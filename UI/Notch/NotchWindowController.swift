@@ -22,9 +22,11 @@ final class NotchWindowController: NSWindowController {
     private var greetingController = GreetingSequenceController()
 
     private let stateModel: YumiStateModel
+    private let characterController: CharacterController
 
-    init(stateModel: YumiStateModel) {
+    init(stateModel: YumiStateModel, characterController: CharacterController) {
         self.stateModel = stateModel
+        self.characterController = characterController
         let screen = Self.notchScreen() ?? NSScreen.main ?? NSScreen.screens[0]
         let sf = screen.frame
         let panel = NotchPanel(
@@ -57,6 +59,7 @@ final class NotchWindowController: NSWindowController {
             rootView: YumiRootView()
                 .environmentObject(greetingController)
                 .environmentObject(stateModel)
+                .environmentObject(characterController)
         )
         hosting.frame = NSRect(origin: .zero, size: contentSize)
         hosting.autoresizingMask = [.width, .height]

@@ -54,6 +54,7 @@ enum NotchGeometry {
 struct YumiRootView: View {
     @EnvironmentObject var greeting: GreetingSequenceController
     @EnvironmentObject var state: YumiStateModel
+    @EnvironmentObject var character: CharacterController
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -77,24 +78,14 @@ struct YumiRootView: View {
                         homeContent
                     }
                 } else if greeting.mode == .compact {
-                    // Sprite peeking next to the notch, driven by the Core state
-                    YumiSprite(state: spriteState, size: 20)
+                    // The character peeking next to the notch, driven by the Core state
+                    YumiCharacterView(controller: character.animationController)
+                        .frame(width: 24, height: 24)
                         .offset(x: 40, y: 16)
                 }
             }
         }
         .ignoresSafeArea()
-    }
-
-    /// Maps the Core presentation state onto the placeholder sprite.
-    private var spriteState: YumiSpriteState {
-        switch state.presentationState {
-        case .idle: return .idle
-        case .working: return .working
-        case .permissionRequired, .questionRequired: return .approval
-        case .completed: return .finished
-        case .errored: return .error
-        }
     }
 
     private var islandWidth: CGFloat { NotchGeometry.width(for: greeting.mode) }

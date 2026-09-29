@@ -14,7 +14,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Core
     private let engine = EventEngine()
     private let store = SessionStore()
+    // Presentation layer (UI)
     private let stateModel = YumiStateModel()
+    private let character = CharacterController()
     private var pumpTask: Task<Void, Never>?
 
     // Demo session used by the "Simulate" menu (replaced by the Claude Code
@@ -31,15 +33,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     // MARK: - Core wiring
 
-    /// The single consumer loop: engine → store → state model.
+    /// The single consumer loop: engine → store → presentation → character.
     /// Runs on the main actor; events are infrequent so this costs nothing
     /// when idle (the `for await` suspends until an event arrives).
     private func startEventPump() {
-        pumpTask = Task { [engine, store, stateModel] in
+        pumpTask = Task { [engine, store, stateModel, character] in
             let events = await engine.subscribe()
+            var lastPresentation: YumiPresentationState?
             for await event in events {
                 let snapshot = await store.apply(event)
                 stateModel.update(from: snapshot)
+                // Character reactions on presentation transitions.
+                if let transition = YumiPresentationTransition.between(lastPresentation ?? .idle,
+                                                                      stateModel.presentationState) {
+                    character.react(to: transition)
+                }
+                character.sync(presentationState: stateModel.presentationState)
+                lastPresentation = stateModel.presentationState
             }
         }
     }
@@ -73,6 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(simulateItem)
 
         menu.addItem(.separator())
+        menu.addItem(withTitle: "Character designer…", action: #selector(openCharacterDesigner), keyEquivalent: "")
         menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(.separator())
         menu.addItem(withTitle: "Quit Yumi", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
@@ -83,7 +94,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Notch
 
     private func setupNotch() {
-        let controller = NotchWindowController(stateModel: stateModel)
+        let controller = NotchWindowController(stateModel: stateModel, characterController: character)
         controller.showWindow(nil)
         controller.fsm.launch()
         notchController = controller
@@ -135,6 +146,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var settingsWindow: NSWindow?
+    private var designerWindow: NSWindow?
+
+    /// Character designer (expression/animation development tool).
+    @objc private func openCharacterDesigner() {
+        if let window = designerWindow, window.isVisible {
+            window.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
+            return
+        }
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 760, height: 640),
+            styleMask: [.titled, .closable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Yumi — Character designer"
+        window.contentView = NSHostingView(rootView: CharacterPreview())
+        window.center()
+        window.isReleasedWhenClosed = false
+        designerWindow = window
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
 
     @objc private func openSettings() {
         if let window = settingsWindow, window.isVisible {

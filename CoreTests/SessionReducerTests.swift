@@ -101,49 +101,5 @@ import Foundation
     }
 }
 
-@Suite struct PresentationStateTests {
-
-    private let agent = Agent(name: "Test Agent", kind: .coding)
-
-    private func makeSession(status: SessionStatus, activity: YumiActivity) -> Session {
-        var session = Session(id: SessionID(), agent: agent, title: "T")
-        session.status = status
-        session.activity = activity
-        return session
-    }
-
-    @Test func emptyIsIdle() {
-        #expect(YumiPresentationState(sessions: []) == .idle)
-    }
-
-    @Test func runningIsWorking() {
-        let sessions = [makeSession(status: .running, activity: .idle)]
-        #expect(YumiPresentationState(sessions: sessions) == .working)
-    }
-
-    @Test func permissionTakesPrecedenceOverWorking() {
-        let sessions = [
-            makeSession(status: .running, activity: .idle),
-            makeSession(status: .waitingForUser, activity: .requestingPermission(PermissionRequest(tool: "Bash"))),
-        ]
-        #expect(YumiPresentationState(sessions: sessions) == .permissionRequired)
-    }
-
-    @Test func questionIsRecognized() {
-        let sessions = [makeSession(status: .waitingForUser, activity: .asking(Question(text: "?")))]
-        #expect(YumiPresentationState(sessions: sessions) == .questionRequired)
-    }
-
-    @Test func completedIsRecognized() {
-        let sessions = [makeSession(status: .completed, activity: .idle)]
-        #expect(YumiPresentationState(sessions: sessions) == .completed)
-    }
-
-    @Test func errorTakesPrecedenceOverEverything() {
-        let sessions = [
-            makeSession(status: .waitingForUser, activity: .requestingPermission(PermissionRequest(tool: "Bash"))),
-            makeSession(status: .errored, activity: .idle),
-        ]
-        #expect(YumiPresentationState(sessions: sessions) == .errored)
-    }
-}
+// The presentation-state tests moved to CoreTests/PresentationTests.swift
+// (they test UI-layer types, not Core types).
