@@ -50,9 +50,12 @@ import CoreGraphics
         #expect(mid.state == .working)  // the state itself never changes
         #expect(mid.deformation != .identity)
 
-        // After expiry: back to the state's resting face.
+        // After expiry: back to the state's resting face (the free gaze may
+        // have moved the pupils, so compare everything except pupilOffset).
         let after = controller.pose(at: t0 + 3.0)
-        #expect(after.face == .focused)  // .working's face
+        var expected = CharacterFace.focused
+        expected.pupilOffset = after.face.pupilOffset
+        #expect(after.face == expected)  // .working's face
     }
 
     @Test func higherPriorityReactionReplacesLower() {

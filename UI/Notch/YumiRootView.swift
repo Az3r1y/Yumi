@@ -16,6 +16,19 @@ final class GreetingSequenceController: ObservableObject {
     /// True only while the FSM is in the greeting state (.coucou).
     @Published private(set) var showGreeting: Bool = false
 
+    /// Free positioning: the character rests at these spots inside the
+    /// expanded island and hops between them on its own.
+    static let expandedSpots: [CGPoint] = [
+        CGPoint(x: 62, y: 100),    // classic left seat
+        CGPoint(x: 150, y: 106),   // center-left, near the text
+        CGPoint(x: 585, y: 104),   // far right edge
+        CGPoint(x: 420, y: 108),   // middle of the card
+    ]
+
+    lazy var wander = CharacterWander(spots: Self.expandedSpots,
+                                      initialIndex: 0,
+                                      now: ProcessInfo.processInfo.systemUptime)
+
     func begin() {
         greetingRunID += 1
         showGreeting = true
@@ -84,12 +97,21 @@ struct YumiRootView: View {
                         .offset(x: 40, y: 16)
                 }
 
-                // Big character on the left of the expanded island
+                // Free-roaming character inside the expanded island
                 // (skipped during the greeting, which draws its own).
+                // GeometryReader supplies the island size; the character
+                // rests at wander spots and hops between them on its own.
                 if greeting.mode == .expanded && !greeting.showGreeting {
-                    YumiCharacterView(controller: character.animationController)
-                        .frame(width: 92, height: 88)
-                        .offset(x: 14, y: -14)
+                    GeometryReader { geo in
+                        let frame = greeting.wander.frame(at: ProcessInfo.processInfo.systemUptime)
+                        YumiCharacterView(controller: character.animationController)
+                            .frame(width: 84, height: 80)
+                            .position(x: frame.position.x,
+                                      y: geo.size.height - 40 + frame.hopY)
+                            .animation(.spring(response: 0.45, dampingFraction: 0.7),
+                                       value: frame.position)
+                    }
+                    .allowsHitTesting(false)
                 }
             }
         }

@@ -20,6 +20,15 @@ final class CharacterAnimationController: ObservableObject {
     /// One-shot animation currently playing (independent of reactions).
     private var oneShot: (animation: CharacterAnimation, start: TimeInterval)?
 
+    // Free gaze: the eyes wander on their own instead of staring at a fixed
+    // point. Amplitudes are in pupil-offset units (body radii fractions).
+    private var gazeFrom: CGSize = .zero
+    private(set) var gazeTarget: CGSize = .zero
+    private var gazeStart: TimeInterval = 0
+    private var nextGazeAt: TimeInterval = 0
+    static let gazeAmplitude = CGSize(width: 0.18, height: 0.12)
+    static let gazeInterval: ClosedRange<TimeInterval> = 1.4...4.0
+
     /// Monotonic timeline anchor; poses depend only on (now - anchor).
     private var anchor: TimeInterval = 0
 
@@ -116,7 +125,14 @@ final class CharacterAnimationController: ObservableObject {
             deformation = deformation.combined(with: ambient.sample(at: t))
         }
 
-        // 3. Reduced motion: clamp amplitudes, keep state legibility.
+        // 3. Free gaze: while no reaction holds the face, let the eyes look
+        // around on their own (states with expressive fixed looks keep them).
+        if currentReaction == nil && Self.stateHasFreeGaze(state) {
+            refreshGazeIfNeeded(at: now)
+            face.pupilOffset = currentGaze(at: now)
+        }
+
+        // 4. Reduced motion: clamp amplitudes, keep state legibility.
         if reduceMotion {
             deformation = Self.damped(deformation)
         }
@@ -143,6 +159,37 @@ final class CharacterAnimationController: ObservableObject {
         case .sleep: return .sleep
         case .bounce: return .bounce
         }
+    }
+
+    /// States whose face leaves room for a wandering gaze (errored/sleepy
+    /// keep their fixed expressive look).
+    static func stateHasFreeGaze(_ state: CharacterState) -> Bool {
+        switch state {
+        case .idle, .working, .thinking, .waiting, .happy: return true
+        case .sleepy, .errored: return false
+        }
+    }
+
+    static func randomGaze() -> CGSize {
+        // Occasionally rest centered — glances feel intentional.
+        if Double.random(in: 0...1) < 0.25 { return .zero }
+        return CGSize(width: Double.random(in: -gazeAmplitude.width...gazeAmplitude.width),
+                      height: Double.random(in: -gazeAmplitude.height...gazeAmplitude.height))
+    }
+
+    private func refreshGazeIfNeeded(at now: TimeInterval) {
+        guard now >= nextGazeAt else { return }
+        gazeFrom = currentGaze(at: now)
+        gazeTarget = Self.randomGaze()
+        gazeStart = now
+        nextGazeAt = now + TimeInterval.random(in: Self.gazeInterval)
+    }
+
+    private func currentGaze(at now: TimeInterval) -> CGSize {
+        let t = min(1, max(0, (now - gazeStart) / 0.45))
+        let p = CharacterEasing.inOut.apply(CGFloat(t))
+        return CGSize(width: gazeFrom.width + (gazeTarget.width - gazeFrom.width) * p,
+                      height: gazeFrom.height + (gazeTarget.height - gazeFrom.height) * p)
     }
 
     /// Reduced-motion damping: strong clamps on movement/deformation while
