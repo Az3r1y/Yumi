@@ -100,6 +100,33 @@ import CoreGraphics
         let damped = CharacterAnimationController.damped(breathe)
         #expect(damped.scaleY != 1 || damped.scaleX != 1)
     }
+
+    @Test func designerOverridesBypassStateMachine() {
+        let controller = CharacterAnimationController()
+        controller.setState(.working)
+        let t0: TimeInterval = 100
+
+        let face = CharacterFace.surprised
+        let deformation = CharacterDeformation.squash(amount: 0.3)
+        controller.setOverrides(face: face, deformation: deformation)
+
+        let pose = controller.pose(at: t0)
+        // The pose is exactly the override — no ambient, no gaze, no reaction.
+        #expect(pose.face == face)
+        #expect(pose.deformation == deformation)
+
+        // Clearing the overrides returns control to the state machine.
+        controller.setOverrides(face: nil, deformation: nil)
+        let after = controller.pose(at: t0 + 0.1)
+        #expect(after.state == .working)
+    }
+
+    @Test func newFaceParametersExistAndDefaultToNeutral() {
+        // eyeRotation / browRotation are consumed by future renderers; the
+        // logic layer carries them without interpreting them.
+        #expect(CharacterFace.default.eyeRotation == 0)
+        #expect(CharacterFace.default.browRotation == 0)
+    }
 }
 
 // MARK: - Animation primitives

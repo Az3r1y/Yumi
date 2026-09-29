@@ -24,6 +24,8 @@ struct CharacterFace: Hashable, Sendable {
     // Brows (short strokes above the eyes)
     var browHeight: CGFloat = 1         // 0 = on the eyes, 1 = high
     var browAngle: CGFloat = 0          // radians; positive = inner ends up (curious)
+    var browRotation: CGFloat = 0       // radians; secondary tilt used by renderers
+    var eyeRotation: CGFloat = 0        // radians; whole-eye tilt (future renderer)
 
     // Mouth
     var mouth: MouthShape = .neutral

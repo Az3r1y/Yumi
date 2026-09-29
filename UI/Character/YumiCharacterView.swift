@@ -5,18 +5,21 @@ import SwiftUI
 ///     YumiCharacterView(state: .idle)          // fixed state
 ///     YumiCharacterView(controller: controller) // live, app-driven
 ///
-/// TimelineView(.animation) only runs while the view is visible (SwiftUI
-/// pauses it off-screen), so an hidden character costs nothing.
+/// The artwork is whatever renderer CharacterViewFactory binds — the view
+/// only feeds poses to it. TimelineView(.animation) runs while visible and
+/// is paused by SwiftUI off-screen, so a hidden character costs nothing.
 struct YumiCharacterView: View {
     private var controller: CharacterAnimationController?
     private var fixedState: CharacterState
     private var fixedFace: CharacterFace?
+    private var renderer: any CharacterRenderer
 
     /// Live mode: driven by a CharacterAnimationController.
     init(controller: CharacterAnimationController) {
         self.controller = controller
         self.fixedState = .idle
         self.fixedFace = nil
+        self.renderer = CharacterViewFactory.make()
     }
 
     /// Static mode: a fixed state (previews, tests, simple integrations).
@@ -24,6 +27,7 @@ struct YumiCharacterView: View {
         self.controller = nil
         self.fixedState = state
         self.fixedFace = nil
+        self.renderer = CharacterViewFactory.make()
     }
 
     /// Static mode with an explicit face override (expression designer).
@@ -31,6 +35,7 @@ struct YumiCharacterView: View {
         self.controller = nil
         self.fixedState = .idle
         self.fixedFace = face
+        self.renderer = CharacterViewFactory.make()
     }
 
     var body: some View {
@@ -42,23 +47,23 @@ struct YumiCharacterView: View {
                     // display-rate ticking and pauses off-screen.
                     let pose = controller.pose(at: ProcessInfo.processInfo.systemUptime)
                     var mutable = context
-                    Self.draw(pose: pose, size: size, into: &mutable)
+                    Self.draw(pose: pose, size: size, into: &mutable, renderer: renderer)
                 }
             }
         } else {
-            StaticCharacterView(state: fixedState, faceOverride: fixedFace)
+            StaticCharacterView(state: fixedState, faceOverride: fixedFace, renderer: renderer)
         }
     }
 
-    /// Applies the blink to the pose, then renders. Factored so both modes
-    /// share the exact same drawing path.
-    static func draw(pose: CharacterPose, size: CGSize, into context: inout GraphicsContext) {
+    /// Applies the blink to the pose, then hands off to the bound renderer.
+    static func draw(pose: CharacterPose, size: CGSize,
+                     into context: inout GraphicsContext, renderer: any CharacterRenderer) {
         var face = pose.face
         face.eyeOpenness *= CharacterEyeAnimation.openness(
             at: pose.time, anchor: pose.anchor)
         var posed = pose
         posed.face = face
-        YumiCharacterRenderer.draw(pose: posed, in: &context, size: size)
+        renderer.draw(pose: posed, in: &context, size: size)
     }
 }
 
@@ -67,6 +72,7 @@ struct YumiCharacterView: View {
 private struct StaticCharacterView: View {
     let state: CharacterState
     let faceOverride: CharacterFace?
+    let renderer: any CharacterRenderer
 
     var body: some View {
         TimelineView(.animation) { _ in
@@ -81,7 +87,7 @@ private struct StaticCharacterView: View {
                     time: now,
                     anchor: anchor)
                 var mutable = context
-                YumiCharacterRenderer.draw(pose: posed, in: &mutable, size: size)
+                YumiCharacterView.draw(pose: posed, size: size, into: &mutable, renderer: renderer)
             }
         }
     }

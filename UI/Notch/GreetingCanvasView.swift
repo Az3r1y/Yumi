@@ -82,11 +82,12 @@ struct GreetingCanvasView: View {
             time: t,
             anchor: startDate.timeIntervalSinceReferenceDate)
 
-        // Draw the character centered in the island.
+        // Draw the character centered in the island (via the bound renderer).
         var characterContext = context
         characterContext.translateBy(x: size.width / 2, y: size.height / 2 + 4)
         let characterSize = CGSize(width: 120, height: 120)
-        YumiCharacterRenderer.draw(pose: pose, in: &characterContext, size: characterSize)
+        let renderer = CharacterViewFactory.make()
+        renderer.draw(pose: pose, in: &characterContext, size: characterSize)
     }
 
     /// Double blink during the greeting (0.55 s and 1.50 s).

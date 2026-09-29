@@ -35,6 +35,13 @@ final class CharacterAnimationController: ObservableObject {
     /// Whether to tone animations down (accessibility "Reduce Motion").
     private(set) var reduceMotion: Bool
 
+    // MARK: - Designer overrides (preview tool only)
+
+    /// When set, replaces the state/reaction face entirely.
+    var faceOverride: CharacterFace?
+    /// When set, replaces all body animation (ambient, reactions, one-shots).
+    var deformationOverride: CharacterDeformation?
+
     // MARK: - Init
 
     init(reduceMotion: Bool = false) {
@@ -51,6 +58,13 @@ final class CharacterAnimationController: ObservableObject {
     /// Toggles reduced motion (wired to NSWorkspace accessibility options).
     func setReduceMotion(_ enabled: Bool) {
         reduceMotion = enabled
+    }
+
+    /// Designer overrides (preview tool): force a face and/or a deformation,
+    /// bypassing states, reactions and ambient animation.
+    func setOverrides(face: CharacterFace?, deformation: CharacterDeformation?) {
+        self.faceOverride = face
+        self.deformationOverride = deformation
     }
 
     // MARK: - Reactions & one-shots
@@ -85,6 +99,11 @@ final class CharacterAnimationController: ObservableObject {
 
     /// The pose at time `now` (monotonic seconds, e.g. systemUptime).
     func pose(at now: TimeInterval) -> CharacterPose {
+        // Designer override path: no state machine, no ambient, no gaze.
+        if let faceOverride, let deformationOverride {
+            return CharacterPose(state: state, face: faceOverride,
+                                 deformation: deformationOverride, time: now, anchor: now)
+        }
         let t = now - anchor
 
         // 1. Which face?
