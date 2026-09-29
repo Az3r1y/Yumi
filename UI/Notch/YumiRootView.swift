@@ -83,6 +83,14 @@ struct YumiRootView: View {
                         .frame(width: 24, height: 24)
                         .offset(x: 40, y: 16)
                 }
+
+                // Big character on the left of the expanded island
+                // (skipped during the greeting, which draws its own).
+                if greeting.mode == .expanded && !greeting.showGreeting {
+                    YumiCharacterView(controller: character.animationController)
+                        .frame(width: 92, height: 88)
+                        .offset(x: 14, y: -14)
+                }
             }
         }
         .ignoresSafeArea()
