@@ -4,7 +4,7 @@
 
 Native macOS app (Swift 6, SwiftUI + AppKit, zero third-party dependencies).
 This repository currently contains **step 1 of the migration from Coucou**:
-a clean, compilable socle — notch window, app lifecycle, menu bar, state
+a clean, compilable socle, notch window, app lifecycle, menu bar, state
 machine, and a technical placeholder character. No feature is implemented yet.
 
 ## Build
