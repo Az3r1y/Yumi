@@ -53,6 +53,7 @@ enum NotchGeometry {
 /// itself toggles click-through, so no hit-testing is needed here).
 struct YumiRootView: View {
     @EnvironmentObject var greeting: GreetingSequenceController
+    @EnvironmentObject var state: YumiStateModel
 
     var body: some View {
         ZStack(alignment: .top) {
@@ -76,8 +77,8 @@ struct YumiRootView: View {
                         homeContent
                     }
                 } else if greeting.mode == .compact {
-                    // Sprite peeking next to the notch
-                    YumiSprite(state: .idle, size: 20)
+                    // Sprite peeking next to the notch, driven by the Core state
+                    YumiSprite(state: spriteState, size: 20)
                         .offset(x: 40, y: 16)
                 }
             }
@@ -85,23 +86,75 @@ struct YumiRootView: View {
         .ignoresSafeArea()
     }
 
+    /// Maps the Core presentation state onto the placeholder sprite.
+    private var spriteState: YumiSpriteState {
+        switch state.presentationState {
+        case .idle: return .idle
+        case .working: return .working
+        case .permissionRequired, .questionRequired: return .approval
+        case .completed: return .finished
+        case .errored: return .error
+        }
+    }
+
     private var islandWidth: CGFloat { NotchGeometry.width(for: greeting.mode) }
     private var islandHeight: CGFloat { NotchGeometry.height(for: greeting.mode) }
 
     @ViewBuilder
     private var homeContent: some View {
-        // Minimal expanded placeholder — real session views come in step 4.
-        VStack(alignment: .leading, spacing: 4) {
-            Text("Yumi")
+        // Minimal expanded view: live Core state. Real session views come in step 4.
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Yumi — \(state.presentationState == .idle ? "idle" : state.presentationState == .working ? "working" : state.presentationState == .permissionRequired ? "permission requested" : state.presentationState == .questionRequired ? "asking a question" : state.presentationState == .completed ? "completed" : "error")")
                 .font(.system(size: 15, weight: .semibold))
-            Text("No sessions yet — the Claude Code connector arrives in step 3.")
-                .font(.system(size: 12))
-                .foregroundStyle(.gray)
+
+            if state.sessions.isEmpty {
+                Text("No sessions. Menu bar → Simulate to publish test events.")
+                    .font(.system(size: 12))
+                    .foregroundStyle(.gray)
+            } else {
+                ForEach(state.sessions) { session in
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(session.status == .errored ? Color.red
+                                  : session.status == .completed ? Color.green
+                                  : session.status == .waitingForUser ? Color.orange
+                                  : Color.white)
+                            .frame(width: 7, height: 7)
+                        Text("\(session.agent.name) — \(session.title)")
+                            .font(.system(size: 12))
+                        Text(session.status == .waitingForUser ? activityLabel(session) : statusLabel(session))
+                            .font(.system(size: 11))
+                            .foregroundStyle(.gray)
+                    }
+                }
+            }
         }
         .foregroundStyle(.white)
         .padding(.leading, 24)
         .padding(.top, 24)
         .frame(width: NotchGeometry.expandedWidth, alignment: .leading)
+    }
+
+    private func statusLabel(_ session: Session) -> String {
+        switch session.status {
+        case .running: return "running"
+        case .waitingForUser: return "waiting"
+        case .errored: return "error"
+        case .completed: return "done"
+        }
+    }
+
+    private func activityLabel(_ session: Session) -> String {
+        switch session.activity {
+        case .requestingPermission(let request):
+            return "needs \(request.tool): \(request.command)"
+        case .asking(let question):
+            return question.text
+        case .working(let tool):
+            return "\(tool.name) \(tool.summary)"
+        case .idle:
+            return statusLabel(session)
+        }
     }
 }
 

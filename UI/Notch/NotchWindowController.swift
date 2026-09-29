@@ -21,7 +21,10 @@ final class NotchWindowController: NSWindowController {
     private var frameTimer: Timer?
     private var greetingController = GreetingSequenceController()
 
-    convenience init() {
+    private let stateModel: YumiStateModel
+
+    init(stateModel: YumiStateModel) {
+        self.stateModel = stateModel
         let screen = Self.notchScreen() ?? NSScreen.main ?? NSScreen.screens[0]
         let sf = screen.frame
         let panel = NotchPanel(
@@ -32,8 +35,12 @@ final class NotchWindowController: NSWindowController {
             defer: false
         )
 
-        self.init(window: panel)
+        super.init(window: panel)
         setupPanel(screen: screen)
+    }
+
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) is not supported")
     }
 
     private func setupPanel(screen: NSScreen) {
@@ -47,7 +54,9 @@ final class NotchWindowController: NSWindowController {
 
         let contentSize = panel.contentRect(forFrameRect: panel.frame).size
         let hosting = NSHostingView(
-            rootView: YumiRootView().environmentObject(greetingController)
+            rootView: YumiRootView()
+                .environmentObject(greetingController)
+                .environmentObject(stateModel)
         )
         hosting.frame = NSRect(origin: .zero, size: contentSize)
         hosting.autoresizingMask = [.width, .height]

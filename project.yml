@@ -35,3 +35,22 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi
+        INFOPLIST_FILE: Resources/Info.plist
+
+  YumiTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: CoreTests
+    dependencies:
+      - target: Yumi
+
+schemes:
+  Yumi:
+    build:
+      targets:
+        Yumi: all
+        YumiTests: [test]
+    test:
+      targets:
+        - YumiTests

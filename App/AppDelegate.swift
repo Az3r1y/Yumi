@@ -1,19 +1,51 @@
 import AppKit
 import SwiftUI
 
-/// Application lifecycle: accessory policy, menu bar item, notch window setup.
+/// Application lifecycle: accessory policy, menu bar, notch window setup.
 ///
-/// New Yumi code. Modeled on Coucou's AppDelegate (adaptation, not a port):
-/// starts only the window and the state machine — no servers, no pollers.
+/// This is Yumi's composition root: the Core instances (EventEngine,
+/// SessionStore, YumiStateModel) are created here and passed explicitly to
+/// whoever needs them — no singletons, no global mutable state.
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem?
     private var notchController: NotchWindowController?
 
+    // Core
+    private let engine = EventEngine()
+    private let store = SessionStore()
+    private let stateModel = YumiStateModel()
+    private var pumpTask: Task<Void, Never>?
+
+    // Demo session used by the "Simulate" menu (replaced by the Claude Code
+    // connector in step 3).
+    private let demoAgent = Agent(id: AgentID("demo-agent"), name: "Demo Agent", kind: .coding)
+    private let demoSession = SessionID("demo-session")
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        startEventPump()
         setupMenuBarItem()
         setupNotch()
+    }
+
+    // MARK: - Core wiring
+
+    /// The single consumer loop: engine → store → state model.
+    /// Runs on the main actor; events are infrequent so this costs nothing
+    /// when idle (the `for await` suspends until an event arrives).
+    private func startEventPump() {
+        pumpTask = Task { [engine, store, stateModel] in
+            let events = await engine.subscribe()
+            for await event in events {
+                let snapshot = await store.apply(event)
+                stateModel.update(from: snapshot)
+            }
+        }
+    }
+
+    private func publish(_ event: YumiEvent) {
+        Task { await engine.publish(event) }
     }
 
     // MARK: - Menu bar
@@ -27,6 +59,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let menu = NSMenu()
         menu.addItem(withTitle: "Open Yumi", action: #selector(openNotch), keyEquivalent: "")
+
+        let simulate = NSMenu(title: "Simulate")
+        simulate.addItem(withTitle: "Start session", action: #selector(simSessionStart), keyEquivalent: "")
+        simulate.addItem(withTitle: "Tool started", action: #selector(simToolStarted), keyEquivalent: "")
+        simulate.addItem(withTitle: "Permission requested", action: #selector(simPermission), keyEquivalent: "")
+        simulate.addItem(withTitle: "Question asked", action: #selector(simQuestion), keyEquivalent: "")
+        simulate.addItem(withTitle: "Task completed", action: #selector(simComplete), keyEquivalent: "")
+        simulate.addItem(withTitle: "Error", action: #selector(simError), keyEquivalent: "")
+        simulate.addItem(withTitle: "End session", action: #selector(simSessionEnd), keyEquivalent: "")
+        let simulateItem = NSMenuItem(title: "Simulate", action: nil, keyEquivalent: "")
+        simulateItem.submenu = simulate
+        menu.addItem(simulateItem)
+
         menu.addItem(.separator())
         menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(.separator())
@@ -38,10 +83,49 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Notch
 
     private func setupNotch() {
-        let controller = NotchWindowController()
+        let controller = NotchWindowController(stateModel: stateModel)
         controller.showWindow(nil)
         controller.fsm.launch()
         notchController = controller
+    }
+
+    // MARK: - Simulated events (step 3 replaces these with the Claude connector)
+
+    @objc private func simSessionStart() {
+        publish(.sessionStarted(demoSession, demoAgent, title: "Demo session"))
+        reveal()
+    }
+
+    @objc private func simToolStarted() {
+        publish(.toolStarted(demoSession, ToolInfo(name: "Edit", summary: "YumiApp.swift")))
+    }
+
+    @objc private func simPermission() {
+        publish(.permissionRequested(demoSession, PermissionRequest(tool: "Bash", command: "swift test")))
+        reveal()
+    }
+
+    @objc private func simQuestion() {
+        publish(.questionRequested(demoSession, Question(text: "Meilisearch or Postgres?", options: ["Meilisearch", "Postgres"])))
+        reveal()
+    }
+
+    @objc private func simComplete() {
+        publish(.taskCompleted(demoSession))
+    }
+
+    @objc private func simError() {
+        publish(.sessionErrored(demoSession, YumiError(message: "Simulated failure")))
+    }
+
+    @objc private func simSessionEnd() {
+        publish(.sessionEnded(demoSession))
+    }
+
+    private func reveal() {
+        if notchController?.fsm.state == .hidden {
+            notchController?.fsm.reveal()
+        }
     }
 
     // MARK: - Actions

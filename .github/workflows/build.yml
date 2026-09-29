@@ -27,3 +27,13 @@ jobs:
             build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
+
+      - name: Test
+        run: |
+          xcodebuild \
+            -project Yumi.xcodeproj \
+            -scheme Yumi \
+            -configuration Debug \
+            test \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
