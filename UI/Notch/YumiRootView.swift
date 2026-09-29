@@ -47,6 +47,9 @@ enum NotchGeometry {
     static let compactExtra: CGFloat = 160
     static let expandedWidth: CGFloat = 640
     static let expandedHeight: CGFloat = 150
+    /// Corner radius of the island silhouette — shared by the SwiftUI shape
+    /// (drawing) and the AppKit hit-testing so the two can never diverge.
+    static let islandCornerRadius: CGFloat = 14
 
     static func width(for mode: NotchMode) -> CGFloat {
         switch mode {
@@ -191,7 +194,7 @@ struct YumiRootView: View {
 /// rounded bottom corners. Sized by its frame.
 struct YumiShape: Shape {
     func path(in rect: CGRect) -> Path {
-        let radius: CGFloat = 14
+        let radius = NotchGeometry.islandCornerRadius
         var p = Path()
         p.move(to: CGPoint(x: 0, y: 0))
         p.addLine(to: CGPoint(x: rect.maxX, y: 0))

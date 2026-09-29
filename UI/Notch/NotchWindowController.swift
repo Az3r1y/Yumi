@@ -278,7 +278,27 @@ final class MouseTargetView: NSView {
         // the 60 Hz polling, which does not depend on hit-testing).
         guard let panel = window as? NotchPanel, islandMode != .hidden else { return nil }
         let island = panel.currentIslandFrame(mode: islandMode)
-        return island.contains(point) ? super.hitTest(point) : nil
+        guard island.contains(point) else { return nil }
+
+        // Match the drawn silhouette (YumiShape): sharp top corners, rounded
+        // bottom corners. Everything outside falls through to the window
+        // behind. SwiftUI's top-left origin mirrors to AppKit's bottom-left
+        // by flipping y around the island's vertical center.
+        let radius = NotchGeometry.islandCornerRadius
+        let leftX = island.minX + radius
+        let rightX = island.maxX - radius
+        let cornerY = island.minY + radius
+        // Bottom-left rounded corner
+        if point.x < leftX, point.y < cornerY {
+            let dx = point.x - leftX, dy = point.y - cornerY
+            if dx * dx + dy * dy > radius * radius { return nil }
+        }
+        // Bottom-right rounded corner
+        if point.x > rightX, point.y < cornerY {
+            let dx = point.x - rightX, dy = point.y - cornerY
+            if dx * dx + dy * dy > radius * radius { return nil }
+        }
+        return super.hitTest(point)
     }
 }
 
