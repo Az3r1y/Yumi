@@ -19,6 +19,7 @@ final class NotchWindowController: NSWindowController {
 
     private var wasInIsland = false
     private var frameTimer: Timer?
+    private var container: MouseTargetView!
     private var greetingController = GreetingSequenceController()
 
     private let stateModel: YumiStateModel
@@ -52,7 +53,10 @@ final class NotchWindowController: NSWindowController {
         panel.hasShadow = false
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) + 3)
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
-        panel.ignoresMouseEvents = true
+        // The panel participates in event routing; MouseTargetView.hitTest
+        // decides per point what reaches the content and what falls through
+        // to the window behind.
+        panel.ignoresMouseEvents = false
 
         let contentSize = panel.contentRect(forFrameRect: panel.frame).size
         let hosting = NSHostingView(
@@ -63,7 +67,17 @@ final class NotchWindowController: NSWindowController {
         )
         hosting.frame = NSRect(origin: .zero, size: contentSize)
         hosting.autoresizingMask = [.width, .height]
-        panel.contentView = hosting
+
+        // The panel (720×320) is much larger than the island (up to 640×150).
+        // AppKit has no per-region click-through on a borderless window, so the
+        // container below performs the hit-testing: clicks inside the island
+        // reach the SwiftUI content, clicks in the transparent area fall
+        // through to the window behind — even while the panel accepts events.
+        let container = MouseTargetView(frame: NSRect(origin: .zero, size: contentSize))
+        container.autoresizingMask = [.width, .height]
+        container.addSubview(hosting)
+        panel.contentView = container
+        self.container = container
 
         wireFSM()
         startPolling()
@@ -208,11 +222,11 @@ final class NotchWindowController: NSWindowController {
         let islandRect = panel.currentIslandFrame(mode: greetingController.mode)
         let inIsland = islandRect.insetBy(dx: -6, dy: -6).contains(local)
 
-        // Click-through toggle: only the island shape intercepts clicks
-        let shouldAcceptMouse = inIsland
-        if panel.ignoresMouseEvents == shouldAcceptMouse {
-            panel.ignoresMouseEvents = !shouldAcceptMouse
-        }
+        // Per-point click handling lives in MouseTargetView.hitTest (island
+        // only). The panel always accepts mouse events; the transparent area
+        // around the island falls through to the window behind. The 60 Hz
+        // polling here feeds the FSM hover enter/leave.
+        container.islandMode = greetingController.mode
 
         // Feed the FSM hover enter/leave
         if inIsland && !wasInIsland {
@@ -242,6 +256,29 @@ final class NotchPanel: NSPanel {
         let w = NotchGeometry.width(for: mode)
         let h = NotchGeometry.height(for: mode)
         return CGRect(x: (frame.width - w) / 2, y: frame.height - h, width: w, height: h)
+    }
+}
+
+/// Content view of the panel: only the island rect is a valid hit target.
+/// A click outside returns nil so macOS forwards the event to the window
+/// behind (standard AppKit per-view passthrough — no extra windows, no
+/// global toggle).
+///
+/// Coordinates: `hitTest(_:)` receives the point in this view's own space
+/// (origin bottom-left), the same space as `NotchPanel.currentIslandFrame` —
+/// no conversion needed. SwiftUI hover uses a top-left origin but the 60 Hz
+/// FSM polling runs in AppKit coordinates and is unaffected.
+final class MouseTargetView: NSView {
+    /// Current island mode, mirrored from the controller each poll tick so
+    /// hit-testing always matches the drawn island size.
+    var islandMode: NotchMode = .hidden
+
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // Hidden island: fully click-through (the FSM wake-on-hover runs on
+        // the 60 Hz polling, which does not depend on hit-testing).
+        guard let panel = window as? NotchPanel, islandMode != .hidden else { return nil }
+        let island = panel.currentIslandFrame(mode: islandMode)
+        return island.contains(point) ? super.hitTest(point) : nil
     }
 }
 

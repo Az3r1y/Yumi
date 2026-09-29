@@ -62,8 +62,10 @@ enum NotchGeometry {
 }
 
 /// Root view rendered inside the 720×320 transparent panel.
-/// The island is drawn top-center; everything else is transparent (the panel
-/// itself toggles click-through, so no hit-testing is needed here).
+/// The island is drawn top-center; everything else is transparent. Mouse
+/// hit-testing is done by MouseTargetView (controller side): only the island
+/// rect is a valid click target, the transparent area passes clicks through
+/// to the window behind.
 struct YumiRootView: View {
     @EnvironmentObject var greeting: GreetingSequenceController
     @EnvironmentObject var state: YumiStateModel
@@ -99,8 +101,11 @@ struct YumiRootView: View {
 
                 // Free-roaming character inside the expanded island
                 // (skipped during the greeting, which draws its own).
-                // GeometryReader supplies the island size; the character
-                // rests at wander spots and hops between them on its own.
+                // The GeometryReader is pinned to the island's exact size
+                // (640×150) so its coordinate space IS the island's — left
+                // unconstrained it would fill the whole 720×320 panel and
+                // place the character below the island frame. Wander spots
+                // are defined in that same island space (x: 0…expandedWidth).
                 if greeting.mode == .expanded && !greeting.showGreeting {
                     GeometryReader { geo in
                         let frame = greeting.wander.frame(at: ProcessInfo.processInfo.systemUptime)
@@ -111,6 +116,7 @@ struct YumiRootView: View {
                             .animation(.spring(response: 0.45, dampingFraction: 0.7),
                                        value: frame.position)
                     }
+                    .frame(width: NotchGeometry.expandedWidth, height: NotchGeometry.expandedHeight)
                     .allowsHitTesting(false)
                 }
             }
