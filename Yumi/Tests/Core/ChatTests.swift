@@ -32,6 +32,7 @@ import Foundation
     @Test func argumentsOfAFirstMessage() {
         let arguments = ClaudeCLI.arguments(session: .new("11111111-2222-4333-8444-555555555555"), systemPrompt: "Tu es Yumi.")
         #expect(arguments == ["-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
+                              "--include-partial-messages",
                               "--permission-prompt-tool", "stdio", "--permission-mode", "default",
                               "--session-id", "11111111-2222-4333-8444-555555555555",
                               "--append-system-prompt", "Tu es Yumi."])
@@ -114,9 +115,10 @@ import Foundation
 
     @Test func aToolIsFollowedFromStartToEnd() {
         #expect(ClaudeStream.events(fromLine: toolUseLine)
-                == [.toolStarted(ChatToolUse(id: "toolu_012Tj", name: "Write", detail: "/tmp/x/hello.txt"))])
-        #expect(ClaudeStream.events(fromLine: toolResultLine) == [.toolFinished(id: "toolu_012Tj", failed: false)])
-        #expect(ClaudeStream.events(fromLine: deniedResultLine) == [.toolFinished(id: "toolu_01HzQ", failed: true)])
+                == [.toolStarted(ChatToolUse(id: "toolu_012Tj", name: "Write", detail: "/tmp/x/hello.txt", content: "hi"))])
+        #expect(ClaudeStream.events(fromLine: toolResultLine)
+                == [.toolFinished(id: "toolu_012Tj", failed: false, output: "File created successfully at: /tmp/x/hello.txt")])
+        #expect(ClaudeStream.events(fromLine: deniedResultLine) == [.toolFinished(id: "toolu_01HzQ", failed: true, output: "Refused by the user")])
     }
 
     @Test func aPermissionRequestCarriesWhatTheAnswerNeeds() throws {
@@ -161,7 +163,9 @@ import Foundation
         let ignored = [
             #"{"type":"rate_limit_event","rate_limit_info":{"status":"allowed"},"session_id":"1fa5"}"#,
             #"{"type":"system","subtype":"thinking_tokens","estimated_tokens":108,"session_id":"1fa5"}"#,
-            #"{"type":"stream_event","event":{"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"Waves"}}}"#,
+            #"{"type":"stream_event","event":{"type":"content_block_delta","index":0,"delta":{"type":"thinking_delta","thinking":"The user"}}}"#,
+            #"{"type":"stream_event","event":{"type":"content_block_delta","index":1,"delta":{"type":"text_delta","text":"sub-agent"}},"parent_tool_use_id":"toolu_parent"}"#,
+            #"{"type":"stream_event","event":{"type":"content_block_stop","index":1}}"#,
             #"{"type":"control_response","response":{"subtype":"success","request_id":"init_1","response":{}}}"#,
             #"{"type":"control_request","request_id":"x","request":{"subtype":"something_new"}}"#,
             // What a sub-agent says and does is its parent's business.

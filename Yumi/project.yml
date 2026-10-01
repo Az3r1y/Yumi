@@ -150,6 +150,8 @@ targets:
       - path: Sources/App/Modules
       - path: Sources/App/Contracts/ModuleTypes.swift
         group: Tests/UnderTest
+      - path: Sources/App/Contracts/ChatLive.swift
+        group: Tests/UnderTest
       - path: Sources/App/AppIdentity.swift
         group: Tests/UnderTest
     settings:

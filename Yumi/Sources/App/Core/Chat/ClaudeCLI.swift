@@ -50,6 +50,7 @@ enum ClaudeCLI {
                          "--input-format", "stream-json",
                          "--output-format", "stream-json",
                          "--verbose",
+                         "--include-partial-messages",
                          "--permission-prompt-tool", "stdio",
                          "--permission-mode", "default"]
         switch session {

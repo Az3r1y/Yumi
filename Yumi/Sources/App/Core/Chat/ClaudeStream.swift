@@ -4,12 +4,18 @@ import Foundation
 enum ChatStreamEvent: Equatable, Sendable {
     /// The turn started; the session identifier is confirmed.
     case started(sessionID: String)
-    /// Claude wrote text meant for the user.
+    /// Claude begins a new message: what it writes from here replaces the text shown so far.
+    case messageStarted
+    /// A few more words of the message being written (partial messages).
+    case textDelta(String)
+    /// Claude wrote text meant for the user: the complete block, once it is finished.
     case text(String)
+    /// Claude is about to use a tool; what it will do with it is not known yet (partial messages).
+    case toolAnnounced(id: String, name: String)
     /// Claude starts using a tool.
     case toolStarted(ChatToolUse)
     /// A tool finished. `failed` is true when it was refused or returned an error.
-    case toolFinished(id: String, failed: Bool)
+    case toolFinished(id: String, failed: Bool, output: String)
     /// Claude needs a permission before using a tool, and waits for the answer.
     case permissionRequested(ChatPermissionRequest)
     /// A pending permission request was answered by someone else (a hook): no answer is expected any more.
@@ -23,6 +29,8 @@ struct ChatToolUse: Equatable, Sendable {
     var name: String
     /// The command, the file path or the query, depending on the tool. Empty when there is none.
     var detail: String
+    /// What the tool writes, when it writes: the content of the file, or the new text of an edit.
+    var content: String = ""
 }
 
 struct ChatPermissionRequest: Equatable, Sendable {
@@ -95,8 +103,9 @@ enum ClaudeStream {
                 case "tool_use":
                     guard let id = block["id"] as? String else { return nil }
                     let name = block["name"] as? String ?? "Tool"
-                    return .toolStarted(ChatToolUse(id: id, name: name,
-                                                    detail: detail(of: block["input"] as? [String: Any] ?? [:])))
+                    let input = block["input"] as? [String: Any] ?? [:]
+                    return .toolStarted(ChatToolUse(id: id, name: name, detail: detail(of: input),
+                                                    content: input["content"] as? String ?? input["new_string"] as? String ?? ""))
                 default:
                     return nil
                 }
@@ -106,7 +115,25 @@ enum ClaudeStream {
             guard object["parent_tool_use_id"] as? String == nil else { return [] }
             return blocks(of: object["message"] as? [String: Any] ?? [:]).compactMap { block in
                 guard block["type"] as? String == "tool_result", let id = block["tool_use_id"] as? String else { return nil }
-                return .toolFinished(id: id, failed: block["is_error"] as? Bool ?? false)
+                return .toolFinished(id: id, failed: block["is_error"] as? Bool ?? false, output: text(of: block["content"]))
+            }
+
+        case "stream_event":
+            // Partial messages: the words as they are written, and tools as soon as they are named.
+            guard object["parent_tool_use_id"] as? String == nil, let event = object["event"] as? [String: Any] else { return [] }
+            switch event["type"] as? String {
+            case "message_start":
+                return [.messageStarted]
+            case "content_block_start":
+                guard let block = event["content_block"] as? [String: Any], block["type"] as? String == "tool_use",
+                      let id = block["id"] as? String else { return [] }
+                return [.toolAnnounced(id: id, name: block["name"] as? String ?? "Tool")]
+            case "content_block_delta":
+                guard let delta = event["delta"] as? [String: Any], delta["type"] as? String == "text_delta",
+                      let text = delta["text"] as? String, !text.isEmpty else { return [] }
+                return [.textDelta(text)]
+            default:
+                return []
             }
 
         case "control_request":
@@ -138,6 +165,12 @@ enum ClaudeStream {
         default:
             return []
         }
+    }
+
+    /// The text of a tool result, which is either a string or a list of text blocks.
+    private static func text(of content: Any?) -> String {
+        if let text = content as? String { return text }
+        return (content as? [[String: Any]] ?? []).compactMap { $0["text"] as? String }.joined(separator: "\n")
     }
 
     private static func blocks(of message: [String: Any]) -> [[String: Any]] {
