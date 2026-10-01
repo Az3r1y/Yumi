@@ -16,7 +16,7 @@ struct IslandOpenLayer: View {
 
         VStack(spacing: 0) {
             // `.o-top { grid-template-columns: 96px 1fr 30px; gap: 0 8px; padding: 8px 10px 7px 0 }`
-            HStack(alignment: .top, spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
                 seat(caption: model.habit.map(IslandModel.caption(for:)) ?? card.caption)
 
                 Group {
@@ -34,8 +34,9 @@ struct IslandOpenLayer: View {
                     .frame(maxHeight: .infinity)
             }
             .padding(.top, IslandConst.openPaddingTop + model.layout.openInset / IslandConst.openScale)
-            .padding(.trailing, 10)
-            .padding(.bottom, 7)
+            .padding(.leading, 8)
+            .padding(.trailing, 16)
+            .padding(.bottom, IslandConst.openPaddingBottom)
 
             IslandDock(state: state, model: model, screen: screen)
         }
@@ -55,7 +56,7 @@ struct IslandOpenLayer: View {
             .foregroundStyle(IslandTheme.muted)
             .lineLimit(1)
             .fixedSize()
-            .frame(width: IslandConst.seatColumn, height: 82, alignment: .bottom)
+            .frame(width: IslandConst.seatColumn, height: IslandConst.seatHeight, alignment: .bottom)
             .contentShape(Rectangle())
             .onTapGesture {
                 SoundEngine.shared.play("pop")
@@ -111,7 +112,7 @@ struct IslandCardView: View {
     let card: IslandCard
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: IslandConst.lineGap) {
             Text(card.eyebrow)
                 .font(IslandTheme.round(10, .bold))
                 .tracking(1)
@@ -178,7 +179,7 @@ struct IslandButtonRow: View {
                              enabled: enabled(action), action: action.run)
             }
         }
-        .padding(.top, 2)
+        .padding(.top, 4)
     }
 }
 
@@ -256,7 +257,7 @@ struct IslandTalkView: View {
 
     var body: some View {
         let lines = lines
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: IslandConst.lineGap) {
             if let contextName {
                 Text("Avec \(contextName)")
                     .font(IslandTheme.round(10, .bold))
@@ -342,7 +343,7 @@ struct IslandDropView: View {
             IslandAction("Ranger") { IslandActions.putAway() },
         ]
         // `.drop { border: 1.5px dashed rgba(255,255,255,.22); border-radius: 14px; padding: 9px 12px; gap: 4px }`
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: IslandConst.lineGap) {
             Text(file.map { "\($0.name), j'en fais quoi ?" } ?? "Dépose ici, je m'en occupe")
                 .font(IslandTheme.round(17, .heavy))
                 .tracking(-0.17)
@@ -354,7 +355,7 @@ struct IslandDropView: View {
             }
         }
         .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .overlay(
             RoundedRectangle(cornerRadius: 14)

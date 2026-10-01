@@ -40,12 +40,13 @@ struct IslandDock: View {
             }
             Spacer(minLength: 0)
         }
-        .padding(.top, 7)
-        .padding(.bottom, 10)
+        .padding(.top, 13)
+        .padding(.bottom, 16)
+
         .overlay(alignment: .top) {
             Rectangle().fill(IslandTheme.line).frame(height: 1)
         }
-        .padding(.horizontal, 12)
+        .padding(.horizontal, 16)
     }
 }
 
