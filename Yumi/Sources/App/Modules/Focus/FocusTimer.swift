@@ -129,7 +129,30 @@ extension FocusTimer {
             snapshot.secondaryAction = "Fermer"
             snapshot.needsAttention = now.timeIntervalSince(at) < Self.attentionSpan
         }
+        snapshot.live = live(now: now)
         return snapshot
+    }
+
+    /// The folded island shows the countdown while it runs, with the button of the moment.
+    /// A paused timer stays visible, more quietly, so it can be resumed from there.
+    func live(now: Date) -> ModuleLive? {
+        let primary = ModuleAction.primary.rawValue
+        switch state {
+        case .idle, .finished:
+            return nil
+        case .running(.focus, _, let endsAt):
+            return ModuleLive(text: FrenchText.countdown(endsAt.timeIntervalSince(now)),
+                              priority: ModuleLivePriority.activity,
+                              controls: [ModuleControl(id: primary, symbol: "pause.fill", label: "Pause")])
+        case .running(.rest, _, let endsAt):
+            return ModuleLive(text: "Pause \(FrenchText.countdown(endsAt.timeIntervalSince(now)))",
+                              priority: ModuleLivePriority.activity,
+                              controls: [ModuleControl(id: primary, symbol: "forward.fill", label: "Passer")])
+        case .paused(_, _, let remaining):
+            return ModuleLive(text: "\(FrenchText.countdown(remaining)) en pause",
+                              priority: ModuleLivePriority.ambient,
+                              controls: [ModuleControl(id: primary, symbol: "play.fill", label: "Reprendre")])
+        }
     }
 
     /// What a button does in the current state.

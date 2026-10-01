@@ -62,8 +62,32 @@ enum MusicSummary {
         }
     }
 
-    /// - Parameter canControl: false in builds that may not send commands to other apps.
-    static func snapshot(_ playing: NowPlaying?, canControl: Bool) -> ModuleSnapshot {
+    /// How long a paused track stays in the folded island, so it can be resumed from there.
+    static let pausedLinger: TimeInterval = 5 * 60
+
+    /// What the folded island shows: the track while it plays, and for a few minutes after a pause.
+    /// - Parameter pausedFor: seconds since the track was paused, when it is.
+    static func live(_ playing: NowPlaying?, canControl: Bool, pausedFor: TimeInterval? = nil) -> ModuleLive? {
+        guard let playing else { return nil }
+        if !playing.isPlaying {
+            guard let pausedFor, pausedFor < pausedLinger else { return nil }
+        }
+        let text = playing.artist.isEmpty ? playing.title : "\(playing.title) · \(playing.artist)"
+        let controls = [
+            playing.isPlaying
+                ? ModuleControl(id: ModuleAction.primary.rawValue, symbol: "pause.fill", label: "Pause")
+                : ModuleControl(id: ModuleAction.primary.rawValue, symbol: "play.fill", label: "Lecture"),
+            ModuleControl(id: ModuleAction.secondary.rawValue, symbol: "forward.fill", label: "Suivant"),
+        ]
+        return ModuleLive(text: text,
+                          priority: playing.isPlaying ? ModuleLivePriority.activity : ModuleLivePriority.ambient,
+                          controls: canControl ? controls : [])
+    }
+
+    /// - Parameters:
+    ///   - canControl: false in builds that may not send commands to other apps.
+    ///   - pausedFor: seconds since the track was paused, when it is.
+    static func snapshot(_ playing: NowPlaying?, canControl: Bool, pausedFor: TimeInterval? = nil) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "music", name: "Musique", colorHex: "#F58AD9", status: "silence",
                                       title: "Rien en lecture", subtitle: "Lance Musique ou Spotify",
                                       primaryAction: "Ouvrir Musique", secondaryAction: nil)
@@ -79,6 +103,7 @@ enum MusicSummary {
         } else {
             snapshot.primaryAction = "Ouvrir \(playing.player.name)"
         }
+        snapshot.live = live(playing, canControl: canControl, pausedFor: pausedFor)
         return snapshot
     }
 }
