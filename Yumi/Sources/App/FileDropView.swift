@@ -59,7 +59,7 @@ enum FileDropHandler {
         UploadSequenceEngine.shared.performDrop(uploadDuration: dur)
 
         // Copy to inbox in background — update state when done
-        let inbox = HookServer.supportDir.appendingPathComponent("inbox")
+        let inbox = AppIdentity.inboxDirectory
         Task.detached {
             try? FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
             let dest = inbox.appendingPathComponent(name)
@@ -85,7 +85,7 @@ enum FileDropHandler {
         // Canvas timeline from drop:
         //   T_DROP → T_PROG_START : ≈1.30s  gulp + shrink + bar reveal
         //   T_PROG_START → progEnd: dur      progress bar fills
-        //   progEnd → growEnd     : 0.70s    Mochi grows back to choose position
+        //   progEnd → growEnd     : 0.70s    character grows back to choose position
         let preProgress = USC.T_PROG_START - USC.T_DROP  // ≈1.30s
 
         // Tick sounds — delayed to sync with canvas progress start

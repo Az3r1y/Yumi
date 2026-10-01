@@ -82,7 +82,7 @@ struct SettingsView: View {
                         }
                         #if APPSTORE
                         if claudeAccessGranted {
-                            Text("~/.claude/coucou/nb-hook")
+                            Text("~/.claude/\(AppIdentity.appStoreHookScriptRelativePath)")
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundColor(.secondary)
                             HStack(spacing: 10) {
@@ -92,14 +92,14 @@ struct SettingsView: View {
                                     .buttonStyle(.bordered)
                             }
                         } else {
-                            Text("Choose your ~/.claude folder so Coucou can add its hooks.")
+                            Text("Choose your ~/.claude folder so \(AppIdentity.productName) can add its hooks.")
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                             Button("Choose .claude folder…") { chooseClaudeFolder() }
                                 .buttonStyle(.borderedProminent)
                         }
                         #else
-                        Text("nb-hook : \(HookServer.hookScriptPath)")
+                        Text("\(AppIdentity.hookScriptName) : \(HookServer.hookScriptPath)")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundColor(.secondary)
                         HStack(spacing: 10) {
@@ -373,7 +373,7 @@ struct SettingsView: View {
     #if APPSTORE
     private func chooseClaudeFolder() {
         let panel = NSOpenPanel()
-        panel.message = "Choose your .claude folder so Coucou can add its hooks"
+        panel.message = "Choose your .claude folder so \(AppIdentity.productName) can add its hooks"
         panel.prompt = "Choose"
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -422,7 +422,7 @@ struct SettingsView: View {
             defer { if accessing { claudeURL.stopAccessingSecurityScopedResource() } }
             pendingHookJSON = try HookServer.shared.previewClaudeHooksAppStore(claudeURL: claudeURL)
             showDiff = true
-            statusMessage = "Review the JSON below before confirming."
+            statusMessage = hookPreviewMessage()
         } catch {
             statusMessage = "❌ \(error.localizedDescription)"
         }
@@ -460,11 +460,18 @@ struct SettingsView: View {
     }
     #endif
 
+    /// Status line shown with the hook preview. Announces the legacy hooks about to be removed.
+    private func hookPreviewMessage() -> String {
+        let legacy = HookServer.shared.pendingLegacyHookCount
+        guard legacy > 0 else { return "Review the JSON below before confirming." }
+        return "Review the JSON below before confirming. It removes \(legacy) old Coucou hook\(legacy == 1 ? "" : "s")."
+    }
+
     private func installHooks() {
         do {
             pendingHookJSON = try HookServer.shared.previewClaudeHooks()
             showDiff = true
-            statusMessage = "Review the JSON below before confirming."
+            statusMessage = hookPreviewMessage()
         } catch {
             statusMessage = "❌ \(error.localizedDescription)"
         }

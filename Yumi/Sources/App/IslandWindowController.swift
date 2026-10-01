@@ -258,7 +258,7 @@ final class IslandWindowController: NSWindowController {
             }
         }
 
-        // Ghost Mochi follows cursor + window highlight during drag (60 Hz, no throttle)
+        // Ghost character follows cursor + window highlight during drag (60 Hz, no throttle)
         if inAttachDrag {
             updateDragGhost()
             updateWindowHighlight()
@@ -476,7 +476,7 @@ final class IslandWindowController: NSWindowController {
         }
     }
 
-    // MARK: - Drag ghost window (Mochi follows cursor during drag)
+    // MARK: - Drag ghost window (character follows cursor during drag)
 
     private func showDragGhost() {
         guard dragGhostPanel == nil else { return }
@@ -825,22 +825,22 @@ struct GhostBotView: View {
 // MARK: - Notification names
 
 extension Notification.Name {
-    static let triggerEmote     = Notification.Name("notchBuddy.triggerEmote")
-    static let triggerSlap      = Notification.Name("notchBuddy.triggerSlap")
-    static let botDizzy         = Notification.Name("notchBuddy.botDizzy")
-    static let botGreet         = Notification.Name("notchBuddy.botGreet")
-    static let botBlink         = Notification.Name("notchBuddy.botBlink")
-    static let botSetTgEs       = Notification.Name("notchBuddy.botSetTgEs")
-    static let botGulp          = Notification.Name("notchBuddy.botGulp")
-    static let botMorphTo       = Notification.Name("notchBuddy.botMorphTo")
-    static let islandAction     = Notification.Name("notchBuddy.islandAction")
-    static let islandCollapse   = Notification.Name("notchBuddy.islandCollapse")
-    static let openFullSettings = Notification.Name("notchBuddy.openFullSettings")
-    static let hookReveal       = Notification.Name("notchBuddy.hookReveal")
+    static let triggerEmote     = AppIdentity.notification("triggerEmote")
+    static let triggerSlap      = AppIdentity.notification("triggerSlap")
+    static let botDizzy         = AppIdentity.notification("botDizzy")
+    static let botGreet         = AppIdentity.notification("botGreet")
+    static let botBlink         = AppIdentity.notification("botBlink")
+    static let botSetTgEs       = AppIdentity.notification("botSetTgEs")
+    static let botGulp          = AppIdentity.notification("botGulp")
+    static let botMorphTo       = AppIdentity.notification("botMorphTo")
+    static let islandAction     = AppIdentity.notification("islandAction")
+    static let islandCollapse   = AppIdentity.notification("islandCollapse")
+    static let openFullSettings = AppIdentity.notification("openFullSettings")
+    static let hookReveal       = AppIdentity.notification("hookReveal")
     // Greeting ↔ IslandWindowController
-    static let greetComplete    = Notification.Name("notchBuddy.greetComplete")
-    static let greetingHover    = Notification.Name("notchBuddy.greetingHover")
-    static let greetingInterrupt = Notification.Name("notchBuddy.greetingInterrupt")
+    static let greetComplete    = AppIdentity.notification("greetComplete")
+    static let greetingHover    = AppIdentity.notification("greetingHover")
+    static let greetingInterrupt = AppIdentity.notification("greetingInterrupt")
 }
 
 // MARK: - islandSize (takes real notch dimensions)
