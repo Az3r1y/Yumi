@@ -2,92 +2,22 @@ import Foundation
 import CoreGraphics
 import SwiftUI
 
-// MARK: - Easing functions (same as prototype: E.out, E.inOut, E.back, E.lin)
-
-enum Ease {
-    static func out(_ t: CGFloat) -> CGFloat   { 1 - pow(1 - t, 3) }
-    static func inOut(_ t: CGFloat) -> CGFloat { t < 0.5 ? 4*t*t*t : 1 - pow(-2*t+2, 3)/2 }
-    static func back(_ t: CGFloat) -> CGFloat  { let c1: CGFloat = 1.7; let c3 = c1+1; return 1+c3*pow(t-1,3)+c1*pow(t-1,2) }
-    static func lin(_ t: CGFloat) -> CGFloat   { t }
-}
-
-// MARK: - Tween key: [target, duration_ms, easing]
-
-struct TweenKey {
-    let target: CGFloat
-    let duration: CGFloat    // milliseconds
-    let ease: (CGFloat) -> CGFloat
-}
-
-struct Tween {
-    let property: String
-    var keys: [TweenKey]
-    var keyIndex: Int = 0
-    var from: CGFloat
-    var startTime: Double    // CACurrentMediaTime() * 1000
-    var onComplete: (() -> Void)? = nil
-}
-
-// MARK: - Particle
-
-struct Particle {
-    enum ParticleType { case heart, star, spark, sweat, z }
-    var type: ParticleType
-    var x, y, vx, vy: CGFloat
-    var age: Double        // seconds
-    var life: Double
-    var rot: CGFloat
-    var size: CGFloat
-}
-
-// MARK: - Bot state config (mirrors STATES in prototype)
-
-struct BotStateCfg {
-    let color: CGColor
-    let tint: CGFloat
-    let eye: EyeShape
-    let badge: BadgeType?
-    let badgeColor: CGColor
-    let glow: CGColor
-    let glowOpacity: CGFloat
-    let bounces: Bool
-    let scans: Bool
-    let breathes: Bool
-    let zz: Bool
-    let sweat: Bool
-    let look: CGPoint?     // fixed look direction
-    let tilt: CGFloat
-    let sound: String?
-}
+// MARK: - Eye shapes of the mini characters (IslandTypes.AgentTask.miniEye)
 
 enum EyeShape: String {
     case pill, wide, dot, line, flat, happy, closed, spiral, heart, star, tired, wink, cup
     case focused, thoughtful, curious, panicked, content
 }
 
-enum BadgeType {
-    case dots(CGColor)
-    case bang(CGColor)
-    case question(CGColor)
-    case dot(CGColor)
-}
-
-// MARK: - Character track constants
-
-enum YumiConst {
-    static let lookYaw: CGFloat   = 0.62   // yaw reached when the pointer is far to the side
-    static let lookPitch: CGFloat = 0.5
-    static let eyeShiftX: CGFloat = 0.16   // how far the eyes slide with the look (fraction of R per unit of yaw)
-    static let eyeShiftY: CGFloat = 0.10
-    static let armLength: CGFloat = 0.52   // fraction of R
-    static let armThick: CGFloat  = 0.30
-}
+// The block below is the first Yumi drawing (CoreGraphics). The greeting and the file-drop
+// canvases still use it, and so does the icon generator. The character of the island itself
+// is drawn by Character/YumiRenderer.swift, ported from design/yumi/maquette/reference.html.
 
 // MARK: - Yumi skin
 
 // >>> YumiSkin
-// Yumi's look (concept 4), shared by the three renderers: BotEngine, GreetingCanvasView
-// and UploadCanvasView. CoreGraphics only, y pointing down, origin at the body centre.
+// Yumi's first look (concept 4), used by GreetingCanvasView and UploadCanvasView.
+// CoreGraphics only, y pointing down, origin at the body centre.
 // design/yumi/outils/icones.sh compiles this block on its own to render the icons,
 // so keep it free of SwiftUI, AppState and anything outside the markers.
 
@@ -567,1148 +497,368 @@ enum YumiSkin {
 }
 // <<< YumiSkin
 
-// MARK: - Bot state configs
-
-let BotStates: [BotState: BotStateCfg] = [
-    .idle: BotStateCfg(
-        color: CGColor(red:0.902,green:0.914,blue:0.933,alpha:1), tint:0,
-        eye:.pill, badge:nil,
-        badgeColor: .white, glow: CGColor(red:1,green:1,blue:1,alpha:0.35), glowOpacity:0.25,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0, sound:nil),
-    .working: BotStateCfg(
-        color: CGColor(red:0.231,green:0.620,blue:1,alpha:1), tint:0.72,
-        eye:.focused, badge:.dots(CGColor(red:0.231,green:0.620,blue:1,alpha:1)),
-        badgeColor: CGColor(red:0.231,green:0.620,blue:1,alpha:1),
-        glow: CGColor(red:0.231,green:0.620,blue:1,alpha:1), glowOpacity:0.55,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0, sound:"work"),
-    .thinking: BotStateCfg(
-        color: CGColor(red:0.545,green:0.361,blue:0.965,alpha:1), tint:0.72,
-        eye:.thoughtful, badge:.dots(CGColor(red:0.545,green:0.361,blue:0.965,alpha:1)),
-        badgeColor: CGColor(red:0.545,green:0.361,blue:0.965,alpha:1),
-        glow: CGColor(red:0.545,green:0.361,blue:0.965,alpha:1), glowOpacity:0.5,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:false,
-        look: CGPoint(x:0.55, y:0.55), tilt:0, sound:"think"),
-    .searching: BotStateCfg(
-        color: CGColor(red:0.388,green:0.396,blue:0.949,alpha:1), tint:0.72,
-        eye:.curious, badge:.dots(CGColor(red:0.388,green:0.396,blue:0.949,alpha:1)),
-        badgeColor: CGColor(red:0.388,green:0.396,blue:0.949,alpha:1),
-        glow: CGColor(red:0.388,green:0.396,blue:0.949,alpha:1), glowOpacity:0.55,
-        bounces:false, scans:true, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0, sound:"search"),
-    .approval: BotStateCfg(
-        color: CGColor(red:0.961,green:0.647,blue:0.141,alpha:1), tint:0.78,
-        eye:.wide, badge:.bang(CGColor(red:0.961,green:0.647,blue:0.141,alpha:1)),
-        badgeColor: CGColor(red:0.961,green:0.647,blue:0.141,alpha:1),
-        glow: CGColor(red:0.961,green:0.647,blue:0.141,alpha:1), glowOpacity:0.6,
-        bounces:true, scans:false, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0, sound:"approval"),
-    .question: BotStateCfg(
-        color: CGColor(red:0.133,green:0.827,blue:0.933,alpha:1), tint:0.75,
-        eye:.curious, badge:.question(CGColor(red:0.133,green:0.827,blue:0.933,alpha:1)),
-        badgeColor: CGColor(red:0.133,green:0.827,blue:0.933,alpha:1),
-        glow: CGColor(red:0.133,green:0.827,blue:0.933,alpha:1), glowOpacity:0.55,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0.17, sound:"question"),
-    .error: BotStateCfg(
-        color: CGColor(red:0.957,green:0.314,blue:0.369,alpha:1), tint:0.78,
-        eye:.flat, badge:.dot(CGColor(red:0.957,green:0.314,blue:0.369,alpha:1)),
-        badgeColor: CGColor(red:0.957,green:0.314,blue:0.369,alpha:1),
-        glow: CGColor(red:0.957,green:0.314,blue:0.369,alpha:1), glowOpacity:0.55,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0, sound:"error"),
-    .finished: BotStateCfg(
-        color: CGColor(red:0.204,green:0.831,blue:0.600,alpha:1), tint:0.72,
-        eye:.happy, badge:.dot(CGColor(red:0.204,green:0.831,blue:0.600,alpha:1)),
-        badgeColor: CGColor(red:0.204,green:0.831,blue:0.600,alpha:1),
-        glow: CGColor(red:0.204,green:0.831,blue:0.600,alpha:1), glowOpacity:0.5,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0, sound:"finish"),
-    .ratelimit: BotStateCfg(
-        color: CGColor(red:0.984,green:0.573,blue:0.235,alpha:1), tint:0.72,
-        eye:.panicked, badge:.dot(CGColor(red:0.984,green:0.573,blue:0.235,alpha:1)),
-        badgeColor: CGColor(red:0.984,green:0.573,blue:0.235,alpha:1),
-        glow: CGColor(red:0.984,green:0.573,blue:0.235,alpha:1), glowOpacity:0.45,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:true,
-        look:nil, tilt:0, sound:"rate"),
-    .sleeping: BotStateCfg(
-        color: CGColor(red:0.580,green:0.635,blue:0.722,alpha:1), tint:0.32,
-        eye:.closed, badge:nil,
-        badgeColor: .white,
-        glow: CGColor(red:0.580,green:0.635,blue:0.722,alpha:1), glowOpacity:0.2,
-        bounces:false, scans:false, breathes:true, zz:true, sweat:false,
-        look:nil, tilt:0, sound:"sleep"),
-    .dizzy: BotStateCfg(
-        color: CGColor(red:0.957,green:0.447,blue:0.714,alpha:1), tint:0.7,
-        eye:.spiral, badge:nil,
-        badgeColor: .white,
-        glow: CGColor(red:0.957,green:0.447,blue:0.714,alpha:1), glowOpacity:0.55,
-        bounces:false, scans:false, breathes:false, zz:false, sweat:false,
-        look:nil, tilt:0, sound:"dizzy"),
-]
-
 // MARK: - Bot engine
 
+/// The character as the rest of the app drives it. The soft body, the faces, the poses and the
+/// habits are ports of design/yumi/maquette/reference.html (see Character/). This class decides
+/// which of them to show, from the island state and from the commands of
+/// Contracts/CharacterCommands.swift, and eases the face the way the CSS of the mock-up does.
+///
+/// Who wins: a habit brings its own face and rim colour; without a habit, a commanded mood or
+/// rim tone applies; without a command, the island state decides (see `look(for:receiving:)`).
 @MainActor
 final class BotEngine: ObservableObject {
     var isMini: Bool = false
-    var bodyColor: CGColor? = nil    // rim colour override for mini bots
-
-    // Animation state (mirrors prototype 's' object)
-    var yaw:    CGFloat = 0
-    var pitch:  CGFloat = 0
-    var roll:   CGFloat = 0
-    var tilt:   CGFloat = 0
-    var open:   CGFloat = 1          // eye open amount
-    var sx:     CGFloat = 1          // scale X
-    var sy:     CGFloat = 1          // scale Y
-    var oy:     CGFloat = 0          // offset Y (bounce)
-    var ox:     CGFloat = 0          // offset X (shake)
-    var tint:   CGFloat = 0
-    var morph:  CGFloat = 0          // morph to rect (for upload bucket)
-    var hands:  CGFloat = 0
-    var blush:  CGFloat = 0
-    var es:     CGFloat = 1          // eye scale
-    var badgeS: CGFloat = 0          // badge scale
-    var eyes = YumiEyes()            // current expression, eased towards the target one
-    var rimMix: CGFloat = 0          // 0 = resting gradient, 1 = rim fully in the state colour
-    var flat:   CGFloat = 0          // sleeping pose (flattened)
-
-    // Targets
-    var tgYaw:    CGFloat = 0
-    var tgPitch:  CGFloat = 0
-    var tgTilt:   CGFloat = 0
-    var tgSy:     CGFloat = 1
-    var tgSx:     CGFloat = 1
-    var tgEs:     CGFloat = 1   // eye-scale target (hover love: 1.08, normal: 1)
-
-    // Particle canvas overhang (extra canvas height at top for hearts to fly into)
+    var bodyColor: CGColor? = nil      // colour of a mini character
+    /// Extra height the caller adds above its frame; the body sits half of it lower.
     var particleOverhang: CGFloat = 0
 
-    // Mouth spring (fraction of R: 0=closed, 0.20=hover, 0.42=open, 0.50=overopen)
-    var slotH: CGFloat = 0           // current height (fraction of R)
-    var slotHTarget: CGFloat = 0     // spring target
-    var slotHVel: CGFloat = 0        // spring velocity (fraction of R / s)
-    var isChewing: Bool = false       // true for ~800ms after gulp swallow
+    /// Direction of the pointer seen from Yumi, -1…1 on both axes, y down. Set by the view.
+    var pointer = CGPoint.zero
+    /// Eye scale target (1.08 while the pointer is on him).
+    var tgEs: CGFloat = 1
 
-    // Color (animated)
-    var col:  (CGFloat, CGFloat, CGFloat) = (0.902, 0.914, 0.933)  // idle
-    var colT: (CGFloat, CGFloat, CGFloat) = (0.902, 0.914, 0.933)
+    private(set) var state: BotState = .idle
+    private let blob = YumiBlob()
 
-    // State
-    var state: BotState = .idle
-    var cfg: BotStateCfg = BotStates[.idle]!
+    // Simulated time, in seconds. Advanced only by advance(to:), so a paused view pauses Yumi.
+    private var clock: Double = 0
+    private var lastDate: Date?
 
-    // Eye override (emote)
-    var eyeOverride: EyeShape? = nil
-    var eyeOverrideUntil: Double = 0   // CACurrentMediaTime()
-    var permanentEye: EyeShape? = nil   // restored after temporary emote/blink expires
-    var permanentEmote: BotEmote? = nil // stored so doMiniBehaviorLoop can switch on it
-    var miniNextBehavior: Double = 0    // CACurrentMediaTime() of next periodic mini action
+    // Commands of the character contract
+    private var habitCommand: YumiHabit?
+    private var moodCommand: YumiMood?
+    private var rimCommand: YumiRimTone?
+    private var gazeCommand: CGPoint?
+    private var lit = true
+    /// A file or a window is being handed over: he looks up, surprised.
+    private var receiving = false
 
-    // Badge animation
-    var badge: BadgeType? = nil
-    var badgeKey: String = "none"
-    var badgeToken: Int = 0
+    // A face shown for a moment (emotes of the island, a slap)
+    private var emote: (face: YumiFace, until: Double)?
+    private var slapTimes: [Double] = []
 
-    // Tweens (keyed by property name)
-    var tweens: [String: Tween] = [:]
-    var locks:  Set<String> = []
+    // Pose in progress, for the arms and the sparks
+    private var pose: YumiPose?
+    private var poseStart: Double = 0
+    private var habitStart: Double = 0
 
-    // Particles
-    var particles: [Particle] = []
+    // Idle life: now and then he glances somewhere on his own
+    private var glance: CGPoint?
+    private var glanceUntil: Double = 0
+    private var nextGlance: Double = 6.5
 
-    // Look target
-    var lookX: CGFloat = 0
-    var lookY: CGFloat = 0
+    private var blinkPhase = Double.random(in: 0..<5.4)
+    private var blinkAt: Double?
 
-    // Timing
-    var lastTime: Double = CACurrentMediaTime()
-    var t0: Double = CACurrentMediaTime() - Double.random(in: 0...5)
-    var nextBlink: Double = CACurrentMediaTime() + 1.5 + Double.random(in: 0...2)
-    var waveUntil: Double = 0
-    var waveStart: Double = 0     // CACurrentMediaTime() when wave animation began
-    var greetToken: Int = 0       // incremented to invalidate stale greet closures
-    var lastAmbient: Double = 0
+    // Eased values: the CSS transitions of the mock-up
+    private var esl = YumiTransition(1), esr = YumiTransition(1), ps = YumiTransition(1)
+    private var tl = YumiTransition(0), tr = YumiTransition(0)
+    private var al = YumiTransition(0), ar = YumiTransition(0)
+    private var bl = YumiTransition(0), br = YumiTransition(0)
+    private var cl = YumiTransition(0), cr = YumiTransition(0)
+    private var tilt = YumiTransition(0)
+    private var lx = YumiTransition(0), ly = YumiTransition(0)
+    private var eyes = YumiTransition(1)
+    private var rimStops: [[YumiTransition]] = YumiRimTone.calm.stops.map { [YumiTransition($0.r), YumiTransition($0.g), YumiTransition($0.b)] }
+    private var rimWidth = YumiTransition(2.6)
+    private var rimWidthSet = false
+    private var drawn = YumiTransition(1)
+    private var light = YumiTransition(1)
+    private var props: [YumiHabit: YumiTransition] = [:]
+    private var ember = YumiTransition(1.9)
+    private var sip = YumiTransition(0)
 
-    // Slap tracking (for dizzy on 3 slaps)
-    var slapTimes: [Double] = []
+    // MARK: - Commands (Contracts/CharacterCommands.swift)
 
-    // Mini wandering look (random, ignores mouse)
-    var miniLookTarget: CGPoint = .zero
-    var miniLookNextTime: Double = 0
+    func play(_ newPose: YumiPose) {
+        guard !isMini else { return }
+        blob.play(newPose, now: clock * 1000)
+        pose = newPose
+        poseStart = clock
+    }
 
-    // MARK: - Public API
+    func setHabit(_ habit: YumiHabit?) { habitCommand = habit }
+
+    /// A new mood replaces whatever face a pose had put on, and frees the gaze, as `setMood`
+    /// does in the mock-up. Send the gaze after the mood.
+    func setMood(_ mood: YumiMood?) {
+        moodCommand = mood
+        gazeCommand = nil
+        blob.tempFace = nil
+        emote = nil
+    }
+
+    func setRim(_ tone: YumiRimTone?) { rimCommand = tone }
+
+    /// Unlit, the body is black on the black island: only the eyes show. When the light
+    /// comes back the rim draws itself round him and the glow blooms.
+    func setLit(_ on: Bool) {
+        guard on != lit else { return }
+        lit = on
+        if on {
+            drawn.set(1, at: clock, over: 0.8, .draw)
+            light.set(1, at: clock, over: 0.7, .ease)
+        } else {
+            drawn.jump(0)
+            light.jump(0)
+        }
+    }
+
+    func setGaze(_ point: CGPoint?) { gazeCommand = point }
+
+    // MARK: - Island state and legacy notifications
 
     func setState(_ newState: BotState, force: Bool = false) {
         guard state != newState || force else { return }
-        let prev = state
+        let changed = state != newState
         state = newState
-        cfg = BotStates[newState]!
-        colT = cgColorToTuple(cfg.color)
-        setTarget(key: "tint", value: cfg.tint)
-        setTarget(key: "tilt", value: cfg.tilt)
-        setBadge(cfg.badge)
-
+        emote = nil
+        blob.tempFace = nil
+        guard changed, !isMini, habitCommand != .sleep else { return }
         switch newState {
-        case .finished:
-            doRoll(duration: 950, turns: 1)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-                self?.emit(.spark, count: 5)
-            }
-        case .error:
-            anim("ox", keys: [
-                TweenKey(target: 0.08,  duration: 50,  ease: Ease.out),
-                TweenKey(target: -0.08, duration: 70,  ease: Ease.inOut),
-                TweenKey(target: 0.05,  duration: 70,  ease: Ease.inOut),
-                TweenKey(target: 0,     duration: 90,  ease: Ease.out),
-            ])
-        case .approval:
-            anim("oy", keys: [
-                TweenKey(target: -0.2, duration: 150, ease: Ease.out),
-                TweenKey(target: 0,    duration: 300, ease: Ease.back),
-            ])
-        case .dizzy:
-            doRoll(duration: 1300, turns: 2)
-        case .question:
-            blink()
-        case .ratelimit:
-            emit(.sweat, count: 1)
-        default:
-            if prev != .idle || newState != .idle { blink() }
+        case .finished:         play(.celebrate)
+        case .error:            play(.squash)
+        case .approval, .dizzy: play(.shake)
+        case .sleeping:         break
+        default:                play(.pop)
         }
     }
 
-    func setBadge(_ b: BadgeType?) {
-        let key = badgeString(b)
-        guard key != badgeKey else { return }
-        badgeKey = key
-        let tok = badgeToken + 1
-        badgeToken = tok
-        anim("badgeS", keys: [TweenKey(target: 0, duration: 90, ease: Ease.inOut)])
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
-            guard let self, tok == self.badgeToken else { return }
-            self.badge = b
-            if b != nil {
-                self.anim("badgeS", keys: [TweenKey(target: 1, duration: 280, ease: Ease.back)])
-            }
-        }
+    /// The island is waiting for a file or a window to be dropped on it.
+    func setReceiving(_ on: Bool) {
+        guard on != receiving else { return }
+        receiving = on
+        if on { play(.stretch) }
     }
 
-    func blink() {
-        guard !locks.contains("open") else { return }
-        anim("open", keys: [
-            TweenKey(target: 0.06, duration: 70,  ease: Ease.inOut),
-            TweenKey(target: 1,    duration: 130, ease: Ease.out),
-        ])
-    }
-
-    func squash() {
-        anim("sy", keys: [
-            TweenKey(target: 0.78, duration: 70,  ease: Ease.out),
-            TweenKey(target: 1.1,  duration: 130, ease: Ease.out),
-            TweenKey(target: 1,    duration: 170, ease: Ease.inOut),
-        ])
-        anim("sx", keys: [
-            TweenKey(target: 1.16, duration: 70,  ease: Ease.out),
-            TweenKey(target: 0.95, duration: 130, ease: Ease.out),
-            TweenKey(target: 1,    duration: 170, ease: Ease.inOut),
-        ])
-    }
-
-    // MARK: - Gulp (mailbox swallow)
+    func blink() { blinkAt = clock }
 
     func gulp() {
-        // Open mouth wide for the swallow, then close during chewing
-        slotHTarget = 0.42
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.46) { [weak self] in
-            self?.slotHTarget = 0
-            self?.isChewing = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.80) { [weak self] in
-                self?.isChewing = false
-            }
-        }
-        anim("sy", keys: [
-            TweenKey(target: 0.78, duration: 80,  ease: Ease.out),
-            TweenKey(target: 1.18, duration: 130, ease: Ease.out),
-            TweenKey(target: 1,    duration: 220, ease: Ease.back),
-        ])
-        anim("sx", keys: [
-            TweenKey(target: 1.28, duration: 80,  ease: Ease.out),
-            TweenKey(target: 0.92, duration: 130, ease: Ease.out),
-            TweenKey(target: 1,    duration: 220, ease: Ease.back),
-        ])
-        blink()
+        play(.boing)
+        emote = (.happy, clock + 0.8)
     }
 
-    // MARK: - Slap (dizzy mechanic)
+    func greet() {
+        play(.wave)
+        SoundEngine.shared.play("greet")
+    }
 
+    /// A click on Yumi: he bounces. Three in a row and he gets dizzy.
     func slap() {
-        interruptGreet()
         guard state != .dizzy else { return }
-        let now = CACurrentMediaTime()
-        slapTimes = slapTimes.filter { now - $0 < 1.7 }
-        slapTimes.append(now)
+        slapTimes = slapTimes.filter { clock - $0 < 1.7 }
+        slapTimes.append(clock)
         SoundEngine.shared.play("slap")
-        squash()
+        play(.boing)
         if slapTimes.count >= 3 {
             slapTimes = []
             NotificationCenter.default.post(name: .botDizzy, object: nil)
         } else {
-            // Annoyed: line eyes for 800ms, annoyed sound after 60ms delay
-            eyeOverride = .line
-            eyeOverrideUntil = now + 0.8
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
-                SoundEngine.shared.play("annoyed")
-            }
+            triggerEmote(.annoyed)
         }
     }
 
-    // MARK: - Mini periodic behavior loop
-
-    func doMiniBehaviorLoop() {
-        switch permanentEmote {
-
-        case .happy:
-            // Little jump + squash
-            guard !locks.contains("oy") else {
-                miniNextBehavior = CACurrentMediaTime() + 0.4
-                return
-            }
-            anim("oy", keys: [
-                TweenKey(target: -0.30, duration: 120, ease: Ease.out),
-                TweenKey(target:  0.03, duration: 200, ease: Ease.inOut),
-                TweenKey(target:  0,    duration: 160, ease: Ease.back),
-            ])
-            anim("sy", keys: [
-                TweenKey(target: 0.82, duration: 80,  ease: Ease.out),
-                TweenKey(target: 1.18, duration: 130, ease: Ease.out),
-                TweenKey(target: 0.88, duration: 160, ease: Ease.inOut),
-                TweenKey(target: 1,    duration: 200, ease: Ease.back),
-            ])
-            anim("sx", keys: [
-                TweenKey(target: 1.15, duration: 80,  ease: Ease.out),
-                TweenKey(target: 0.88, duration: 130, ease: Ease.out),
-                TweenKey(target: 1.06, duration: 160, ease: Ease.inOut),
-                TweenKey(target: 1,    duration: 200, ease: Ease.back),
-            ])
-            miniNextBehavior = CACurrentMediaTime() + 2.2 + Double.random(in: 0...1.2)
-
-        case .annoyed:
-            // Rapid head shake
-            guard !locks.contains("yaw") else {
-                miniNextBehavior = CACurrentMediaTime() + 0.5
-                return
-            }
-            anim("yaw", keys: [
-                TweenKey(target: -0.65, duration: 50,  ease: Ease.out),
-                TweenKey(target:  0.65, duration: 90,  ease: Ease.inOut),
-                TweenKey(target: -0.5,  duration: 80,  ease: Ease.inOut),
-                TweenKey(target:  0.4,  duration: 75,  ease: Ease.inOut),
-                TweenKey(target: -0.2,  duration: 70,  ease: Ease.inOut),
-                TweenKey(target:  0,    duration: 140, ease: Ease.out),
-            ])
-            miniNextBehavior = CACurrentMediaTime() + 3.0 + Double.random(in: 0...2.5)
-
-        case .wink:
-            // Brief wink: eye closes, head tilts slightly
-            let now2 = CACurrentMediaTime()
-            eyeOverride = .wink
-            eyeOverrideUntil = now2 + 0.55
-            anim("tilt", keys: [
-                TweenKey(target:  0.13, duration: 100, ease: Ease.out),
-                TweenKey(target:  0.13, duration: 320, ease: Ease.lin),
-                TweenKey(target:  0,    duration: 200, ease: Ease.inOut),
-            ])
-            miniNextBehavior = CACurrentMediaTime() + 2.2 + Double.random(in: 0...2.0)
-
+    func triggerEmote(_ kind: BotEmote, duration: Double = 1.8) {
+        switch kind {
         case .love:
-            // Emit hearts + gentle sway
-            emit(.heart, count: 2)
-            anim("tilt", keys: [
-                TweenKey(target: -0.1, duration: 180, ease: Ease.out),
-                TweenKey(target:  0.1, duration: 340, ease: Ease.inOut),
-                TweenKey(target:  0,   duration: 220, ease: Ease.inOut),
-            ])
-            miniNextBehavior = CACurrentMediaTime() + 2.6 + Double.random(in: 0...1.5)
-
-        default:
-            miniNextBehavior = CACurrentMediaTime() + 3.0 + Double.random(in: 0...2.0)
-        }
-    }
-
-    func doRoll(duration: CGFloat, turns: CGFloat) {
-        roll = 0
-        anim("roll", keys: [TweenKey(target: .pi * 2 * turns, duration: duration, ease: Ease.inOut)]) { [weak self] in
-            self?.roll = 0
-        }
-    }
-
-    func greet() {
-        let now = CACurrentMediaTime()
-        greetToken += 1
-        let tok = greetToken
-        waveStart = now + 0.45   // wave begins at 0.45s
-        waveUntil = now + 1.55   // wave ends at 1.55s
-
-        // 0s: happy eyes for full greeting (2s — no gap, no flicker)
-        eyeOverride = .happy
-        eyeOverrideUntil = now + 2.0
-        anim("oy", keys: [
-            TweenKey(target: -0.06, duration: 220, ease: Ease.out),
-            TweenKey(target:  0.0,  duration: 220, ease: Ease.back),
-        ])
-
-        // 0.25s: hands out + body squash + sound
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self] in
-            guard let self, self.greetToken == tok else { return }
-            self.anim("hands", keys: [TweenKey(target: 1, duration: 280, ease: Ease.out)])
-            self.anim("sy", keys: [
-                TweenKey(target: 0.95, duration: 100, ease: Ease.out),
-                TweenKey(target: 1.0,  duration: 260, ease: Ease.back),
-            ])
-            self.anim("sx", keys: [
-                TweenKey(target: 1.04, duration: 100, ease: Ease.out),
-                TweenKey(target: 1.0,  duration: 260, ease: Ease.back),
-            ])
-            SoundEngine.shared.play("greet")
-        }
-
-        // 0.55s: first blink
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.55) { [weak self] in
-            guard let self, self.greetToken == tok else { return }
-            self.blink()
-        }
-
-        // 1.50s: second blink
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.50) { [weak self] in
-            guard let self, self.greetToken == tok else { return }
-            self.blink()
-        }
-
-        // 1.55s: retract hands
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.55) { [weak self] in
-            guard let self, self.greetToken == tok else { return }
-            self.waveUntil = 0
-            self.anim("hands", keys: [TweenKey(target: 0, duration: 200, ease: Ease.inOut)])
-        }
-
-        // 1.75s: brief happy eyes then back to normal
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.75) { [weak self] in
-            guard let self, self.greetToken == tok else { return }
-            self.eyeOverride = .happy
-            self.eyeOverrideUntil = CACurrentMediaTime() + 0.30
-        }
-    }
-
-    /// Immediately interrupts an in-progress greeting (hands retract in 150 ms).
-    func interruptGreet() {
-        guard hands > 0.01 || CACurrentMediaTime() < waveUntil else { return }
-        greetToken += 1   // invalidate any pending closures
-        waveUntil = 0
-        waveStart = 0
-        anim("hands", keys: [TweenKey(target: 0, duration: 150, ease: Ease.inOut)])
-    }
-
-    /// Sets a permanent eye expression that survives blinks and transient emotes.
-    func setPermanentEmote(_ emote: BotEmote?) {
-        permanentEmote = emote
-        // .wink fires periodically — don't freeze the eye (normal between winks)
-        if emote == .wink {
-            miniNextBehavior = CACurrentMediaTime() + Double.random(in: 0.8...2.5)
-            return
-        }
-        permanentEye = emote.map { emoteEyeShape($0) }
-        if let eye = permanentEye {
-            eyeOverride = eye
-            eyeOverrideUntil = .greatestFiniteMagnitude
-        } else {
-            if eyeOverrideUntil == .greatestFiniteMagnitude {
-                eyeOverride = nil
-                eyeOverrideUntil = 0
-            }
-        }
-        // Stagger first periodic behavior so bots don't all fire at once
-        miniNextBehavior = CACurrentMediaTime() + Double.random(in: 0.8...2.5)
-    }
-
-    func triggerEmote(_ emote: BotEmote, duration: Double = 1.8, silent: Bool = false) {
-        let now = CACurrentMediaTime()
-        eyeOverride = emoteEyeShape(emote)
-        eyeOverrideUntil = now + duration
-
-        switch emote {
-        case .love:
-            anim("blush", keys: [
-                TweenKey(target: 1, duration: 300, ease: Ease.out),
-                TweenKey(target: 1, duration: CGFloat((duration - 0.6) * 1000), ease: Ease.lin),
-                TweenKey(target: 0, duration: 300, ease: Ease.inOut),
-            ])
-            emit(.heart, count: 4)
-            anim("oy", keys: [
-                TweenKey(target: -0.1, duration: 160, ease: Ease.out),
-                TweenKey(target: 0,    duration: 300, ease: Ease.back),
-            ])
+            emote = (.happy, clock + duration)
+            play(.pop)
         case .surprised:
-            anim("oy", keys: [
-                TweenKey(target: -0.3, duration: 140, ease: Ease.out),
-                TweenKey(target: 0,    duration: 380, ease: Ease.back),
-            ])
-            anim("es", keys: [
-                TweenKey(target: 1.25, duration: 120, ease: Ease.out),
-                TweenKey(target: 1,    duration: 500, ease: Ease.inOut),
-            ])
-        case .proud:
-            emit(.star, count: 5)
-            anim("tilt", keys: [
-                TweenKey(target: -0.14, duration: 220, ease: Ease.out),
-                TweenKey(target: -0.14, duration: CGFloat((duration - 0.5) * 1000), ease: Ease.lin),
-                TweenKey(target: 0,     duration: 280, ease: Ease.inOut),
-            ])
-            anim("blush", keys: [
-                TweenKey(target: 0.7, duration: 250, ease: Ease.out),
-                TweenKey(target: 0.7, duration: CGFloat((duration - 0.5) * 1000), ease: Ease.lin),
-                TweenKey(target: 0,   duration: 300, ease: Ease.inOut),
-            ])
+            emote = (.surprised, clock + duration)
+            play(.pop)
+        case .proud, .happy:
+            emote = (.happy, clock + duration)
         case .wink:
-            anim("tilt", keys: [
-                TweenKey(target: 0.12, duration: 160, ease: Ease.out),
-                TweenKey(target: 0.12, duration: CGFloat((duration - 0.4) * 1000), ease: Ease.lin),
-                TweenKey(target: 0,    duration: 240, ease: Ease.inOut),
-            ])
+            emote = (.wink, clock + duration)
         case .yawn:
-            anim("sy", keys: [
-                TweenKey(target: 1.12, duration: 500, ease: Ease.inOut),
-                TweenKey(target: 1,    duration: 500, ease: Ease.inOut),
-            ])
-            anim("sx", keys: [
-                TweenKey(target: 0.94, duration: 500, ease: Ease.inOut),
-                TweenKey(target: 1,    duration: 500, ease: Ease.inOut),
-            ])
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { [weak self] in
-                self?.eyeOverride = .closed
-                self?.emit(.z, count: 2)
-            }
-        case .happy:
-            anim("blush", keys: [
-                TweenKey(target: 0.6, duration: 200, ease: Ease.out),
-                TweenKey(target: 0,   duration: 600, ease: Ease.inOut),
-            ])
+            emote = (.asleep, clock + duration)
         case .annoyed:
-            eyeOverride = .line
-            eyeOverrideUntil = now + 0.8
+            emote = (.annoyed, clock + 0.8)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
                 SoundEngine.shared.play("annoyed")
             }
         }
     }
 
-    func emit(_ type: Particle.ParticleType, count: Int) {
-        for i in 0..<count {
-            let isZ = type == .z
-            let p = Particle(
-                type: type,
-                x: (CGFloat.random(in: -0.5...0.5)) * 0.9 + (isZ ? 0.55 : 0),
-                y: -0.7 - CGFloat.random(in: 0...0.2),
-                vx: CGFloat.random(in: -0.5...0.5) * 0.35 + (isZ ? 0.18 : 0),
-                vy: -(0.45 + CGFloat.random(in: 0...0.35)),
-                age: -Double(i) * 0.14,
-                life: 1.3 + Double.random(in: 0...0.5),
-                rot: CGFloat.random(in: 0...(.pi * 2)),
-                size: 0.15 + CGFloat.random(in: 0...0.08)
-            )
-            particles.append(p)
+    /// Face and rim colour for an island state, when nothing else was commanded.
+    private static func look(for state: BotState, receiving: Bool) -> (mood: YumiMood, rim: YumiRimTone) {
+        if receiving { return (.surprised, .calm) }
+        switch state {
+        case .idle:      return (.neutral, .calm)
+        case .working:   return (.focused, .work)
+        case .thinking:  return (.thinking, .think)
+        case .searching: return (.curious, .think)
+        case .approval:  return (.surprised, .warn)
+        case .question:  return (.curious, .warn)
+        case .error:     return (.worried, .error)
+        case .finished:  return (.happy, .done)
+        case .ratelimit: return (.worried, .warn)
+        case .sleeping:  return (.asleep, .calm)
+        case .dizzy:     return (.surprised, .joy)
         }
     }
 
-    // MARK: - Update (called every frame from TimelineView)
+    // MARK: - Frame (called from the view's TimelineView)
 
-    func update(dt: Double) {
-        let now = CACurrentMediaTime()
-        let dtCG = CGFloat(dt)
+    func advance(to date: Date) {
+        // The mock-up caps a frame at 33 ms, so a hitch never throws the springs
+        let dt = lastDate.map { min(0.033, max(0, date.timeIntervalSince($0))) } ?? 0
+        lastDate = date
+        clock += dt
+        guard !isMini else { return }
 
-        // Process tweens
-        for key in tweens.keys {
-            guard var tw = tweens[key] else { continue }
-            let k = tw.keys[tw.keyIndex]
-            let elapsed = now * 1000 - tw.startTime
-            let p = min(1, max(0, CGFloat(elapsed) / k.duration))
-            let val = tw.from + (k.target - tw.from) * k.ease(p)
-            setProperty(key, value: val)
+        // A sleeping island state falls asleep by itself
+        let habit = habitCommand ?? (state == .sleeping ? .sleep : nil)
+        if habit != blob.habit {
+            blob.setHabit(habit)
+            habitStart = clock
+            emote = nil
+        }
 
-            if p >= 1 {
-                tw.from = k.target
-                tw.keyIndex += 1
-                tw.startTime = now * 1000
-                if tw.keyIndex >= tw.keys.count {
-                    tweens.removeValue(forKey: key)
-                    locks.remove(key)
-                    tw.onComplete?()
-                } else {
-                    tweens[key] = tw
-                }
-            } else {
-                tweens[key] = tw
+        let fromState = BotEngine.look(for: state, receiving: receiving)
+        let mood = habit?.face ?? moodCommand?.face ?? fromState.mood.face
+        let tone = habit?.rim ?? rimCommand ?? fromState.rim
+
+        if let e = emote, clock >= e.until { emote = nil }
+        if let p = pose, clock - poseStart >= p.duration { pose = nil }
+        let face = blob.tempFace ?? emote?.face ?? mood
+
+        if clock >= nextGlance {
+            nextGlance = clock + 6.5
+            if habit == nil, pose == nil, face.look == nil, gazeCommand == nil, lit {
+                glance = CGPoint(x: .random(in: -1...1), y: .random(in: -0.6...0.6))
+                glanceUntil = clock + 0.9
             }
         }
+        if glance != nil, clock >= glanceUntil { glance = nil }
 
-        // Compute look targets
-        let t = CGFloat(now - t0)
-        var ty: CGFloat = lookX * 0.62
-        var tp: CGFloat = lookY * 0.5
+        // Where he looks: a face can pin the gaze, then a command, then a glance, then the pointer
+        let fixed = face.look ?? gazeCommand ?? glance
+        let look = fixed ?? pointer
+        blob.lookX = look.x
+        blob.lookY = look.y
+        if fixed == nil { blob.gaze = pointer.x * 2.5 }
 
-        if let fixedLook = cfg.look {
-            ty = ty * 0.35 + fixedLook.x * 0.55
-            tp = tp * 0.3  + fixedLook.y * 0.5
+        blob.step(dt: CGFloat(dt), now: clock * 1000)
+
+        // Durations and curves below are the CSS transitions of the mock-up
+        let now = clock
+        esl.set(face.esl, at: now, over: 0.26, .lid)
+        esr.set(face.esr, at: now, over: 0.26, .lid)
+        tl.set(face.tl, at: now, over: 0.26, .lid)
+        tr.set(face.tr, at: now, over: 0.26, .lid)
+        al.set(face.al, at: now, over: 0.26, .lid)
+        ar.set(face.ar, at: now, over: 0.26, .lid)
+        bl.set(face.bl, at: now, over: 0.26, .lid)
+        br.set(face.br, at: now, over: 0.26, .lid)
+        ps.set(face.ps, at: now, over: 0.26, .spring)
+        cl.set(face.cl, at: now, over: 0.12, .ease)
+        cr.set(face.cr, at: now, over: 0.12, .ease)
+        tilt.set(face.tilt, at: now, over: 0.4, .spring)
+        lx.set(look.x, at: now, over: fixed != nil ? 0.3 : 0.14, fixed != nil ? .spring : .easeOut)
+        ly.set(look.y, at: now, over: fixed != nil ? 0.3 : 0.14, fixed != nil ? .spring : .easeOut)
+        eyes.set(tgEs, at: now, over: 0.25, .spring)
+        for (i, stop) in tone.stops.enumerated() {
+            rimStops[i][0].set(stop.r, at: now, over: 0.5, .ease)
+            rimStops[i][1].set(stop.g, at: now, over: 0.5, .ease)
+            rimStops[i][2].set(stop.b, at: now, over: 0.5, .ease)
         }
-        if cfg.scans {
-            ty = sin(t * 2.6) * 0.6
-            tp = -0.06
+        for h in YumiHabit.allCases {
+            props[h, default: YumiTransition(0)].set(h == habit ? 1 : 0, at: now, over: 0.25, .ease)
         }
-        if state == .sleeping { ty = 0; tp = -0.14 }
-        if state == .dizzy    { ty = sin(t * 9) * 0.25 }
-
-        // Mini bots: override look with random wandering (never follows mouse)
-        if isMini && cfg.look == nil && !cfg.scans && state != .sleeping && state != .dizzy {
-            if now > miniLookNextTime {
-                miniLookTarget = CGPoint(
-                    x: CGFloat.random(in: -0.88...0.88),
-                    y: CGFloat.random(in: -0.55...0.45)
-                )
-                miniLookNextTime = now + Double.random(in: 0.5...2.0)
-            }
-            ty = miniLookTarget.x * 0.62
-            tp = miniLookTarget.y * 0.5
-        }
-
-        tgYaw   = ty
-        tgPitch = tp
-        tgTilt  = cfg.tilt
-
-        // Body sway during greeting wave
-        if now > waveStart && now < waveUntil {
-            let wt = CGFloat(now - waveStart)
-            tgTilt = -0.06 + sin(2 * .pi * 1.2 * wt) * 0.07
-        }
-
-        let bounce = cfg.bounces ? -abs(sin(t * 5.2)) * 0.07 : CGFloat(0)
-        // oy tween can override if not locked
-        if !locks.contains("oy") { oy += (bounce - oy) * CGFloat(1 - pow(0.0008, dt)) }
-
-        if cfg.breathes {
-            let amp: CGFloat = isMini ? 0.07 : 0.035
-            tgSy = 1 + sin(t * 1.8) * amp
-            tgSx = 1 - sin(t * 1.8) * amp * 0.57
-        } else if isMini {
-            // Subtle idle pulse (unique phase per engine via t0)
-            tgSy = 1 + sin(t * 2.2) * 0.04
-            tgSx = 1 - sin(t * 2.2) * 0.02
-        } else {
-            tgSy = 1; tgSx = 1
-        }
-
-        // Mini bots: periodic dramatic behaviors
-        if isMini && now > miniNextBehavior {
-            doMiniBehaviorLoop()
-        }
-
-        // Smooth look
-        let kLook = CGFloat(1 - pow(0.0025, dt))
-        let kGen  = CGFloat(1 - pow(0.0008, dt))
-
-        if !locks.contains("yaw")   { yaw   += (tgYaw   - yaw)   * kLook }
-        if !locks.contains("pitch") { pitch += (tgPitch  - pitch) * kLook }
-        if !locks.contains("tilt")  { tilt  += (tgTilt   - tilt)  * kGen  }
-        if !locks.contains("sy")    { sy    += (tgSy     - sy)    * kGen  }
-        if !locks.contains("sx")    { sx    += (tgSx     - sx)    * kGen  }
-        if !locks.contains("es")    { es    += (tgEs     - es)    * kGen  }
-
-        // Animate color
-        col = mixColor(col, colT, 1 - pow(0.002, dt))
-        rimMix += (min(1, tint / 0.7) - rimMix) * kGen
-        flat   += ((state == .sleeping ? 1 : 0) - flat) * kGen
-
-        // Ease the eyes towards the current expression
-        eyes = eyes.mix(yumiExpression(eyeShape).eyes(at: t), CGFloat(1 - pow(0.00001, dt)))
-
-        // Blink
-        if now > nextBlink {
-            if state != .sleeping && state != .dizzy {
-                blink()
-                if Double.random(in: 0...1) < 0.22 {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.23) { [weak self] in self?.blink() }
-                }
-            }
-            nextBlink = now + 2.2 + Double.random(in: 0...3.2)
-        }
-
-        // Clear expired eye override (restore permanent if set)
-        if eyeOverride != nil && now > eyeOverrideUntil {
-            eyeOverride = permanentEye
-            if permanentEye != nil { eyeOverrideUntil = .greatestFiniteMagnitude }
-        }
-
-        // Ambient particles
-        if now - lastAmbient > 1.3 {
-            lastAmbient = now
-            if cfg.zz { emit(.z, count: 1) }   // ZZZ works for mini too
-            if !isMini && cfg.sweat && Double.random(in: 0...1) < 0.5 { emit(.sweat, count: 1) }
-        }
-
-        // Age particles
-        for i in particles.indices { particles[i].age += dt }
-        particles.removeAll { $0.age >= $0.life }
-
-        // Mouth slot spring — ω₀ ≈ 25 rad/s (T=0.25s), ζ=0.6 (underdamped, slight clack)
-        let slotOmega: CGFloat = 2 * .pi / 0.25
-        let slotZeta: CGFloat = 0.6
-        let slotAcc = slotOmega * slotOmega * (slotHTarget - slotH)
-                    - 2 * slotZeta * slotOmega * slotHVel
-        slotHVel += slotAcc * dtCG
-        slotH = max(0, slotH + slotHVel * dtCG)
-
-        lastTime = now
+        ember.set(blob.drag ? 3 : 1.9, at: now, over: 0.3, .ease)
+        sip.set(blob.sip ? 1 : 0, at: now, over: 0.35, .spring)
     }
 
     // MARK: - Draw
 
-    /// Where the body sits in the canvas this frame, with the roll and the sleeping pose applied.
-    private struct BodyPose {
-        var R, hw, hh, cx, cy, tilt, sx, sy, celebrate: CGFloat
+    /// Points per unit of the mock-up's 100 × 84 box, for a frame of this size. The body is
+    /// 84 units wide and takes 68.4 % of the frame width (1.14 × the "diameter" of the layouts).
+    static func unit(for frame: CGRect) -> CGFloat { frame.width * 0.684 / 84 }
+
+    /// The room Yumi needs around `frame` so that nothing he does is cut: jumps and stretches
+    /// above, the cloud and the notes, droplets and smoke on the sides. In the coordinates of `frame`.
+    static func canvasRect(for frame: CGRect, overhang: CGFloat) -> CGRect {
+        let u = unit(for: frame)
+        let origin = CGPoint(x: frame.midX - 50 * u, y: frame.midY + overhang / 2 - 42 * u)
+        return CGRect(x: origin.x - 80 * u, y: origin.y - 70 * u, width: 260 * u, height: 170 * u).union(frame)
     }
 
-    private func bodyPose(_ size: CGSize) -> BodyPose {
-        let R = size.width * 0.3
-        let hh = R * YumiSkin.bodyHH
-        var p = BodyPose(
-            R: R, hw: R * YumiSkin.bodyHW, hh: hh,
-            cx: size.width / 2 + ox * R,
-            // particleOverhang shifts the bot body down in canvas coords so hearts can fly into
-            // the extended canvas above without clipping (BotPlacement compensates with position offset)
-            cy: size.height / 2 + particleOverhang / 2 + oy * R + R * 0.06,
-            tilt: tilt, sx: sx, sy: sy, celebrate: 0)
+    /// Rim width in units of the box, from the scale Yumi is drawn at: the values of `SEATS`
+    /// in the mock-up. The smaller he is, the thicker the rim, so that he stays readable at 20 pt.
+    private static func rimWidth(atScale s: CGFloat) -> CGFloat {
+        let seats: [(CGFloat, CGFloat)] = [(0.05, 6), (0.27, 6.5), (0.42, 4.5), (0.56, 3.4), (0.66, 3), (0.92, 2.8), (1, 2.6)]
+        return yumiKeyframes(s, seats, .linear)
+    }
 
-        // The "roll" tween runs from 0 to a number of full turns. Yumi is a slime, not a ball:
-        // each turn is one hop with the arms up, or one wobble when dizzy.
-        if roll != 0 {
-            if state == .dizzy {
-                p.tilt += sin(roll) * 0.22
-            } else {
-                let hop = pow(sin(roll / 2), 2)
-                p.cy -= hop * R * 0.30
-                p.sy *= 1 + 0.10 * sin(roll)
-                p.sx *= 1 - 0.06 * sin(roll)
-                p.celebrate = hop
-            }
+    /// The 0.243 s blink of the mock-up, every 5.4 s, or when asked.
+    private var blinkValue: CGFloat {
+        let p = CGFloat((clock + blinkPhase).truncatingRemainder(dividingBy: 5.4) / 5.4)
+        var v = yumiKeyframes(p, [(0, 1), (0.955, 1), (0.975, 0.08), (1, 1)], .ease)
+        if let b = blinkAt {
+            let q = CGFloat((clock - b) / 0.243)
+            if q < 1 { v = min(v, yumiKeyframes(q, [(0, 1), (0.444, 0.08), (1, 1)], .ease)) }
         }
-        // Sleeping pose: flattened, base planted
-        if flat > 0.001 {
-            p.sy *= 1 - 0.20 * flat
-            p.sx *= 1 + 0.08 * flat
-            p.cy += hh * 0.20 * flat
-        }
-        return p
+        return v
     }
 
-    /// The body stays black: the state colours the rim light (the brand, for mini characters).
-    private var rim: YumiRim {
-        if isMini, let bc = bodyColor {
-            let c = cgColorToTuple(bc)
-            return .solid(YumiRGB(c.0, c.1, c.2))
-        }
-        return YumiRim.idle.mix(.solid(YumiRGB(col.0, col.1, col.2)), rimMix)
-    }
-
-    private var eyeShape: EyeShape {
-        // In box mode: eager eyes when file over box (slotHTarget set), closed smile while chewing
-        if morph > 0.5 {
-            if isChewing { return .content }
-            if slotHTarget > 0.05 || slotH > 0.10 { return .cup }
-        }
-        return eyeOverride ?? cfg.eye
-    }
-
-    func draw(context: GraphicsContext, size: CGSize) {
-        let p = bodyPose(size)
-        let rim = self.rim
-
-        // Body path (dome for Yumi, morph to rect for upload)
-        let bodyPath = yumiPath(rx: p.hw, ry: p.hh, morph: morph, R: p.R)
-        let glow: CGFloat = isMini ? 0 : 0.45 + 0.55 * cfg.glowOpacity
-
-        context.withCGContext { cg in
-            cg.saveGState()
-            cg.translateBy(x: p.cx, y: p.cy)
-            if p.tilt != 0 { cg.rotate(by: p.tilt) }
-            cg.scaleBy(x: p.sx, y: p.sy)
-
-            YumiSkin.drawBody(cg, path: bodyPath, hw: p.hw, hh: p.hh, R: p.R, rim: rim, glow: glow, shine: !isMini)
-
-            // Face: the pupils carry the look, the eyes themselves only slide a little
-            cg.saveGState()
-            cg.addPath(bodyPath)
-            cg.clip()
-            let faceOffset = CGPoint(x: yaw * p.R * YumiConst.eyeShiftX,
-                                     y: -pitch * p.R * YumiConst.eyeShiftY + p.R * 0.20 * morph)
-            let gaze = CGPoint(x: clamp(yaw / YumiConst.lookYaw, -1, 1),
-                               y: clamp(-pitch / YumiConst.lookPitch, -1, 1))
-            YumiSkin.drawBlush(cg, R: p.R, amount: blush * (1 - morph), offset: faceOffset)
-            YumiSkin.drawEyes(cg, R: p.R, eyes: eyes, gaze: gaze, open: open, scale: es, offset: faceOffset)
-            cg.restoreGState()
-
-            // Mouth hole inside the box face
-            // Spec: left/right margins 0.10R, top margin 0.08R from box top (-0.94R)
-            if morph > 0.05 {
-                let hW = p.R * 1.80 * morph   // hole width = box width (2×1.0R) − 2×0.10R margin
-                let hH = slotH * p.R * morph  // hole height (spring-animated, scaled by morph)
-                // Hole Y: box top is -R*0.94 at morph=1, lerped from -R*0.88 at morph=0
-                let boxTop = -p.R * (0.88 + 0.06 * morph)
-                let hY = boxTop + p.R * 0.08 * morph  // top margin scales with morph
-                // Only draw if visibly open
-                if hH > 0.8 {
-                    YumiSkin.drawMouth(cg, body: bodyPath, rect: CGRect(x: -hW / 2, y: hY, width: hW, height: hH),
-                                       rim: rim, alpha: min(1, morph))
-                }
-            }
-            cg.restoreGState()
-        }
-    }
-
-    // MARK: - Draw arms behind body (called before draw() so they appear under Yumi)
-
-    func drawHandsBehind(context: GraphicsContext, size: CGSize) {
-        guard !isMini else { return }
-        let p = bodyPose(size)
-        let amount = max(hands, p.celebrate)
-        // Only draw the arms when Yumi is large enough for them to read (not compact/peek)
-        guard amount > 0.01, p.R > 14 else { return }
-
-        let now = CACurrentMediaTime()
-        let isWaving = now >= waveStart && waveStart > 0 && now < waveUntil
-        let wt = CGFloat(now - waveStart)
-        let length = p.R * YumiConst.armLength * amount
-        let thick  = p.R * YumiConst.armThick * amount
-        let rim = self.rim
-
-        // Body half-dims with current squash scale
-        let hwB = p.hw * p.sx
-        let hhB = p.hh * p.sy
-
-        context.withCGContext { cg in
-            cg.saveGState()
-            cg.translateBy(x: p.cx, y: p.cy)
-            if p.tilt != 0 { cg.rotate(by: p.tilt) }
-
-            for sd: CGFloat in [-1, 1] {
-                var raise = p.celebrate   // 0 = hanging at the side, 1 = raised
-                var swing: CGFloat = 0
-                if isWaving {
-                    if sd > 0 {
-                        // Right arm: rise to wave position over first 180ms, then oscillate
-                        let rise = min(1.0, wt / 0.18)
-                        raise = max(raise, 1 - pow(1 - rise, 3))   // easeOut cubic
-                        swing = sin(13 * wt) * 0.35 * raise
-                    } else {
-                        // Left arm: gentle sway at rest position
-                        swing = sin(6 * wt) * 0.10
-                    }
-                }
-                cg.saveGState()
-                // Shoulder sits just inside the outline so the arm grows out of the body
-                cg.translateBy(x: sd * hwB * (0.90 - 0.10 * raise), y: hhB * (0.42 - 0.62 * raise))
-                cg.scaleBy(x: sd, y: 1)
-                cg.rotate(by: 0.55 - 1.45 * raise + swing)
-                cg.translateBy(x: length * 0.42, y: 0)
-                YumiSkin.drawArm(cg, length: length, thickness: thick, R: p.R, rim: rim)
-                cg.restoreGState()
-            }
-            cg.restoreGState()
-        }
-    }
-
-    func drawHandsAndExtras(context: GraphicsContext, size: CGSize) {
-        let p = bodyPose(size)
-
-        // Badge — hidden while morphing to mailbox
-        if let badge = badge, badgeS > 0.01, morph < 0.25 {
-            drawBadge(context: context, size: size, badge: badge, R: p.R, rx: p.hw, ry: p.hh, cx: p.cx, cy: p.cy)
-        }
-
-        // Particles
-        drawParticles(context: context, size: size, R: p.R, cx: p.cx, cy: p.cy)
-    }
-
-    // MARK: - Private draw helpers
-
-    private func yumiPath(rx: CGFloat, ry: CGFloat, morph: CGFloat, R: CGFloat) -> CGPath {
-        // Target mailbox dims (spec: 1.0R wide, 0.94R tall, 0.42R corner radius)
-        YumiSkin.bodyPath(hw: rx, hh: ry, morph: morph,
-                          boxHW: R * YumiSkin.boxHW, boxHH: R * YumiSkin.boxHH, boxCorner: R * YumiSkin.boxCorner)
-    }
-
-    private func drawBadge(context: GraphicsContext, size: CGSize, badge: BadgeType, R: CGFloat, rx: CGFloat, ry: CGFloat, cx: CGFloat, cy: CGFloat) {
-        let bs = badgeS * (isMini ? 1.25 : 1)
-        let bx = cx - R * 0.72 * sx
-        let by = cy - R * 0.72 * sy
+    /// Draws Yumi for `frame`: the box of the mock-up is centred in it. The context may be
+    /// larger than the frame (see `canvasRect(for:overhang:)`).
+    func draw(context: GraphicsContext, frame: CGRect) {
+        let unit = BotEngine.unit(for: frame)
         var ctx = context
-        ctx.translateBy(x: bx, y: by)
-        ctx.scaleBy(x: bs, y: bs)
-        let now = CGFloat(CACurrentMediaTime())
+        ctx.translateBy(x: frame.midX - 50 * unit, y: frame.midY + particleOverhang / 2 - 42 * unit)
+        ctx.scaleBy(x: unit, y: unit)
 
-        switch badge {
-        case .dots(let col):
-            if isMini {
-                // Mini: animated pulsing dot
-                let phase = (now * 2.4).truncatingRemainder(dividingBy: 1)
-                let dotR = R * 0.22 * (1 + 0.25 * sin(phase * .pi * 2))
-                var outer = Path()
-                outer.addEllipse(in: CGRect(x: -R*0.2, y: -R*0.2, width: R*0.4, height: R*0.4))
-                ctx.fill(outer, with: .color(.black))
-                var dot = Path()
-                dot.addEllipse(in: CGRect(x: -dotR, y: -dotR, width: dotR*2, height: dotR*2))
-                ctx.fill(dot, with: .color(Color(cgColor: col)))
-            } else {
-                // Pill badge with animated dots (prototype style)
-                let pw: CGFloat = R * 0.72
-                let ph: CGFloat = R * 0.36
-                var pill = Path()
-                pill.addRoundedRect(in: CGRect(x: -pw/2, y: -ph/2, width: pw, height: ph),
-                                    cornerSize: CGSize(width: ph/2, height: ph/2))
-                ctx.fill(pill, with: .color(Color(cgColor: col)))
-                for i in 0..<3 {
-                    let phase = ((now * 2.4 - CGFloat(i) * 0.22).truncatingRemainder(dividingBy: 1) + 1).truncatingRemainder(dividingBy: 1)
-                    let dotR = R * 0.055 * (1 + 0.4 * max(0, sin(phase * .pi * 2)))
-                    var dot = Path()
-                    dot.addEllipse(in: CGRect(x: (CGFloat(i)-1)*R*0.18 - dotR, y: -dotR, width: dotR*2, height: dotR*2))
-                    ctx.fill(dot, with: .color(.white))
-                }
-            }
-
-        case .bang(let col), .question(let col):
-            var ring = Path()
-            ring.addEllipse(in: CGRect(x: -R*0.3, y: -R*0.3, width: R*0.6, height: R*0.6))
-            ctx.fill(ring, with: .color(.black))
-            var inner = Path()
-            inner.addEllipse(in: CGRect(x: -R*0.23, y: -R*0.23, width: R*0.46, height: R*0.46))
-            ctx.fill(inner, with: .color(Color(cgColor: col)))
-            if !isMini {
-                let text = badge == .bang(col) ? "!" : "?"
-                ctx.draw(Text(text).font(.system(size: R*0.32, weight: .black)).foregroundColor(.white),
-                         at: CGPoint(x: 0, y: R*0.02))
-            }
-
-        case .dot(let col):
-            var outer = Path()
-            outer.addEllipse(in: CGRect(x: -R*0.2, y: -R*0.2, width: R*0.4, height: R*0.4))
-            ctx.fill(outer, with: .color(.black))
-            var inner = Path()
-            inner.addEllipse(in: CGRect(x: -R*0.135, y: -R*0.135, width: R*0.27, height: R*0.27))
-            ctx.fill(inner, with: .color(Color(cgColor: col)))
+        if isMini {
+            let c = bodyColor.flatMap { $0.components }.flatMap { $0.count >= 3 ? $0 : nil } ?? [1, 1, 1]
+            YumiRenderer.drawMini(color: Color(.sRGB, red: Double(c[0]), green: Double(c[1]), blue: Double(c[2])),
+                                  blink: blinkValue, asleep: state == .sleeping, in: ctx)
+            return
         }
-    }
 
-    private func drawParticles(context: GraphicsContext, size: CGSize, R: CGFloat, cx: CGFloat, cy: CGFloat) {
-        for p in particles {
-            guard p.age > 0 else { continue }
-            let k = CGFloat(p.age / p.life)
-            let a = k < 0.2 ? k / 0.2 : 1 - (k - 0.2) / 0.8
-            let px = cx + (p.x + p.vx * CGFloat(p.age)) * R * 1.3
-            let py = cy + (p.y + p.vy * CGFloat(p.age)) * R * 1.3
-            let sz = R * p.size * (1 + k * 0.4)
+        let width = BotEngine.rimWidth(atScale: unit)
+        if rimWidthSet { rimWidth.set(width, at: clock, over: 0.4, .ease) } else { rimWidth.jump(width); rimWidthSet = true }
 
-            var pctx = context
-            pctx.translateBy(x: px, y: py)
-            pctx.opacity = Double(min(max(a, 0), 1))
-
-            switch p.type {
-            case .heart:
-                pctx.rotate(by: .radians(sin(CGFloat(p.age) * 6) * 0.3))
-                pctx.fill(heartShape(size: sz), with: .color(Color(hex: "#FF4D6D")))
-            case .star:
-                pctx.rotate(by: .radians(p.rot + CGFloat(p.age) * 2))
-                pctx.fill(starShape(outer: sz, inner: sz*0.45), with: .color(Color(hex: "#F7B32B")))
-            case .spark:
-                pctx.rotate(by: .radians(p.rot))
-                pctx.fill(starShape(outer: sz*0.8, inner: sz*0.18), with: .color(.white))
-            case .sweat:
-                var drop = Path()
-                drop.move(to: CGPoint(x: 0, y: -sz))
-                drop.addQuadCurve(to: CGPoint(x: 0, y: sz*0.6), control: CGPoint(x: sz*0.8, y: sz*0.2))
-                drop.addQuadCurve(to: CGPoint(x: 0, y: -sz), control: CGPoint(x: -sz*0.8, y: sz*0.2))
-                pctx.fill(drop, with: .color(Color(hex: "#7CC7FF")))
-            case .z:
-                pctx.draw(Text("z").font(.system(size: sz*1.9, weight: .bold)).foregroundColor(Color(red: 0.357, green: 0.549, blue: 1)),
-                          at: .zero)
-            }
+        let now = clock
+        var f = YumiFrame()
+        f.h = blob.shapeH
+        f.w = blob.shapeW
+        f.lean = blob.lean
+        f.y = blob.y
+        f.air = blob.air
+        f.faceShift = CGPoint(x: blob.fx.dx, y: blob.fx.dy)
+        f.faceScale = CGSize(width: blob.fx.sx, height: blob.fx.sy)
+        f.yaw = blob.yaw
+        f.pitch = blob.pitch
+        f.face = YumiFace(esl: esl.value(at: now), esr: esr.value(at: now), ps: ps.value(at: now),
+                          tl: tl.value(at: now), tr: tr.value(at: now), al: al.value(at: now), ar: ar.value(at: now),
+                          bl: bl.value(at: now), br: br.value(at: now), cl: cl.value(at: now), cr: cr.value(at: now),
+                          tilt: tilt.value(at: now))
+        f.pupil = CGPoint(x: lx.value(at: now), y: ly.value(at: now))
+        f.eyesScale = eyes.value(at: now)
+        f.blink = blinkValue
+        f.rim = rimStops.map { YumiRGB($0[0].value(at: now), $0[1].value(at: now), $0[2].value(at: now)) }
+        f.rimWidth = rimWidth.value(at: now)
+        f.drawn = drawn.value(at: now)
+        f.light = light.value(at: now)
+        // Waiting for an approval: the glow pulses
+        f.glow = state == .approval
+            ? yumiKeyframes(CGFloat(now.truncatingRemainder(dividingBy: 1.1) / 1.1), [(0, 0.85), (0.5, 0.35), (1, 0.85)], .easeInOut)
+            : 0.85
+        f.props = props.mapValues { $0.value(at: now) }
+        f.habitTime = CGFloat(now - habitStart)
+        f.emberRadius = ember.value(at: now)
+        f.emberHot = blob.drag
+        f.sip = sip.value(at: now)
+        if let p = pose {
+            if p.showsArms { f.armTime = CGFloat(now - poseStart) }
+            if p.showsSparks { f.sparkTime = CGFloat(now - poseStart) }
         }
-    }
-
-    // MARK: - Tween helpers
-
-    func anim(_ key: String, keys: [TweenKey], onComplete: (() -> Void)? = nil) {
-        let current = getProperty(key)
-        tweens[key] = Tween(property: key, keys: keys, keyIndex: 0,
-                            from: current, startTime: CACurrentMediaTime() * 1000,
-                            onComplete: onComplete)
-        locks.insert(key)
-    }
-
-    private func setTarget(key: String, value: CGFloat) {
-        guard !locks.contains(key) else { return }
-        switch key {
-        case "tint":  tint  += (value - tint)  // immediate target, smoothed in update
-        case "tilt":  tgTilt = value
-        default: break
-        }
-    }
-
-    private func setProperty(_ key: String, value: CGFloat) {
-        switch key {
-        case "yaw":    yaw    = value
-        case "pitch":  pitch  = value
-        case "roll":   roll   = value
-        case "tilt":   tilt   = value
-        case "open":   open   = value
-        case "sx":     sx     = value
-        case "sy":     sy     = value
-        case "oy":     oy     = value
-        case "ox":     ox     = value
-        case "tint":   tint   = value
-        case "morph":  morph  = value
-        case "hands":  hands  = value
-        case "blush":  blush  = value
-        case "es":     es     = value
-        case "badgeS": badgeS = value
-        default: break
-        }
-    }
-
-    private func getProperty(_ key: String) -> CGFloat {
-        switch key {
-        case "yaw":    return yaw
-        case "pitch":  return pitch
-        case "roll":   return roll
-        case "tilt":   return tilt
-        case "open":   return open
-        case "sx":     return sx
-        case "sy":     return sy
-        case "oy":     return oy
-        case "ox":     return ox
-        case "tint":   return tint
-        case "morph":  return morph
-        case "hands":  return hands
-        case "blush":  return blush
-        case "es":     return es
-        case "badgeS": return badgeS
-        default:       return 0
-        }
-    }
-}
-
-// MARK: - Math helpers
-
-private func lerp(_ a: CGFloat, _ b: CGFloat, _ t: CGFloat) -> CGFloat { a + (b-a) * t }
-private func clamp(_ v: CGFloat, _ lo: CGFloat, _ hi: CGFloat) -> CGFloat { max(lo, min(hi, v)) }
-
-private func cgColorToTuple(_ c: CGColor) -> (CGFloat, CGFloat, CGFloat) {
-    guard let comps = c.components, comps.count >= 3 else { return (1,1,1) }
-    return (comps[0], comps[1], comps[2])
-}
-
-private func mix3(_ a: (CGFloat,CGFloat,CGFloat), _ b: (CGFloat,CGFloat,CGFloat), _ t: CGFloat) -> (CGFloat,CGFloat,CGFloat) {
-    (lerp(a.0,b.0,t), lerp(a.1,b.1,t), lerp(a.2,b.2,t))
-}
-
-private func mixColor(_ a: (CGFloat,CGFloat,CGFloat), _ b: (CGFloat,CGFloat,CGFloat), _ t: CGFloat) -> (CGFloat,CGFloat,CGFloat) {
-    mix3(a, b, t)
-}
-
-private func badgeString(_ b: BadgeType?) -> String {
-    guard let b else { return "none" }
-    func hex(_ c: CGColor) -> String {
-        guard let k = c.components, k.count >= 3 else { return "?" }
-        return "\(Int(k[0]*255)).\(Int(k[1]*255)).\(Int(k[2]*255))"
-    }
-    switch b {
-    case .dots(let c):     return "dots-\(hex(c))"
-    case .bang(let c):     return "bang-\(hex(c))"
-    case .question(let c): return "q-\(hex(c))"
-    case .dot(let c):      return "dot-\(hex(c))"
-    }
-}
-
-private func emoteEyeShape(_ e: BotEmote) -> EyeShape {
-    switch e {
-    case .love:      return .heart
-    case .surprised: return .dot
-    case .proud:     return .star
-    case .wink:      return .wink
-    case .yawn:      return .tired
-    case .happy:     return .happy
-    case .annoyed:   return .line
-    }
-}
-
-/// Which expression of the concept sheet each eye shape stands for.
-private func yumiExpression(_ shape: EyeShape) -> YumiExpression {
-    switch shape {
-    case .pill:       return .neutral
-    case .wide, .dot: return .surprised
-    case .line:       return .annoyed
-    case .flat:       return .worried
-    case .happy:      return .happy
-    case .closed:     return .asleep
-    case .spiral:     return .confused
-    case .heart:      return .love
-    case .star:       return .proud
-    case .tired:      return .drowsy
-    case .wink:       return .wink
-    case .cup:        return .eager
-    case .focused:    return .focused
-    case .thoughtful: return .thoughtful
-    case .curious:    return .curious
-    case .panicked:   return .panicked
-    case .content:    return .content
-    }
-}
-
-// MARK: - Shape helpers
-
-private func heartShape(size s: CGFloat) -> Path {
-    var p = Path()
-    p.move(to: CGPoint(x: 0, y: s * 0.38))
-    p.addCurve(to: CGPoint(x: 0, y: -s * 0.38),
-               control1: CGPoint(x: -s * 1.05, y: -s * 0.15),
-               control2: CGPoint(x: -s * 0.5,  y: -s * 0.95))
-    p.addCurve(to: CGPoint(x: 0, y: s * 0.38),
-               control1: CGPoint(x: s * 0.5,   y: -s * 0.95),
-               control2: CGPoint(x: s * 1.05,  y: -s * 0.15))
-    p.closeSubpath()
-    return p
-}
-
-private func starShape(outer ro: CGFloat, inner ri: CGFloat) -> Path {
-    var p = Path()
-    for i in 0..<10 {
-        let r = i.isMultiple(of: 2) ? ro : ri
-        let a = -.pi/2 + CGFloat(i) * .pi/5
-        let pt = CGPoint(x: cos(a) * r, y: sin(a) * r)
-        if i == 0 { p.move(to: pt) } else { p.addLine(to: pt) }
-    }
-    p.closeSubpath()
-    return p
-}
-
-// Equatable for BadgeType (needed for comparing)
-extension BadgeType: Equatable {
-    static func == (lhs: BadgeType, rhs: BadgeType) -> Bool {
-        switch (lhs, rhs) {
-        case (.dots, .dots): return true
-        case (.bang, .bang): return true
-        case (.question, .question): return true
-        case (.dot, .dot): return true
-        default: return false
-        }
+        f.drops = blob.drops
+        f.puffs = blob.puffs
+        f.time = CGFloat(now)
+        YumiRenderer.draw(f, in: ctx)
     }
 }
