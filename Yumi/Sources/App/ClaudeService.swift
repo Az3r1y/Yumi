@@ -241,13 +241,46 @@ final class ClaudeService {
         var lastText = ""
         var result: ChatTurnResult?
 
+        // The answer in progress, for the island (Contracts/ChatLive.swift). Words arrive by the
+        // dozen per second: the island is told at most ten times a second, and always gets the last state.
+        var tracker = ChatLiveTracker()
+        var throttle = PublishThrottle()
+        var pending: Task<Void, Never>?
+        func publishLive() {
+            let delay = throttle.delay(now: Date())
+            if delay == 0 {
+                pending?.cancel()
+                pending = nil
+                throttle.published(at: Date())
+                if state.chatLive != tracker.live { state.chatLive = tracker.live }
+            } else if pending == nil {
+                pending = Task { @MainActor in
+                    try? await Task.sleep(for: .seconds(delay))
+                    guard !Task.isCancelled else { return }
+                    pending = nil
+                    publishLive()
+                }
+            }
+        }
+        state.chatLive = tracker.live
+        defer {
+            pending?.cancel()
+            // Unless another message took over, the answer is no longer in progress.
+            if self.turn === turn || self.turn == nil { state.chatLive = nil }
+        }
+
         reading: for await line in lines {
             // A cancelled turn only waits for its process to end: what it still says changes nothing.
             if turn.isCancelled { continue }
             for event in ClaudeStream.events(fromLine: line) {
+                tracker.apply(event)
+                publishLive()
                 switch event {
                 case .started(let id):
                     session = (id, folder)
+
+                case .messageStarted, .textDelta, .toolAnnounced:
+                    break
 
                 case .text(let text):
                     lastText = text
@@ -256,7 +289,7 @@ final class ClaudeService {
                     tools[tool.id] = tool
                     state.stateOverride = .working
 
-                case .toolFinished(let id, let failed):
+                case .toolFinished(let id, let failed, _):
                     if let tool = tools.removeValue(forKey: id) {
                         let outcome: ChatToolOutcome = refused.contains(id) ? .refused : (failed ? .failed : .done)
                         if let line = ChatPhrases.action(tool, outcome: outcome) {
@@ -274,6 +307,10 @@ final class ClaudeService {
                     ) { [weak turn] decision in
                         let answer = ChatPermissionDecision(islandAnswer: decision)
                         turn?.send(ClaudeStream.answerLine(to: request, answer))
+                        var allowed = true
+                        if case .deny = answer { allowed = false }
+                        tracker.permissionAnswered(toolUseID: request.toolUseID, allowed: allowed)
+                        if turn != nil { publishLive() }
                         if case .deny = answer {
                             refused.insert(request.toolUseID)
                             state.stateOverride = .thinking

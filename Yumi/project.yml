@@ -77,7 +77,8 @@ targets:
         # Asked the first time the user presses the matching button of a module, never at launch.
         NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
-        NSDocumentsFolderUsageDescription: "Yumi range dans Documents/Yumi les fichiers que tu lui demandes de créer depuis le chat."
+        NSDownloadsFolderUsageDescription: "Yumi dépose dans Téléchargements les fichiers que tu lui demandes de créer depuis le chat."
+        NSDocumentsFolderUsageDescription: "Yumi travaille dans Documents si tu y as placé le dossier du chat."
         NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
         NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
     settings:
@@ -117,7 +118,8 @@ targets:
         # Asked the first time the user presses the matching button of a module, never at launch.
         NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
-        NSDocumentsFolderUsageDescription: "Yumi range dans Documents/Yumi les fichiers que tu lui demandes de créer depuis le chat."
+        NSDownloadsFolderUsageDescription: "Yumi dépose dans Téléchargements les fichiers que tu lui demandes de créer depuis le chat."
+        NSDocumentsFolderUsageDescription: "Yumi travaille dans Documents si tu y as placé le dossier du chat."
         NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
         NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
     settings:
@@ -147,6 +149,8 @@ targets:
       - path: Sources/App/Core
       - path: Sources/App/Modules
       - path: Sources/App/Contracts/ModuleTypes.swift
+        group: Tests/UnderTest
+      - path: Sources/App/Contracts/ChatLive.swift
         group: Tests/UnderTest
       - path: Sources/App/AppIdentity.swift
         group: Tests/UnderTest

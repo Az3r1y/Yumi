@@ -195,9 +195,22 @@ Reste à faire côté île : dessiner `AppState.modules`, remplacer les « VS Co
 |---|---|
 | `ModuleSnapshot.live` | Claude Code : attention quand une session attend. Musique : activité en lecture, puis cinq minutes plus discrètement après une pause. Focus : activité pendant le décompte. Agenda : prochain rendez-vous du jour. Notes : seulement un rappel en retard. Météo : rien. |
 | Bouton « Voir » de Claude Code | Ouvre le dossier de la session dans l'éditeur de code (celui de la session, sinon la préférence `codeEditor`, sinon VS Code et ses cousins). Une approbation en attente reste traitée dans l'île. |
-| Chat | Un processus `claude -p` par message, entrée et sortie en `stream-json`, session reprise par `--resume`. Dossier de travail `~/Documents/Yumi`, modifiable par la préférence `chatFolder`. Sans Claude Code : l'API si une clé existe. Build App Store : toujours l'API. |
+| Chat | Un processus `claude -p` par message, entrée et sortie en `stream-json`, session reprise par `--resume`. Dossier de travail : Téléchargements, modifiable par la préférence `chatFolder`. Sans Claude Code : l'API si une clé existe. Build App Store : toujours l'API. |
 | Permissions du chat | En mode `-p` simple, Claude Code n'appelle jamais le hook `PermissionRequest` et refuse l'outil. Le mécanisme prévu pour un programme hôte est `--permission-prompt-tool stdio` : la demande arrive sur la sortie du processus (`control_request`), la réponse repart sur son entrée. Yumi l'affiche dans la même file d'approbations que les autres sessions. Les hooks de la session du chat sont ignorés pour ne pas la compter deux fois. Aucune option qui saute les permissions, mode `default` imposé. |
 | « Toujours » dans le chat | N'applique que les règles proposées pour ce qui est affiché, jamais un changement de mode ni l'ouverture d'un dossier. |
 | Fichier joint | Seul le dossier `inbox` de Yumi est ouvert en lecture au chat. |
 
 Reste à faire côté île : afficher l'état `working` dans la vue du chat (elle ne connaît que `thinking`), montrer la commande entière d'une approbation (une seule ligne tronquée aujourd'hui), distinguer les lignes d'action des réponses.
+
+## Cœur, chantier C : le chat en direct
+
+| Sujet | État |
+|---|---|
+| `AppState.chatLive` | Renseigné pendant toute la réponse, remis à `nil` à la fin (réponse ajoutée à `chatHistory`, erreur, ou annulation). Dix mises à jour par seconde au plus. |
+| `text` | Grandit mot à mot (messages partiels de Claude Code). Repart de zéro à chaque nouveau message de la même réponse : entre deux actions, c'est la phrase en cours qui s'affiche. |
+| `activity` | Apparaît dès que l'outil est nommé (« Écrit un fichier »), puis se précise (« Écrit bonjour.txt »). En attente de permission : `kind` vaut `waiting`, libellé « Attend ton accord », `detail` = ce qui est demandé. Si plusieurs actions sont annoncées ensemble, celle qui attend passe devant, sinon la plus ancienne. |
+| `detail` | Quatre lignes de 80 caractères au plus : le début du fichier écrit ou du texte modifié, les dernières lignes affichées par une commande terminée. |
+| `done` | Une entrée par action finie, `succeeded` faux si elle a échoué ou a été refusée. |
+| Île repliée | Le module Claude Code annonce l'action du chat dans `live` (priorité activité, attention pendant une attente de permission). Une session qui attend l'utilisateur reste devant. Rien quand le chat est au repos. |
+| Historique | Les lignes d'action (« Fichier créé : … ») sont toujours ajoutées à `chatHistory` : à l'île de choisir entre elles et `done` pendant la réponse. |
+| Dossier du chat | Téléchargements par défaut. Un ancien `~/Documents/Yumi` n'est ni déplacé ni supprimé. |

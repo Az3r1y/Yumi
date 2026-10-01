@@ -14,7 +14,25 @@ final class ClaudeCodeModule: YumiModule {
         self.onShow = onShow
     }
 
-    var snapshot: ModuleSnapshot { ClaudeSessions.snapshot(sessions) }
+    /// What the chat is doing, while it answers through Claude Code; nil when it is idle.
+    private var chat: ChatAnnouncement?
+
+    var snapshot: ModuleSnapshot {
+        var snapshot = ClaudeSessions.snapshot(sessions)
+        // A session waiting for the user stays ahead of the chat's own activity.
+        if snapshot.live == nil, let chat {
+            snapshot.live = ModuleLive(text: chat.text,
+                                       priority: chat.needsUser ? ModuleLivePriority.attention : ModuleLivePriority.activity)
+        }
+        return snapshot
+    }
+
+    /// Tells the folded island what the chat is doing. Pass nil when the answer is complete.
+    func announceChat(_ announcement: ChatAnnouncement?) {
+        guard announcement != chat else { return }
+        chat = announcement
+        onChange?()
+    }
 
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
@@ -23,6 +41,7 @@ final class ClaudeCodeModule: YumiModule {
     func stop() {
         onChange = nil
         sessions = []
+        chat = nil
     }
 
     func receive(_ event: YumiEvent, sessions: [SessionID: Session]) {
@@ -92,5 +111,19 @@ final class ClaudeCodeModule: YumiModule {
             return false
         }
         return true
+    }
+}
+
+/// One line about the chat's answer in progress, for the folded island.
+struct ChatAnnouncement: Equatable, Sendable {
+    /// "Écrit bonjour.txt", "Lance swift test", "Yumi répond".
+    var text: String
+    /// True while the chat waits for a permission.
+    var needsUser = false
+
+    init?(_ live: ChatLive?) {
+        guard let live else { return nil }
+        text = ChatLiveTracker.headline(live)
+        needsUser = live.activity?.kind == .waiting
     }
 }
