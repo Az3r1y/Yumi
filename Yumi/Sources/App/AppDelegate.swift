@@ -102,6 +102,7 @@ final class YumiCore {
                 AgendaModule(),
                 NotesModule(),
                 FocusModule(),
+                MusicModule(),
             ],
             onPublish: { state.modules = $0 }
         )

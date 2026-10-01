@@ -70,10 +70,10 @@ targets:
         LSUIElement: YES
         NSHighResolutionCapable: YES
         NSSupportsAutomaticGraphicsSwitching: YES
-        NSAppleEventsUsageDescription: "Yumi reads the address of the page open in your browser to attach it as context, and sends the emails you confirm through Mail."
+        NSAppleEventsUsageDescription: "Yumi lit l'adresse de la page ouverte dans ton navigateur pour la joindre comme contexte, envoie par Mail les messages que tu confirmes, et met en pause ou passe au morceau suivant quand tu le demandes."
         # Not a key macOS reads: Accessibility consent is given in System Settings, with no custom text.
         # Kept as a record of why the app asks for it.
-        NSAccessibilityUsageDescription: "Yumi reads the title of the frontmost window to attach it as context, and listens for Escape and your global shortcut."
+        NSAccessibilityUsageDescription: "Yumi lit le titre de la fenêtre au premier plan pour le joindre comme contexte, et écoute la touche Échap et ton raccourci global."
         # Asked the first time the user presses the matching button of a module, never at launch.
         NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
