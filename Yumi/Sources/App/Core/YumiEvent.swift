@@ -33,4 +33,35 @@ enum YumiEvent: Equatable, Sendable {
 
     /// The session failed.
     case sessionErrored(SessionID, YumiError)
+
+    /// Where the session runs. Sent again whenever it may have changed.
+    case sessionLocated(SessionID, SessionOrigin)
+
+    /// The user sent a prompt: the agent starts a turn.
+    case promptSubmitted(SessionID, text: String)
+
+    /// A pending permission request got its answer, from Yumi or from elsewhere.
+    case permissionResolved(SessionID, requestID: String)
+
+    /// The agent hit a usage limit.
+    case rateLimited(SessionID)
+
+    /// A line worth showing in the session's activity log. Changes no state.
+    case activityNoted(SessionID, String)
+}
+
+extension YumiEvent {
+    /// The session the event is about, if any.
+    var sessionID: SessionID? {
+        switch self {
+        case .agentRegistered:
+            return nil
+        case .sessionStarted(let id, _, _), .sessionEnded(let id), .toolStarted(let id, _),
+             .toolFinished(let id, _), .permissionRequested(let id, _), .questionRequested(let id, _),
+             .taskCompleted(let id), .sessionErrored(let id, _), .sessionLocated(let id, _),
+             .promptSubmitted(let id, _), .permissionResolved(let id, _), .rateLimited(let id),
+             .activityNoted(let id, _):
+            return id
+        }
+    }
 }

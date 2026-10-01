@@ -26,16 +26,35 @@ enum SessionReducer {
         case .sessionEnded(let id):
             sessions.removeValue(forKey: id)
 
+        case .sessionLocated(let id, let origin):
+            sessions[id]?.origin = origin
+
+        case .promptSubmitted(let id, _):
+            sessions[id]?.activity = .thinking
+            sessions[id]?.status = .running
+            sessions[id]?.isTurnActive = true
+
         case .toolStarted(let id, let tool):
             sessions[id]?.activity = .working(tool)
             sessions[id]?.status = .running
+            sessions[id]?.isTurnActive = true
 
         case .toolFinished(let id, _):
-            sessions[id]?.activity = .idle
+            // A tool ending must not erase a question or a permission request still on screen.
+            if case .working = sessions[id]?.activity {
+                sessions[id]?.activity = .idle
+            }
 
         case .permissionRequested(let id, let request):
             sessions[id]?.activity = .requestingPermission(request)
             sessions[id]?.status = .waitingForUser
+            sessions[id]?.isTurnActive = true
+
+        case .permissionResolved(let id, let requestID):
+            if case .requestingPermission(let request) = sessions[id]?.activity, request.id == requestID {
+                sessions[id]?.activity = .idle
+                sessions[id]?.status = .running
+            }
 
         case .questionRequested(let id, let question):
             sessions[id]?.activity = .asking(question)
@@ -44,10 +63,25 @@ enum SessionReducer {
         case .taskCompleted(let id):
             sessions[id]?.status = .completed
             sessions[id]?.activity = .idle
+            sessions[id]?.isTurnActive = false
 
         case .sessionErrored(let id, _):
             sessions[id]?.status = .errored
             sessions[id]?.activity = .idle
+            sessions[id]?.isTurnActive = false
+
+        case .rateLimited(let id):
+            sessions[id]?.status = .rateLimited
+            sessions[id]?.activity = .idle
+
+        case .activityNoted:
+            break
+        }
+
+        // Whatever the event, the session it is about becomes the most recent one.
+        if let id = event.sessionID, sessions[id] != nil {
+            let latest = sessions.values.map(\.recency).max() ?? 0
+            sessions[id]?.recency = latest + 1
         }
 
         return sessions

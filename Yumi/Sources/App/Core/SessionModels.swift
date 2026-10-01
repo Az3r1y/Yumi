@@ -8,6 +8,8 @@ enum SessionStatus: Equatable, Codable, Sendable {
     case waitingForUser
     case errored
     case completed
+    /// The agent is held back by a usage limit until further notice.
+    case rateLimited
 }
 
 // MARK: - Current activity
@@ -15,6 +17,8 @@ enum SessionStatus: Equatable, Codable, Sendable {
 /// What the agent is doing right now inside a session.
 enum YumiActivity: Equatable, Codable, Sendable {
     case idle
+    /// The agent received a prompt and has not started a tool yet.
+    case thinking
     case working(ToolInfo)
     case asking(Question)
     case requestingPermission(PermissionRequest)
@@ -68,6 +72,24 @@ struct YumiError: Equatable, Codable, Sendable {
     init(message: String) { self.message = message }
 }
 
+// MARK: - Origin
+
+/// Where a session runs. Lets Yumi bring the right window back to the front.
+struct SessionOrigin: Equatable, Codable, Sendable {
+    /// Folder the agent works in. Empty when unknown.
+    var workingDirectory: String
+    /// Bundle identifier of the application hosting the session (terminal, editor). Empty when unknown.
+    var hostBundleID: String
+    /// Name the host gives itself (`TERM_PROGRAM` for a terminal). Empty when unknown.
+    var hostName: String
+
+    init(workingDirectory: String = "", hostBundleID: String = "", hostName: String = "") {
+        self.workingDirectory = workingDirectory
+        self.hostBundleID = hostBundleID
+        self.hostName = hostName
+    }
+}
+
 // MARK: - Session
 
 /// One session = one run of an agent (e.g. one Claude Code conversation).
@@ -78,6 +100,13 @@ struct Session: Equatable, Codable, Sendable, Identifiable {
     var title: String
     var status: SessionStatus
     var activity: YumiActivity
+    var origin: SessionOrigin?
+    /// True between a prompt and the end of the answer. Tells a session busy between
+    /// two tools (running, no activity) from one waiting for its next prompt.
+    var isTurnActive: Bool
+    /// Rank of the last event that touched the session: the highest value is the most
+    /// recently active session. Lets consumers order sessions without a clock.
+    var recency: Int
 
     init(id: SessionID = SessionID(), agent: Agent, title: String) {
         self.id = id
@@ -85,5 +114,8 @@ struct Session: Equatable, Codable, Sendable, Identifiable {
         self.title = title
         self.status = .running
         self.activity = .idle
+        self.origin = nil
+        self.isTurnActive = false
+        self.recency = 0
     }
 }
