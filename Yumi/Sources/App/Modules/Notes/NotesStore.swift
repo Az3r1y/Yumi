@@ -83,6 +83,11 @@ enum NotesSummary {
 
     static func snapshot(notes: [String], reminders: [ReminderItem], remindersAccess: PermissionState,
                          now: Date, calendar: Calendar = .current) -> ModuleSnapshot {
+        plainSnapshot(notes: notes, reminders: reminders, remindersAccess: remindersAccess, now: now, calendar: calendar).withSymbols("note.text")
+    }
+
+    private static func plainSnapshot(notes: [String], reminders: [ReminderItem], remindersAccess: PermissionState,
+                                      now: Date, calendar: Calendar) -> ModuleSnapshot {
         let due = ordered(reminders)
         let total = notes.count + due.count
         var snapshot = ModuleSnapshot(id: "notes", name: "Notes", colorHex: "#F2C744",

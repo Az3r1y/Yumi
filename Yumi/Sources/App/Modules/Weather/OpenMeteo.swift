@@ -99,6 +99,23 @@ enum WeatherSummary {
         }
     }
 
+    /// The symbol of the module: the sky right now when it is known.
+    static func symbol(for state: WeatherState) -> String {
+        guard case .ready(let report) = state else { return "cloud.sun.fill" }
+        switch report.code {
+        case 0, 1:       return "sun.max.fill"
+        case 2:          return "cloud.sun.fill"
+        case 3:          return "cloud.fill"
+        case 45, 48:     return "cloud.fog.fill"
+        case 51...57:    return "cloud.drizzle.fill"
+        case 61...67:    return "cloud.rain.fill"
+        case 71...77, 85, 86: return "cloud.snow.fill"
+        case 80...82:    return "cloud.heavyrain.fill"
+        case 95...99:    return "cloud.bolt.rain.fill"
+        default:         return "cloud.sun.fill"
+        }
+    }
+
     private static func isRain(_ code: Int) -> Bool {
         (51...67).contains(code) || (80...82).contains(code) || (95...99).contains(code)
     }
@@ -119,6 +136,10 @@ enum WeatherSummary {
     }
 
     static func snapshot(_ state: WeatherState, now: Date, calendar: Calendar = .current) -> ModuleSnapshot {
+        plainSnapshot(state, now: now, calendar: calendar).withSymbols(symbol(for: state))
+    }
+
+    private static func plainSnapshot(_ state: WeatherState, now: Date, calendar: Calendar) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "weather", name: "Météo", colorHex: "#7FD0FF", status: "…",
                                       title: "Je regarde le ciel", subtitle: "Un instant",
                                       primaryAction: "Détail", secondaryAction: nil)

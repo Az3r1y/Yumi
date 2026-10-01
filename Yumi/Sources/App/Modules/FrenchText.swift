@@ -21,6 +21,13 @@ enum FrenchText {
         return String(format: "%02d:%02d", total / 60, total % 60)
     }
 
+    /// "1:52", "25:00", "1:02:07": a position in a track or a timer.
+    static func trackTime(_ seconds: TimeInterval) -> String {
+        let total = max(0, Int(seconds.rounded(.down)))
+        return total >= 3600 ? String(format: "%d:%02d:%02d", total / 3600, (total % 3600) / 60, total % 60)
+                             : String(format: "%d:%02d", total / 60, total % 60)
+    }
+
     /// "18 min 42", "42 s", "1 h 05"
     static func duration(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds.rounded(.up)))
