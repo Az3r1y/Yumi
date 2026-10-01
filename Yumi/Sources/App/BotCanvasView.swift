@@ -26,11 +26,9 @@ struct BotCanvasView: View {
                     engine.slotHTarget = 0
                     if engine.morph < 0.05 { engine.slotH = 0; engine.slotHVel = 0 }
                 }
-                // Integration pills have a fixed brand color → use it as bodyColor.
-                // Claude Code tasks use state-based gradient (working=blue, thinking=purple, etc.).
-                engine.bodyColor = (state.focusTask?.isIntegration == true)
-                    ? cgColorFromHex(state.focusTask!.color)
-                    : nil
+                // The main character never takes a brand colour: its body stays black and its rim
+                // light shows the state (working=blue, thinking=purple, etc.). Only the mini
+                // characters of the integration pills carry their brand colour (bodyColor).
                 engine.update(dt: dt)
                 engine.drawHandsBehind(context: context, size: size)
                 engine.draw(context: context, size: size)
@@ -87,6 +85,9 @@ struct BotCanvasView: View {
         }
         .onAppear {
             engine.setState(state.effectiveState, force: true)
+            #if DEBUG
+            BotDemo.startIfRequested()
+            #endif
         }
     }
 
@@ -176,3 +177,68 @@ extension CGColor {
         cgColorFromHex(hex) ?? CGColor(gray: 0.5, alpha: 1)
     }
 }
+
+// MARK: - Character demo (Debug builds only)
+
+#if DEBUG
+/// Launch with `YUMI_DEMO=1` in the environment to walk the character through every state and
+/// emote (compact, then expanded) and through the file-drop sequence, so the three renderers can
+/// be checked by eye. With `YUMI_DEMO_SHOTS=<folder>`, a PNG of the island is saved at each step.
+@MainActor
+enum BotDemo {
+    private static var started = false
+
+    static func startIfRequested() {
+        guard !started, ProcessInfo.processInfo.environment["YUMI_DEMO"] != nil else { return }
+        started = true
+        Task { @MainActor in
+            let state = AppState.shared
+            func pause(_ seconds: Double) async {
+                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            }
+
+            // Greeting (4.6 s), then the island settles in compact mode
+            for i in 0..<14 { await pause(0.4); shot(String(format: "0-greeting-%02d", i)) }
+            await pause(0.6)
+
+            for s in BotState.allCases {
+                state.stateOverride = s
+                await pause(0.8); shot("1-compact-\(s.rawValue)")
+            }
+            NotificationCenter.default.post(name: .hookExpand, object: IslandView.overview)
+            for s in BotState.allCases {
+                state.stateOverride = s
+                await pause(0.6); shot("2-state-\(s.rawValue)-a")
+                await pause(1.2); shot("2-state-\(s.rawValue)-b")
+            }
+            state.stateOverride = nil
+            for e in BotEmote.allCases {
+                NotificationCenter.default.post(name: .triggerEmote, object: e)
+                await pause(0.9); shot("3-emote-\(e.rawValue)")
+                await pause(0.9)
+            }
+
+            // File drop: same calls as IslandWindowController and FileDropHandler, without a file
+            UploadSequenceEngine.shared.enterZone(x: 330, y: 150)
+            NotificationCenter.default.post(name: .hookExpand, object: IslandView.upload)
+            for i in 0..<4 { await pause(0.35); shot("4-upload-\(i)") }
+            UploadSequenceEngine.shared.performDrop(uploadDuration: 2.4)
+            state.view = .uploading
+            for i in 4..<20 { await pause(0.3); shot(String(format: "4-upload-%02d", i)) }
+            state.view = .choose
+            await pause(1.0); shot("4-upload-20")
+            UploadSequenceEngine.shared.deactivate()
+            NotificationCenter.default.post(name: .islandCollapse, object: nil)
+        }
+    }
+
+    private static func shot(_ name: String) {
+        guard let folder = ProcessInfo.processInfo.environment["YUMI_DEMO_SHOTS"],
+              let view = NSApp.windows.first(where: { $0.windowController is IslandWindowController })?.contentView,
+              let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+        view.cacheDisplay(in: view.bounds, to: rep)
+        let url = URL(fileURLWithPath: folder).appendingPathComponent(name + ".png")
+        try? rep.representation(using: .png, properties: [:])?.write(to: url)
+    }
+}
+#endif

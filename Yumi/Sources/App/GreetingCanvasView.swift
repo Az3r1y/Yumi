@@ -29,7 +29,7 @@ private enum GT {
 
 private let GC0     = CGPoint(x: 320, y: 90)   // Mochi center
 private let GHB:    CGFloat = 58                // body height at full size
-private let GASP:   CGFloat = 1.34             // body width/height ratio
+private let GASP:   CGFloat = YumiSkin.bodyHW / YumiSkin.bodyHH   // body width/height ratio
 private let GEAR_X: CGFloat = 40               // ear x from small island left edge (matches BotPlacement compact x=40)
 private let GEAR_Y: CGFloat = 16               // ear y
 private let GEAR_HB:CGFloat = 17               // ear body height
@@ -247,81 +247,61 @@ private func gRR(_ ctx: CGContext, _ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h
 }
 
 private func mochiPath(hw: CGFloat, hh: CGFloat) -> CGPath {
-    let n: CGFloat = 3.2
-    let path = CGMutablePath()
-    let steps = 96
-    for i in 0...steps {
-        let a = CGFloat(i)/CGFloat(steps)*2 * .pi
-        let ca = cos(a), sa = sin(a)
-        let px = hw * (ca < 0 ? -1 : 1) * pow(abs(ca), 2/n)
-        let py = hh * (sa < 0 ? -1 : 1) * pow(abs(sa), 2/n)
-        if i == 0 { path.move(to: CGPoint(x: px, y: py)) }
-        else { path.addLine(to: CGPoint(x: px, y: py)) }
-    }
-    path.closeSubpath(); return path
+    YumiSkin.bodyPath(hw: hw, hh: hh)
 }
 
-// Linear gradient fill clipped to path (body-local coords, centered at origin)
-private func whiteFill(_ ctx: CGContext, _ path: CGPath,
-                        x0: CGFloat, y0: CGFloat, x1: CGFloat, y1: CGFloat) {
-    let cs   = CGColorSpaceCreateDeviceRGB()
-    let c0   = CGColor(red: 251/255, green: 251/255, blue: 252/255, alpha: 1)
-    let c1   = CGColor(red: 231/255, green: 233/255, blue: 236/255, alpha: 1)
-    guard let g = CGGradient(colorsSpace: cs, colors: [c0,c1] as CFArray, locations: [0,1]) else { return }
+private let gWorkBlue = YumiRGB(hex: 0x3B9EFF)   // rim colour of the working state, reached at GT.tint1
+
+// Arms are capsules of the body material, drawn behind the body: they run from a shoulder
+// just inside the outline to the hand, so they always look attached.
+private func drawArm(_ ctx: CGContext, shoulder: CGPoint, hand: CGPoint, thickness: CGFloat, R: CGFloat, rim: YumiRim) {
+    let dx = hand.x - shoulder.x, dy = hand.y - shoulder.y
     ctx.saveGState()
-    ctx.addPath(path); ctx.clip()
-    ctx.drawLinearGradient(g, start: CGPoint(x: x0, y: y0), end: CGPoint(x: x1, y: y1), options: [])
+    ctx.translateBy(x: (shoulder.x + hand.x) / 2, y: (shoulder.y + hand.y) / 2)
+    ctx.rotate(by: atan2(dy, dx))
+    YumiSkin.drawArm(ctx, length: hypot(dx, dy) + thickness, thickness: thickness, R: R, rim: rim)
     ctx.restoreGState()
 }
 
-private func drawHandL(_ ctx: CGContext, hw: CGFloat, hh: CGFloat, p: GreetPose) {
+private func drawHandL(_ ctx: CGContext, hw: CGFloat, hh: CGFloat, p: GreetPose, rim: YumiRim) {
     let k = CGFloat(p.handL); guard k > 0.01 else { return }
     let hb = hh*2, r = hb*0.15*k
-    let rx = gLerpF(-hw*0.35, -hw-hb*0.22, k)
+    let rx = gLerpF(-hw*0.35, -hw-hb*0.03, k)
     let ry0 = gLerpF(hh*0.85, hh*0.62, k)
     var ry = Double(ry0)
     if p.wave >= 0 { ry += sin(p.wave*6)*Double(hb)*0.02 }
-    ctx.saveGState()
-    ctx.translateBy(x: rx, y: CGFloat(ry))
-    let circ = CGPath(ellipseIn: CGRect(x: -r, y: -r, width: r*2, height: r*2), transform: nil)
-    whiteFill(ctx, circ, x0: r, y0: -r, x1: -r, y1: r)
-    ctx.addEllipse(in: CGRect(x: -r, y: -r, width: r*2, height: r*2))
-    ctx.setStrokeColor(CGColor(red: 0, green: 0, blue: 0, alpha: 0.08))
-    ctx.setLineWidth(0.8); ctx.strokePath()
-    ctx.restoreGState()
+    drawArm(ctx, shoulder: CGPoint(x: -hw*0.84, y: hh*0.36), hand: CGPoint(x: rx, y: CGFloat(ry)),
+            thickness: r*2, R: hh / YumiSkin.bodyHH, rim: rim)
 }
 
-private func drawHandR(_ ctx: CGContext, hw: CGFloat, hh: CGFloat, p: GreetPose) {
+private func drawHandR(_ ctx: CGContext, hw: CGFloat, hh: CGFloat, p: GreetPose, rim: YumiRim) {
     let k = CGFloat(p.handR); guard k > 0.01 else { return }
-    let hb = hh*2, L = hb*0.40*k, T2 = hb*0.22*k
-    let rx0 = gLerpF(hw*0.35, hw+hb*0.20, k)
-    let ry0 = gLerpF(hh*0.85, hh*0.20, k)
+    let hb = hh*2, L = hb*0.40*k, T2 = hb*0.30*k
+    let rx0 = gLerpF(hw*0.35, hw+hb*0.02, k)
+    let ry0 = gLerpF(hh*0.85, hh*0.06, k)
     var rx = Double(rx0), ry = Double(ry0), ang = -0.61
     if p.wave >= 0 {
         let w = p.wave*2 * .pi*2.5
         ang += sin(w)*0.21; ry += sin(w+0.8)*Double(hb)*0.04; rx += cos(w)*Double(hb)*0.015
     }
-    ctx.saveGState()
-    ctx.translateBy(x: CGFloat(rx), y: CGFloat(ry)); ctx.rotate(by: CGFloat(ang))
-    let cap = CGMutablePath()
-    gRR(ctx, -L/2, -T2/2, L, T2, T2/2)
-    cap.addPath(ctx.path!); ctx.beginPath()  // use current ctx path as clip path
-    whiteFill(ctx, cap, x0: L/2, y0: -T2/2, x1: -L/2, y1: T2/2)
-    gRR(ctx, -L/2, -T2/2, L, T2, T2/2)
-    ctx.setStrokeColor(CGColor(red: 0, green: 0, blue: 0, alpha: 0.08))
-    ctx.setLineWidth(0.8); ctx.strokePath()
-    ctx.restoreGState()
+    // The hand is the far end of the old capsule (centre rx, ry, length L, angle ang)
+    let hand = CGPoint(x: CGFloat(rx) + cos(CGFloat(ang)) * L * 0.3, y: CGFloat(ry) + sin(CGFloat(ang)) * L * 0.3)
+    drawArm(ctx, shoulder: CGPoint(x: hw*0.84, y: hh*0.30), hand: hand,
+            thickness: T2, R: hh / YumiSkin.bodyHH, rim: rim)
 }
 
 private func drawMochi(_ ctx: CGContext, p: GreetPose) {
     let hh = CGFloat(p.hb/2), hw = hh*GASP; guard hh > 0.4 else { return }
+    let R = hh / YumiSkin.bodyHH
+    // Rim light: resting gradient, turning to the working blue at the end of the sequence
+    let rim = YumiRim.idle.mix(.solid(gWorkBlue), CGFloat(min(1, p.tint / 0.6)))
 
-    // Halo (golden → blue) — soft diffuse aura, two-pass for smoothness
+    // Halo (violet → blue) — soft diffuse aura, two-pass for smoothness
     if p.halo > 0 {
         let bl = CGFloat(p.haloBlue)
-        let cr = gLerpF(232/255, 59/255, bl)
-        let cg = gLerpF(195/255, 158/255, bl)
-        let cb = gLerpF(154/255, 255/255, bl)
+        let cr = gLerpF(YumiSkin.violet.r, gWorkBlue.r, bl)
+        let cg = gLerpF(YumiSkin.violet.g, gWorkBlue.g, bl)
+        let cb = gLerpF(YumiSkin.violet.b, gWorkBlue.b, bl)
         let cs = CGColorSpaceCreateDeviceRGB()
         let cx = CGFloat(p.x), cy = CGFloat(p.y)
         // Inner soft glow
@@ -355,60 +335,32 @@ private func drawMochi(_ ctx: CGContext, p: GreetPose) {
     ctx.rotate(by: CGFloat(p.tilt))
     ctx.scaleBy(x: CGFloat(p.sx), y: CGFloat(p.sy))
 
-    // Hands behind body
-    drawHandL(ctx, hw: hw, hh: hh, p: p)
-    drawHandR(ctx, hw: hw, hh: hh, p: p)
+    // Arms behind body
+    drawHandL(ctx, hw: hw, hh: hh, p: p, rim: rim)
+    drawHandR(ctx, hw: hw, hh: hh, p: p, rim: rim)
 
     // Body
     let mpath = mochiPath(hw: hw, hh: hh)
-    whiteFill(ctx, mpath, x0: hw*0.6, y0: -hh, x1: -hw*0.6, y1: hh)
-
-    // Blue tint overlay
-    if p.tint > 0 {
-        let cs = CGColorSpaceCreateDeviceRGB()
-        let c0 = CGColor(red: 127/255, green: 180/255, blue: 234/255, alpha: CGFloat(p.tint))
-        let c1 = CGColor(red: 127/255, green: 180/255, blue: 234/255, alpha: 0)
-        if let g = CGGradient(colorsSpace: cs, colors: [c0,c1] as CFArray, locations: [0,1]) {
-            ctx.saveGState()
-            ctx.addPath(mpath); ctx.clip()
-            ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: hh), end: CGPoint(x: 0, y: -hh*0.1), options: [])
-            ctx.restoreGState()
-        }
-    }
+    YumiSkin.drawBody(ctx, path: mpath, hw: hw, hh: hh, R: R, rim: rim, glow: CGFloat(p.halo))
 
     // Eyes (clipped to body)
     ctx.saveGState()
     ctx.addPath(mpath); ctx.clip()
-    ctx.setFillColor(gHex("#16171A"))
-    ctx.setStrokeColor(gHex("#16171A"))
-    let er = CGFloat(p.hb*0.06)
-    let sp = CGFloat(p.hb*0.19)
-    let lx = CGFloat(p.lookX)*hw*0.42
-    let ly = CGFloat(p.lookY)*hh*0.28 + hh*0.12 + CGFloat(p.eyeRoll)*hh*1.25
-    for sd: CGFloat in [-1, 1] {
-        ctx.saveGState()
-        ctx.translateBy(x: sd*sp+lx, y: ly)
-        if p.eye == .happy {
-            ctx.setLineWidth(er*0.95)
-            ctx.setLineCap(.round)
-            ctx.beginPath()
-            ctx.addArc(center: CGPoint(x: 0, y: er*0.6), radius: er*1.25,
-                       startAngle: .pi*1.15, endAngle: .pi*1.85, clockwise: false)
-            ctx.strokePath()
-        } else if p.eye == .content {
-            ctx.setLineWidth(er*0.95)
-            ctx.setLineCap(.round)
-            ctx.beginPath()
-            ctx.addArc(center: CGPoint(x: 0, y: -er*0.5), radius: er*1.25,
-                       startAngle: .pi*0.15, endAngle: .pi*0.85, clockwise: false)
-            ctx.strokePath()
-        } else {
-            ctx.scaleBy(x: 1, y: max(0.12, CGFloat(p.open)))
-            ctx.addEllipse(in: CGRect(x: -er, y: -er, width: er*2, height: er*2))
-            ctx.fillPath()
-        }
-        ctx.restoreGState()
+    var eyes: YumiEyes
+    switch p.eye {
+    case .dot:     eyes = YumiExpression.neutral.eyes()
+    case .happy:   eyes = YumiExpression.content.eyes()
+    case .content: eyes = YumiExpression.asleep.eyes()
     }
+    // The dip is a bow: the eyes close and sink a little
+    let bow = CGFloat(p.eyeRoll)
+    if bow > 0 {
+        eyes.left.lidTop = 0.9 * bow
+        eyes.right.lidTop = 0.9 * bow
+    }
+    let lx = CGFloat(p.lookX), ly = CGFloat(p.lookY)
+    YumiSkin.drawEyes(ctx, R: R, eyes: eyes, gaze: CGPoint(x: lx, y: ly + bow), open: CGFloat(p.open),
+                      offset: CGPoint(x: lx * R * 0.16, y: ly * R * 0.10 + bow * hh * 0.30))
     ctx.restoreGState()
 
     // Activity badge (top-left corner)
@@ -493,7 +445,7 @@ private func drawHeader(_ ctx: CGContext, alpha: Double) {
     ctx.restoreGState()
 }
 
-private let miniColors = ["#E86A6A","#3E86E0","#EFAE5A","#8C73F2"]
+private let miniColors: [UInt32] = [0xE86A6A, 0x3E86E0, 0xEFAE5A, 0x8C73F2]
 
 private func drawMinis(_ ctx: CGContext, alpha: Double) {
     guard alpha > 0.01 else { return }
@@ -505,8 +457,7 @@ private func drawMinis(_ ctx: CGContext, alpha: Double) {
         ctx.saveGState()
         ctx.translateBy(x: cx+dx, y: cy+dy)
         ctx.scaleBy(x: CGFloat(alpha), y: CGFloat(alpha))
-        ctx.setFillColor(gHex(miniColors[i]))
-        ctx.addPath(mochiPath(hw: 5.3, hh: 4)); ctx.fillPath()
+        YumiSkin.drawFigure(ctx, R: 4 / YumiSkin.bodyHH, rim: .solid(YumiRGB(hex: miniColors[i])))
         ctx.restoreGState()
     }
 }

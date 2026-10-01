@@ -62,6 +62,7 @@ struct BotStateCfg {
 
 enum EyeShape: String {
     case pill, wide, dot, line, flat, happy, closed, spiral, heart, star, tired, wink, cup
+    case focused, thoughtful, curious, panicked, content
 }
 
 enum BadgeType {
@@ -71,18 +72,500 @@ enum BadgeType {
     case dot(CGColor)
 }
 
-// MARK: - Mochi track constants (from PISTES.mochi)
+// MARK: - Character track constants
 
 enum MochiConst {
-    static let eyeW: CGFloat  = 0.25
-    static let eyeH: CGFloat  = 0.27
-    static let eyeSp: CGFloat = 0.37
-    static let eyeP: CGFloat  = -0.12
-    static let baseTop    = CGColor(red: 0.929, green: 0.929, blue: 0.937, alpha: 1)  // #EDEDEF
-    static let baseBottom = CGColor(red: 0.769, green: 0.773, blue: 0.792, alpha: 1)  // #C4C5CA
-    static let ink        = CGColor(red: 0.102, green: 0.082, blue: 0.071, alpha: 1)  // #1A1412
-    static let miniInk    = CGColor(red: 0.063, green: 0.075, blue: 0.102, alpha: 1)  // #10131A
+    static let lookYaw: CGFloat   = 0.62   // yaw reached when the pointer is far to the side
+    static let lookPitch: CGFloat = 0.5
+    static let eyeShiftX: CGFloat = 0.16   // how far the eyes slide with the look (fraction of R per unit of yaw)
+    static let eyeShiftY: CGFloat = 0.10
+    static let armLength: CGFloat = 0.52   // fraction of R
+    static let armThick: CGFloat  = 0.30
 }
+
+// MARK: - Yumi skin
+
+// >>> YumiSkin
+// Yumi's look (concept 4), shared by the three renderers: BotEngine, GreetingCanvasView
+// and UploadCanvasView. CoreGraphics only, y pointing down, origin at the body centre.
+// design/yumi/outils/icones.sh compiles this block on its own to render the icons,
+// so keep it free of SwiftUI, AppState and anything outside the markers.
+
+struct YumiRGB: Equatable, Sendable {
+    var r: CGFloat, g: CGFloat, b: CGFloat
+
+    init(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) { self.r = r; self.g = g; self.b = b }
+
+    init(hex: UInt32) {
+        self.init(CGFloat((hex >> 16) & 0xFF) / 255, CGFloat((hex >> 8) & 0xFF) / 255, CGFloat(hex & 0xFF) / 255)
+    }
+
+    func mix(_ o: YumiRGB, _ t: CGFloat) -> YumiRGB {
+        YumiRGB(r + (o.r - r) * t, g + (o.g - g) * t, b + (o.b - b) * t)
+    }
+
+    func cg(_ alpha: CGFloat = 1) -> CGColor { CGColor(srgbRed: r, green: g, blue: b, alpha: alpha) }
+}
+
+/// The rim light: three stops running from the left edge to the right edge of the body.
+struct YumiRim: Equatable, Sendable {
+    var left: YumiRGB, mid: YumiRGB, right: YumiRGB
+
+    /// Resting gradient of the concept sheet: blue, violet, pink.
+    static let idle = YumiRim(left: YumiSkin.blue, mid: YumiSkin.violet, right: YumiSkin.rose)
+
+    /// One state (or brand) colour, with a little shading so the rim keeps some depth.
+    static func solid(_ c: YumiRGB) -> YumiRim {
+        YumiRim(left: c.mix(YumiSkin.white, 0.34), mid: c, right: c.mix(YumiSkin.white, 0.10))
+    }
+
+    func mix(_ o: YumiRim, _ t: CGFloat) -> YumiRim {
+        YumiRim(left: left.mix(o.left, t), mid: mid.mix(o.mid, t), right: right.mix(o.right, t))
+    }
+}
+
+/// One eye. Everything is a number so two expressions can be blended.
+struct YumiEye: Equatable, Sendable {
+    var scale: CGFloat = 1
+    var lidTop: CGFloat = 0      // 0…1 of the eye height covered by the upper lid
+    var lidBottom: CGFloat = 0   // 0…1 covered by the lower lid (arched, the cheek pushes up)
+    var slant: CGFloat = 0       // upper lid slope: > 0 inner side lower, < 0 outer side lower
+    var arc: CGFloat = 0         // closed eye: +1 bent upwards (smile), -1 bent downwards (sleep)
+    var pupil: CGFloat = 1       // pupil scale
+    var px: CGFloat = 0          // pupil offset added to the gaze, -1…1
+    var py: CGFloat = 0
+    var heart: CGFloat = 0       // 0…1 pupil replaced by a heart
+    var sparkle: CGFloat = 0     // 0…1 second reflection
+
+    func mix(_ o: YumiEye, _ t: CGFloat) -> YumiEye {
+        func l(_ a: CGFloat, _ b: CGFloat) -> CGFloat { a + (b - a) * t }
+        return YumiEye(scale: l(scale, o.scale), lidTop: l(lidTop, o.lidTop), lidBottom: l(lidBottom, o.lidBottom),
+                       slant: l(slant, o.slant), arc: l(arc, o.arc), pupil: l(pupil, o.pupil),
+                       px: l(px, o.px), py: l(py, o.py), heart: l(heart, o.heart), sparkle: l(sparkle, o.sparkle))
+    }
+}
+
+struct YumiEyes: Equatable, Sendable {
+    var left = YumiEye()
+    var right = YumiEye()
+    var gaze: CGFloat = 1        // how much of the look direction reaches the pupils
+
+    func mix(_ o: YumiEyes, _ t: CGFloat) -> YumiEyes {
+        YumiEyes(left: left.mix(o.left, t), right: right.mix(o.right, t), gaze: gaze + (o.gaze - gaze) * t)
+    }
+}
+
+/// The expressions of the concept sheet, plus the few the app needs on top.
+enum YumiExpression: Sendable {
+    case neutral, happy, curious, focused, thoughtful, asleep, drowsy
+    case worried, confused, annoyed, surprised, panicked, wink
+    case love, proud, eager, content
+
+    /// `t` (seconds) only matters for the expressions that move on their own.
+    func eyes(at t: CGFloat = 0) -> YumiEyes {
+        var e = YumiEyes()
+        func both(_ edit: (inout YumiEye) -> Void) { edit(&e.left); edit(&e.right) }
+        switch self {
+        case .neutral:
+            break
+        case .happy:
+            both { $0.lidBottom = 0.30; $0.pupil = 1.06; $0.py = -0.30 }
+        case .curious:
+            e.left.scale = 0.90; e.left.lidTop = 0.10
+            e.right.scale = 1.14
+            both { $0.py = -0.22 }
+        case .focused:
+            both { $0.lidTop = 0.40; $0.lidBottom = 0.14; $0.pupil = 0.92; $0.py = 0.22 }
+        case .thoughtful:
+            e.left.lidTop = 0.24; e.right.lidTop = 0.08
+            both { $0.pupil = 0.94 }
+        case .asleep:
+            both { $0.arc = -1 }
+        case .drowsy:
+            both { $0.lidTop = 0.56; $0.py = 0.35; $0.pupil = 0.92 }
+            e.gaze = 0.3
+        case .worried:
+            both { $0.lidTop = 0.20; $0.slant = -0.75; $0.pupil = 0.80; $0.py = 0.20 }
+            e.gaze = 0.6
+        case .confused:
+            e.left.scale = 1.10; e.right.scale = 0.88
+            e.left.px = cos(t * 9) * 0.85;  e.left.py = sin(t * 9) * 0.85
+            e.right.px = cos(-t * 7 + 2) * 0.85; e.right.py = sin(-t * 7 + 2) * 0.85
+            both { $0.pupil = 0.82 }
+            e.gaze = 0
+        case .annoyed:
+            both { $0.lidTop = 0.36; $0.slant = 0.85; $0.lidBottom = 0.12; $0.pupil = 0.90 }
+        case .surprised:
+            both { $0.scale = 1.16; $0.pupil = 0.66 }
+        case .panicked:
+            both { $0.scale = 1.20; $0.pupil = 0.50 }
+            e.left.px = sin(t * 47) * 0.30;  e.left.py = cos(t * 39) * 0.24
+            e.right.px = sin(t * 43 + 1) * 0.30; e.right.py = cos(t * 51 + 2) * 0.24
+            e.gaze = 0.35
+        case .wink:
+            e.right.arc = 1
+            e.left.lidBottom = 0.18
+        case .love:
+            both { $0.scale = 1.08; $0.heart = 1 }
+            e.gaze = 0.5
+        case .proud:
+            both { $0.lidBottom = 0.26; $0.pupil = 1.12; $0.sparkle = 1; $0.py = -0.25 }
+        case .eager:
+            both { $0.scale = 1.12; $0.pupil = 1.10 }
+        case .content:
+            both { $0.arc = 1 }
+        }
+        return e
+    }
+}
+
+enum YumiSkin {
+    // Palette of the concept sheet
+    static let ink    = YumiRGB(hex: 0x0B0F1A)
+    static let indigo = YumiRGB(hex: 0x2A2A8C)
+    static let blue   = YumiRGB(hex: 0x5B8CFF)
+    static let violet = YumiRGB(hex: 0xC77DFF)
+    static let rose   = YumiRGB(hex: 0xFF8AD0)
+    static let white  = YumiRGB(hex: 0xFFFFFF)
+    static let heart  = YumiRGB(hex: 0xFF5C9A)
+
+    // Body half-size in units of R (R is half of the "diameter" used by the layouts)
+    static let bodyHW: CGFloat = 1.14
+    static let bodyHH: CGFloat = 0.88
+    // The box the body morphs into while it waits for a file
+    static let boxHW: CGFloat = 1.0
+    static let boxHH: CGFloat = 0.94
+    static let boxCorner: CGFloat = 0.42
+
+    // MARK: Silhouette
+
+    /// Point of the dome outline for angle `a`, in a -1…1 box (y down): round on top,
+    /// wider and almost flat at the base.
+    static func domePoint(_ a: CGFloat) -> CGPoint {
+        let ca = cos(a), sa = sin(a)
+        let n: CGFloat = sa < 0 ? domeTop : domeBase
+        var x = (ca < 0 ? -1 : 1) * pow(abs(ca), 2 / n)
+        let y = (sa < 0 ? -1 : 1) * pow(abs(sa), 2 / n)
+        x *= domeTaper(y) / domeWidest
+        return CGPoint(x: x, y: y)
+    }
+
+    private static let domeTop: CGFloat = 2.1     // superellipse exponent above the centre
+    private static let domeBase: CGFloat = 3.1    // and below: squarer, so the base reads flat
+    private static func domeTaper(_ y: CGFloat) -> CGFloat { 1 - 0.25 * pow((1 - y) / 2, 1.25) }
+
+    /// Widest half-width of the tapered outline before normalisation.
+    private static let domeWidest: CGFloat = {
+        var m: CGFloat = 0
+        for i in 0...200 {
+            let y = CGFloat(i) / 200
+            let x = pow(1 - pow(y, domeBase), 1 / domeBase) * domeTaper(y)
+            m = max(m, x)
+        }
+        return m
+    }()
+
+    /// Body outline. `morph` 0 is the dome, 1 the rounded box of half-size `boxHW` × `boxHH`.
+    static func bodyPath(hw: CGFloat, hh: CGFloat, morph: CGFloat = 0,
+                         boxHW: CGFloat = 0, boxHH: CGFloat = 0, boxCorner: CGFloat = 0) -> CGPath {
+        let n = 96
+        let m = max(0, min(1, morph))
+        let path = CGMutablePath()
+        for i in 0..<n {
+            let a = CGFloat(i) / CGFloat(n) * .pi * 2
+            let d = domePoint(a)
+            var p = CGPoint(x: d.x * hw, y: d.y * hh)
+            if m > 0.005 {
+                let b = boxPoint(ca: cos(a), sa: sin(a), W: boxHW, H: boxHH, cr: boxCorner)
+                p = CGPoint(x: p.x + (b.x - p.x) * m, y: p.y + (b.y - p.y) * m)
+            }
+            if i == 0 { path.move(to: p) } else { path.addLine(to: p) }
+        }
+        path.closeSubpath()
+        return path
+    }
+
+    /// Where the ray of direction (ca, sa) leaves a rounded rectangle of half-size W × H.
+    static func boxPoint(ca: CGFloat, sa: CGFloat, W: CGFloat, H: CGFloat, cr: CGFloat) -> CGPoint {
+        let eps: CGFloat = 1e-6
+        let kx: CGFloat = ca >= 0 ? 1 : -1
+        let ky: CGFloat = sa >= 0 ? 1 : -1
+        let cx = kx * (W - cr)
+        let cy = ky * (H - cr)
+
+        let dot  = ca * cx + sa * cy
+        let disc = dot * dot - (cx * cx + cy * cy - cr * cr)
+        if disc >= 0 {
+            let t = dot + sqrt(disc)
+            if t > eps {
+                let px = ca * t, py = sa * t
+                if abs(px) >= W - cr - eps && abs(py) >= H - cr - eps { return CGPoint(x: px, y: py) }
+            }
+        }
+        if abs(sa) > eps {
+            let t = (ky * H) / sa
+            if t > eps {
+                let x = ca * t
+                if abs(x) <= W - cr + eps { return CGPoint(x: x, y: ky * H) }
+            }
+        }
+        if abs(ca) > eps {
+            let t = (kx * W) / ca
+            if t > eps {
+                let y = sa * t
+                if abs(y) <= H - cr + eps { return CGPoint(x: kx * W, y: y) }
+            }
+        }
+        return CGPoint(x: kx * W, y: ky * H)
+    }
+
+    // MARK: Body
+
+    private static func gradient(_ stops: [(YumiRGB, CGFloat, CGFloat)]) -> CGGradient? {
+        guard let cs = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        var comps: [CGFloat] = []
+        var locs: [CGFloat] = []
+        for (c, alpha, loc) in stops {
+            comps += [c.r, c.g, c.b, alpha]
+            locs.append(loc)
+        }
+        return CGGradient(colorSpace: cs, colorComponents: comps, locations: locs, count: stops.count)
+    }
+
+    /// Rim thickness for a body of unit R. Never under a point, so the outline survives at 12 pt.
+    static func rimWidth(_ R: CGFloat) -> CGFloat { max(R * 0.085, 1.0) }
+
+    /// Black body carried by its rim light. The island is black too: without the rim the
+    /// silhouette disappears, so the rim is drawn crisp, with a soft bloom behind it.
+    /// `glow` (0…1) adds a halo outside the body; `shine` the soft reflection of the sheet.
+    static func drawBody(_ ctx: CGContext, path: CGPath, hw: CGFloat, hh: CGFloat, R: CGFloat,
+                         rim: YumiRim, glow: CGFloat = 0, shine: Bool = true, alpha: CGFloat = 1) {
+        if glow > 0.01 {
+            ctx.saveGState()
+            ctx.setShadow(offset: .zero, blur: R * 0.5, color: rim.mid.cg(0.60 * glow * alpha))
+            ctx.addPath(path)
+            ctx.setFillColor(ink.cg(alpha))
+            ctx.fillPath()
+            ctx.restoreGState()
+        }
+
+        ctx.saveGState()
+        ctx.addPath(path)
+        ctx.clip()
+        if alpha < 1 { ctx.setAlpha(alpha) }
+
+        if let g = gradient([(ink.mix(indigo, 0.16), 1, 0), (ink, 1, 0.55), (ink.mix(YumiRGB(0, 0, 0), 0.35), 1, 1)]) {
+            ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: -hh), end: CGPoint(x: 0, y: hh),
+                                   options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+        }
+
+        // Rim: the body minus a copy of itself pushed up and squeezed, which leaves a
+        // crescent that is thicker at the base and on the sides than at the top.
+        let t = rimWidth(R)
+        let rimGradient = gradient([(rim.left, 1, 0), (rim.mid, 1, 0.52), (rim.right, 1, 1)])
+        // A stack of wider, fainter crescents stands in for a blur behind the crisp one.
+        // More of them on a large body, where the steps would show.
+        let bloom = R > 9 ? min(32, max(9, Int(R / 5))) : 2
+        var layers: [(CGFloat, CGFloat)] = (0..<bloom).map { i in
+            let k = CGFloat(i) / CGFloat(bloom - 1)   // 0 widest, 1 narrowest
+            return (1.5 + (1 - k) * (R > 9 ? 3.4 : 0.6), R > 9 ? (0.015 + 0.06 * k) * 9 / CGFloat(bloom) : 0.16)
+        }
+        layers.append((1, 1))
+        for (k, a) in layers {
+            let side = t * k, bottom = t * k * 1.15, top = t * (0.30 + (k - 1) * 0.25)
+            var tr = CGAffineTransform(translationX: 0, y: (top - bottom) / 2)
+                .scaledBy(x: max(0.05, 1 - side / hw), y: max(0.05, 1 - (top + bottom) / (2 * hh)))
+            guard let inner = path.copy(using: &tr), let g = rimGradient else { continue }
+            ctx.saveGState()
+            ctx.addPath(path)
+            ctx.addPath(inner)
+            ctx.clip(using: .evenOdd)
+            ctx.setAlpha(a * alpha)
+            ctx.drawLinearGradient(g, start: CGPoint(x: -hw, y: -hh * 0.35), end: CGPoint(x: hw, y: hh * 0.55),
+                                   options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+            ctx.restoreGState()
+        }
+
+        if shine && R > 9, let g = gradient([(blue.mix(white, 0.35), 0.20, 0), (blue, 0, 1)]) {
+            let c = CGPoint(x: -hw * 0.40, y: -hh * 0.52)
+            ctx.drawRadialGradient(g, startCenter: c, startRadius: 0, endCenter: c, endRadius: R * 0.62, options: [])
+        }
+        ctx.restoreGState()
+    }
+
+    // MARK: Eyes
+
+    /// Eyes grow relative to the body when it gets small (compact island, mini characters).
+    static func eyeBoost(_ R: CGFloat) -> CGFloat {
+        let k = max(0, min(1, (R - 7) / 6))
+        return 1.35 - 0.35 * (k * k * (3 - 2 * k))
+    }
+
+    /// Two white ovals with a round black pupil and a small reflection. `gaze` is the look
+    /// direction (-1…1, y down), `open` the blink (1 open), `scale` the tweened eye scale.
+    static func drawEyes(_ ctx: CGContext, R: CGFloat, eyes: YumiEyes, gaze: CGPoint = .zero,
+                         open: CGFloat = 1, scale: CGFloat = 1, offset: CGPoint = .zero) {
+        let boost = eyeBoost(R)
+        let spacing = R * 0.34 * (1 + (boost - 1) * 0.6)
+        for side: CGFloat in [-1, 1] {
+            let e = side < 0 ? eyes.left : eyes.right
+            let w = R * 0.50 * boost * scale * e.scale
+            let h = R * 0.64 * boost * scale * e.scale
+            ctx.saveGState()
+            ctx.translateBy(x: offset.x + side * spacing, y: offset.y - R * 0.10)
+            drawEye(ctx, e, side: side, w: w, h: h, R: R,
+                    gaze: CGPoint(x: gaze.x * eyes.gaze, y: gaze.y * eyes.gaze), open: open)
+            ctx.restoreGState()
+        }
+    }
+
+    private static func drawEye(_ ctx: CGContext, _ e: YumiEye, side: CGFloat, w: CGFloat, h: CGFloat,
+                                R: CGFloat, gaze: CGPoint, open: CGFloat) {
+        let o = max(0, min(1, open)) * (1 - min(1, abs(e.arc)))
+
+        // Closed: a white stroke, bent like a smile or like a sleeping eye.
+        if o < 0.14 {
+            let lw = max(w * 0.22, 0.9)
+            let bend = e.arc * h * 0.28
+            let x = max(w / 2 - lw / 2, lw * 0.3)
+            ctx.setStrokeColor(white.cg())
+            ctx.setLineWidth(lw)
+            ctx.setLineCap(.round)
+            ctx.beginPath()
+            ctx.move(to: CGPoint(x: -x, y: bend / 2))
+            ctx.addQuadCurve(to: CGPoint(x: x, y: bend / 2), control: CGPoint(x: 0, y: -bend * 1.5))
+            ctx.strokePath()
+            return
+        }
+
+        let eh = h * o
+        ctx.saveGState()
+        ctx.addEllipse(in: CGRect(x: -w / 2, y: -eh / 2, width: w, height: eh))
+        ctx.clip()
+
+        if e.lidTop > 0.001 || e.lidBottom > 0.001 || abs(e.slant) > 0.001 {
+            let top = -eh / 2 + e.lidTop * eh
+            func lid(_ x: CGFloat) -> CGFloat { top + e.slant * (-side) * (x / (w / 2)) * eh * 0.30 }
+            let apex = eh / 2 - e.lidBottom * eh
+            let edge = apex + e.lidBottom * eh * 0.9
+            ctx.beginPath()
+            ctx.move(to: CGPoint(x: -w, y: lid(-w)))
+            ctx.addLine(to: CGPoint(x: w, y: lid(w)))
+            ctx.addLine(to: CGPoint(x: w, y: edge))
+            ctx.addLine(to: CGPoint(x: w * 0.56, y: edge))
+            ctx.addQuadCurve(to: CGPoint(x: -w * 0.56, y: edge), control: CGPoint(x: 0, y: 2 * apex - edge))
+            ctx.addLine(to: CGPoint(x: -w, y: edge))
+            ctx.closePath()
+            ctx.clip()
+        }
+
+        ctx.setFillColor(white.cg())
+        ctx.fill(CGRect(x: -w, y: -h, width: w * 2, height: h * 2))
+
+        // Pupil
+        let pr = w * 0.33 * e.pupil
+        var gx = gaze.x + e.px, gy = gaze.y + e.py
+        let len = hypot(gx, gy)
+        if len > 1 { gx /= len; gy /= len }
+        let cx = gx * max(0, w / 2 - pr) * 0.92
+        let cy = gy * max(0, h / 2 - pr) * 0.82
+        if e.heart < 0.99 {
+            ctx.setFillColor(ink.cg(1 - e.heart))
+            ctx.fillEllipse(in: CGRect(x: cx - pr, y: cy - pr, width: pr * 2, height: pr * 2))
+        }
+        if e.heart > 0.01 {
+            let s = pr * 1.55
+            ctx.beginPath()
+            ctx.move(to: CGPoint(x: cx, y: cy + s * 0.62))
+            ctx.addCurve(to: CGPoint(x: cx, y: cy - s * 0.30),
+                         control1: CGPoint(x: cx - s * 1.25, y: cy - s * 0.10),
+                         control2: CGPoint(x: cx - s * 0.55, y: cy - s * 0.95))
+            ctx.addCurve(to: CGPoint(x: cx, y: cy + s * 0.62),
+                         control1: CGPoint(x: cx + s * 0.55, y: cy - s * 0.95),
+                         control2: CGPoint(x: cx + s * 1.25, y: cy - s * 0.10))
+            ctx.closePath()
+            ctx.setFillColor(heart.cg(e.heart))
+            ctx.fillPath()
+        }
+        // Reflections, dropped when they would be under half a point
+        if R >= 8 {
+            let rr = pr * 0.34
+            ctx.setFillColor(white.cg())
+            ctx.fillEllipse(in: CGRect(x: cx + pr * 0.36 - rr, y: cy - pr * 0.38 - rr, width: rr * 2, height: rr * 2))
+            if e.sparkle > 0.01 {
+                let r2 = pr * 0.22 * e.sparkle
+                ctx.fillEllipse(in: CGRect(x: cx - pr * 0.42 - r2, y: cy + pr * 0.36 - r2, width: r2 * 2, height: r2 * 2))
+            }
+        }
+        ctx.restoreGState()
+    }
+
+    /// Soft pink cheeks under the eyes.
+    static func drawBlush(_ ctx: CGContext, R: CGFloat, amount: CGFloat, offset: CGPoint = .zero) {
+        guard amount > 0.01, let g = gradient([(heart, 0.60 * min(1, amount), 0), (heart, 0, 1)]) else { return }
+        for side: CGFloat in [-1, 1] {
+            ctx.saveGState()
+            ctx.translateBy(x: offset.x + side * R * 0.66, y: offset.y + R * 0.30)
+            ctx.scaleBy(x: 1, y: 0.6)
+            ctx.drawRadialGradient(g, startCenter: .zero, startRadius: 0, endCenter: .zero, endRadius: R * 0.26, options: [])
+            ctx.restoreGState()
+        }
+    }
+
+    // MARK: Arms and mouth
+
+    /// A small arm: a capsule of the same material as the body, centred on the current origin.
+    static func drawArm(_ ctx: CGContext, length: CGFloat, thickness: CGFloat, R: CGFloat, rim: YumiRim) {
+        guard length > 0.3, thickness > 0.3 else { return }
+        let rect = CGRect(x: -length / 2, y: -thickness / 2, width: length, height: thickness)
+        let r = min(length, thickness) / 2
+        let path = CGPath(roundedRect: rect, cornerWidth: r, cornerHeight: r, transform: nil)
+        drawBody(ctx, path: path, hw: length / 2, hh: thickness / 2, R: R * 0.7, rim: rim, shine: false)
+    }
+
+    /// The mouth that opens on top of the box: lit from the inside by the rim colour.
+    static func drawMouth(_ ctx: CGContext, body: CGPath, rect: CGRect, rim: YumiRim, alpha: CGFloat = 1) {
+        guard rect.height > 0.3, rect.width > 0.3 else { return }
+        let r = min(rect.width / 2, rect.height / 2)
+        let hole = CGPath(roundedRect: rect, cornerWidth: r, cornerHeight: r, transform: nil)
+        ctx.saveGState()
+        ctx.addPath(body)
+        ctx.clip()
+        ctx.setAlpha(alpha)
+        ctx.saveGState()
+        ctx.addPath(hole)
+        ctx.clip()
+        if let g = gradient([(YumiRGB(0, 0, 0), 1, 0), (indigo.mix(rim.mid, 0.35), 1, 1)]) {
+            ctx.drawLinearGradient(g, start: CGPoint(x: 0, y: rect.minY), end: CGPoint(x: 0, y: rect.maxY),
+                                   options: [.drawsBeforeStartLocation, .drawsAfterEndLocation])
+        }
+        ctx.restoreGState()
+        if rect.height > 2 {
+            ctx.addPath(hole)
+            ctx.setStrokeColor(rim.mid.mix(white, 0.25).cg(0.9))
+            ctx.setLineWidth(1)
+            ctx.strokePath()
+        }
+        ctx.restoreGState()
+    }
+
+    // MARK: Whole character
+
+    /// Yumi at rest, centred on the origin: used for the mini characters of the greeting
+    /// and by the icon generator.
+    static func drawFigure(_ ctx: CGContext, R: CGFloat, rim: YumiRim = .idle, eyes: YumiEyes = YumiEyes(),
+                           gaze: CGPoint = .zero, glow: CGFloat = 0) {
+        let hw = R * bodyHW, hh = R * bodyHH
+        let path = bodyPath(hw: hw, hh: hh)
+        drawBody(ctx, path: path, hw: hw, hh: hh, R: R, rim: rim, glow: glow)
+        ctx.saveGState()
+        ctx.addPath(path)
+        ctx.clip()
+        drawEyes(ctx, R: R, eyes: eyes, gaze: gaze)
+        ctx.restoreGState()
+    }
+}
+// <<< YumiSkin
 
 // MARK: - Bot state configs
 
@@ -95,21 +578,21 @@ let BotStates: [BotState: BotStateCfg] = [
         look:nil, tilt:0, sound:nil),
     .working: BotStateCfg(
         color: CGColor(red:0.231,green:0.620,blue:1,alpha:1), tint:0.72,
-        eye:.pill, badge:.dots(CGColor(red:0.231,green:0.620,blue:1,alpha:1)),
+        eye:.focused, badge:.dots(CGColor(red:0.231,green:0.620,blue:1,alpha:1)),
         badgeColor: CGColor(red:0.231,green:0.620,blue:1,alpha:1),
         glow: CGColor(red:0.231,green:0.620,blue:1,alpha:1), glowOpacity:0.55,
         bounces:false, scans:false, breathes:false, zz:false, sweat:false,
         look:nil, tilt:0, sound:"work"),
     .thinking: BotStateCfg(
         color: CGColor(red:0.545,green:0.361,blue:0.965,alpha:1), tint:0.72,
-        eye:.pill, badge:.dots(CGColor(red:0.545,green:0.361,blue:0.965,alpha:1)),
+        eye:.thoughtful, badge:.dots(CGColor(red:0.545,green:0.361,blue:0.965,alpha:1)),
         badgeColor: CGColor(red:0.545,green:0.361,blue:0.965,alpha:1),
         glow: CGColor(red:0.545,green:0.361,blue:0.965,alpha:1), glowOpacity:0.5,
         bounces:false, scans:false, breathes:false, zz:false, sweat:false,
         look: CGPoint(x:0.55, y:0.55), tilt:0, sound:"think"),
     .searching: BotStateCfg(
         color: CGColor(red:0.388,green:0.396,blue:0.949,alpha:1), tint:0.72,
-        eye:.pill, badge:.dots(CGColor(red:0.388,green:0.396,blue:0.949,alpha:1)),
+        eye:.curious, badge:.dots(CGColor(red:0.388,green:0.396,blue:0.949,alpha:1)),
         badgeColor: CGColor(red:0.388,green:0.396,blue:0.949,alpha:1),
         glow: CGColor(red:0.388,green:0.396,blue:0.949,alpha:1), glowOpacity:0.55,
         bounces:false, scans:true, breathes:false, zz:false, sweat:false,
@@ -123,7 +606,7 @@ let BotStates: [BotState: BotStateCfg] = [
         look:nil, tilt:0, sound:"approval"),
     .question: BotStateCfg(
         color: CGColor(red:0.133,green:0.827,blue:0.933,alpha:1), tint:0.75,
-        eye:.pill, badge:.question(CGColor(red:0.133,green:0.827,blue:0.933,alpha:1)),
+        eye:.curious, badge:.question(CGColor(red:0.133,green:0.827,blue:0.933,alpha:1)),
         badgeColor: CGColor(red:0.133,green:0.827,blue:0.933,alpha:1),
         glow: CGColor(red:0.133,green:0.827,blue:0.933,alpha:1), glowOpacity:0.55,
         bounces:false, scans:false, breathes:false, zz:false, sweat:false,
@@ -136,7 +619,7 @@ let BotStates: [BotState: BotStateCfg] = [
         bounces:false, scans:false, breathes:false, zz:false, sweat:false,
         look:nil, tilt:0, sound:"error"),
     .finished: BotStateCfg(
-        color: CGColor(red:0.204,green:0.831,blue:0.600,alpha:1), tint:0.35,
+        color: CGColor(red:0.204,green:0.831,blue:0.600,alpha:1), tint:0.72,
         eye:.happy, badge:.dot(CGColor(red:0.204,green:0.831,blue:0.600,alpha:1)),
         badgeColor: CGColor(red:0.204,green:0.831,blue:0.600,alpha:1),
         glow: CGColor(red:0.204,green:0.831,blue:0.600,alpha:1), glowOpacity:0.5,
@@ -144,7 +627,7 @@ let BotStates: [BotState: BotStateCfg] = [
         look:nil, tilt:0, sound:"finish"),
     .ratelimit: BotStateCfg(
         color: CGColor(red:0.984,green:0.573,blue:0.235,alpha:1), tint:0.72,
-        eye:.tired, badge:.dot(CGColor(red:0.984,green:0.573,blue:0.235,alpha:1)),
+        eye:.panicked, badge:.dot(CGColor(red:0.984,green:0.573,blue:0.235,alpha:1)),
         badgeColor: CGColor(red:0.984,green:0.573,blue:0.235,alpha:1),
         glow: CGColor(red:0.984,green:0.573,blue:0.235,alpha:1), glowOpacity:0.45,
         bounces:false, scans:false, breathes:false, zz:false, sweat:true,
@@ -170,7 +653,7 @@ let BotStates: [BotState: BotStateCfg] = [
 @MainActor
 final class BotEngine: ObservableObject {
     var isMini: Bool = false
-    var bodyColor: CGColor? = nil    // override for mini bots
+    var bodyColor: CGColor? = nil    // rim colour override for mini bots
 
     // Animation state (mirrors prototype 's' object)
     var yaw:    CGFloat = 0
@@ -188,6 +671,9 @@ final class BotEngine: ObservableObject {
     var blush:  CGFloat = 0
     var es:     CGFloat = 1          // eye scale
     var badgeS: CGFloat = 0          // badge scale
+    var eyes = YumiEyes()            // current expression, eased towards the target one
+    var rimMix: CGFloat = 0          // 0 = resting gradient, 1 = rim fully in the state colour
+    var flat:   CGFloat = 0          // sleeping pose (flattened)
 
     // Targets
     var tgYaw:    CGFloat = 0
@@ -740,6 +1226,11 @@ final class BotEngine: ObservableObject {
 
         // Animate color
         col = mixColor(col, colT, 1 - pow(0.002, dt))
+        rimMix += (min(1, tint / 0.7) - rimMix) * kGen
+        flat   += ((state == .sleeping ? 1 : 0) - flat) * kGen
+
+        // Ease the eyes towards the current expression
+        eyes = eyes.mix(yumiExpression(eyeShape).eyes(at: t), CGFloat(1 - pow(0.00001, dt)))
 
         // Blink
         if now > nextBlink {
@@ -782,477 +1273,178 @@ final class BotEngine: ObservableObject {
 
     // MARK: - Draw
 
-    func draw(context: GraphicsContext, size: CGSize) {
-        let W = size.width
-        let H = size.height
-        let R = W * 0.3
-        let rx = R * 1.14
-        let ry = R * 0.88
-
-        let cx = W / 2 + ox * R
-        // particleOverhang shifts the bot body down in canvas coords so hearts can fly into
-        // the extended canvas above without clipping (BotPlacement compensates with position offset)
-        let cy = H / 2 + particleOverhang / 2 + oy * R + R * 0.06
-
-        var ctx = context
-        ctx.translateBy(x: cx, y: cy)
-        if tilt != 0 { ctx.rotate(by: .radians(tilt)) }
-        ctx.scaleBy(x: sx, y: sy)
-
-        // Body path (superellipse for Mochi, morph to rect for upload)
-        let bodyPath = mochiPath(rx: rx, ry: ry, morph: morph, R: R)
-
-        // Body fill
-        drawBody(ctx: &ctx, path: bodyPath, R: R, rx: rx, ry: ry)
-
-        // Blush — always shows a floor proportional to tint (prototype behaviour)
-        let blushVal = max(blush, tint * 0.5) * (1 - morph)
-        if blushVal > 0.01 {
-            drawBlush(ctx: &ctx, path: bodyPath, rx: rx, ry: ry, R: R, blush: blushVal)
-        }
-
-        // Eyes
-        drawEyes(ctx: &ctx, path: bodyPath, R: R, rx: rx, ry: ry)
-
-        // Mouth hole — dark pill cutout inside the box face
-        // Spec: left/right margins 0.10R, top margin 0.08R from box top (-0.94R)
-        if morph > 0.05 {
-            let hW = R * 1.80 * morph   // hole width = box width (2×1.0R) − 2×0.10R margin
-            let hH = slotH * R * morph  // hole height (spring-animated, scaled by morph)
-            let hX = -hW / 2
-            // Hole Y: box top is -R*0.94 at morph=1, lerped from -R*0.88 at morph=0
-            let boxTop = -R * (0.88 + 0.06 * morph)
-            let hY = boxTop + R * 0.08 * morph  // top margin scales with morph
-
-            var boxCtx = ctx
-            boxCtx.clip(to: bodyPath)  // everything clipped inside body
-
-            // Top rim — 1pt white 55% line at box top edge
-            var rim = Path()
-            rim.move(to: CGPoint(x: -R * 0.90 * morph, y: boxTop + 1))
-            rim.addLine(to: CGPoint(x: R * 0.90 * morph, y: boxTop + 1))
-            boxCtx.stroke(rim, with: .color(Color.white.opacity(0.55 * Double(morph))),
-                          style: StrokeStyle(lineWidth: 1, lineCap: .round))
-
-            // Hole interior — only draw if visibly open
-            if hH > 0.8 {
-                let hR = min(hW / 2, hH / 2)  // fully rounded when hH < hW (pill shape)
-                var hole = Path()
-                hole.addRoundedRect(in: CGRect(x: hX, y: hY, width: hW, height: hH),
-                                    cornerSize: CGSize(width: hR, height: hR))
-                boxCtx.fill(hole, with: .linearGradient(
-                    Gradient(colors: [Color(red: 0.027, green: 0.031, blue: 0.039),
-                                      Color(red: 0.063, green: 0.075, blue: 0.102)]),
-                    startPoint: CGPoint(x: 0, y: hY),
-                    endPoint: CGPoint(x: 0, y: hY + hH)
-                ))
-                // Bottom lip — 1pt white 28% highlight
-                if hH > 4 {
-                    let lipR = min(hR, (hW - 2) / 2)
-                    var lip = Path()
-                    lip.move(to: CGPoint(x: hX + lipR, y: hY + hH - 0.5))
-                    lip.addLine(to: CGPoint(x: hX + hW - lipR, y: hY + hH - 0.5))
-                    boxCtx.stroke(lip, with: .color(Color.white.opacity(0.28 * Double(morph))),
-                                  style: StrokeStyle(lineWidth: 1, lineCap: .round))
-                }
-            }
-        }
-
-        // Reset transform for hands, badge, particles which need world coords
-        // (We'll pass world-space cx/cy to these helpers)
+    /// Where the body sits in the canvas this frame, with the roll and the sleeping pose applied.
+    private struct BodyPose {
+        var R, hw, hh, cx, cy, tilt, sx, sy, celebrate: CGFloat
     }
 
-    // MARK: - Draw hands behind body (called before draw() so hands appear under Mochi)
+    private func bodyPose(_ size: CGSize) -> BodyPose {
+        let R = size.width * 0.3
+        let hh = R * YumiSkin.bodyHH
+        var p = BodyPose(
+            R: R, hw: R * YumiSkin.bodyHW, hh: hh,
+            cx: size.width / 2 + ox * R,
+            // particleOverhang shifts the bot body down in canvas coords so hearts can fly into
+            // the extended canvas above without clipping (BotPlacement compensates with position offset)
+            cy: size.height / 2 + particleOverhang / 2 + oy * R + R * 0.06,
+            tilt: tilt, sx: sx, sy: sy, celebrate: 0)
+
+        // The "roll" tween runs from 0 to a number of full turns. Yumi is a slime, not a ball:
+        // each turn is one hop with the arms up, or one wobble when dizzy.
+        if roll != 0 {
+            if state == .dizzy {
+                p.tilt += sin(roll) * 0.22
+            } else {
+                let hop = pow(sin(roll / 2), 2)
+                p.cy -= hop * R * 0.30
+                p.sy *= 1 + 0.10 * sin(roll)
+                p.sx *= 1 - 0.06 * sin(roll)
+                p.celebrate = hop
+            }
+        }
+        // Sleeping pose: flattened, base planted
+        if flat > 0.001 {
+            p.sy *= 1 - 0.20 * flat
+            p.sx *= 1 + 0.08 * flat
+            p.cy += hh * 0.20 * flat
+        }
+        return p
+    }
+
+    /// The body stays black: the state colours the rim light (the brand, for mini characters).
+    private var rim: YumiRim {
+        if isMini, let bc = bodyColor {
+            let c = cgColorToTuple(bc)
+            return .solid(YumiRGB(c.0, c.1, c.2))
+        }
+        return YumiRim.idle.mix(.solid(YumiRGB(col.0, col.1, col.2)), rimMix)
+    }
+
+    private var eyeShape: EyeShape {
+        // In box mode: eager eyes when file over box (slotHTarget set), closed smile while chewing
+        if morph > 0.5 {
+            if isChewing { return .content }
+            if slotHTarget > 0.05 || slotH > 0.10 { return .cup }
+        }
+        return eyeOverride ?? cfg.eye
+    }
+
+    func draw(context: GraphicsContext, size: CGSize) {
+        let p = bodyPose(size)
+        let rim = self.rim
+
+        // Body path (dome for Yumi, morph to rect for upload)
+        let bodyPath = mochiPath(rx: p.hw, ry: p.hh, morph: morph, R: p.R)
+        let glow: CGFloat = isMini ? 0 : 0.45 + 0.55 * cfg.glowOpacity
+
+        context.withCGContext { cg in
+            cg.saveGState()
+            cg.translateBy(x: p.cx, y: p.cy)
+            if p.tilt != 0 { cg.rotate(by: p.tilt) }
+            cg.scaleBy(x: p.sx, y: p.sy)
+
+            YumiSkin.drawBody(cg, path: bodyPath, hw: p.hw, hh: p.hh, R: p.R, rim: rim, glow: glow, shine: !isMini)
+
+            // Face: the pupils carry the look, the eyes themselves only slide a little
+            cg.saveGState()
+            cg.addPath(bodyPath)
+            cg.clip()
+            let faceOffset = CGPoint(x: yaw * p.R * MochiConst.eyeShiftX,
+                                     y: -pitch * p.R * MochiConst.eyeShiftY + p.R * 0.20 * morph)
+            let gaze = CGPoint(x: clamp(yaw / MochiConst.lookYaw, -1, 1),
+                               y: clamp(-pitch / MochiConst.lookPitch, -1, 1))
+            YumiSkin.drawBlush(cg, R: p.R, amount: blush * (1 - morph), offset: faceOffset)
+            YumiSkin.drawEyes(cg, R: p.R, eyes: eyes, gaze: gaze, open: open, scale: es, offset: faceOffset)
+            cg.restoreGState()
+
+            // Mouth hole inside the box face
+            // Spec: left/right margins 0.10R, top margin 0.08R from box top (-0.94R)
+            if morph > 0.05 {
+                let hW = p.R * 1.80 * morph   // hole width = box width (2×1.0R) − 2×0.10R margin
+                let hH = slotH * p.R * morph  // hole height (spring-animated, scaled by morph)
+                // Hole Y: box top is -R*0.94 at morph=1, lerped from -R*0.88 at morph=0
+                let boxTop = -p.R * (0.88 + 0.06 * morph)
+                let hY = boxTop + p.R * 0.08 * morph  // top margin scales with morph
+                // Only draw if visibly open
+                if hH > 0.8 {
+                    YumiSkin.drawMouth(cg, body: bodyPath, rect: CGRect(x: -hW / 2, y: hY, width: hW, height: hH),
+                                       rim: rim, alpha: min(1, morph))
+                }
+            }
+            cg.restoreGState()
+        }
+    }
+
+    // MARK: - Draw arms behind body (called before draw() so they appear under Yumi)
 
     func drawHandsBehind(context: GraphicsContext, size: CGSize) {
-        guard hands > 0.01, !isMini else { return }
-        let W = size.width, H = size.height
-        let R = W * 0.3
-        // Only draw hands when Mochi is large enough to be meaningful (not compact/peek)
-        guard R > 14 else { return }
-        let rx = R * 1.14
-        let ry = R * 0.88
-        let cx = W / 2 + ox * R
-        let cy = H / 2 + particleOverhang / 2 + oy * R + R * 0.06
+        guard !isMini else { return }
+        let p = bodyPose(size)
+        let amount = max(hands, p.celebrate)
+        // Only draw the arms when Yumi is large enough for them to read (not compact/peek)
+        guard amount > 0.01, p.R > 14 else { return }
 
         let now = CACurrentMediaTime()
-        let bodyH = 2 * ry   // full body height
-
-        // Hand ellipse half-dims: 0.30×bodyH wide, 0.26×bodyH tall (scaled by hands 0→1)
-        let hew = 0.30 * ry * hands   // half-width
-        let heh = 0.26 * ry * hands   // half-height
+        let isWaving = now >= waveStart && waveStart > 0 && now < waveUntil
+        let wt = CGFloat(now - waveStart)
+        let length = p.R * MochiConst.armLength * amount
+        let thick  = p.R * MochiConst.armThick * amount
+        let rim = self.rim
 
         // Body half-dims with current squash scale
-        let hwB = rx * sx
-        let hhB = ry * sy
+        let hwB = p.hw * p.sx
+        let hhB = p.hh * p.sy
 
-        let isWaving = now >= waveStart && waveStart > 0 && now < waveUntil
+        context.withCGContext { cg in
+            cg.saveGState()
+            cg.translateBy(x: p.cx, y: p.cy)
+            if p.tilt != 0 { cg.rotate(by: p.tilt) }
 
-        for sd in [-1.0, 1.0] {
-            var localX: CGFloat
-            var localY: CGFloat
-            var handRot: CGFloat = 0
-
-            if sd > 0 && isWaving {
-                // Right hand: rise to wave position over first 180ms, then oscillate
-                let wt = CGFloat(now - waveStart)
-                let rise = min(1.0, wt / 0.18)
-                let riseEased: CGFloat = 1 - pow(1 - rise, 3)   // easeOut cubic
-
-                // Rest position is lower-side; wave position is upper-side (at eye height)
-                let restX: CGFloat = hwB * 1.08
-                let restY: CGFloat = hhB * 0.70
-                let oscX = cos(13 * wt) * 0.06 * bodyH
-                let oscY = -sin(13 * wt) * 0.14 * bodyH
-                let waveX: CGFloat = hwB * 1.10 + oscX
-                let waveY: CGFloat = -hhB * 0.15 + oscY
-                localX = restX + (waveX - restX) * riseEased
-                localY = restY + (waveY - restY) * riseEased
-                handRot = (-0.5 + sin(13 * wt) * 0.35) * riseEased
-
-            } else if sd < 0 && isWaving {
-                // Left hand: gentle sway at rest position
-                let wt = CGFloat(now - waveStart)
-                localX = -hwB * 1.08
-                localY = hhB * 0.70 + sin(6 * wt) * 0.04 * bodyH
-
-            } else {
-                // Rest: lower-side, clearly peeking behind body bottom
-                localX = CGFloat(sd) * hwB * 1.08
-                localY = hhB * 0.70
+            for sd: CGFloat in [-1, 1] {
+                var raise = p.celebrate   // 0 = hanging at the side, 1 = raised
+                var swing: CGFloat = 0
+                if isWaving {
+                    if sd > 0 {
+                        // Right arm: rise to wave position over first 180ms, then oscillate
+                        let rise = min(1.0, wt / 0.18)
+                        raise = max(raise, 1 - pow(1 - rise, 3))   // easeOut cubic
+                        swing = sin(13 * wt) * 0.35 * raise
+                    } else {
+                        // Left arm: gentle sway at rest position
+                        swing = sin(6 * wt) * 0.10
+                    }
+                }
+                cg.saveGState()
+                // Shoulder sits just inside the outline so the arm grows out of the body
+                cg.translateBy(x: sd * hwB * (0.90 - 0.10 * raise), y: hhB * (0.42 - 0.62 * raise))
+                cg.scaleBy(x: sd, y: 1)
+                cg.rotate(by: 0.55 - 1.45 * raise + swing)
+                cg.translateBy(x: length * 0.42, y: 0)
+                YumiSkin.drawArm(cg, length: length, thickness: thick, R: p.R, rim: rim)
+                cg.restoreGState()
             }
-
-            // Apply body tilt to get world position
-            let cosT = cos(tilt), sinT = sin(tilt)
-            let worldX = cx + cosT * localX - sinT * localY
-            let worldY = cy + sinT * localX + cosT * localY
-
-            // Draw
-            var handCtx = context
-            handCtx.translateBy(x: worldX, y: worldY)
-            if handRot != 0 { handCtx.rotate(by: .radians(handRot)) }
-
-            let handRect = CGRect(x: -hew, y: -heh, width: hew * 2, height: heh * 2)
-            var handPath = Path()
-            handPath.addEllipse(in: handRect)
-
-            // Fill with body material (same gradient as body)
-            if let bc = bodyColor {
-                let c0 = mix3(cgColorToTuple(bc), (1, 1, 1), 0.35)
-                let c1 = cgColorToTuple(bc)
-                handCtx.fill(handPath, with: .linearGradient(
-                    Gradient(colors: [colorFromTuple(c0), colorFromTuple(c1)]),
-                    startPoint: CGPoint(x: hew * 0.7, y: -heh * 0.85),
-                    endPoint: CGPoint(x: -hew * 0.8, y: heh * 0.9)
-                ))
-            } else {
-                let c0 = cgColorToTuple(MochiConst.baseTop)
-                let c1 = cgColorToTuple(MochiConst.baseBottom)
-                handCtx.fill(handPath, with: .linearGradient(
-                    Gradient(colors: [colorFromTuple(c0), colorFromTuple(c1)]),
-                    startPoint: CGPoint(x: hew * 0.7, y: -heh * 0.85),
-                    endPoint: CGPoint(x: -hew * 0.8, y: heh * 0.9)
-                ))
-            }
-
-            // Subtle separation border — rgba(0,0,0,0.08) 1pt
-            handCtx.stroke(handPath, with: .color(Color.black.opacity(0.08)), lineWidth: 1)
+            cg.restoreGState()
         }
     }
 
     func drawHandsAndExtras(context: GraphicsContext, size: CGSize) {
-        let W = size.width
-        let H = size.height
-        let R = W * 0.3
-        let rx = R * 1.14
-        let ry = R * 0.88
-        let cx = W / 2 + ox * R
-        let cy = H / 2 + particleOverhang / 2 + oy * R + R * 0.06
+        let p = bodyPose(size)
 
         // Badge — hidden while morphing to mailbox
         if let badge = badge, badgeS > 0.01, morph < 0.25 {
-            drawBadge(context: context, size: size, badge: badge, R: R, rx: rx, ry: ry, cx: cx, cy: cy)
+            drawBadge(context: context, size: size, badge: badge, R: p.R, rx: p.hw, ry: p.hh, cx: p.cx, cy: p.cy)
         }
 
         // Particles
-        drawParticles(context: context, size: size, R: R, cx: cx, cy: cy)
+        drawParticles(context: context, size: size, R: p.R, cx: p.cx, cy: p.cy)
     }
 
     // MARK: - Private draw helpers
 
-    private func mochiPath(rx: CGFloat, ry: CGFloat, morph: CGFloat, R: CGFloat) -> Path {
-        let n = 72
-        let expN: CGFloat = 2.0 / 2.7
+    private func mochiPath(rx: CGFloat, ry: CGFloat, morph: CGFloat, R: CGFloat) -> CGPath {
         // Target mailbox dims (spec: 1.0R wide, 0.94R tall, 0.42R corner radius)
-        let tw = R * 1.0
-        let th = R * 0.94
-        let tr = R * 0.42
-        var path = Path()
-        for i in 0...n {
-            let a = CGFloat(i) / CGFloat(n) * .pi * 2
-            let ca = cos(a), sa = sin(a)
-            let px0 = rx * (ca >= 0 ? pow(ca, expN) : -pow(-ca, expN))
-            let py0 = ry * (sa >= 0 ? pow(sa, expN) : -pow(-sa, expN))
-            let px: CGFloat
-            let py: CGFloat
-            if morph < 0.005 {
-                px = px0; py = py0
-            } else {
-                let rr = rrPoint(ca: ca, sa: sa, W: tw, H: th, cr: tr)
-                px = lerp(px0, rr.x, morph)
-                py = lerp(py0, rr.y, morph)
-            }
-            if i == 0 { path.move(to: CGPoint(x: px, y: py)) }
-            else { path.addLine(to: CGPoint(x: px, y: py)) }
-        }
-        path.closeSubpath()
-        return path
-    }
-
-    /// Ray-rounded-rect intersection: find the point on the rounded rect boundary in direction (ca, sa).
-    private func rrPoint(ca: CGFloat, sa: CGFloat, W: CGFloat, H: CGFloat, cr: CGFloat) -> CGPoint {
-        let eps: CGFloat = 1e-6
-        let kx: CGFloat = ca >= 0 ? 1 : -1
-        let ky: CGFloat = sa >= 0 ? 1 : -1
-        let cx = kx * (W - cr)
-        let cy = ky * (H - cr)
-
-        // Try corner arc
-        let dot  = ca * cx + sa * cy
-        let disc = dot * dot - (cx*cx + cy*cy - cr*cr)
-        if disc >= 0 {
-            let t = dot + sqrt(disc)
-            if t > eps {
-                let px = ca * t, py = sa * t
-                if abs(px) >= W - cr - eps && abs(py) >= H - cr - eps {
-                    return CGPoint(x: px, y: py)
-                }
-            }
-        }
-
-        // Horizontal edge |y| = H
-        if abs(sa) > eps {
-            let t = (ky * H) / sa
-            if t > eps {
-                let x = ca * t
-                if abs(x) <= W - cr + eps { return CGPoint(x: x, y: ky * H) }
-            }
-        }
-        // Vertical edge |x| = W
-        if abs(ca) > eps {
-            let t = (kx * W) / ca
-            if t > eps {
-                let y = sa * t
-                if abs(y) <= H - cr + eps { return CGPoint(x: kx * W, y: y) }
-            }
-        }
-
-        return CGPoint(x: kx * W, y: ky * H)
-    }
-
-    private func drawBody(ctx: inout GraphicsContext, path: Path, R: CGFloat, rx: CGFloat, ry: CGFloat) {
-        if let bc = bodyColor {
-            // Mini bots: flat solid fill — no gradient, no reflection, no highlight
-            ctx.fill(path, with: .color(Color(cgColor: bc)))
-        } else {
-            // Main bot: linear gradient body
-            let c0 = cgColorToTuple(MochiConst.baseTop)
-            let c1 = cgColorToTuple(MochiConst.baseBottom)
-            ctx.fill(path, with: .linearGradient(
-                Gradient(colors: [colorFromTuple(c0), colorFromTuple(c1)]),
-                startPoint: CGPoint(x: rx*0.7, y: -ry*0.85),
-                endPoint: CGPoint(x: -rx*0.8, y: ry*0.9)
-            ))
-            // State tint — fades out as morph increases (mailbox has no tint)
-            let effectiveTint = tint * (1 - morph)
-            if effectiveTint > 0.01 {
-                let tc = colorFromTuple(col)
-                ctx.fill(path, with: .linearGradient(
-                    Gradient(stops: [
-                        .init(color: tc.opacity(Double(0.72 * effectiveTint)), location: 0),
-                        .init(color: tc.opacity(0), location: 1)
-                    ]),
-                    startPoint: CGPoint(x: 0, y: ry),
-                    endPoint: CGPoint(x: 0, y: -ry)
-                ))
-            }
-            // Shadow rim
-            ctx.fill(path, with: .radialGradient(
-                Gradient(stops: [
-                    .init(color: .clear, location: 0),
-                    .init(color: .clear, location: 0.6),
-                    .init(color: Color.black.opacity(0.2), location: 1)
-                ]),
-                center: .zero, startRadius: R*0.15, endRadius: R*1.25
-            ))
-            // Highlight
-            ctx.fill(path, with: .radialGradient(
-                Gradient(stops: [
-                    .init(color: Color.white.opacity(0.55), location: 0),
-                    .init(color: .clear, location: 1)
-                ]),
-                center: CGPoint(x: rx*0.34, y: -ry*0.46),
-                startRadius: 0,
-                endRadius: R*0.42
-            ))
-        }
-    }
-
-    private func drawBlush(ctx: inout GraphicsContext, path: Path, rx: CGFloat, ry: CGFloat, R: CGFloat, blush: CGFloat) {
-        ctx.clip(to: path)
-        let yOffset = sin(yaw) * rx * 0.8
-        for sd in [-1.0, 1.0] {
-            let bx = CGFloat(sd) * rx * 0.55 + yOffset
-            let by = ry * 0.2
-            var ellipse = Path()
-            ellipse.addEllipse(in: CGRect(x: bx - R*0.17, y: by - R*0.1, width: R*0.34, height: R*0.2))
-            ctx.fill(ellipse, with: .color(Color(red: 1, green: 0.471, blue: 0.588, opacity: Double(0.5 * blush))))
-        }
-    }
-
-    private func drawEyes(ctx: inout GraphicsContext, path: Path, R: CGFloat, rx: CGFloat, ry: CGFloat) {
-        var shape = eyeOverride ?? cfg.eye
-        // In box mode: cup eyes when file over box (slotHTarget set), happy arcs while chewing
-        if morph > 0.5 {
-            if isChewing { shape = .happy }
-            else if slotHTarget > 0.05 || slotH > 0.10 { shape = .cup }
-        }
-        ctx.clip(to: path)
-
-        for sd in [-1.0, 1.0] {
-            let eyeYaw   = CGFloat(sd) * MochiConst.eyeSp + yaw
-            var eyePitch = MochiConst.eyeP + pitch + roll
-            // Wrap pitch for roll-through effect
-            eyePitch = ((eyePitch + .pi).truncatingRemainder(dividingBy: .pi*2) + .pi*2).truncatingRemainder(dividingBy: .pi*2) - .pi
-
-            let cp = cos(eyePitch)
-            guard cos(eyeYaw) * cp > 0.04 else { continue }  // behind head
-
-            let ex = sin(eyeYaw) * cp * rx
-            let ey = -sin(eyePitch) * ry + (morph > 0 ? ry * 0.14 * morph : 0)
-
-            let fx = lerp(max(0.18, cos(eyeYaw)), 1, morph * 0.7)
-            let fy = lerp(max(0.18, cp),          1, morph * 0.7)
-
-            let eyeMult: CGFloat = isMini ? 1.9 : 1.0
-            let ew = R * MochiConst.eyeW * es * eyeMult
-            let eh = R * MochiConst.eyeH * es * eyeMult
-
-            var eyeCtx = ctx
-            eyeCtx.translateBy(x: ex, y: ey)
-            eyeCtx.scaleBy(x: fx, y: fy)
-            drawEyeShape(ctx: &eyeCtx, shape: shape, w: ew, h: eh, open: open, sd: CGFloat(sd), R: R)
-        }
-    }
-
-    private func drawEyeShape(ctx: inout GraphicsContext, shape: EyeShape, w: CGFloat, h: CGFloat, open: CGFloat, sd: CGFloat, R: CGFloat) {
-        let ink = isMini ? Color(cgColor: MochiConst.miniInk) : Color(cgColor: MochiConst.ink)
-        let now = CGFloat(CACurrentMediaTime())
-
-        switch shape {
-        case .wide:
-            drawEyeShape(ctx: &ctx, shape: .pill, w: w*1.16, h: h*1.12, open: open, sd: sd, R: R)
-
-        case .pill:
-            let hh = max(h * open, w * 0.3)
-            var p = Path()
-            p.addRoundedRect(in: CGRect(x: -w/2, y: -hh/2, width: w, height: hh),
-                             cornerSize: CGSize(width: min(w/2, hh/2), height: min(w/2, hh/2)))
-            ctx.fill(p, with: .color(ink))
-
-        case .dot:
-            var p = Path()
-            p.addEllipse(in: CGRect(x: -w*0.45, y: -w*0.45, width: w*0.9, height: w*0.9))
-            ctx.fill(p, with: .color(ink))
-
-        case .line:
-            ctx.rotate(by: .radians(-sd * 0.2))
-            var p = Path()
-            p.addRoundedRect(in: CGRect(x: -w*0.78, y: -w*0.21, width: w*1.56, height: w*0.42),
-                             cornerSize: CGSize(width: w*0.21, height: w*0.21))
-            ctx.fill(p, with: .color(ink))
-
-        case .flat:
-            var p = Path()
-            p.addRoundedRect(in: CGRect(x: -w*0.72, y: -w*0.2, width: w*1.44, height: w*0.4),
-                             cornerSize: CGSize(width: w*0.2, height: w*0.2))
-            ctx.fill(p, with: .color(ink))
-
-        case .happy:
-            var p = Path()
-            p.addArc(center: CGPoint(x: 0, y: h*0.18), radius: w*0.82,
-                     startAngle: .degrees(180 + 12), endAngle: .degrees(180 - 12), clockwise: true)
-            ctx.stroke(p, with: .color(ink), style: StrokeStyle(lineWidth: w*0.5, lineCap: .round))
-
-        case .closed:
-            var p = Path()
-            p.addArc(center: CGPoint(x: 0, y: -h*0.08), radius: w*0.78,
-                     startAngle: .degrees(15), endAngle: .degrees(165), clockwise: false)
-            ctx.stroke(p, with: .color(ink), style: StrokeStyle(lineWidth: w*0.36, lineCap: .round))
-
-        case .spiral:
-            var p = Path()
-            var a: CGFloat = 0
-            while a < 4.4 * .pi {
-                let r  = w * 0.06 + a * w * 0.058
-                let aa = a + now * 9 * sd
-                let px = cos(aa) * r
-                let py = sin(aa) * r
-                if a == 0 { p.move(to: CGPoint(x: px, y: py)) }
-                else { p.addLine(to: CGPoint(x: px, y: py)) }
-                a += 0.2
-            }
-            ctx.stroke(p, with: .color(ink), style: StrokeStyle(lineWidth: w*0.22, lineCap: .round))
-
-        case .heart:
-            let heartPath = heartShape(size: w * 1.2)
-            ctx.fill(heartPath, with: .color(Color(hex: "#FF4D6D")))
-
-        case .star:
-            ctx.rotate(by: .radians(now * 1.5 * sd))
-            let starPath = starShape(outer: w * 1.05, inner: w * 0.46)
-            ctx.fill(starPath, with: .color(Color(hex: "#F7B32B")))
-
-        case .tired:
-            var p1 = Path()
-            p1.addRoundedRect(in: CGRect(x: -w/2, y: -h*0.02, width: w, height: h*0.38),
-                              cornerSize: CGSize(width: w/2, height: w/2))
-            ctx.fill(p1, with: .color(ink))
-            var p2 = Path()
-            p2.addRoundedRect(in: CGRect(x: -w*0.62, y: -h*0.1, width: w*1.24, height: w*0.22),
-                              cornerSize: CGSize(width: w*0.11, height: w*0.11))
-            ctx.fill(p2, with: .color(ink))
-
-        case .wink:
-            if sd < 0 {
-                let hh = max(h * open, w * 0.3)
-                var p = Path()
-                p.addRoundedRect(in: CGRect(x: -w/2, y: -hh/2, width: w, height: hh),
-                                 cornerSize: CGSize(width: min(w/2,hh/2), height: min(w/2,hh/2)))
-                ctx.fill(p, with: .color(ink))
-            } else {
-                var p = Path()
-                p.addArc(center: CGPoint(x: 0, y: h*0.18), radius: w*0.82,
-                         startAngle: .degrees(180+12), endAngle: .degrees(180-12), clockwise: true)
-                ctx.stroke(p, with: .color(ink), style: StrokeStyle(lineWidth: w*0.5, lineCap: .round))
-            }
-
-        case .cup:
-            // Flat top, rounded bottom corners (like a cup / U-shape)
-            let hh = max(h * open, w * 0.3)
-            let cr = min(w / 2, hh / 2)  // bottom corner radius
-            var p = Path()
-            p.move(to: CGPoint(x: -w/2, y: -hh/2))
-            p.addLine(to: CGPoint(x: w/2, y: -hh/2))
-            p.addLine(to: CGPoint(x: w/2, y: hh/2 - cr))
-            p.addQuadCurve(to: CGPoint(x: w/2 - cr, y: hh/2),
-                           control: CGPoint(x: w/2, y: hh/2))
-            p.addLine(to: CGPoint(x: -w/2 + cr, y: hh/2))
-            p.addQuadCurve(to: CGPoint(x: -w/2, y: hh/2 - cr),
-                           control: CGPoint(x: -w/2, y: hh/2))
-            p.closeSubpath()
-            ctx.fill(p, with: .color(ink))
-        }
+        YumiSkin.bodyPath(hw: rx, hh: ry, morph: morph,
+                          boxHW: R * YumiSkin.boxHW, boxHH: R * YumiSkin.boxHH, boxCorner: R * YumiSkin.boxCorner)
     }
 
     private func drawBadge(context: GraphicsContext, size: CGSize, badge: BadgeType, R: CGFloat, rx: CGFloat, ry: CGFloat, cx: CGFloat, cy: CGFloat) {
@@ -1346,7 +1538,7 @@ final class BotEngine: ObservableObject {
                 drop.addQuadCurve(to: CGPoint(x: 0, y: -sz), control: CGPoint(x: -sz*0.8, y: sz*0.2))
                 pctx.fill(drop, with: .color(Color(hex: "#7CC7FF")))
             case .z:
-                pctx.draw(Text("z").font(.system(size: sz*1.9, weight: .bold)).foregroundColor(Color(red: 0.82, green: 0.86, blue: 0.92)),
+                pctx.draw(Text("z").font(.system(size: sz*1.9, weight: .bold)).foregroundColor(Color(red: 0.357, green: 0.549, blue: 1)),
                           at: .zero)
             }
         }
@@ -1432,10 +1624,6 @@ private func mixColor(_ a: (CGFloat,CGFloat,CGFloat), _ b: (CGFloat,CGFloat,CGFl
     mix3(a, b, t)
 }
 
-private func colorFromTuple(_ t: (CGFloat,CGFloat,CGFloat)) -> Color {
-    Color(red: Double(t.0), green: Double(t.1), blue: Double(t.2))
-}
-
 private func badgeString(_ b: BadgeType?) -> String {
     guard let b else { return "none" }
     func hex(_ c: CGColor) -> String {
@@ -1459,6 +1647,29 @@ private func emoteEyeShape(_ e: BotEmote) -> EyeShape {
     case .yawn:      return .tired
     case .happy:     return .happy
     case .annoyed:   return .line
+    }
+}
+
+/// Which expression of the concept sheet each eye shape stands for.
+private func yumiExpression(_ shape: EyeShape) -> YumiExpression {
+    switch shape {
+    case .pill:       return .neutral
+    case .wide, .dot: return .surprised
+    case .line:       return .annoyed
+    case .flat:       return .worried
+    case .happy:      return .happy
+    case .closed:     return .asleep
+    case .spiral:     return .confused
+    case .heart:      return .love
+    case .star:       return .proud
+    case .tired:      return .drowsy
+    case .wink:       return .wink
+    case .cup:        return .eager
+    case .focused:    return .focused
+    case .thoughtful: return .thoughtful
+    case .curious:    return .curious
+    case .panicked:   return .panicked
+    case .content:    return .content
     }
 }
 
