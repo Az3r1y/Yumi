@@ -290,123 +290,53 @@ struct UploadCanvasView: View {
         cCtx.draw(btn2, at: CGPoint(x:350, y:126), anchor: .center)
     }
 
-    // MARK: - Mochi (superellipse body + eyes + mouth)
+    // MARK: - Mochi (body + eyes + mouth)
 
     private func drawMochi(ctx: inout GraphicsContext, f: USFrame) {
         let R  = f.d / 2 / 1.04
         let m  = f.morph
         let mc = max(0, min(m, 1.0))
 
-        var c = ctx
-        c.concatenate(CGAffineTransform(translationX: CGFloat(f.x), y: CGFloat(f.y + f.hop)))
-        c.concatenate(CGAffineTransform(rotationAngle: CGFloat(f.tilt)))
-        c.concatenate(CGAffineTransform(scaleX: CGFloat(f.sx), y: CGFloat(f.sy)))
-
         let (bp, rx, ry) = usBodyPath(m: m, R: R)
-
-        // ── Body gradient ──────────────────────────────────────────
-        let bodyGrad = Gradient(stops:[
-            .init(color: Color(hex:"#EDEDEF"), location:0),
-            .init(color: Color(hex:"#C4C5CA"), location:1)
-        ])
-        c.fill(bp, with: .linearGradient(bodyGrad,
-            startPoint:  CGPoint(x:  rx*0.7, y: -ry*0.9),
-            endPoint:    CGPoint(x: -rx*0.8, y:  ry*0.9)))
-
-        // ── Edge shadow ────────────────────────────────────────────
-        let shadowGrad = Gradient(stops:[
-            .init(color: .clear, location:0),
-            .init(color: .clear, location:0.62),
-            .init(color: Color.black.opacity(0.12), location:1)
-        ])
-        c.fill(bp, with: .radialGradient(shadowGrad,
-            center: CGPoint(x:0,y:0), startRadius: CGFloat(R*0.2), endRadius: CGFloat(R*1.3)))
-
-        // ── Top rim (box mode) ─────────────────────────────────────
-        if mc > 0.3 {
-            let rimAlpha = max(0, min(1, (mc-0.3)/0.7))
-            var rimCtx = c
-            rimCtx.clip(to: bp)
-            var rim = Path()
-            rim.move(to: CGPoint(x: -rx*0.72, y: -ry+0.9))
-            rim.addLine(to: CGPoint(x: rx*0.72,  y: -ry+0.9))
-            rimCtx.stroke(rim, with: .color(Color.white.opacity(0.6*rimAlpha)),
-                          style: StrokeStyle(lineWidth:1.2, lineCap:.round))
-        }
+        let body = bp.cgPath
+        // Unit of the shared drawing: the dome is as wide as the diameter f.d
+        let unit = CGFloat(f.d / 2) / YumiSkin.bodyHW
+        // Rim light: resting gradient, pulled to green while a file is over the zone or uploading
+        let rim = YumiRim.idle.mix(.solid(YumiRGB(hex: 0x34D399)), CGFloat(min(1, f.greenWash * 1.6)))
 
         // ── Mouth hole ─────────────────────────────────────────────
         let mh = f.mouth * R * mc
-        if mh > 0.3 {
-            let mw  = 2*rx - 0.24*R
-            let mxO = CGFloat(-mw/2)
-            let myO = CGFloat(-ry + 0.10*R)
-            let mhr = CGFloat(min(mw/2, mh/2))
-            var mCtx = c
-            mCtx.clip(to: bp)
-            let holeGrad = Gradient(stops:[
-                .init(color: Color(red:0.012,green:0.012,blue:0.016), location:0),
-                .init(color: Color(red:0.063,green:0.067,blue:0.078), location:1)
-            ])
-            let holePath = roundedRect(CGRect(x:mxO, y:myO, width:CGFloat(mw), height:CGFloat(mh)), r:Double(mhr))
-            mCtx.fill(holePath, with: .linearGradient(holeGrad,
-                startPoint: CGPoint(x:0, y:myO),
-                endPoint:   CGPoint(x:0, y:myO+CGFloat(mh))))
-            // Bottom lip
-            if mh > 4 {
-                var lip = Path()
-                lip.move(to:    CGPoint(x:mxO+mhr,              y:myO+CGFloat(mh)+0.5))
-                lip.addLine(to: CGPoint(x:mxO+CGFloat(mw)-mhr,  y:myO+CGFloat(mh)+0.5))
-                mCtx.stroke(lip, with: .color(Color.white.opacity(0.55)),
-                            style: StrokeStyle(lineWidth:1, lineCap:.round))
-            }
-        }
+        let mw = 2*rx - 0.24*R
+        let mouth = CGRect(x: -mw/2, y: -ry + 0.10*R, width: mw, height: mh)
 
         // ── Eyes ───────────────────────────────────────────────────
-        let ew = R * 0.25
-        let eh = R * (0.62 - 0.16*mc)
-        let ey = R * (0.02 + 0.28*mc)
-        let sp = R * 0.30
-        let lx = f.lookX * R * (0.34 - 0.08*mc)
-        let ly = f.lookY * R * (0.16 - 0.09*mc)
-
-        var eCtx = c
-        eCtx.clip(to: bp)
-        for sd in [-1.0, 1.0] {
-            var ec = eCtx
-            ec.concatenate(CGAffineTransform(translationX: CGFloat(sd*sp+lx), y: CGFloat(ey+ly)))
-            drawEyeShape(ctx: &ec, shape: f.eye, w: CGFloat(ew), h: CGFloat(eh))
+        let eyes: YumiEyes
+        switch f.eye {
+        case .pill:    eyes = YumiExpression.neutral.eyes()
+        case .cup:     eyes = YumiExpression.eager.eyes()
+        case .content: eyes = YumiExpression.content.eyes()
         }
-    }
+        // In box mode the eyes sit lower, under the mouth
+        let faceOffset = CGPoint(x: f.lookX * Double(unit) * 0.16, y: f.lookY * Double(unit) * 0.10 + R * 0.24 * mc)
 
-    // MARK: - Eye shapes
+        ctx.withCGContext { cg in
+            cg.saveGState()
+            cg.translateBy(x: CGFloat(f.x), y: CGFloat(f.y + f.hop))
+            cg.rotate(by: CGFloat(f.tilt))
+            cg.scaleBy(x: CGFloat(f.sx), y: CGFloat(f.sy))
 
-    private func drawEyeShape(ctx: inout GraphicsContext, shape: USEyeShape, w: CGFloat, h: CGFloat) {
-        let ink = Color(red:0.055,green:0.059,blue:0.071)
-        switch shape {
-        case .pill:
-            var p = Path()
-            p.addRoundedRect(in: CGRect(x:-w/2, y:-h/2, width:w, height:h),
-                             cornerSize: CGSize(width:w/2, height:w/2))
-            ctx.fill(p, with: .color(ink))
+            YumiSkin.drawBody(cg, path: body, hw: CGFloat(rx), hh: CGFloat(ry), R: unit, rim: rim, glow: 0.7)
 
-        case .cup:
-            // Flat top + semicircle bottom (cup shape)
-            let hh = h * 0.55
-            var p = Path()
-            p.move(to: CGPoint(x:-w/2, y:-hh/2))
-            p.addLine(to: CGPoint(x: w/2, y:-hh/2))
-            p.addLine(to: CGPoint(x: w/2, y: hh/2-w/2))
-            p.addArc(center: CGPoint(x:0, y:hh/2-w/2), radius:w/2, startAngle:.degrees(0), endAngle:.degrees(180), clockwise:false)
-            p.closeSubpath()
-            ctx.fill(p, with: .color(ink))
+            cg.saveGState()
+            cg.addPath(body)
+            cg.clip()
+            YumiSkin.drawEyes(cg, R: unit, eyes: eyes, gaze: CGPoint(x: f.lookX, y: f.lookY), offset: faceOffset)
+            cg.restoreGState()
 
-        case .content:
-            // Upward arc (content / happy)
-            var p = Path()
-            p.addArc(center: CGPoint(x:0, y:-h*0.12), radius:w*0.85,
-                     startAngle:.degrees(180*0.15), endAngle:.degrees(180*0.85), clockwise:false)
-            ctx.stroke(p, with: .color(ink),
-                       style: StrokeStyle(lineWidth:w*0.5, lineCap:.round))
+            if mh > 0.3 {
+                YumiSkin.drawMouth(cg, body: body, rect: mouth, rim: rim)
+            }
+            cg.restoreGState()
         }
     }
 
@@ -552,24 +482,26 @@ private func drawDocCG(cg: CGContext, cx: Double, cy: Double, wsc: Double, hsc: 
     cg.fillPath()
 }
 
-// MARK: - Superellipse body path (port of reference bodyPath(m, R))
+// MARK: - Body path (dome at m = 0, box with a mouth on top at m = 1)
+
+/// Half-size of the body for morph `m`. R is the half-size of the box; the dome is 1.04 R wide,
+/// so that its width equals the diameter `d` of the sequence.
+func usBodyHalf(m: Double, R: Double) -> (rx: Double, ry: Double) {
+    let mc = max(0, min(m, 1.0))
+    let domeHW = R * 1.04
+    let domeHH = domeHW * Double(YumiSkin.bodyHH / YumiSkin.bodyHW)
+    return (domeHW + (R * Double(YumiSkin.boxHW) - domeHW) * mc,
+            domeHH + (R * Double(YumiSkin.boxHH) - domeHH) * mc)
+}
 
 func usBodyPath(m: Double, R: Double) -> (path: Path, rx: Double, ry: Double) {
     let mc = max(0, min(m, 1.0))
-    let n  = 2.15 + (5.5-2.15)*mc
-    let rx = R * (1.04 - 0.04*mc)
-    let ry = R * (0.97 - 0.03*mc)
-    var path = Path()
-    for i in 0...96 {
-        let a  = Double(i)/96 * .pi*2
-        let ca = cos(a), sa = sin(a)
-        let px = rx * (ca<0 ? -1 : ca>0 ? 1 : 0) * pow(abs(ca), 2/n)
-        let py = ry * (sa<0 ? -1 : sa>0 ? 1 : 0) * pow(abs(sa), 2/n)
-        if i == 0 { path.move(to:    CGPoint(x:px,y:py)) }
-        else       { path.addLine(to: CGPoint(x:px,y:py)) }
-    }
-    path.closeSubpath()
-    return (path, rx, ry)
+    let dome = usBodyHalf(m: 0, R: R)
+    let (rx, ry) = usBodyHalf(m: m, R: R)
+    let path = YumiSkin.bodyPath(hw: CGFloat(dome.rx), hh: CGFloat(dome.ry), morph: CGFloat(mc),
+                                 boxHW: CGFloat(R) * YumiSkin.boxHW, boxHH: CGFloat(R) * YumiSkin.boxHH,
+                                 boxCorner: CGFloat(R) * YumiSkin.boxCorner)
+    return (Path(path), rx, ry)
 }
 
 // MARK: - Rounded rect helper (mirrors reference rr())
