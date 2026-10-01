@@ -144,26 +144,26 @@ private enum PlayerScripting {
     ///   instead of showing the system dialog.
     static func run(_ source: String, on player: MusicPlayer, askingFirst: Bool,
                     completion: @escaping @Sendable (Result<String, Failure>) -> Void) {
+        let allowedKey = "playerAllowed.\(player.rawValue)"
+        // The system can tell whether the permission was granted (AEDeterminePermissionToAutomateTarget),
+        // but that call sometimes never returns, and it held every later pause and next behind it
+        // on this queue. Yumi remembers instead that a command to this player went through.
+        if !askingFirst, !UserDefaults.standard.bool(forKey: allowedKey) {
+            completion(.failure(.notAllowed))
+            return
+        }
         queue.async {
-            if !askingFirst, !isAlreadyAllowed(player) {
-                completion(.failure(.notAllowed))
-                return
-            }
             var error: NSDictionary?
             let output = NSAppleScript(source: source)?.executeAndReturnError(&error)
             if let error {
                 let code = error[NSAppleScript.errorNumber] as? Int
+                if code == notAuthorized { UserDefaults.standard.set(false, forKey: allowedKey) }
                 completion(.failure(code == notAuthorized ? .notAllowed : .failed))
             } else {
+                UserDefaults.standard.set(true, forKey: allowedKey)
                 completion(.success(output?.stringValue ?? ""))
             }
         }
-    }
-
-    /// True when the user already allowed Yumi to control the player.
-    private static func isAlreadyAllowed(_ player: MusicPlayer) -> Bool {
-        let target = NSAppleEventDescriptor(bundleIdentifier: player.rawValue)
-        return AEDeterminePermissionToAutomateTarget(target.aeDesc, typeWildCard, typeWildCard, false) == noErr
     }
 }
 #endif

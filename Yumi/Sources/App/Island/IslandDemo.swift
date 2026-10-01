@@ -13,7 +13,7 @@ enum IslandDemo {
 
     static func startIfRequested(controller: IslandWindowController) {
         let env = ProcessInfo.processInfo.environment
-        guard !started, env["YUMI_ISLAND_SHOTS"] != nil || env["YUMI_ISLAND_VIEW"] != nil || env["YUMI_ISLAND_ASK"] != nil else { return }
+        guard !started, env["YUMI_ISLAND_SHOTS"] != nil || env["YUMI_ISLAND_VIEW"] != nil || env["YUMI_ISLAND_ASK"] != nil || env["YUMI_ISLAND_ACTION"] != nil else { return }
         started = true
         // Nothing folds the island while it is being looked at
         controller.holdsOpen = true
@@ -28,6 +28,15 @@ enum IslandDemo {
                 await pause(1); shot(controller, "5-live-hover")
                 controller.demoHover = false
                 await pause(1); shot(controller, "5-live-b")
+                NSApp.terminate(nil)
+            } else if let action = env["YUMI_ISLAND_ACTION"] {
+                // "music:primary": the same notification as a module button, after a wait
+                await pause(Double(env["YUMI_ISLAND_WAIT"] ?? "") ?? 8)
+                let parts = action.split(separator: ":").map(String.init)
+                let live = AppState.shared.modules.map { "\($0.id)=\($0.live?.text ?? "-")" }.joined(separator: ", ")
+                print("YUMI modules: \(live)")
+                if parts.count == 2 { IslandActions.liveControl(parts[0], parts[1]) }
+                await pause(Double(env["YUMI_ISLAND_AFTER"] ?? "") ?? 4)
                 NSApp.terminate(nil)
             } else if let question = env["YUMI_ISLAND_ASK"] {
                 // A real request, through the chat service, with a picture every half second
