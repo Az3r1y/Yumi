@@ -957,15 +957,7 @@ struct IntegrationCardView: View {
 
     private var isConfigured: Bool {
         switch task.id {
-        case "integration_claude":
-            let url = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/settings.json")
-            guard let data = try? Data(contentsOf: url),
-                  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-                  let hooks = json["hooks"] as? [String: Any],
-                  let ss = hooks["SessionStart"] as? [[String: Any]] else { return false }
-            return ss.contains { ($0["hooks"] as? [[String: Any]])?.contains {
-                ($0["command"] as? String)?.contains("NotchBuddy") == true
-            } ?? false }
+        case "integration_claude":  return HookServer.hooksInstalled()
         case "integration_resend":  return KeychainStore.shared.get("resend-api-key") != nil
         case "integration_n8n":     return KeychainStore.shared.get("n8n-api-key")    != nil
         case "integration_vercel":  return KeychainStore.shared.get("vercel-token")   != nil
@@ -2681,19 +2673,7 @@ struct SendButtonStyle: ButtonStyle {
 struct SettingsIslandView: View {
     @ObservedObject var state: AppState
 
-    private var claudeConnected: Bool {
-        let url = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".claude/settings.json")
-        guard let data = try? Data(contentsOf: url),
-              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let hooks = json["hooks"] as? [String: Any],
-              let ss = hooks["SessionStart"] as? [[String: Any]] else { return false }
-        return ss.contains { matcher in
-            (matcher["hooks"] as? [[String: Any]])?.contains {
-                ($0["command"] as? String)?.contains("NotchBuddy") == true
-            } ?? false
-        }
-    }
+    private var claudeConnected: Bool { HookServer.hooksInstalled() }
 
     private var apiConnected: Bool {
         KeychainStore.shared.get("anthropic-api-key") != nil

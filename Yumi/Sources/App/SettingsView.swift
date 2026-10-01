@@ -82,7 +82,7 @@ struct SettingsView: View {
                         }
                         #if APPSTORE
                         if claudeAccessGranted {
-                            Text("~/.claude/coucou/nb-hook")
+                            Text("~/.claude/\(AppIdentity.appStoreHookScriptRelativePath)")
                                 .font(.system(size: 11, design: .monospaced))
                                 .foregroundColor(.secondary)
                             HStack(spacing: 10) {
@@ -92,14 +92,14 @@ struct SettingsView: View {
                                     .buttonStyle(.bordered)
                             }
                         } else {
-                            Text("Choose your ~/.claude folder so Coucou can add its hooks.")
+                            Text("Choose your ~/.claude folder so \(AppIdentity.productName) can add its hooks.")
                                 .font(.system(size: 12))
                                 .foregroundColor(.secondary)
                             Button("Choose .claude folder…") { chooseClaudeFolder() }
                                 .buttonStyle(.borderedProminent)
                         }
                         #else
-                        Text("nb-hook : \(HookServer.hookScriptPath)")
+                        Text("\(AppIdentity.hookScriptName) : \(HookServer.hookScriptPath)")
                             .font(.system(size: 11, design: .monospaced))
                             .foregroundColor(.secondary)
                         HStack(spacing: 10) {
@@ -373,7 +373,7 @@ struct SettingsView: View {
     #if APPSTORE
     private func chooseClaudeFolder() {
         let panel = NSOpenPanel()
-        panel.message = "Choose your .claude folder so Coucou can add its hooks"
+        panel.message = "Choose your .claude folder so \(AppIdentity.productName) can add its hooks"
         panel.prompt = "Choose"
         panel.canChooseFiles = false
         panel.canChooseDirectories = true

@@ -256,10 +256,9 @@ final class N8nPoller: @unchecked Sendable {
     // MARK: - Logging
 
     private func n8nLog(_ message: String) {
-        let logsDir = FileManager.default.urls(for: .libraryDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Logs/NotchBuddy")
+        let logsDir = AppIdentity.logsDirectory
         try? FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
-        let logFile = logsDir.appendingPathComponent("n8n.log")
+        let logFile = logsDir.appendingPathComponent(AppIdentity.n8nLogFileName)
         let f = DateFormatter(); f.dateFormat = "HH:mm:ss"
         let line = "\(f.string(from: Date())) · \(message)\n"
         guard let data = line.data(using: .utf8) else { return }
