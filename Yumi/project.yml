@@ -19,7 +19,7 @@ settings:
       CODE_SIGNING_REQUIRED: YES
       CODE_SIGNING_ALLOWED: YES
       CODE_SIGN_IDENTITY: "Developer ID Application"
-      # DEVELOPMENT_TEAM: set before the first signed release
+      # DEVELOPMENT_TEAM is not set here: scripts/release.sh passes it from YUMI_TEAM_ID.
       OTHER_CODE_SIGN_FLAGS: "--timestamp"
       CODE_SIGN_ENTITLEMENTS: Resources/Yumi.entitlements
 
