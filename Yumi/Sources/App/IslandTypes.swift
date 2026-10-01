@@ -195,7 +195,7 @@ enum IslandConst {
     /// Zoom of the launch (the drop and the greeting).
     static let launchScale: CGFloat = 1.25
     static let openHeightDefault: CGFloat = 150
-    static let openHeightMax: CGFloat = 300
+    static let openHeightMax: CGFloat = 340
     /// Left column of the open island: Yumi's seat and his caption.
     static let seatColumn: CGFloat = 96
     // The mock-up packs the open island tightly (8 pt above, 82 pt seat, 4 pt between lines).

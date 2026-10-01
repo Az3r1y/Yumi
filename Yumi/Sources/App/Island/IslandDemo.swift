@@ -13,7 +13,7 @@ enum IslandDemo {
 
     static func startIfRequested(controller: IslandWindowController) {
         let env = ProcessInfo.processInfo.environment
-        guard !started, env["YUMI_ISLAND_SHOTS"] != nil || env["YUMI_ISLAND_VIEW"] != nil else { return }
+        guard !started, env["YUMI_ISLAND_SHOTS"] != nil || env["YUMI_ISLAND_VIEW"] != nil || env["YUMI_ISLAND_ASK"] != nil else { return }
         started = true
         // Nothing folds the island while it is being looked at
         controller.holdsOpen = true
@@ -28,6 +28,17 @@ enum IslandDemo {
                 await pause(1); shot(controller, "5-live-hover")
                 controller.demoHover = false
                 await pause(1); shot(controller, "5-live-b")
+                NSApp.terminate(nil)
+            } else if let question = env["YUMI_ISLAND_ASK"] {
+                // A real request, through the chat service, with a picture every half second
+                await pause(6.2)
+                controller.expand(to: .prompt)
+                await pause(0.8)
+                IslandActions.send(question)
+                for i in 0..<(Int(env["YUMI_ISLAND_WAIT"] ?? "") ?? 60) {
+                    await pause(0.5)
+                    shot(controller, String(format: "7-ask-%03d", i))
+                }
                 NSApp.terminate(nil)
             } else if env["YUMI_ISLAND_VIEW"] == "chat-live" {
                 await pause(6.2)
