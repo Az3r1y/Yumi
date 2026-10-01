@@ -148,8 +148,16 @@ import Foundation
     @Test func agendaOffersToJoinWhenThereIsALink() {
         let live = AgendaSummary.snapshot(events: [event("Point produit", date(1, 14, 30), join: "https://meet.google.com/abc")],
                                           access: .granted, now: date(1, 14, 40), calendar: calendar).live
-        #expect(live?.text == "14:30 Point produit")
+        #expect(live?.text == "En cours : Point produit")
         #expect(live?.controls == [ModuleControl(id: "primary", symbol: "video.fill", label: "Rejoindre")])
+    }
+
+    @Test func agendaAnnouncesWhatComesNextRatherThanWhatIsRunning() {
+        let events = [event("Atelier", date(1, 10), join: "https://meet.google.com/abc"), event("Déjeuner", date(1, 12, 30))]
+        let live = AgendaSummary.snapshot(events: events, access: .granted, now: date(1, 10, 10), calendar: calendar).live
+        #expect(live?.text == "12:30 Déjeuner")
+        // The button would join the workshop, not the lunch: it is not offered.
+        #expect(live?.controls.isEmpty == true)
     }
 
     @Test func agendaIsSilentWithoutAnEventToday() {

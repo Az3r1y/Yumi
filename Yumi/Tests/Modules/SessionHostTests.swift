@@ -29,9 +29,10 @@ import Foundation
     }
 
     @Test func aSessionInAnEditorIsShownInThatEditor() {
-        let cursor = SessionOrigin(hostBundleID: "com.todesktop.230313mzl4w4u92.cursor")
+        let cursor = SessionOrigin(hostBundleID: "com.todesktop.230313mzl4w4u92")
         #expect(SessionHost.editor(for: cursor, preferred: "dev.zed.Zed", running: ["com.microsoft.VSCode"], isInstalled: { _ in true })
-                == "com.todesktop.230313mzl4w4u92.cursor")
+                == "com.todesktop.230313mzl4w4u92")
+        #expect(SessionHost.kind(of: cursor) == .editor)
     }
 
     @Test func aSessionOutsideAnEditorIsShownInTheUsersEditor() {

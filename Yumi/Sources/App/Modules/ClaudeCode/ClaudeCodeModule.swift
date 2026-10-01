@@ -41,7 +41,11 @@ final class ClaudeCodeModule: YumiModule {
         case .primary:
             // A pending approval is answered in the island. Otherwise "Voir" shows the work itself:
             // the project, in the code editor.
-            if case .requestingPermission = session.activity {
+            let approvalPending = sessions.contains {
+                if case .requestingPermission = $0.activity { return true }
+                return false
+            }
+            if approvalPending {
                 onShow()
             } else if !showProject(of: session), !Self.bringToFront(session.origin) {
                 onShow()

@@ -84,7 +84,7 @@ struct FocusTimer: Equatable, Sendable {
 
 extension FocusTimer {
     /// Seconds a phase change keeps asking for attention.
-    private static let attentionSpan: TimeInterval = 10
+    static let attentionSpan: TimeInterval = 10
 
     func snapshot(now: Date) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "prêt",

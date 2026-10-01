@@ -35,6 +35,8 @@ enum SessionReducer {
             sessions[id]?.isTurnActive = true
 
         case .toolStarted(let id, let tool):
+            // Another tool of the same session (a sub-agent) must not hide a request still waiting.
+            if case .requestingPermission = sessions[id]?.activity { break }
             sessions[id]?.activity = .working(tool)
             sessions[id]?.status = .running
             sessions[id]?.isTurnActive = true

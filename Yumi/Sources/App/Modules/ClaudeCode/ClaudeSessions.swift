@@ -119,8 +119,8 @@ enum SessionHost {
     }
 
     static func isEditor(_ origin: SessionOrigin?) -> Bool {
-        guard let id = bundleID(for: origin)?.lowercased() else { return false }
-        return editorMarkers.contains { id.contains($0) }
+        guard let id = bundleID(for: origin) else { return false }
+        return knownEditors.contains(id) || editorMarkers.contains { id.lowercased().contains($0) }
     }
 
     /// What kind of application hosts the session, or nil when it is unknown.

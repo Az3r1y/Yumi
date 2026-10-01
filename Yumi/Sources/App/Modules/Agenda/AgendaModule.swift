@@ -33,12 +33,12 @@ final class AgendaModule: YumiModule {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.reload() }
         }
-        // "dans 12 min" changes every minute. Without the permission there is nothing to count down.
+        // "dans 12 min" changes every minute. Without the permission a tick costs nothing.
         ticking = Task { [weak self] in
             while !Task.isCancelled {
                 guard let self else { return }
                 self.reload()
-                let wait: Double = self.access == .granted ? 60 - Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 60) : 600
+                let wait = 60 - Date().timeIntervalSince1970.truncatingRemainder(dividingBy: 60)
                 try? await Task.sleep(for: .seconds(wait), tolerance: .seconds(1))
             }
         }

@@ -122,8 +122,9 @@ final class MusicModule: YumiModule {
             guard case .success(let text) = result else { return }
             let update = MusicSummary.update(fromScriptResult: text, player: player)
             Task { @MainActor in
-                // A stopped player says nothing new; do not erase what a notification already told.
-                if case .track = update { self?.receive(update) }
+                // Only a track that is playing is news: a stopped player says nothing, and a track
+                // found paused was paused at an unknown time, not just now.
+                if case .track(let track) = update, track.isPlaying { self?.receive(update) }
             }
         }
         #endif
