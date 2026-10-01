@@ -226,10 +226,18 @@ struct IslandTalkView: View {
     @ObservedObject var state: AppState
     @State private var text = ""
     @State private var listHeight: CGFloat = 0
+    /// The reader is at the bottom of the conversation: it follows what arrives.
+    @State private var atBottom = true
+    /// The text of the answer in progress, remembered as it grows. When the answer ends it
+    /// stays on screen until the reply shows up in the history, so that the live bubble
+    /// becomes the final one without a blank in between.
+    @State private var held: String?
     @FocusState private var focused: Bool
 
-    /// The island never grows past `IslandConst.openHeightMax`: older lines scroll.
-    private let listLimit: CGFloat = 132
+    /// The island grows with the conversation up to `IslandConst.openHeightMax`; past
+    /// that, older lines scroll.
+    private let listLimit: CGFloat = 170
+    private static let bottomID = "bottom"
 
     private struct Line: Identifiable {
         let id: String
@@ -243,9 +251,12 @@ struct IslandTalkView: View {
             out.append(Line(id: "note", mine: false, text: note))
         }
         if out.isEmpty { out.append(Line(id: "hello", mine: false, text: "Je t'écoute.")) }
-        if state.stateOverride == .thinking { out.append(Line(id: "typing", mine: false, text: "…")) }
         return out
     }
+
+    /// The answer being made, or the text of the one that just ended and is not in the
+    /// history yet.
+    private var live: ChatLive? { state.chatLive ?? held.map { ChatLive(text: $0) } }
 
     private var contextName: String? {
         switch state.promptContext {
@@ -275,16 +286,45 @@ struct IslandTalkView: View {
                         ForEach(lines) { line in
                             bubble(line).id(line.id)
                         }
+                        if let live {
+                            ChatLiveView(live: live, running: state.chatLive != nil)
+                        } else if state.stateOverride == .thinking {
+                            // The core has not started the live answer yet
+                            ChatLiveView(live: ChatLive())
+                        }
+                        Color.clear.frame(height: 0).id(Self.bottomID)
                     }
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { listHeight = $0 }
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                        listHeight = height
+                        if atBottom { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+                    }
                 }
                 .frame(height: min(max(listHeight, 1), listLimit))
-                .onChange(of: lines.last?.id) { _, last in
-                    if let last { withAnimation(.islandEase(0.2)) { proxy.scrollTo(last, anchor: .bottom) } }
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    LiveChat.followsBottom(offset: geometry.contentOffset.y + geometry.contentInsets.top,
+                                           viewport: geometry.containerSize.height,
+                                           content: geometry.contentSize.height)
+                } action: { _, follows in
+                    atBottom = follows
                 }
-                .onAppear {
-                    if let last = lines.last?.id { proxy.scrollTo(last, anchor: .bottom) }
+                .onChange(of: state.chatHistory.count) { _, _ in
+                    // A message sent or received: back to the last line, and the answer
+                    // that was held has its final bubble now
+                    held = nil
+                    atBottom = true
+                    proxy.scrollTo(Self.bottomID, anchor: .bottom)
                 }
+                .onChange(of: state.chatLive) { _, new in
+                    if let new {
+                        held = new.text.isEmpty ? nil : new.text
+                    } else if let kept = held {
+                        // If no reply ever lands in the history (an error), let go
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                            if state.chatLive == nil, held == kept { held = nil }
+                        }
+                    }
+                }
+                .onAppear { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
             }
             .riseIn(1)
 
@@ -309,14 +349,7 @@ struct IslandTalkView: View {
     private func bubble(_ line: Line) -> some View {
         HStack(spacing: 0) {
             if line.mine { Spacer(minLength: 16) }
-            Text(line.text)
-                .font(IslandTheme.text(12))
-                .lineSpacing(1.2)
-                .fixedSize(horizontal: false, vertical: true)
-                .textSelection(.enabled)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(RoundedRectangle(cornerRadius: 13).fill(line.mine ? IslandTheme.bubbleMe : IslandTheme.surface))
+            ChatBubbleText(text: line.text, mine: line.mine)
             if !line.mine { Spacer(minLength: 16) }
         }
     }

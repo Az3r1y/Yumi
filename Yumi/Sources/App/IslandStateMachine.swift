@@ -212,3 +212,23 @@ enum FoldedIsland {
         return min(max(minimum, content), widest)
     }
 }
+
+// MARK: - The chat answering live
+
+/// Pure rules of the talk view while an answer is being made (Contracts/ChatLive.swift).
+enum LiveChat {
+
+    /// The conversation follows its last line only while the reader is at the bottom:
+    /// someone who scrolled up to read is left where they are.
+    static func followsBottom(offset: Double, viewport: Double, content: Double, slack: Double = 12) -> Bool {
+        content <= viewport || offset + viewport >= content - slack
+    }
+
+    /// Kinds of action (`ChatActivity.Kind` raw values) that leave something behind.
+    static let changes: Set<String> = ["writing", "editing"]
+
+    /// Yumi celebrates an answer that created or modified something, and only if it worked.
+    static func celebrates(done: [(kind: String, succeeded: Bool)]) -> Bool {
+        done.contains { changes.contains($0.kind) && $0.succeeded }
+    }
+}
