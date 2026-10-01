@@ -213,23 +213,6 @@ enum IslandContent {
         if minutes < 60 { return "Depuis \(minutes) min" }
         return "Depuis \(minutes / 60) h \(String(format: "%02d", minutes % 60))"
     }
-
-    // MARK: - The compact island: one dot, one mark
-
-    /// "Yumi reste discret et affiche le prochain repère."
-    static func compactMark(state: AppState, model: IslandModel) -> (color: Color, text: String)? {
-        switch IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: state.pendingApproval != nil) {
-        case .alert:    return (IslandTheme.amber, "à toi")
-        case .error:    return (IslandTheme.red, "erreur")
-        case .finished: return (IslandTheme.green, "fini")
-        case .working:
-            let minutes = model.workStart.map { Int(Date.now.timeIntervalSince($0) / 60) } ?? 0
-            return (IslandTheme.blue, "\(max(1, minutes)) min")
-        default:
-            guard let m = model.featuredModule(in: state.modules) else { return nil }
-            return (Color(hex: m.colorHex), m.status)
-        }
-    }
 }
 
 // MARK: - What the buttons do
@@ -276,6 +259,15 @@ enum IslandActions {
                                         userInfo: ["module": id, "action": action])
         tap()
         IslandModel.shared.pose(.pop)
+    }
+
+    /// A button of the folded island: the same action as in the detail view, and the
+    /// island stays folded.
+    static func liveControl(_ id: String, _ action: String) {
+        NotificationCenter.default.post(name: .moduleAction, object: nil,
+                                        userInfo: ["module": id, "action": action])
+        tap()
+        state.lastActivity = .now
     }
 
     static func toggleDrawer() {

@@ -2,6 +2,7 @@ import Foundation
 
 /// Pure 4-state FSM for island open/close logic.
 /// No AppKit / AppState dependencies — communicates via `onTransition`.
+/// (This file is compiled as is into the unit tests, with the module contract.)
 @MainActor
 final class IslandStateMachine {
 
@@ -175,4 +176,39 @@ final class IslandStateMachine {
         onTransition?(old, new)
     }
 
+}
+
+// MARK: - The folded island: what is live
+
+/// Pure rules of the folded island (Contracts/ModuleTypes.swift): which module it shows on
+/// the right of the notch, and how wide it may grow for it. No view, no state.
+enum FoldedIsland {
+
+    /// The live module with the highest priority. With several at that priority, the one
+    /// already shown stays, so that the island does not flicker between them; otherwise the
+    /// first in the user's order. nil when nothing is live: the island shows nothing.
+    static func live(in modules: [ModuleSnapshot], shown: String?) -> ModuleSnapshot? {
+        guard let top = modules.compactMap({ $0.live?.priority }).max() else { return nil }
+        let best = modules.filter { $0.live?.priority == top }
+        return best.first { $0.id == shown } ?? best.first
+    }
+
+    /// True when the change of text is a new thing to read (the next track) rather than the
+    /// same thing ticking (a countdown): only the first one slides.
+    static func isNewLine(_ old: String, _ new: String) -> Bool {
+        skeleton(old) != skeleton(new)
+    }
+
+    /// The text without what ticks: every digit reads the same.
+    static func skeleton(_ text: String) -> String {
+        String(text.map { $0.isNumber ? "0" : $0 })
+    }
+
+    /// Width of one ear (the island sticks out by this much on each side of the notch): wide
+    /// enough for `content`, never narrower than `minimum`, and never so wide that the folded
+    /// island would be wider than the open one.
+    static func ear(content: Double, minimum: Double, notchWidth: Double, openWidth: Double) -> Double {
+        let widest = max(minimum, (openWidth - notchWidth) / 2)
+        return min(max(minimum, content), widest)
+    }
 }

@@ -71,6 +71,9 @@ struct IslandLayout: Equatable {
     var notchHeight: CGFloat = IslandConst.notchHeight
     /// A real notch hides whatever is drawn behind it; a screen without one shows everything.
     var hasNotch = false
+    /// How far the folded island sticks out on each side of the notch. It grows with what is
+    /// live on the right (see `FoldedIsland.ear`).
+    var compactEar: CGFloat = IslandConst.compactExtra / 2
 
     /// The mock-up has a 32 pt notch. A taller one pushes the launch shapes down by the difference.
     var notchDelta: CGFloat { max(0, notchHeight - IslandConst.mockNotchHeight) }
@@ -83,7 +86,7 @@ struct IslandLayout: Equatable {
         let k = IslandConst.openScale, l = IslandConst.launchScale
         switch stage {
         case .hidden:  return CGSize(width: notchWidth, height: notchHeight)
-        case .compact: return CGSize(width: notchWidth + IslandConst.compactExtra, height: notchHeight)
+        case .compact: return CGSize(width: notchWidth + compactEar * 2, height: notchHeight)
         case .open:    return CGSize(width: IslandConst.expandedWidth * IslandConst.openScale, height: openHeight)
         case .drip:    return CGSize(width: (notchWidth + IslandConst.dripExtra) * l, height: IslandConst.dripHeight * l + notchDelta)
         case .greet:   return CGSize(width: IslandConst.greetWidth * l, height: IslandConst.greetHeight * l + notchDelta)
@@ -107,7 +110,7 @@ struct IslandLayout: Equatable {
         case .hidden:
             return IslandSeat(x: 0, y: notchHeight / 2 - 2, scale: 0.05, opacity: 0)
         case .compact:
-            return IslandSeat(x: 28 - (notchWidth + IslandConst.compactExtra) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
+            return IslandSeat(x: 28 - (notchWidth + compactEar * 2) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
         case .open:
             return IslandSeat(x: (58 - IslandConst.expandedWidth / 2) * k, y: (IslandConst.openPaddingTop + IslandConst.seatHeight / 2 + 7) * k + openInset, scale: 0.66 * k, opacity: 1)
         case .drip:
@@ -173,6 +176,15 @@ enum IslandConst {
     static let notchHeight: CGFloat = 32
     /// The compact island sticks out this much on both sides of the notch (344 for a 184 notch).
     static let compactExtra: CGFloat = 160
+    /// Folded island, right of the notch: paddings, the colour dot, the longest live text,
+    /// and the buttons that appear on hover.
+    static let foldedLeading: CGFloat = 10
+    static let foldedTrailing: CGFloat = 14
+    static let foldedDot: CGFloat = 7
+    static let foldedGap: CGFloat = 7
+    static let foldedTextMax: CGFloat = 190
+    static let foldedControl: CGFloat = 22
+    static let foldedControlGap: CGFloat = 4
     /// Open island: 480 wide in the mock-up. On a real screen that frame is too tight around
     /// its content, so the island is wider and airier than the mock-up while its text stays
     /// close to the mock-up's size.
