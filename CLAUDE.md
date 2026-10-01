@@ -1,0 +1,28 @@
+# Yumi: guide for AI coding agents
+
+Yumi is a native macOS app: a small animated character living in the MacBook notch that shows Claude Code sessions and a few integrations, and lets the user approve, answer, chat and drop files from the notch. It is built on the MIT source code of Coucou (see `ATTRIBUTION.md`).
+
+## Read first
+- `YUMI.md`: decisions, identity values, character design brief, file ownership per work session. It wins over any other document.
+- `ARCHITECTURE.md`: analysis of the 18 systems of the original code, with refactor risks. Paths written `NotchBuddy/...` are `Yumi/...` here.
+
+## Where things are
+- `Yumi/Sources/App/`: all Swift code. `Yumi/Resources/sounds/`: the WAV sounds. `Yumi/project.yml`: XcodeGen project.
+- `design/yumi/`: character concept sheet (concept 4, left half).
+- Branch `legacy-v0`: the first Yumi attempt (typed event engine, multi-session store, tests). Reference only.
+
+## Build
+```
+cd Yumi && xcodegen && xcodebuild -scheme Yumi -configuration Debug build
+```
+
+## Rules
+- Swift 6, SwiftUI + AppKit. No third-party dependencies unless truly unavoidable. The character is drawn in code (`Canvas` + `TimelineView`).
+- The `.xcodeproj` and the `Info.plist` files are generated: change `project.yml`, never edit them.
+- Never copy an icon, sound, image or the Mochi character design from Coucou. This repository is public.
+- Secrets live in the Keychain, never on disk or in git.
+- No telemetry. Network calls only to services the user configured.
+- Never block Claude Code: if the app doesn't answer, the hook exits immediately.
+- Never overwrite `~/.claude/settings.json`: dated backup, merge, show the diff, write only after the user confirms.
+- Never send an email or approve a Claude Code permission without an explicit click.
+- Keep `LICENSE` with the original copyright notice.

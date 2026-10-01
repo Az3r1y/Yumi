@@ -1,49 +1,28 @@
 # Yumi
 
-**Yumi — your native Mac companion for AI agents and creative workflows.**
+A small companion that lives in your MacBook's notch and keeps an eye on your Claude Code sessions.
 
-Native macOS app (Swift 6, SwiftUI + AppKit, zero third-party dependencies).
-This repository currently contains **steps 1 and 2 of the migration from Coucou**:
-a clean, compilable socle, notch window, app lifecycle, menu bar, state
-machine, a technical placeholder character, and the Core event engine
-(typed events, sessions, presentation state) with unit tests.
+Native macOS app: Swift 6, SwiftUI + AppKit, no third-party dependencies.
+
+**Status: work in progress.** The app builds and runs, but the migration from its Coucou base is under way: the character is being redrawn, and the icons and sounds are not there yet.
 
 ## Build
 
 Requirements: macOS 15+, Xcode 16+, [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
 ```bash
-cd yumi
+brew install xcodegen
+cd Yumi
 xcodegen
 open Yumi.xcodeproj   # then ⌘R
 ```
 
-## Layout
+## Documents
 
-```
-Yumi/
-├── App/          # entry point, composition root, menu bar (+ Simulate menu)
-├── Core/         # event engine: IDs, Agent, YumiEvent, EventEngine, SessionStore
-├── CoreTests/    # unit tests for the Core (Swift Testing)
-├── UI/           # Notch (window + FSM), Character (sprite), Settings
-├── Agents/       # ClaudeCode connector (empty — step 3)
-├── Platform/     # keychain, permissions, sounds, logging (empty)
-├── Legacy/       # code ported from Coucou + ATTRIBUTION.md
-└── Resources/    # Info.plist (generated), future assets
-```
+- [YUMI.md](YUMI.md): decisions, character design brief, work plan.
+- [ARCHITECTURE.md](ARCHITECTURE.md): analysis of the original code base.
+- [ATTRIBUTION.md](ATTRIBUTION.md): what comes from Coucou and what does not.
 
-Rules: new Yumi code stays out of `Legacy/`; ported Coucou files are listed in
-[Legacy/ATTRIBUTION.md](Legacy/ATTRIBUTION.md). No Coucou brand, assets, sounds
-or character is reused.
+## License
 
-## Tests
-
-```bash
-cd yumi
-test=$(xcodebuild -project Yumi.xcodeproj -scheme Yumi -configuration Debug test CODE_SIGNING_ALLOWED=NO 2>&1)
-echo "$test" | grep -E "(passed|failed)"
-```
-
-26 tests cover the Core: event engine (publish/subscribe/unsubscribe/shutdown),
-session reducer (every event kind, multi-session), presentation state, and IDs
-(uniqueness, hashing, Codable).
+Code: [MIT](LICENSE). Yumi is built on the source code of [Coucou](https://github.com/Louis-CFM/coucou) by Louis Raillé. The Yumi name, character, icons and sounds are not covered by the MIT license.

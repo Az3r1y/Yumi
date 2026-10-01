@@ -16,24 +16,14 @@ jobs:
         run: brew install xcodegen
 
       - name: Generate project
-        run: xcodegen
+        run: cd Yumi && xcodegen
 
       - name: Build
         run: |
           xcodebuild \
-            -project Yumi.xcodeproj \
-            -scheme Yumi \
-            -configuration Release \
-            build \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO
-
-      - name: Test
-        run: |
-          xcodebuild \
-            -project Yumi.xcodeproj \
+            -project Yumi/Yumi.xcodeproj \
             -scheme Yumi \
             -configuration Debug \
-            test \
+            build \
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
