@@ -19,7 +19,7 @@ settings:
       CODE_SIGNING_REQUIRED: YES
       CODE_SIGNING_ALLOWED: YES
       CODE_SIGN_IDENTITY: "Developer ID Application"
-      # DEVELOPMENT_TEAM: set before the first signed release
+      # DEVELOPMENT_TEAM is not set here: scripts/release.sh passes it from YUMI_TEAM_ID.
       OTHER_CODE_SIGN_FLAGS: "--timestamp"
       CODE_SIGN_ENTITLEMENTS: Resources/Yumi.entitlements
 
@@ -28,8 +28,13 @@ schemes:
     build:
       targets:
         Yumi: all
+        YumiTests: [test]
     run:
       config: Debug
+    test:
+      config: Debug
+      targets:
+        - YumiTests
     archive:
       config: Release
   YumiAppStore:
@@ -65,8 +70,10 @@ targets:
         LSUIElement: YES
         NSHighResolutionCapable: YES
         NSSupportsAutomaticGraphicsSwitching: YES
-        NSAppleEventsUsageDescription: "Pour sauter au terminal et envoyer des mails."
-        NSAccessibilityUsageDescription: "Pour lire le titre de la fenêtre active et l'attacher comme contexte."
+        NSAppleEventsUsageDescription: "Yumi reads the address of the page open in your browser to attach it as context, and sends the emails you confirm through Mail."
+        # Not a key macOS reads: Accessibility consent is given in System Settings, with no custom text.
+        # Kept as a record of why the app asks for it.
+        NSAccessibilityUsageDescription: "Yumi reads the title of the frontmost window to attach it as context, and listens for Escape and your global shortcut."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi
@@ -112,3 +119,20 @@ targets:
         CODE_SIGN_IDENTITY: "Apple Development"
         CODE_SIGN_ENTITLEMENTS: Resources/YumiAppStore.entitlements
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: APPSTORE
+
+  # Unit tests. Not hosted by the app: the files under test are compiled into the
+  # bundle, so running the tests never launches Yumi (no socket, no Keychain, no window).
+  # Only add files here that have no dependency on the rest of the app.
+  YumiTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+      - path: Tests
+      - path: Sources/App/IslandStateMachine.swift
+        group: Tests/UnderTest
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: app.yumi.tests
+        GENERATE_INFOPLIST_FILE: YES
+        MACOSX_DEPLOYMENT_TARGET: "15.0"
+        CODE_SIGN_ENTITLEMENTS: ""
