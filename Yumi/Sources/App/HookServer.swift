@@ -3,7 +3,7 @@ import Darwin
 import AppKit
 
 // MARK: - HookServer
-// Listens on a Unix domain socket for events from nb-hook (Claude Code hooks).
+// Listens on a Unix domain socket for events from the hook script (Claude Code hooks).
 // Thread-safe: socket I/O on background threads, state updates dispatched to main queue.
 
 final class HookServer: @unchecked Sendable {
@@ -262,7 +262,7 @@ final class HookServer: @unchecked Sendable {
         if pendingApprovalFD >= 0 {
             let old = pendingApprovalFD
             Task.detached { [weak self] in
-                // "ask" → nb-hook outputs nothing → Claude Code re-asks
+                // "ask" → the hook script outputs nothing → Claude Code re-asks
                 self?.sendLine(fd: old, text: #"{"permissionDecision":"ask"}"#)
                 close(old)
             }
@@ -283,12 +283,12 @@ final class HookServer: @unchecked Sendable {
         let captured = fd
         DispatchQueue.main.asyncAfter(deadline: .now() + 115) { [weak self] in
             guard let self, self.pendingApprovalFD == captured else { return }
-            // "ask" → nb-hook outputs nothing → Claude Code re-asks rather than denying
+            // "ask" → the hook script outputs nothing → Claude Code re-asks rather than denying
             self.sendApprovalDecision("ask")
         }
     }
 
-    /// Called by ApprovalView buttons. Writes the decision to the waiting nb-hook and cleans up.
+    /// Called by ApprovalView buttons. Writes the decision to the waiting hook script and cleans up.
     @MainActor
     func sendApprovalDecision(_ decision: String) {
         let fd = pendingApprovalFD
@@ -438,7 +438,7 @@ final class HookServer: @unchecked Sendable {
         }
     }
 
-    // MARK: - nb-hook script installation
+    // MARK: - Hook script installation
 
     func installHookScript() {
         #if APPSTORE
@@ -486,6 +486,25 @@ final class HookServer: @unchecked Sendable {
         }
     }
 
+    /// Removes the hooks whose command satisfies `shouldRemove` from the matcher entries of one
+    /// event. Other hooks of the same entry are kept; an entry left without hooks is dropped.
+    /// Returns the number of hooks removed.
+    private static func stripHooks(from matchers: inout [[String: Any]],
+                                   where shouldRemove: (String) -> Bool) -> Int {
+        var removed = 0
+        matchers = matchers.compactMap { matcher in
+            let list = hookList(matcher)
+            let kept = list.filter { !(($0["command"] as? String).map(shouldRemove) ?? false) }
+            guard kept.count < list.count else { return matcher }
+            removed += list.count - kept.count
+            guard !kept.isEmpty else { return nil }
+            var matcher = matcher
+            matcher["hooks"] = kept
+            return matcher
+        }
+        return removed
+    }
+
     /// The "hooks" dictionary of settings.json, or nil if the file is missing or unreadable.
     private static func installedHooks(at settingsURL: URL = defaultSettingsURL) -> [String: Any]? {
         guard let data = try? Data(contentsOf: settingsURL),
@@ -523,6 +542,9 @@ final class HookServer: @unchecked Sendable {
 
     private var _pendingHooksData: Data?
 
+    /// Number of Coucou or NotchBuddy hooks the last preview removes. Shown before the user confirms.
+    private(set) var pendingLegacyHookCount = 0
+
     /// Returns preview JSON without writing — call writeClaudeHooks() to confirm.
     func previewClaudeHooks() throws -> String {
         let data = try buildHooksData(settingsURL: Self.defaultSettingsURL)
@@ -547,7 +569,8 @@ final class HookServer: @unchecked Sendable {
         _pendingHooksData = nil
     }
 
-    /// Merges this app's hooks into the settings.json at `settingsURL`, replacing any it already has.
+    /// Merges this app's hooks into the settings.json at `settingsURL`, replacing any it already has
+    /// and removing the legacy Coucou and NotchBuddy hooks from every event.
     private func buildHooksData(settingsURL: URL) throws -> Data {
         var settings: [String: Any] = [:]
         if let data = try? Data(contentsOf: settingsURL),
@@ -556,13 +579,21 @@ final class HookServer: @unchecked Sendable {
         }
         let command = AppIdentity.hookCommand
         var hooks = settings["hooks"] as? [String: Any] ?? [:]
+        var legacyCount = 0
+        for key in hooks.keys {
+            guard var matchers = hooks[key] as? [[String: Any]] else { continue }
+            legacyCount += Self.stripHooks(from: &matchers, where: AppIdentity.isLegacyHookCommand)
+            _ = Self.stripHooks(from: &matchers, where: AppIdentity.isOwnHookCommand)
+            if matchers.isEmpty { hooks.removeValue(forKey: key) }
+            else { hooks[key] = matchers }
+        }
         for (event, timeout) in Self.hookEvents {
             var existing = hooks[event] as? [[String: Any]] ?? []
-            existing.removeAll(where: Self.isOwnMatcher)
             existing.append(["hooks": [["type": "command", "command": command, "timeout": timeout]]])
             hooks[event] = existing
         }
         settings["hooks"] = hooks
+        pendingLegacyHookCount = legacyCount
         return try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
     }
 
@@ -570,7 +601,7 @@ final class HookServer: @unchecked Sendable {
         try removeHooks(settingsURL: Self.defaultSettingsURL)
     }
 
-    /// Removes this app's hooks from the settings.json at `settingsURL`.
+    /// Removes this app's hooks from the settings.json at `settingsURL`. Legacy hooks are left alone.
     private func removeHooks(settingsURL: URL) throws {
         guard let data = try? Data(contentsOf: settingsURL),
               var settings = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -578,7 +609,7 @@ final class HookServer: @unchecked Sendable {
 
         for key in hooks.keys {
             if var matchers = hooks[key] as? [[String: Any]] {
-                matchers.removeAll(where: Self.isOwnMatcher)
+                guard Self.stripHooks(from: &matchers, where: AppIdentity.isOwnHookCommand) > 0 else { continue }
                 if matchers.isEmpty { hooks.removeValue(forKey: key) }
                 else { hooks[key] = matchers }
             }

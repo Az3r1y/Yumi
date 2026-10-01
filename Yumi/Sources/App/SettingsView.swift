@@ -422,7 +422,7 @@ struct SettingsView: View {
             defer { if accessing { claudeURL.stopAccessingSecurityScopedResource() } }
             pendingHookJSON = try HookServer.shared.previewClaudeHooksAppStore(claudeURL: claudeURL)
             showDiff = true
-            statusMessage = "Review the JSON below before confirming."
+            statusMessage = hookPreviewMessage()
         } catch {
             statusMessage = "❌ \(error.localizedDescription)"
         }
@@ -460,11 +460,18 @@ struct SettingsView: View {
     }
     #endif
 
+    /// Status line shown with the hook preview. Announces the legacy hooks about to be removed.
+    private func hookPreviewMessage() -> String {
+        let legacy = HookServer.shared.pendingLegacyHookCount
+        guard legacy > 0 else { return "Review the JSON below before confirming." }
+        return "Review the JSON below before confirming. It removes \(legacy) old Coucou hook\(legacy == 1 ? "" : "s")."
+    }
+
     private func installHooks() {
         do {
             pendingHookJSON = try HookServer.shared.previewClaudeHooks()
             showDiff = true
-            statusMessage = "Review the JSON below before confirming."
+            statusMessage = hookPreviewMessage()
         } catch {
             statusMessage = "❌ \(error.localizedDescription)"
         }

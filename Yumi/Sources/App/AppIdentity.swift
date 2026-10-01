@@ -8,33 +8,32 @@ enum AppIdentity {
 
     // MARK: Visible names
 
-    static let productName   = "Coucou"
+    static let productName   = "Yumi"
     static let characterName = "Mochi"
 
     // MARK: Persisted identifiers
 
     /// Keychain generic-password service. Not derived from the bundle identifier.
-    static let keychainService = "fr.louisraille.NotchBuddy"
+    static let keychainService = "app.yumi"
     /// Folder under ~/Library/Application Support (socket, hook script, inbox).
-    static let supportFolderName = "NotchBuddy"
-    static let socketFileName    = "nb.sock"
-    static let hookScriptName    = "nb-hook"
+    static let supportFolderName = "Yumi"
+    static let socketFileName    = "yumi.sock"
+    static let hookScriptName    = "yumi-hook"
     static let inboxFolderName   = "inbox"
     /// Folder under ~/.claude that holds the hook script in the App Store build.
-    static let appStoreHookFolderName = "coucou"
-    /// Bundle identifier of the sandboxed build (its container holds the socket).
-    static let appStoreBundleIdentifier = "fr.louisraille.Coucou"
+    static let appStoreHookFolderName = "yumi"
     /// Folder under ~/Library/Logs.
-    static let logsFolderName  = "NotchBuddy"
-    static let hookLogFileName = "nb.log"
+    static let logsFolderName  = "Yumi"
+    static let hookLogFileName = "hooks.log"
     static let n8nLogFileName  = "n8n.log"
 
     // MARK: Claude Code hooks
 
     /// Message Claude Code receives when a permission is denied from the island.
     static let denyMessage = "Denied from \(productName)"
-    /// A hook command in settings.json belongs to this app when it contains one of these.
-    static let hookCommandMarkers = ["NotchBuddy", "coucou"]
+    /// Hook commands containing one of these were installed by the apps Yumi replaces
+    /// (Coucou, NotchBuddy). They are removed when Yumi installs its own hooks.
+    static let legacyHookCommandMarkers = ["NotchBuddy", "coucou"]
 
     // MARK: Internal
 
@@ -77,7 +76,9 @@ enum AppIdentity {
     /// (and outside the sandbox), so the path is spelled from ~ and expanded by Python.
     static var hookScriptSocketPath: String {
         #if APPSTORE
-        return "~/Library/Containers/\(appStoreBundleIdentifier)/Data/Library/Application Support/\(supportFolderName)/\(socketFileName)"
+        // The sandbox container is named after the bundle identifier
+        let bundleIdentifier = Bundle.main.bundleIdentifier ?? "app.yumi.appstore"
+        return "~/Library/Containers/\(bundleIdentifier)/Data/Library/Application Support/\(supportFolderName)/\(socketFileName)"
         #else
         return "~/Library/Application Support/\(supportFolderName)/\(socketFileName)"
         #endif
@@ -97,7 +98,14 @@ enum AppIdentity {
     }
 
     /// The one place that decides whether a hook command in settings.json is ours.
+    /// Exact match on purpose: a substring test on "yumi" would also catch unrelated
+    /// commands (a user or a folder named yumi, for instance).
     static func isOwnHookCommand(_ command: String) -> Bool {
-        hookCommandMarkers.contains { command.contains($0) }
+        command == hookCommand
+    }
+
+    /// True for a hook left behind by Coucou or NotchBuddy.
+    static func isLegacyHookCommand(_ command: String) -> Bool {
+        !isOwnHookCommand(command) && legacyHookCommandMarkers.contains { command.contains($0) }
     }
 }
