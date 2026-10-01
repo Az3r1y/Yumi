@@ -80,38 +80,39 @@ struct IslandLayout: Equatable {
     var openInset: CGFloat { hasNotch ? max(0, notchHeight + 2 - IslandConst.openPaddingTop) : 0 }
 
     func size(_ stage: IslandStage, openHeight: CGFloat) -> CGSize {
+        let k = IslandConst.openScale
         switch stage {
         case .hidden:  return CGSize(width: notchWidth, height: notchHeight)
         case .compact: return CGSize(width: notchWidth + IslandConst.compactExtra, height: notchHeight)
         case .open:    return CGSize(width: IslandConst.expandedWidth * IslandConst.openScale, height: openHeight)
-        case .drip:    return CGSize(width: notchWidth + IslandConst.dripExtra, height: IslandConst.dripHeight + notchDelta)
-        case .greet:   return CGSize(width: IslandConst.greetWidth, height: IslandConst.greetHeight + notchDelta)
+        case .drip:    return CGSize(width: (notchWidth + IslandConst.dripExtra) * k, height: IslandConst.dripHeight * k + notchDelta)
+        case .greet:   return CGSize(width: IslandConst.greetWidth * k, height: IslandConst.greetHeight * k + notchDelta)
         }
     }
 
     func cornerRadius(_ stage: IslandStage) -> CGFloat {
         switch stage {
         case .hidden, .compact: return IslandConst.roundedCorner
-        case .open, .greet:     return IslandConst.expandedCorner
-        case .drip:             return IslandConst.dripCorner
+        case .open, .greet:     return IslandConst.expandedCorner * IslandConst.openScale
+        case .drip:             return IslandConst.dripCorner * IslandConst.openScale
         }
     }
 
     /// `SEATS`: [x in the island, y, scale, opacity]. The rim width of each seat is the
     /// character's own business: it derives it from the size it is drawn at.
     func seat(_ stage: IslandStage) -> IslandSeat {
+        let k = IslandConst.openScale
         switch stage {
         case .hidden:
             return IslandSeat(x: 0, y: notchHeight / 2 - 2, scale: 0.05, opacity: 0)
         case .compact:
             return IslandSeat(x: 28 - (notchWidth + IslandConst.compactExtra) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
         case .open:
-            let k = IslandConst.openScale
             return IslandSeat(x: (50 - IslandConst.expandedWidth / 2) * k, y: 48 * k + openInset, scale: 0.66 * k, opacity: 1)
         case .drip:
-            return IslandSeat(x: 0, y: 62 + notchDelta, scale: 0.42, opacity: 1)
+            return IslandSeat(x: 0, y: 62 * k + notchDelta, scale: 0.42 * k, opacity: 1)
         case .greet:
-            return IslandSeat(x: 118 - IslandConst.greetWidth / 2, y: 94 + notchDelta, scale: 1, opacity: 1)
+            return IslandSeat(x: (118 - IslandConst.greetWidth / 2) * k, y: 94 * k + notchDelta, scale: k, opacity: 1)
         }
     }
 }
@@ -173,9 +174,10 @@ enum IslandConst {
     static let compactExtra: CGFloat = 160
     /// Open island: 480 wide in the mock-up, as low as the content allows.
     static let expandedWidth: CGFloat = 480
-    /// The open island and its second square are the mock-up enlarged by this much:
-    /// at its own size it reads too small on a real screen. Change this one number to resize.
-    static let openScale: CGFloat = 1.25
+    /// The open island, its second square and the launch are the mock-up enlarged by this
+    /// much: at its own size it reads too small on a real screen. Change this one number to
+    /// resize (the panel below has to stay wider than 480 × this).
+    static let openScale: CGFloat = 1.4
     static let openHeightDefault: CGFloat = 150
     static let openHeightMax: CGFloat = 300
     /// Left column of the open island: Yumi's seat and his caption.
@@ -197,6 +199,6 @@ enum IslandConst {
     static let dripCorner: CGFloat = 80
 
     /// Size of the transparent panel the island lives in.
-    static let panelWidth: CGFloat = 720
-    static let panelHeight: CGFloat = 580
+    static let panelWidth: CGFloat = 880
+    static let panelHeight: CGFloat = 680
 }
