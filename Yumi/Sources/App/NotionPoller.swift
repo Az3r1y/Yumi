@@ -14,6 +14,12 @@ final class NotionPoller: @unchecked Sendable {
         timer = t
     }
 
+    /// Stops polling. Called when the integration is deselected; `start()` resumes it.
+    func stop() {
+        timer?.cancel()
+        timer = nil
+    }
+
     func pollNow() { poll() }
 
     private func poll() {

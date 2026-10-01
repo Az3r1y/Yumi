@@ -20,6 +20,12 @@ final class VercelPoller: @unchecked Sendable {
         timer = t
     }
 
+    /// Stops polling. Called when the integration is deselected; `start()` resumes it.
+    func stop() {
+        timer?.cancel()
+        timer = nil
+    }
+
     // MARK: - Poll
 
     private func poll() {

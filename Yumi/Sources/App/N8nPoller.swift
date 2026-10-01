@@ -21,6 +21,12 @@ final class N8nPoller: @unchecked Sendable {
         timer = t
     }
 
+    /// Stops polling. Called when the integration is deselected; `start()` resumes it.
+    func stop() {
+        timer?.cancel()
+        timer = nil
+    }
+
     // MARK: - Poll list endpoint
 
     private func poll() {

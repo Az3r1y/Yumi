@@ -123,7 +123,8 @@ targets:
   # Unit tests. Not hosted by the app: the files under test are compiled into the
   # bundle, so running the tests never launches Yumi (no socket, no Keychain, no window).
   # Only add files here that have no dependency on the rest of the app.
-  # Core/ as a whole follows that rule: nothing in it may import a view, AppState or a module.
+  # Core/ and Modules/ as a whole follow that rule: nothing in them may use a view, AppState,
+  # the hook server or a sound. Core/ knows nothing about Modules/ either.
   YumiTests:
     type: bundle.unit-test
     platform: macOS
@@ -132,6 +133,11 @@ targets:
       - path: Sources/App/IslandStateMachine.swift
         group: Tests/UnderTest
       - path: Sources/App/Core
+      - path: Sources/App/Modules
+      - path: Sources/App/Contracts/ModuleTypes.swift
+        group: Tests/UnderTest
+      - path: Sources/App/AppIdentity.swift
+        group: Tests/UnderTest
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi.tests

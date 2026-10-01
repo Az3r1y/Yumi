@@ -5,6 +5,7 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     private(set) var islandController: IslandWindowController?
+    private var core: YumiCore?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Ignore SIGPIPE — prevents crash when the hook script closes socket before we write response
@@ -63,15 +64,72 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         islandController = IslandWindowController()
         islandController?.showWindow(nil)
         islandController?.fsm.launch()
-        HookServer.shared.start()
-        N8nPoller.shared.start()
-        VercelPoller.shared.start()
-        ResendPoller.shared.start()
-        GithubPoller.shared.start()
-        StripePoller.shared.start()
-        CalcomPoller.shared.start()
-        NotionPoller.shared.start()
+        let core = YumiCore(state: .shared)
+        core.start()
+        self.core = core
+        IntegrationPollers.sync(active: AppState.shared.activeIntegrations)
         NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
                                                name: .openFullSettings, object: nil)
+    }
+}
+
+// MARK: - Core
+// Composition root of everything that feeds the island: the event engine, the session store,
+// the modules and the hook server. Nothing here is a singleton; the pieces are created once
+// and handed to each other.
+
+@MainActor
+final class YumiCore {
+    /// A session silent for this long is considered gone (terminal killed without a SessionEnd).
+    private static let sessionLifetime: TimeInterval = 12 * 3600
+
+    private let engine = EventEngine()
+    private let store = SessionStore()
+    private let ingress: EventIngress
+    private let mirror: ClaudeTaskMirror
+    let modules: ModuleRegistry
+
+    private var lastSeen: [SessionID: Date] = [:]
+    private var consumer: Task<Void, Never>?
+
+    init(state: AppState) {
+        ingress = EventIngress(engine: engine)
+        let mirror = ClaudeTaskMirror(state: state)
+        self.mirror = mirror
+        modules = ModuleRegistry(
+            modules: [
+                ClaudeCodeModule(onShow: { mirror.show() }),
+            ],
+            onPublish: { state.modules = $0 }
+        )
+    }
+
+    func start() {
+        modules.start()
+        consumer = Task { [engine, store, ingress, weak self] in
+            // Subscribe before the socket opens: the engine does not keep events for later.
+            let events = await engine.subscribe()
+            HookServer.shared.start(ingress: ingress)
+            for await event in events {
+                let sessions = await store.apply(event)
+                guard let self else { return }
+                self.mirror.receive(event, sessions: sessions)
+                self.modules.receive(event, sessions: sessions)
+                self.endSilentSessions(after: event, in: sessions)
+            }
+        }
+    }
+
+    /// Sessions normally end with a hook. One that has said nothing for hours is dropped,
+    /// unless it is waiting for the user. Checked when an event arrives: no timer needed.
+    private func endSilentSessions(after event: YumiEvent, in sessions: [SessionID: Session]) {
+        let now = Date()
+        if let id = event.sessionID { lastSeen[id] = sessions[id] == nil ? nil : now }
+        for (id, seen) in lastSeen where now.timeIntervalSince(seen) > Self.sessionLifetime {
+            lastSeen[id] = nil
+            if let session = sessions[id], session.status != .waitingForUser {
+                ingress.post(.sessionEnded(id))
+            }
+        }
     }
 }

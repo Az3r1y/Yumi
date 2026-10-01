@@ -4,7 +4,8 @@ import AppKit
 
 // MARK: - HookServer
 // Listens on a Unix domain socket for events from the hook script (Claude Code hooks).
-// Thread-safe: socket I/O on background threads, state updates dispatched to main queue.
+// Socket threads translate each hook into typed events and post them to the engine; they never
+// touch the app state. Permission requests keep their socket open until a decision is made.
 
 final class HookServer: @unchecked Sendable {
     static let shared = HookServer()
@@ -14,17 +15,33 @@ final class HookServer: @unchecked Sendable {
     static var socketPath: String { AppIdentity.socketPath }
     static var hookScriptPath: String { AppIdentity.hookScriptPath }
 
-    // No approval blocking state — notch is notification-only, user answers in VS Code
+    /// Seconds a permission request waits in the island before Claude Code asks in the terminal instead.
+    /// Shorter than the 120 s Claude Code gives the hook.
+    private static let approvalTimeout: TimeInterval = 115
 
     private var serverFD: Int32 = -1
-    private var pendingApprovalFD: Int32 = -1   // held open while user decides
-    private var activeSessionId: String? = nil  // current Claude Code session
+    private var ingress: EventIngress?
+
+    /// Hook scripts waiting for a decision, by request identifier. Socket threads add, the main actor removes.
+    private let heldLock = NSLock()
+    private var held: [String: HeldSocket] = [:]
+
+    /// Permission requests waiting for the user, oldest first. The first one is on screen.
+    @MainActor private var approvals: [PendingApproval] = []
+
+    private struct PendingApproval {
+        let requestID: String
+        let sessionID: SessionID
+        let info: ApprovalInfo
+    }
 
     private init() {}
 
     // MARK: - Start
 
-    func start() {
+    /// - Parameter ingress: where the translated hook events go. Its engine must already have its subscribers.
+    func start(ingress: EventIngress) {
+        self.ingress = ingress
         #if !APPSTORE
         installHookScript()
         #endif
@@ -35,6 +52,7 @@ final class HookServer: @unchecked Sendable {
 
     private func serverThread() {
         let path = Self.socketPath
+        try? FileManager.default.createDirectory(at: Self.supportDir, withIntermediateDirectories: true)
         try? FileManager.default.removeItem(atPath: path)
 
         let fd = socket(AF_UNIX, SOCK_STREAM, 0)
@@ -86,131 +104,126 @@ final class HookServer: @unchecked Sendable {
         let eventName = payload["hook_event_name"] as? String ?? ""
 
         if eventName == "PermissionRequest" {
-            // Hold fd open — Claude Code waits for our decision (up to 120s)
-            Task { @MainActor in self.processPermissionRequest(fd: fd, payload: payload) }
+            // Hold fd open: Claude Code waits for our decision (up to 120s)
+            let requestID = UUID().uuidString
+            let events = ClaudeHookTranslator.events(for: payload, requestID: requestID)
+            guard let ingress, !events.isEmpty else {
+                // "ask" → the hook script outputs nothing → Claude Code asks in the terminal
+                sendLine(fd: fd, text: #"{"permissionDecision":"ask"}"#)
+                close(fd)
+                return
+            }
+            let socket = HeldSocket(fd: fd, acknowledges: ClaudeHookTranslator.protocolVersion(of: payload) >= 2)
+            heldLock.withLock { held[requestID] = socket }
+            ingress.post(events)
         } else {
-            Task { @MainActor in self.processEvent(name: eventName, payload: payload) }
+            ingress?.post(ClaudeHookTranslator.events(for: payload))
             sendLine(fd: fd, text: #"{"ok":true}"#)
             close(fd)
         }
     }
 
+    // MARK: - Permission requests (blocking: Claude Code waits for the decision)
 
-    // MARK: - Event → AppState
-    // All Claude Code events route to the permanent "integration_claude" task.
-    // View switches only happen if VS Code is the currently focused pill.
-    // When not focused: state updates animate the mini bot in the pill; badge shown for alerts.
-
+    /// Queues a permission request and shows it if nothing else is waiting.
+    /// Called when the request comes out of the engine, once its session is known.
     @MainActor
-    private func processEvent(name: String, payload: [String: Any]) {
-        let state = AppState.shared
-        let sessionId = payload["session_id"] as? String ?? "unknown"
-        let cwd = payload["cwd"] as? String ?? ""
-        let rawName = URL(fileURLWithPath: cwd).lastPathComponent
-        let projectName = rawName.isEmpty ? "Session" : rawName
+    fileprivate func presentApproval(_ request: PermissionRequest, session sessionID: SessionID) {
+        guard let socket = heldLock.withLock({ held[request.id] }) else { return }
+        nbLog("PermissionRequest \(request.tool): \(request.command)")
 
-        let termProgram = payload["term_program"] as? String ?? ""
-        let bundleId    = payload["bundle_id"]    as? String ?? ""
-        let isVSCode = termProgram.lowercased().contains("vscode") ||
-                       bundleId.lowercased().contains("vscode")
-        guard isVSCode else {
-            nbLog("Ignored \(name) from \(termProgram.isEmpty ? bundleId : termProgram) (\(projectName))")
-            return
+        // One request at a time per session: an older one goes back to the terminal.
+        for stale in approvals where stale.sessionID == sessionID {
+            resolveApproval(stale.requestID, decision: "ask")
         }
 
-        let focused = state.focusId == "integration_claude"
+        approvals.append(PendingApproval(
+            requestID: request.id, sessionID: sessionID,
+            info: ApprovalInfo(sessionId: sessionID.value, tool: request.tool, command: request.command)))
 
-        switch name {
+        // The script now knows the app is alive and waits for the user.
+        if socket.acknowledges { socket.send(#"{"ack":true}"#) }
 
-        case "SessionStart":
-            activeSessionId = sessionId
-            upsertTask(projectName: projectName, cwd: cwd)
-            nbLog("SessionStart \(projectName) (\(sessionId.prefix(8)))")
-            if state.isPresent { expandIfNeeded(to: .overview) }
-            SoundEngine.shared.play("work")
+        let requestID = request.id
+        // The script went away: answered in the terminal, or Claude Code stopped waiting.
+        socket.watch { [weak self] in
+            Task { @MainActor in self?.resolveApproval(requestID, decision: "ask") }
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.approvalTimeout) { [weak self] in
+            // "ask" → the hook script outputs nothing → Claude Code re-asks rather than denying
+            self?.resolveApproval(requestID, decision: "ask")
+        }
 
-        case "UserPromptSubmit":
-            activeSessionId = sessionId
-            upsertTask(projectName: projectName, cwd: cwd)
-            state.updateTask(id: "integration_claude", state: .thinking)
-            if let prompt = payload["prompt"] as? String, !prompt.isEmpty {
-                appendStep(id: "integration_claude", step: String(prompt.prefix(60)))
-            }
-            if state.isPresent { expandIfNeeded(to: .overview) }
+        if approvals.count == 1 { showApproval(approvals[0]) }
+    }
 
-        case "PreToolUse":
-            activeSessionId = sessionId
-            upsertTask(projectName: projectName, cwd: cwd)
-            state.updateTask(id: "integration_claude", state: .working)
-            let tool = payload["tool_name"] as? String ?? "Tool"
-            let input = payload["tool_input"] as? [String: Any] ?? [:]
-            let step = frenchStep(tool: tool, input: input)
-            appendStep(id: "integration_claude", step: step)
-            nbLog("PreToolUse \(step)")
+    /// Opens the island on a permission request. Approval always forces the island open: the user must be able to respond.
+    @MainActor
+    private func showApproval(_ approval: PendingApproval) {
+        let state = AppState.shared
+        state.updateTask(id: ClaudeTaskMirror.taskID, state: .approval)
+        state.pendingApproval = approval.info
+        state.isPinned = true
+        SoundEngine.shared.play("approval")
+        state.focusId = ClaudeTaskMirror.taskID
+        Self.expandIfNeeded(to: .approval)
+    }
 
-        case "PostToolUse":
-            state.updateTask(id: "integration_claude", state: .working)
+    /// Called by ApprovalView buttons. Writes the decision to the waiting hook script and cleans up.
+    @MainActor
+    func sendApprovalDecision(_ decision: String) {
+        guard let current = approvals.first else {
+            closeApprovalView()
+            return
+        }
+        resolveApproval(current.requestID, decision: decision)
+    }
 
-        case "PostToolUseFailure":
-            state.updateTask(id: "integration_claude", state: .working)
-            appendStep(id: "integration_claude", step: "⚠ failed")
+    /// Answers one request and moves on to the next. Does nothing if the request is already answered.
+    @MainActor
+    private func resolveApproval(_ requestID: String, decision: String) {
+        guard let index = approvals.firstIndex(where: { $0.requestID == requestID }) else { return }
+        let approval = approvals.remove(at: index)
 
-        case "Notification":
-            let message = payload["message"] as? String ?? ""
-            let lower = message.lowercased()
-            if lower.contains("rate limit") || lower.contains("limite d") {
-                state.updateTask(id: "integration_claude", state: .ratelimit)
-                SoundEngine.shared.play("rate")
-            } else if message.hasSuffix("?") {
-                state.updateTask(id: "integration_claude", state: .question)
-                appendStep(id: "integration_claude", step: message)
-            }
+        let json: String
+        switch decision {
+        case "allow":  json = #"{"permissionDecision":"allow"}"#
+        case "always": json = #"{"permissionDecision":"always"}"#
+        case "ask":    json = #"{"permissionDecision":"ask"}"#
+        default:       json = #"{"permissionDecision":"deny"}"#
+        }
+        heldLock.withLock { held.removeValue(forKey: requestID) }?.finish(json)
+        ingress?.post(.permissionResolved(approval.sessionID, requestID: requestID))
 
-        case "Stop":
-            state.updateTask(id: "integration_claude", state: .finished)
-            if let message = payload["message"] as? String, !message.isEmpty {
-                appendStep(id: "integration_claude", step: String(message.prefix(60)))
-            }
-            SoundEngine.shared.play("finish")
-            if focused {
-                expandIfNeeded(to: .finished)
-            } else {
-                setPillBadge(id: "integration_claude", badge: .finished)
-            }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 5.2) {
-                state.updateTask(id: "integration_claude", state: .idle)
-                self.clearPillBadge(id: "integration_claude")
-            }
-
-        case "StopFailure":
-            state.updateTask(id: "integration_claude", state: .error)
-            SoundEngine.shared.play("error")
-            if focused {
-                expandIfNeeded(to: .error)
-            } else {
-                setPillBadge(id: "integration_claude", badge: .error)
-            }
-
-        case "SessionEnd":
-            activeSessionId = nil
-            state.updateTask(id: "integration_claude", state: .idle)
-            clearSession()
-
-        case "SubagentStart":
-            appendStep(id: "integration_claude", step: "+ subagent")
-
-        case "SubagentStop":
-            appendStep(id: "integration_claude", step: "• subagent done")
-
-        default:
-            break
+        // Only the request on screen changes what the island shows.
+        guard index == 0 else { return }
+        if let next = approvals.first {
+            showApproval(next)
+        } else {
+            closeApprovalView()
         }
     }
 
-    // MARK: - Helpers
+    @MainActor
+    private func closeApprovalView() {
+        let state = AppState.shared
+        state.pendingApproval = nil
+        state.isPinned = false
+        state.updateTask(id: ClaudeTaskMirror.taskID, state: .working)
+        if let idx = state.tasks.firstIndex(where: { $0.id == ClaudeTaskMirror.taskID }) {
+            state.tasks[idx].pillBadge = nil
+        }
+        state.view = state.tasks.isEmpty ? .empty : .overview
+    }
+
+    /// True while a permission request is on screen.
+    @MainActor
+    var hasPendingApproval: Bool { !approvals.isEmpty }
+
+    // MARK: - Island helpers
 
     @MainActor
-    private func expandIfNeeded(to view: IslandView) {
+    fileprivate static func expandIfNeeded(to view: IslandView) {
         let state = AppState.shared
         let isAlert: Bool
         switch view {
@@ -218,7 +231,7 @@ final class HookServer: @unchecked Sendable {
         default: isAlert = false
         }
         if state.mode == .expanded {
-            // Only force-switch view for alerts — leave user on their current view otherwise
+            // Only force-switch view for alerts, leave user on their current view otherwise
             if isAlert { state.view = view }
         } else if isAlert {
             // Alerts always force-expand
@@ -230,173 +243,9 @@ final class HookServer: @unchecked Sendable {
         // Already compact and non-alert: the character state update is enough, no expand
     }
 
-    // MARK: - Permission request (blocking — Claude Code waits for decision)
-
-    @MainActor
-    private func processPermissionRequest(fd: Int32, payload: [String: Any]) {
-        let state = AppState.shared
-        let sessionId = payload["session_id"] as? String ?? "unknown"
-        let cwd       = payload["cwd"]        as? String ?? ""
-        let rawName   = URL(fileURLWithPath: cwd).lastPathComponent
-        let projectName = rawName.isEmpty ? "Session" : rawName
-
-        let termProgram = payload["term_program"] as? String ?? ""
-        let bundleId    = payload["bundle_id"]    as? String ?? ""
-        let isVSCode = termProgram.lowercased().contains("vscode") ||
-                       bundleId.lowercased().contains("vscode")
-        guard isVSCode else {
-            Task.detached { [weak self] in
-                self?.sendLine(fd: fd, text: #"{"permissionDecision":"ask"}"#)
-                close(fd)
-            }
-            return
-        }
-
-        let tool = payload["tool_name"] as? String ?? "Tool"
-        var command = tool
-        if let input = payload["tool_input"] as? [String: Any] {
-            command = input["command"] as? String ?? tool
-        }
-        nbLog("PermissionRequest \(tool): \(command)")
-
-        if pendingApprovalFD >= 0 {
-            let old = pendingApprovalFD
-            Task.detached { [weak self] in
-                // "ask" → the hook script outputs nothing → Claude Code re-asks
-                self?.sendLine(fd: old, text: #"{"permissionDecision":"ask"}"#)
-                close(old)
-            }
-        }
-        pendingApprovalFD = fd
-        activeSessionId = sessionId
-
-        upsertTask(projectName: projectName, cwd: cwd)
-        state.updateTask(id: "integration_claude", state: .approval)
-        state.pendingApproval = ApprovalInfo(sessionId: sessionId, tool: tool, command: command)
-        state.isPinned = true
-        SoundEngine.shared.play("approval")
-
-        // Approval always forces the island open — user must be able to respond
-        state.focusId = "integration_claude"
-        expandIfNeeded(to: .approval)
-
-        let captured = fd
-        DispatchQueue.main.asyncAfter(deadline: .now() + 115) { [weak self] in
-            guard let self, self.pendingApprovalFD == captured else { return }
-            // "ask" → the hook script outputs nothing → Claude Code re-asks rather than denying
-            self.sendApprovalDecision("ask")
-        }
-    }
-
-    /// Called by ApprovalView buttons. Writes the decision to the waiting hook script and cleans up.
-    @MainActor
-    func sendApprovalDecision(_ decision: String) {
-        let fd = pendingApprovalFD
-        pendingApprovalFD = -1
-
-        let json: String
-        switch decision {
-        case "allow":  json = #"{"permissionDecision":"allow"}"#
-        case "always": json = #"{"permissionDecision":"always"}"#
-        case "ask":    json = #"{"permissionDecision":"ask"}"#
-        default:       json = #"{"permissionDecision":"deny"}"#
-        }
-
-        if fd >= 0 {
-            Task.detached { [weak self] in
-                self?.sendLine(fd: fd, text: json)
-                close(fd)
-            }
-        }
-
-        let state = AppState.shared
-        state.pendingApproval = nil
-        state.isPinned = false
-        state.updateTask(id: "integration_claude", state: .working)
-        clearPillBadge(id: "integration_claude")
-        state.view = state.tasks.isEmpty ? .empty : .overview
-    }
-
-    /// Updates integration_claude with the current session project name and cwd.
-    @MainActor
-    private func upsertTask(projectName: String, cwd: String = "") {
-        let state = AppState.shared
-        guard let idx = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) else { return }
-        state.tasks[idx].name = projectName
-        if !cwd.isEmpty { state.tasks[idx].sessionCwd = cwd }
-    }
-
-    // MARK: - Badge helpers
-
-    @MainActor
-    private func setPillBadge(id: String, badge: PillBadge) {
-        let state = AppState.shared
-        guard let idx = state.tasks.firstIndex(where: { $0.id == id }) else { return }
-        state.tasks[idx].pillBadge = badge
-    }
-
-    @MainActor
-    private func clearPillBadge(id: String) {
-        let state = AppState.shared
-        guard let idx = state.tasks.firstIndex(where: { $0.id == id }) else { return }
-        state.tasks[idx].pillBadge = nil
-    }
-
-    /// Resets integration_claude to idle, clears steps and project name.
-    @MainActor
-    private func clearSession() {
-        let state = AppState.shared
-        guard let idx = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) else { return }
-        state.tasks[idx].steps = []
-        state.tasks[idx].stepIndex = 0
-        state.tasks[idx].name = "VS Code"
-        state.tasks[idx].pillBadge = nil
-    }
-
-    @MainActor
-    private func appendStep(id: String, step: String) {
-        let state = AppState.shared
-        guard let idx = state.tasks.firstIndex(where: { $0.id == id }) else { return }
-        state.tasks[idx].steps.append(step)
-        if state.tasks[idx].steps.count > 20 { state.tasks[idx].steps.removeFirst() }
-        state.tasks[idx].stepIndex = state.tasks[idx].steps.count - 1
-    }
-
-    // MARK: - French step labels
-
-    private func frenchStep(tool: String, input: [String: Any]) -> String {
-        let labels: [String: String] = [
-            "Bash":       "Exécute",
-            "Read":       "Lit",
-            "Write":      "Écrit",
-            "Edit":       "Modifie",
-            "Glob":       "Cherche",
-            "Grep":       "Recherche",
-            "WebSearch":  "Recherche web",
-            "WebFetch":   "Récupère",
-            "TodoWrite":  "Tâches",
-            "Task":       "Agent",
-            "LS":         "Liste",
-            "MultiEdit":  "Modifie",
-            "NotebookEdit": "Notebook",
-        ]
-        let label = labels[tool] ?? tool
-        if let cmd = input["command"] as? String {
-            let short = String(cmd.prefix(40))
-            return "\(label) · \(short)"
-        } else if let path = input["path"] as? String {
-            return "\(label) · \(URL(fileURLWithPath: path).lastPathComponent)"
-        } else if let file = input["file_path"] as? String {
-            return "\(label) · \(URL(fileURLWithPath: file).lastPathComponent)"
-        } else if let query = input["query"] as? String {
-            return "\(label) · \(String(query.prefix(40)))"
-        }
-        return label
-    }
-
     // MARK: - Logging
 
-    private func nbLog(_ message: String) {
+    fileprivate func nbLog(_ message: String) {
         let logsDir = AppIdentity.logsDirectory
         try? FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
         let logFile = logsDir.appendingPathComponent(AppIdentity.hookLogFileName)
@@ -416,15 +265,7 @@ final class HookServer: @unchecked Sendable {
     }
 
     private func sendLine(fd: Int32, text: String) {
-        let bytes = Array((text + "\n").utf8)
-        bytes.withUnsafeBytes { buffer in
-            var sent = 0
-            while sent < buffer.count {
-                let n = Darwin.send(fd, buffer.baseAddress! + sent, buffer.count - sent, 0)
-                if n <= 0 { break }
-                sent += n
-            }
-        }
+        writeLine(text, to: fd)
     }
 
     // MARK: - Hook script installation
@@ -650,6 +491,262 @@ final class HookServer: @unchecked Sendable {
     #endif
 }
 
+// MARK: - Socket helpers
+
+private func writeLine(_ text: String, to fd: Int32) {
+    let bytes = Array((text + "\n").utf8)
+    bytes.withUnsafeBytes { buffer in
+        var sent = 0
+        while sent < buffer.count {
+            let n = Darwin.send(fd, buffer.baseAddress! + sent, buffer.count - sent, 0)
+            if n <= 0 { break }
+            sent += n
+        }
+    }
+}
+
+/// The socket of a hook script waiting for a permission decision.
+/// Everything that touches the descriptor runs on one serial queue, so a reply, a hang-up and
+/// the close can never overlap.
+private final class HeldSocket: @unchecked Sendable {
+    private static let queue = DispatchQueue(label: "\(AppIdentity.notificationPrefix).hook-replies")
+
+    /// True when the script waits for an acknowledgement before it waits for the decision.
+    let acknowledges: Bool
+    private let fd: Int32
+    private var watcher: DispatchSourceRead?
+    private var closed = false
+
+    init(fd: Int32, acknowledges: Bool) {
+        self.fd = fd
+        self.acknowledges = acknowledges
+    }
+
+    /// Writes a line and keeps the socket open.
+    func send(_ line: String) {
+        Self.queue.async {
+            guard !self.closed else { return }
+            writeLine(line, to: self.fd)
+        }
+    }
+
+    /// Writes the last line and closes the socket.
+    func finish(_ line: String) {
+        Self.queue.async {
+            guard !self.closed else { return }
+            writeLine(line, to: self.fd)
+            self.shut()
+        }
+    }
+
+    /// Calls `onHangUp` once if the script closes its end before `finish`.
+    func watch(onHangUp: @escaping @Sendable () -> Void) {
+        Self.queue.async { [weak self] in
+            guard let self, !self.closed, self.watcher == nil else { return }
+            let fd = self.fd
+            let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: Self.queue)
+            source.setEventHandler { [weak self] in
+                guard let self, !self.closed else { return }
+                var byte: UInt8 = 0
+                let n = recv(fd, &byte, 1, MSG_PEEK | MSG_DONTWAIT)
+                if n > 0 {
+                    // The script never writes twice; drop whatever this is so the source settles.
+                    _ = recv(fd, &byte, 1, MSG_DONTWAIT)
+                    return
+                }
+                if n < 0 && (errno == EAGAIN || errno == EINTR) { return }
+                self.shut()
+                onHangUp()
+            }
+            // The descriptor is closed by the cancel handler, once the source has let go of it.
+            source.setCancelHandler { close(fd) }
+            self.watcher = source
+            source.resume()
+        }
+    }
+
+    private func shut() {
+        closed = true
+        if let watcher {
+            watcher.cancel()
+            self.watcher = nil
+        } else {
+            close(fd)
+        }
+    }
+}
+
+// MARK: - Claude Code sessions → island
+// Keeps the permanent Claude Code pill ("integration_claude") in step with the sessions, and plays
+// the sounds and island reactions of each event. The pill shows one session at a time: the one
+// waiting for the user, otherwise the most recently active.
+
+@MainActor
+final class ClaudeTaskMirror {
+    static let taskID = "integration_claude"
+    static let idleName = "Claude Code"
+
+    private let state: AppState
+    /// Sessions already announced (sound and reveal happen once per session).
+    private var known: Set<SessionID> = []
+    /// Last lines of each session's activity log.
+    private var steps: [SessionID: [String]] = [:]
+    /// Sessions that have just finished: they show "finished" for a moment, then go idle.
+    private var celebrating: [SessionID: Int] = [:]
+    private var celebrationCount = 0
+
+    init(state: AppState) {
+        self.state = state
+    }
+
+    private var focused: Bool { state.focusId == Self.taskID }
+
+    func receive(_ event: YumiEvent, sessions: [SessionID: Session]) {
+        // Other agents will get their own display; this one only speaks for Claude Code.
+        if let id = event.sessionID, let session = sessions[id],
+           session.agent.id != ClaudeHookTranslator.agent.id { return }
+
+        var approval: (PermissionRequest, SessionID)?
+
+        switch event {
+        case .sessionStarted(let id, _, let title):
+            guard known.insert(id).inserted else { break }
+            HookServer.shared.nbLog("SessionStart \(title) (\(id.value.prefix(8)))")
+            if state.isPresent { HookServer.expandIfNeeded(to: .overview) }
+            SoundEngine.shared.play("work")
+
+        case .promptSubmitted(let id, let text):
+            celebrating[id] = nil
+            if !text.isEmpty { append(String(text.prefix(60)), to: id) }
+            if state.isPresent { HookServer.expandIfNeeded(to: .overview) }
+
+        case .toolStarted(let id, let tool):
+            celebrating[id] = nil
+            let step = ClaudeToolPhrase.step(tool)
+            append(step, to: id)
+            HookServer.shared.nbLog("PreToolUse \(step)")
+
+        case .activityNoted(let id, let line):
+            append(line, to: id)
+
+        case .rateLimited:
+            SoundEngine.shared.play("rate")
+
+        case .questionRequested(let id, let question):
+            append(question.text, to: id)
+
+        case .taskCompleted(let id):
+            SoundEngine.shared.play("finish")
+            celebrate(id)
+            if focused {
+                HookServer.expandIfNeeded(to: .finished)
+            } else {
+                setBadge(.finished)
+            }
+
+        case .sessionErrored:
+            SoundEngine.shared.play("error")
+            if focused {
+                HookServer.expandIfNeeded(to: .error)
+            } else {
+                setBadge(.error)
+            }
+
+        case .sessionEnded(let id):
+            known.remove(id)
+            steps[id] = nil
+            celebrating[id] = nil
+
+        case .permissionRequested(let id, let request):
+            approval = (request, id)
+
+        case .agentRegistered, .sessionLocated, .toolFinished, .permissionResolved:
+            break
+        }
+
+        refresh(sessions)
+        if let (request, id) = approval {
+            HookServer.shared.presentApproval(request, session: id)
+        }
+    }
+
+    // MARK: Pill
+
+    /// Rewrites the pill from the session to show. Touches `AppState` only when something changed.
+    private func refresh(_ sessions: [SessionID: Session]) {
+        guard let idx = state.tasks.firstIndex(where: { $0.id == Self.taskID }) else { return }
+        var task = state.tasks[idx]
+        if let session = ClaudeSessions.ordered(sessions).first {
+            task.name = ClaudeSessions.projectName(session)
+            if let cwd = session.origin?.workingDirectory, !cwd.isEmpty { task.sessionCwd = cwd }
+            task.steps = steps[session.id] ?? []
+            task.stepIndex = max(0, task.steps.count - 1)
+            task.state = botState(for: session)
+        } else {
+            // No session left: back to the resting pill.
+            task.name = Self.idleName
+            task.steps = []
+            task.stepIndex = 0
+            task.state = .idle
+            task.pillBadge = nil
+        }
+        if task != state.tasks[idx] { state.tasks[idx] = task }
+        lastSessions = sessions
+    }
+
+    private var lastSessions: [SessionID: Session] = [:]
+
+    private func botState(for session: Session) -> BotState {
+        switch session.activity {
+        case .requestingPermission: return .approval
+        case .asking:               return .question
+        case .thinking:             return .thinking
+        case .working:              return .working
+        case .idle:
+            switch session.status {
+            case .rateLimited:    return .ratelimit
+            case .errored:        return .error
+            case .completed:      return celebrating[session.id] != nil ? .finished : .idle
+            case .waitingForUser: return .question
+            case .running:        return session.isTurnActive ? .working : .idle
+            }
+        }
+    }
+
+    private func append(_ step: String, to id: SessionID) {
+        var log = steps[id] ?? []
+        log.append(step)
+        if log.count > 20 { log.removeFirst() }
+        steps[id] = log
+    }
+
+    /// Shows "finished" for 5.2 s, unless the session starts working again before that.
+    private func celebrate(_ id: SessionID) {
+        celebrationCount += 1
+        let token = celebrationCount
+        celebrating[id] = token
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5.2) { [weak self] in
+            guard let self, self.celebrating[id] == token else { return }
+            self.celebrating[id] = nil
+            self.setBadge(nil)
+            self.refresh(self.lastSessions)
+        }
+    }
+
+    private func setBadge(_ badge: PillBadge?) {
+        guard let idx = state.tasks.firstIndex(where: { $0.id == Self.taskID }),
+              state.tasks[idx].pillBadge != badge else { return }
+        state.tasks[idx].pillBadge = badge
+    }
+
+    /// Opens the island on the Claude Code sessions: on the pending approval if there is one.
+    func show() {
+        state.setFocus(Self.taskID)
+        NotificationCenter.default.post(name: .hookExpand,
+                                        object: HookServer.shared.hasPendingApproval ? IslandView.approval : IslandView.overview)
+    }
+}
+
 // MARK: - Notification names for hook server → controller communication
 
 extension Notification.Name {
@@ -707,49 +804,61 @@ def main():
     )
 
     if event == 'PermissionRequest':
-        # Block and wait for \(AppIdentity.productName)'s decision (Claude Code allows up to 120s)
+        # Wait for \(AppIdentity.productName)'s decision (Claude Code allows up to 120s), but only if the app shows it is alive:
+        # it must acknowledge the request within 2 seconds, or Claude Code asks in the terminal as usual.
+        payload['hook_protocol'] = 2
         try:
             s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.settimeout(118)
+            s.settimeout(2)
             s.connect(socket_path)
             s.sendall((json.dumps(payload) + '\\n').encode())
-            chunks = []
-            while True:
-                chunk = s.recv(4096)
-                if not chunk:
-                    break
-                chunks.append(chunk)
-                if b'\\n' in chunk:
-                    break
-            s.close()
-            response = b''.join(chunks).decode().strip()
-            if response:
+            pending = b''
+
+            def read_line():
+                nonlocal pending
+                while b'\\n' not in pending:
+                    chunk = s.recv(4096)
+                    if not chunk:
+                        line, pending = pending, b''
+                        return line
+                    pending += chunk
+                line, pending = pending.split(b'\\n', 1)
+                return line
+
+            def parse(line):
                 try:
-                    resp_obj = json.loads(response)
-                    decision = resp_obj.get('permissionDecision', '')
+                    obj = json.loads(line.decode().strip())
+                    return obj if isinstance(obj, dict) else {}
                 except Exception:
-                    decision = ''
-                if decision == 'allow':
-                    out = {'hookSpecificOutput': {'hookEventName': 'PermissionRequest', 'decision': {'behavior': 'allow'}}}
-                    sys.stdout.write(json.dumps(out) + '\\n')
-                    sys.stdout.flush()
-                    sys.exit(0)
-                elif decision == 'always':
-                    # Let Claude Code persist the rule via updatedPermissions
-                    suggestions = payload.get('permission_suggestions', [])
-                    out = {'hookSpecificOutput': {'hookEventName': 'PermissionRequest', 'decision': {'behavior': 'allow', 'updatedPermissions': suggestions}}}
-                    sys.stdout.write(json.dumps(out) + '\\n')
-                    sys.stdout.flush()
-                    sys.exit(0)
-                elif decision == 'deny':
-                    out = {'hookSpecificOutput': {'hookEventName': 'PermissionRequest', 'decision': {'behavior': 'deny', 'message': '\(AppIdentity.denyMessage)'}}}
-                    sys.stdout.write(json.dumps(out) + '\\n')
-                    sys.stdout.flush()
-                    sys.exit(0)
-                # 'ask' or unknown: fall through → no output → Claude Code re-asks
+                    return {}
+
+            resp_obj = parse(read_line())
+            if resp_obj.get('ack'):
+                s.settimeout(118)
+                resp_obj = parse(read_line())
+            s.close()
+            decision = resp_obj.get('permissionDecision', '')
+            if decision == 'allow':
+                out = {'hookSpecificOutput': {'hookEventName': 'PermissionRequest', 'decision': {'behavior': 'allow'}}}
+                sys.stdout.write(json.dumps(out) + '\\n')
+                sys.stdout.flush()
+                sys.exit(0)
+            elif decision == 'always':
+                # Let Claude Code persist the rule via updatedPermissions
+                suggestions = payload.get('permission_suggestions', [])
+                out = {'hookSpecificOutput': {'hookEventName': 'PermissionRequest', 'decision': {'behavior': 'allow', 'updatedPermissions': suggestions}}}
+                sys.stdout.write(json.dumps(out) + '\\n')
+                sys.stdout.flush()
+                sys.exit(0)
+            elif decision == 'deny':
+                out = {'hookSpecificOutput': {'hookEventName': 'PermissionRequest', 'decision': {'behavior': 'deny', 'message': '\(AppIdentity.denyMessage)'}}}
+                sys.stdout.write(json.dumps(out) + '\\n')
+                sys.stdout.flush()
+                sys.exit(0)
+            # 'ask' or unknown: fall through → no output → Claude Code re-asks
         except Exception:
             pass
-        # App unreachable, timed out, or no explicit decision — print nothing
+        # App unreachable, silent, timed out, or no explicit decision: print nothing
         # Claude Code will handle the absence of output (re-ask or default behaviour)
         sys.exit(0)
 
@@ -761,7 +870,7 @@ def main():
         s.sendall((json.dumps(payload) + '\\n').encode())
         s.close()
     except Exception:
-        pass  # Always exit cleanly — never block Claude Code
+        pass  # Always exit cleanly, never block Claude Code
 
 main()
 sys.exit(0)

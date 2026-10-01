@@ -6,7 +6,7 @@ import Combine
 extension AgentTask {
     /// All available integration pills. Claude is always active; others are opt-in (max 4).
     static let integrationAgents: [AgentTask] = [
-        AgentTask(id: "integration_claude",  name: "VS Code",   color: "#F5F6F8", state: .idle, steps: [], source: .claudeCode, isIntegration: true),
+        AgentTask(id: "integration_claude",  name: "Claude Code", color: "#F5F6F8", state: .idle, steps: [], source: .claudeCode, isIntegration: true),
         AgentTask(id: "integration_resend",  name: "Resend",    color: "#22C55E", state: .idle, steps: [], source: .n8n, isIntegration: true),
         AgentTask(id: "integration_n8n",     name: "n8n",       color: "#F29B38", state: .idle, steps: [], source: .n8n, isIntegration: true),
         AgentTask(id: "integration_vercel",  name: "Vercel",    color: "#7C5CFF", state: .idle, steps: [], source: .n8n, isIntegration: true),
@@ -16,7 +16,7 @@ extension AgentTask {
         AgentTask(id: "integration_stripe",  name: "Stripe",    color: "#0570DE", state: .idle, steps: [], source: .n8n, isIntegration: true),
     ]
 
-    /// IDs that can be toggled (VS Code is always on and excluded from this list)
+    /// IDs that can be toggled (Claude Code is always on and excluded from this list)
     static let toggleableIntegrationIds: [String] = [
         "integration_resend", "integration_n8n", "integration_vercel", "integration_github",
         "integration_notion", "integration_calcom", "integration_stripe",
@@ -181,8 +181,8 @@ final class AppState: ObservableObject {
     @Published var pendingApproval: ApprovalInfo? = nil
 
     // Modules shown in the island, pinned ones first (see Contracts/ModuleTypes.swift).
-    // Example data until the core feeds live snapshots.
-    @Published var modules: [ModuleSnapshot] = ModuleCatalog.placeholders
+    // Kept up to date by the ModuleRegistry: one snapshot per selected module, in selection order.
+    @Published var modules: [ModuleSnapshot] = []
 
     // MARK: - Init (loads persisted settings)
 
@@ -295,8 +295,34 @@ final class AppState: ObservableObject {
             }
         }
         syncMode()
+        IntegrationPollers.sync(active: activeIntegrations)
     }
 
+}
+
+// MARK: - Integration pollers
+// Each legacy integration polls its service on a timer. A poller runs only while its
+// integration is selected: a deselected one makes no request and keeps no timer.
+
+@MainActor
+enum IntegrationPollers {
+    private static let all: [(id: String, start: () -> Void, stop: () -> Void)] = [
+        ("integration_n8n",    { N8nPoller.shared.start() },    { N8nPoller.shared.stop() }),
+        ("integration_vercel", { VercelPoller.shared.start() }, { VercelPoller.shared.stop() }),
+        ("integration_resend", { ResendPoller.shared.start() }, { ResendPoller.shared.stop() }),
+        ("integration_github", { GithubPoller.shared.start() }, { GithubPoller.shared.stop() }),
+        ("integration_stripe", { StripePoller.shared.start() }, { StripePoller.shared.stop() }),
+        ("integration_calcom", { CalcomPoller.shared.start() }, { CalcomPoller.shared.stop() }),
+        ("integration_notion", { NotionPoller.shared.start() }, { NotionPoller.shared.stop() }),
+    ]
+
+    /// Starts the pollers of the selected integrations and stops the others.
+    /// Starting a running poller, or stopping a stopped one, does nothing.
+    static func sync(active: Set<String>) {
+        for poller in all {
+            if active.contains(poller.id) { poller.start() } else { poller.stop() }
+        }
+    }
 }
 
 // MARK: - Supporting types

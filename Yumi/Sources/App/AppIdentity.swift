@@ -46,8 +46,20 @@ enum AppIdentity {
     // MARK: Derived paths
 
     static var supportDirectory: URL {
-        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        if let developmentSupportDirectory { return developmentSupportDirectory }
+        return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent(supportFolderName)
+    }
+
+    /// Debug builds only: `YUMI_SUPPORT_DIR` moves the socket and the hook script elsewhere, so a
+    /// development build can run next to the installed app without taking its socket.
+    private static var developmentSupportDirectory: URL? {
+        #if DEBUG
+        if let path = ProcessInfo.processInfo.environment["YUMI_SUPPORT_DIR"], !path.isEmpty {
+            return URL(fileURLWithPath: path)
+        }
+        #endif
+        return nil
     }
 
     static var inboxDirectory: URL { supportDirectory.appendingPathComponent(inboxFolderName) }
@@ -75,6 +87,7 @@ enum AppIdentity {
     /// Socket path as written in the hook script. The script runs outside the app
     /// (and outside the sandbox), so the path is spelled from ~ and expanded by Python.
     static var hookScriptSocketPath: String {
+        if developmentSupportDirectory != nil { return socketPath }
         #if APPSTORE
         // The sandbox container is named after the bundle identifier
         let bundleIdentifier = Bundle.main.bundleIdentifier ?? "app.yumi.appstore"
