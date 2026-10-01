@@ -27,8 +27,16 @@ struct IslandScene: View {
     @State private var openings = 0
 
     var body: some View {
-        let layout = model.layout
         let stage = model.stage(for: state.mode)
+        // What is live decides how wide the folded island is
+        let folded = FoldedContent(module: FoldedIsland.live(in: state.modules, shown: model.liveModuleID),
+                                   hover: model.foldedHover && stage == .compact)
+        let ear = folded.ear(notchWidth: model.layout.notchWidth)
+        let layout: IslandLayout = {
+            var layout = model.layout
+            layout.compactEar = ear
+            return layout
+        }()
         let size = layout.size(stage, openHeight: model.openHeight)
         let seat = layout.seat(stage)
         let approval = state.pendingApproval != nil
@@ -37,7 +45,8 @@ struct IslandScene: View {
             stage: stage,
             screen: stage == .open ? screen : IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: approval),
             moduleID: stage == .open && screen == .module ? model.selectedModule(in: state.modules)?.id : nil,
-            smokes: smokes)
+            smokes: smokes,
+            music: folded.musicPlaying)
         let middle = IslandConst.panelWidth / 2
         let launching = model.launchStage != nil
 
@@ -56,9 +65,6 @@ struct IslandScene: View {
                                  center: CGPoint(x: IslandConst.greetWidth * IslandConst.launchScale / 2 + layout.seat(.greet).x,
                                                  y: layout.seat(.greet).y))
 
-                    IslandCompactLayer(state: state, model: model)
-                        .modifier(IslandLayer(on: stage == .compact))
-
                     IslandOpenLayer(state: state, model: model, screen: screen)
                         .id(openings)
                         .fixedSize(horizontal: false, vertical: true)
@@ -69,6 +75,11 @@ struct IslandScene: View {
                         .scaleEffect(IslandConst.openScale, anchor: .topLeading)
                         .modifier(IslandLayer(on: stage == .open))
                 }
+            } edge: {
+                // Laid out in the island's width of the instant, so that it stays against
+                // its right edge while the island widens or narrows
+                IslandCompactLayer(content: folded, ear: ear, height: layout.notchHeight)
+                    .modifier(IslandLayer(on: stage == .compact))
             }
             .animation(model.snap ? nil : .islandSpring(), value: size)
 
@@ -88,6 +99,9 @@ struct IslandScene: View {
                 .onAppear { model.actorAppeared() }
         }
         .onAppear { model.direct(from: nil, to: situation) }
+        .onChange(of: folded.module?.id, initial: true) { _, id in model.liveModuleID = id }
+        .onChange(of: ear, initial: true) { _, ear in model.layout.compactEar = ear }
+        .onChange(of: folded.controls.count, initial: true) { _, count in model.foldedControls = count }
         .onChange(of: situation) { old, new in model.direct(from: old, to: new) }
         .onChange(of: state.effectiveState) { old, new in model.track(state: old, new) }
         .onChange(of: state.focusTask?.steps.last) { _, step in model.track(step: step) }
@@ -135,17 +149,22 @@ struct IslandShape: Shape {
 /// The island at one size. It is rebuilt at every frame of a change, so its width and height
 /// follow `--spring` (.55 s) while its corners follow their own ease (.4 s), as in
 /// `transition: width .55s var(--spring), height .55s var(--spring), border-radius .4s ease`.
-struct IslandBody<Content: View>: View, Animatable {
+struct IslandBody<Content: View, Edge: View>: View, Animatable {
     var width: CGFloat
     var height: CGFloat
     let radius: CGFloat
+    /// Layers anchored to the top-left corner of the island, each with its own width.
     let content: Content
+    /// A layer that takes the width the island has at this instant.
+    let edge: Edge
 
-    init(width: CGFloat, height: CGFloat, radius: CGFloat, @ViewBuilder content: () -> Content) {
+    init(width: CGFloat, height: CGFloat, radius: CGFloat,
+         @ViewBuilder content: () -> Content, @ViewBuilder edge: () -> Edge) {
         self.width = width
         self.height = height
         self.radius = radius
         self.content = content()
+        self.edge = edge()
     }
 
     nonisolated var animatableData: AnimatablePair<CGFloat, CGFloat> {
@@ -154,16 +173,17 @@ struct IslandBody<Content: View>: View, Animatable {
     }
 
     var body: some View {
-        IslandCorners(width: width, height: height, radius: radius, content: content)
+        IslandCorners(width: width, height: height, radius: radius, content: content, edge: edge)
             .animation(.islandEase(0.4), value: radius)
     }
 }
 
-private struct IslandCorners<Content: View>: View, Animatable {
+private struct IslandCorners<Content: View, Edge: View>: View, Animatable {
     let width: CGFloat
     let height: CGFloat
     var radius: CGFloat
     let content: Content
+    let edge: Edge
 
     nonisolated var animatableData: CGFloat {
         get { radius }
@@ -176,6 +196,7 @@ private struct IslandCorners<Content: View>: View, Animatable {
             shape.fill(.black)
             content
                 .frame(width: max(0, width), height: max(0, height), alignment: .topLeading)
+                .overlay(alignment: .topTrailing) { edge }
                 .clipShape(shape)
         }
         .frame(width: max(0, width), height: max(0, height), alignment: .topLeading)
@@ -204,34 +225,5 @@ struct IslandActor: View, Animatable {
         BotCanvasView(state: state)
             .frame(width: side, height: side)
             .position(x: x, y: y)
-    }
-}
-
-// MARK: - Compact island (`.compact`): Yumi in the left ear, one mark in the right one
-
-struct IslandCompactLayer: View {
-    @ObservedObject var state: AppState
-    @ObservedObject var model: IslandModel
-
-    var body: some View {
-        let size = model.layout.size(.compact, openHeight: 0)
-        // The elapsed minutes of a working agent move on by themselves
-        TimelineView(.periodic(from: .now, by: 20)) { _ in
-            HStack(spacing: 7) {
-                if let mark = IslandContent.compactMark(state: state, model: model) {
-                    Circle().fill(mark.color).frame(width: 7, height: 7)
-                    Text(mark.text)
-                        .font(IslandTheme.round(12, .bold))
-                        .monospacedDigit()
-                        .foregroundStyle(IslandTheme.fg)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.8)
-                }
-            }
-            // The mark has to stay in the ear: the notch hides what is behind it
-            .frame(maxWidth: IslandConst.compactExtra / 2 - 14 - 4, alignment: .trailing)
-            .padding(.horizontal, 14)
-            .frame(width: size.width, height: size.height, alignment: .trailing)
-        }
     }
 }

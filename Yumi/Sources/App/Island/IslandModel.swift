@@ -27,6 +27,15 @@ final class IslandModel: ObservableObject {
         var bye = false
     }
 
+    // MARK: Folded island
+
+    /// The live module shown on the right of the notch: kept while another one only ties with it.
+    @Published var liveModuleID: String?
+    /// The pointer is on the folded island: the buttons of the live module are out.
+    @Published var foldedHover = false
+    /// How many of those buttons there are, for the window controller's hit test.
+    var foldedControls = 0
+
     // MARK: Open island
 
     @Published var selectedModuleID: String?
@@ -95,7 +104,7 @@ final class IslandModel: ObservableObject {
             ?? modules.first
     }
 
-    static func isMusic(_ moduleID: String?) -> Bool {
+    nonisolated static func isMusic(_ moduleID: String?) -> Bool {
         moduleID == "music" || moduleID == "musique"
     }
 
@@ -173,6 +182,8 @@ final class IslandModel: ObservableObject {
         var screen: IslandScreen
         var moduleID: String?
         var smokes: Bool
+        /// The live module is the music, and it is playing.
+        var music = false
     }
 
     /// `STATES` of the mock-up: the face, the rim colour, the habit and the pose of each view.
@@ -198,11 +209,14 @@ final class IslandModel: ObservableObject {
         setMood(look?.mood)
         setRim(look?.rim)
 
-        // Habit
+        // Habit. Music playing puts his headphones on wherever nothing else is going on:
+        // folded, on the home view, and on the view of the music module.
+        let listening = (new.music && (!open || new.screen == .home))
+            || (open && new.screen == .module && Self.isMusic(new.moduleID))
         switch new.screen {
         case .working:
             cancelLateHabit()
-            setHabit(new.smokes ? .smoke : nil)
+            setHabit(new.smokes ? .smoke : (new.music ? .headphones : nil))
         case .error:
             cancelLateHabit()
             setHabit(.cloud)
@@ -214,12 +228,9 @@ final class IslandModel: ObservableObject {
                 lateHabit = item
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.65, execute: item)
             }
-        case .module where open && Self.isMusic(new.moduleID):
-            cancelLateHabit()
-            setHabit(.headphones)
         default:
             cancelLateHabit()
-            setHabit(nil)
+            setHabit(listening ? .headphones : nil)
         }
 
         // Pose: `playPose(Y, s.pose || 'pop')` on every view

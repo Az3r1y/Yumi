@@ -426,3 +426,87 @@ import Foundation
         ])
     }
 }
+
+// MARK: – The folded island: what is live
+
+@Suite struct FoldedIslandTests {
+
+    private func module(_ id: String, live priority: Int? = nil, text: String = "…") -> ModuleSnapshot {
+        ModuleSnapshot(id: id, name: id, colorHex: "#FFFFFF", status: "", title: "", subtitle: "",
+                       primaryAction: "Voir", secondaryAction: nil,
+                       live: priority.map { ModuleLive(text: text, priority: $0) })
+    }
+
+    @Test func nothingLiveShowsNothing() {
+        #expect(FoldedIsland.live(in: [], shown: nil) == nil)
+        #expect(FoldedIsland.live(in: [module("agenda"), module("music")], shown: "music") == nil)
+    }
+
+    @Test func theHighestPriorityWins() {
+        let modules = [
+            module("agenda", live: ModuleLivePriority.ambient),
+            module("music", live: ModuleLivePriority.activity),
+            module("claude-code", live: ModuleLivePriority.attention),
+            module("weather"),
+        ]
+        #expect(FoldedIsland.live(in: modules, shown: nil)?.id == "claude-code")
+        #expect(FoldedIsland.live(in: modules, shown: "music")?.id == "claude-code")
+    }
+
+    @Test func atEqualPriorityTheOneShownStays() {
+        let modules = [
+            module("focus", live: ModuleLivePriority.activity),
+            module("music", live: ModuleLivePriority.activity),
+        ]
+        #expect(FoldedIsland.live(in: modules, shown: "music")?.id == "music")
+        #expect(FoldedIsland.live(in: modules, shown: "focus")?.id == "focus")
+    }
+
+    @Test func atEqualPriorityTheFirstInOrderIsTakenWhenNoneWasShown() {
+        let modules = [
+            module("focus", live: ModuleLivePriority.activity),
+            module("music", live: ModuleLivePriority.activity),
+        ]
+        #expect(FoldedIsland.live(in: modules, shown: nil)?.id == "focus")
+        #expect(FoldedIsland.live(in: modules, shown: "agenda")?.id == "focus")
+    }
+
+    @Test func theOneShownGivesWayToAHigherPriority() {
+        let modules = [
+            module("agenda", live: ModuleLivePriority.ambient),
+            module("music", live: ModuleLivePriority.activity),
+        ]
+        #expect(FoldedIsland.live(in: modules, shown: "agenda")?.id == "music")
+    }
+
+    @Test func theOneShownIsReplacedOnceItIsNoLongerLive() {
+        let modules = [module("music"), module("agenda", live: ModuleLivePriority.ambient)]
+        #expect(FoldedIsland.live(in: modules, shown: "music")?.id == "agenda")
+    }
+
+    @Test func aNewTrackIsANewLineButACountdownIsNot() {
+        #expect(FoldedIsland.isNewLine("Lueur · Halo Nord", "Marée basse · Halo Nord"))
+        #expect(!FoldedIsland.isNewLine("18:42", "18:41"))
+        #expect(!FoldedIsland.isNewLine("Pause 04:59", "Pause 04:58"))
+        #expect(FoldedIsland.isNewLine("18:42", "18:41 en pause"))
+        #expect(!FoldedIsland.isNewLine("Lueur · Halo Nord", "Lueur · Halo Nord"))
+    }
+
+    @Test func theEarFitsItsContent() {
+        #expect(FoldedIsland.ear(content: 140, minimum: 80, notchWidth: 184, openWidth: 660) == 140)
+    }
+
+    @Test func theEarIsNeverNarrowerThanTheMockUp() {
+        #expect(FoldedIsland.ear(content: 0, minimum: 80, notchWidth: 184, openWidth: 660) == 80)
+        #expect(FoldedIsland.ear(content: 42, minimum: 80, notchWidth: 184, openWidth: 660) == 80)
+    }
+
+    @Test func theFoldedIslandIsNeverWiderThanTheOpenOne() {
+        for content in stride(from: 0.0, through: 2000, by: 37) {
+            let ear = FoldedIsland.ear(content: content, minimum: 80, notchWidth: 184, openWidth: 660)
+            #expect(184 + 2 * ear <= 660)
+        }
+        // An open island narrower than the folded minimum: the minimum still holds
+        #expect(FoldedIsland.ear(content: 500, minimum: 80, notchWidth: 184, openWidth: 300) == 80)
+    }
+}

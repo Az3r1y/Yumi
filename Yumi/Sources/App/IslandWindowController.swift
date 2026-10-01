@@ -16,6 +16,8 @@ final class IslandWindowController: NSWindowController {
     private var wasInIsland = false
     /// Debug walk-through: the island does not fold by itself.
     var holdsOpen = false
+    /// Debug walk-through: as if the pointer were on the folded island.
+    var demoHover = false
     private var frameTimer: Timer?
     private var monitors: [Any] = []
     private var subscriptions: Set<AnyCancellable> = []
@@ -204,6 +206,10 @@ final class IslandWindowController: NSWindowController {
         if inIsland { state.lastActivity = .now }
         wasInIsland = inIsland
 
+        // The buttons of the live module come out while the pointer is on the folded island
+        let onFolded = (inIsland || demoHover) && model.stage(for: state.mode) == .compact
+        if model.foldedHover != onFolded { model.foldedHover = onFolded }
+
         // Ghost character follows cursor + window highlight during drag (60 Hz, no throttle)
         if inAttachDrag {
             updateDragGhost()
@@ -227,6 +233,18 @@ final class IslandWindowController: NSWindowController {
         let height = model.drawerHeight * IslandConst.openScale
         return CGRect(x: island.maxX - width, y: island.minY - IslandConst.drawerGap - height,
                       width: width, height: height)
+    }
+
+    /// The buttons of the folded island: against its right edge, on its whole height.
+    private func isFoldedControlHit(_ windowPoint: CGPoint) -> Bool {
+        let count = CGFloat(model.foldedControls)
+        guard count > 0, model.foldedHover, model.stage(for: state.mode) == .compact else { return false }
+        let island = islandFrame()
+        let width = count * IslandConst.foldedControl + (count - 1) * IslandConst.foldedControlGap
+        let right = island.maxX - IslandConst.foldedTrailing
+        return windowPoint.x >= right - width - IslandConst.foldedGap / 2
+            && windowPoint.x <= island.maxX
+            && windowPoint.y >= island.minY - 6
     }
 
     /// Where Yumi is: his 100 × 84 box at the scale of his seat.
@@ -299,6 +317,8 @@ final class IslandWindowController: NSWindowController {
             guard let self else { return event }
             MainActor.assumeIsolated {
                 guard self.wasInIsland else { return }
+                // A button of the folded island acts by itself: the island stays folded
+                guard !self.isFoldedControlHit(event.locationInWindow) else { return }
                 self.pendingIslandClick = true
                 // Drag only starts when clicking directly on Yumi
                 guard self.isBotHit(event.locationInWindow) else { return }
