@@ -75,6 +75,25 @@ Correspondance proposée entre les états existants et les expressions de la pla
 | émote `wink` | clin d'œil |
 | émote `love`, `surprised` | à dessiner dans le même style |
 
+## Phase 3 : île repliée vivante, chat sans facture
+
+La phase 2 est terminée et fusionnée : personnage, île et cœur sont dans `main`. La répartition des fichiers de la phase 2 reste valable. Deux chantiers, deux sessions.
+
+Décisions prises en voyant l'app réelle :
+
+- **Taille de l'île** : on garde celle de `main` (échelle 1,4 par rapport à la maquette). La maquette reste la référence pour les proportions et le mouvement, plus pour la taille.
+- **L'approbation depuis la notch fonctionne** de bout en bout (testée le 1er octobre 2026 avec le script de hook).
+
+### Chantier A, session Cœur : le chat passe par Claude Code
+
+Aujourd'hui le chat appelle l'API avec une clé facturée à l'usage et ne sait que répondre par du texte. Il doit piloter le Claude Code installé sur le Mac : plus de facture à l'usage (l'abonnement de l'utilisateur), et la capacité d'agir (créer des fichiers, lancer des commandes, coder dans un dossier). Les demandes de permission passent par la notch, jamais contournées.
+
+L'interface vue par l'île ne change pas : `ClaudeService.shared.chat(query:context:state:)`, `clearConversation()`, et les réponses dans `AppState.chatHistory`.
+
+### Chantier B, sessions Cœur puis Île : l'île repliée montre ce qui est vivant
+
+Le contrat `Contracts/ModuleTypes.swift` a gagné `ModuleSnapshot.live` (texte court, priorité, deux boutons au plus). Le cœur le renseigne, l'île repliée affiche le module vivant de plus haute priorité et ses boutons au survol. Priorités : quelqu'un attend une réponse, puis ce qui tourne (musique, focus), puis ce qui est bon à savoir (prochain rendez-vous).
+
 ## Phase 2 : porter la maquette, répartition des fichiers
 
 Trois sessions en parallèle. Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Chaque session peut créer de nouveaux fichiers dans son propre sous-dossier.
