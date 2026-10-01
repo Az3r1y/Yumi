@@ -100,6 +100,11 @@ enum NotesSummary {
             snapshot.primaryAction = "Terminé"
             snapshot.secondaryAction = "Tout voir"
             snapshot.needsAttention = isLate(reminder, now: now, calendar: calendar)
+            // A late reminder is the one thing worth the folded island: it can be ticked off from there.
+            if snapshot.needsAttention {
+                snapshot.live = ModuleLive(text: "Rappel : \(reminder.title)", priority: ModuleLivePriority.ambient,
+                                           controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "checkmark", label: "Terminé")])
+            }
         } else if let note = notes.last {
             snapshot.title = "Dernière note"
             snapshot.subtitle = note

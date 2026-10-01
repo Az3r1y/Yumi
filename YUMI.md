@@ -182,3 +182,16 @@ Le chemin d'un événement : script de hook, socket, `ClaudeHookTranslator`, `Ev
 | Pollers hérités | Chacun ne tourne que si son intégration est cochée. |
 
 Reste à faire côté île : dessiner `AppState.modules`, remplacer les « VS Code » écrits en dur par le nom de la pastille, proposer le choix des modules et la ville de la météo dans les réglages. Reste à vérifier à la main : Musique et Spotify en lecture, Agenda et rappels après autorisation, Météo par localisation, boutons Deny et Always.
+
+## Cœur, phase 3 : île repliée et chat par Claude Code
+
+| Sujet | État |
+|---|---|
+| `ModuleSnapshot.live` | Claude Code : attention quand une session attend. Musique : activité en lecture, puis cinq minutes plus discrètement après une pause. Focus : activité pendant le décompte. Agenda : prochain rendez-vous du jour. Notes : seulement un rappel en retard. Météo : rien. |
+| Bouton « Voir » de Claude Code | Ouvre le dossier de la session dans l'éditeur de code (celui de la session, sinon la préférence `codeEditor`, sinon VS Code et ses cousins). Une approbation en attente reste traitée dans l'île. |
+| Chat | Un processus `claude -p` par message, entrée et sortie en `stream-json`, session reprise par `--resume`. Dossier de travail `~/Documents/Yumi`, modifiable par la préférence `chatFolder`. Sans Claude Code : l'API si une clé existe. Build App Store : toujours l'API. |
+| Permissions du chat | En mode `-p` simple, Claude Code n'appelle jamais le hook `PermissionRequest` et refuse l'outil. Le mécanisme prévu pour un programme hôte est `--permission-prompt-tool stdio` : la demande arrive sur la sortie du processus (`control_request`), la réponse repart sur son entrée. Yumi l'affiche dans la même file d'approbations que les autres sessions. Les hooks de la session du chat sont ignorés pour ne pas la compter deux fois. Aucune option qui saute les permissions, mode `default` imposé. |
+| « Toujours » dans le chat | N'applique que les règles proposées pour ce qui est affiché, jamais un changement de mode ni l'ouverture d'un dossier. |
+| Fichier joint | Seul le dossier `inbox` de Yumi est ouvert en lecture au chat. |
+
+Reste à faire côté île : afficher l'état `working` dans la vue du chat (elle ne connaît que `thinking`), montrer la commande entière d'une approbation (une seule ligne tronquée aujourd'hui), distinguer les lignes d'action des réponses.

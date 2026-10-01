@@ -100,7 +100,11 @@ final class KeychainStore: @unchecked Sendable {
     }
 }
 
-// MARK: - Claude API
+// MARK: - Chat
+// The chat drives the Claude Code installed on the Mac (see Core/Chat): the user's subscription
+// instead of a key billed by use, and the ability to act. The API remains the fallback when
+// Claude Code is not installed, and the only path of the App Store build, which may not launch
+// other programs.
 
 @MainActor
 final class ClaudeService {
@@ -115,8 +119,25 @@ final class ClaudeService {
     // Multi-turn conversation messages (for API)
     private var conversationMessages: [[String: Any]] = []
 
+    #if !APPSTORE
+    // Claude Code conversation: the session to resume, and the folder it belongs to
+    private var session: (id: String, folder: String)?
+    /// What was attached to the last message, so the same attachment is not repeated at every message.
+    private var sentContext: ChatContext?
+    /// Folders outside the chat folder that Claude Code may read: where attached files are.
+    private var readableFolders: [String] = []
+    private var turn: ClaudeCodeTurn?
+    #endif
+
     func clearConversation() {
         conversationMessages = []
+        #if !APPSTORE
+        turn?.cancel()
+        turn = nil
+        session = nil
+        sentContext = nil
+        readableFolders = []
+        #endif
     }
 
     private let systemPrompt = """
@@ -130,9 +151,199 @@ final class ClaudeService {
         ["type": "web_search_20250305", "name": "web_search", "max_uses": 5]
     ]
 
-    // MARK: - Chat (multi-turn, natural text + web search)
+    // MARK: - Chat (multi-turn)
 
     func chat(query: String, context: PromptContext?, state: AppState) async {
+        #if APPSTORE
+        await chatWithAPI(query: query, context: context, state: state)
+        #else
+        if let binary = ClaudeCLI.locate() {
+            await chatWithClaudeCode(binary: binary, query: query, context: context, state: state)
+        } else if let key = apiKey, !key.isEmpty {
+            await chatWithAPI(query: query, context: context, state: state)
+        } else {
+            await showError(ChatPhrases.notInstalled, state: state)
+        }
+        #endif
+    }
+
+    // MARK: - Chat through Claude Code
+
+    #if !APPSTORE
+    private func chatWithClaudeCode(binary: String, query: String, context: PromptContext?, state: AppState) async {
+        // A message sent while the previous one is still being answered replaces it.
+        turn?.cancel()
+
+        let folder = ChatFolder.path(stored: UserDefaults.standard.string(forKey: ChatFolder.key))
+        do {
+            try FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
+        } catch {
+            await showError("Je n'arrive pas à créer le dossier \(folder).", state: state)
+            return
+        }
+        // A session belongs to the folder it was started in: another folder is another conversation.
+        if let session, session.folder != folder {
+            self.session = nil
+            sentContext = nil
+        }
+
+        let attached = Self.chatContext(from: context)
+        // A dropped file is copied to Yumi's inbox: that folder, and only that one, is opened for
+        // reading. A file anywhere else is read through an ordinary permission request.
+        let inbox = AppIdentity.inboxDirectory.path
+        if case .file(_, let path?) = attached, ChatFolder.contains(path, in: inbox), !readableFolders.contains(inbox) {
+            readableFolders.append(inbox)
+        }
+        let message = ChatPhrases.message(query: query, context: attached == sentContext ? nil : attached)
+
+        var outcome = await runTurn(binary: binary, message: message, folder: folder, state: state)
+        if outcome == .unknownSession {
+            // The session to resume is gone (its history was removed): start again, attachment included.
+            session = nil
+            outcome = await runTurn(binary: binary, message: ChatPhrases.message(query: query, context: attached),
+                                    folder: folder, state: state)
+        }
+        if outcome == .answered { sentContext = attached }
+    }
+
+    private enum TurnOutcome { case answered, failed, cancelled, unknownSession }
+
+    /// Sends one message to Claude Code and follows the answer until the turn ends.
+    private func runTurn(binary: String, message: String, folder: String, state: AppState) async -> TurnOutcome {
+        let target: ClaudeCLI.Session = session.map { .resume($0.id) } ?? .new(UUID().uuidString.lowercased())
+        // From now on the hooks of this session are left to the chat (see HookServer).
+        ChatSessionRegistry.shared.insert(target.id)
+
+        var extra: [String] = []
+        #if DEBUG
+        // Development only: extra arguments, e.g. to keep the user's own settings out of a test run.
+        extra = (ProcessInfo.processInfo.environment["YUMI_CHAT_ARGS"] ?? "").split(separator: " ").map(String.init)
+        #endif
+        let turn = ClaudeCodeTurn(
+            binary: binary,
+            arguments: ClaudeCLI.arguments(
+                session: target,
+                systemPrompt: ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: folder),
+                readableFolders: readableFolders, extra: extra),
+            environment: ClaudeCLI.environment(from: ProcessInfo.processInfo.environment, binary: binary),
+            folder: folder)
+        self.turn = turn
+        defer { if self.turn === turn { self.turn = nil } }
+
+        guard let lines = turn.start(message: message) else {
+            await showError(ChatPhrases.stopped, state: state)
+            return .failed
+        }
+
+        var tools: [String: ChatToolUse] = [:]
+        var refused: Set<String> = []
+        var waiting: Set<String> = []
+        var lastText = ""
+        var result: ChatTurnResult?
+
+        reading: for await line in lines {
+            // A cancelled turn only waits for its process to end: what it still says changes nothing.
+            if turn.isCancelled { continue }
+            for event in ClaudeStream.events(fromLine: line) {
+                switch event {
+                case .started(let id):
+                    session = (id, folder)
+
+                case .text(let text):
+                    lastText = text
+
+                case .toolStarted(let tool):
+                    tools[tool.id] = tool
+                    state.stateOverride = .working
+
+                case .toolFinished(let id, let failed):
+                    if let tool = tools.removeValue(forKey: id) {
+                        let outcome: ChatToolOutcome = refused.contains(id) ? .refused : (failed ? .failed : .done)
+                        if let line = ChatPhrases.action(tool, outcome: outcome) {
+                            state.chatHistory.append(ChatMessage(role: .assistant, content: line))
+                        }
+                    }
+                    if state.stateOverride == .working { state.stateOverride = .thinking }
+
+                case .permissionRequested(let request):
+                    // The request is shown in the island like the ones of any Claude Code session;
+                    // the answer goes back to the process, which waits for it.
+                    waiting.insert(request.requestID)
+                    HookServer.shared.presentChatApproval(
+                        id: request.requestID, session: target.id, tool: request.toolName, command: request.summary
+                    ) { [weak turn] decision in
+                        let answer = ChatPermissionDecision(islandAnswer: decision)
+                        turn?.send(ClaudeStream.answerLine(to: request, answer))
+                        if case .deny = answer {
+                            refused.insert(request.toolUseID)
+                            state.stateOverride = .thinking
+                        } else {
+                            state.stateOverride = .working
+                        }
+                        waiting.remove(request.requestID)
+                    }
+
+                case .permissionCancelled(let requestID):
+                    waiting.remove(requestID)
+                    HookServer.shared.cancelChatApproval(id: requestID)
+
+                case .finished(let turnResult):
+                    result = turnResult
+                    // The answer is complete. Closing the input ends the process; there is no need
+                    // to wait for it before showing the answer.
+                    turn.finish()
+                    break reading
+                }
+            }
+        }
+
+        // Nothing can answer the requests still on screen. A cancelled turn leaves the view alone.
+        let wasCancelled = turn.isCancelled && result == nil
+        for requestID in waiting { HookServer.shared.cancelChatApproval(id: requestID, backToChat: !wasCancelled) }
+
+        if wasCancelled {
+            // Unless another message took over, the character stops looking busy.
+            if self.turn === turn || self.turn == nil,
+               [.thinking, .working, .approval].contains(state.stateOverride) {
+                state.stateOverride = nil
+            }
+            return .cancelled
+        }
+        guard let result else {
+            let problem = turn.errorOutput
+            await showError(ChatPhrases.isLoginProblem(problem) ? ChatPhrases.notLoggedIn : ChatPhrases.stopped, state: state)
+            return .failed
+        }
+        if let id = result.sessionID, !result.isError { session = (id, folder) }
+        if ChatPhrases.isUnknownSession(result), case .resume = target { return .unknownSession }
+        if result.isError {
+            await showError(ChatPhrases.failure(result), state: state)
+            return .failed
+        }
+        let text = result.text.isEmpty ? lastText : result.text
+        guard !text.isEmpty else {
+            await showError(ChatPhrases.noAnswer, state: state)
+            return .failed
+        }
+        state.chatHistory.append(ChatMessage(role: .assistant, content: text))
+        state.stateOverride = nil
+        state.view = .prompt
+        NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
+        return .answered
+    }
+
+    private static func chatContext(from context: PromptContext?) -> ChatContext? {
+        switch context {
+        case .window(let app, let title, let url): return .window(app: app, title: title, url: url)
+        case .file(let name, let fileURL):         return .file(name: name, path: fileURL?.path)
+        case nil:                                  return nil
+        }
+    }
+    #endif
+
+    // MARK: - Chat through the API (natural text + web search)
+
+    private func chatWithAPI(query: String, context: PromptContext?, state: AppState) async {
         guard let key = apiKey, !key.isEmpty else {
             await showError("API key missing. Open settings.", state: state)
             return
@@ -356,3 +567,112 @@ final class ClaudeService {
         }
     }
 }
+
+// MARK: - One turn of Claude Code
+
+#if !APPSTORE
+/// One `claude -p` process: started with a message, read line by line, written to when a permission
+/// request is answered, ended by closing its input. The process and its pipes are only touched
+/// from the main actor; its output is read on a background queue and handed over as lines.
+@MainActor
+private final class ClaudeCodeTurn {
+    private let process = Process()
+    private let input = Pipe()
+    private let output = Pipe()
+    private let errors = Pipe()
+    private let errorText = ErrorText()
+    private var inputClosed = false
+
+    private(set) var isCancelled = false
+
+    /// What the process wrote on its error output (start-up failures are only reported there).
+    var errorOutput: String { errorText.value }
+
+    init(binary: String, arguments: [String], environment: [String: String], folder: String) {
+        process.executableURL = URL(fileURLWithPath: binary)
+        process.arguments = arguments
+        process.environment = environment
+        process.currentDirectoryURL = URL(fileURLWithPath: folder)
+        process.standardInput = input
+        process.standardOutput = output
+        process.standardError = errors
+    }
+
+    /// Launches the process and sends the message. Returns the lines of its output, or nil if it could not start.
+    func start(message: String) -> AsyncStream<String>? {
+        let (lines, continuation) = AsyncStream.makeStream(of: String.self, bufferingPolicy: .unbounded)
+        let buffer = LineBox()
+        output.fileHandleForReading.readabilityHandler = { handle in
+            let chunk = handle.availableData
+            if chunk.isEmpty {
+                // End of output: the process closed it, or exited.
+                handle.readabilityHandler = nil
+                if let rest = buffer.flush() { continuation.yield(rest) }
+                continuation.finish()
+            } else {
+                for line in buffer.append(chunk) { continuation.yield(line) }
+            }
+        }
+        let errorText = errorText
+        errors.fileHandleForReading.readabilityHandler = { handle in
+            let chunk = handle.availableData
+            if chunk.isEmpty { handle.readabilityHandler = nil } else { errorText.append(chunk) }
+        }
+        do {
+            try process.run()
+        } catch {
+            output.fileHandleForReading.readabilityHandler = nil
+            errors.fileHandleForReading.readabilityHandler = nil
+            continuation.finish()
+            return nil
+        }
+        send(ClaudeStream.userLine(message))
+        return lines
+    }
+
+    /// Writes one line on the input of the process. Does nothing once the input is closed.
+    func send(_ line: String) {
+        guard !inputClosed else { return }
+        try? input.fileHandleForWriting.write(contentsOf: Data(line.utf8))
+    }
+
+    /// Closes the input: Claude Code exits once the turn is over. If it lingers, it is stopped.
+    func finish() {
+        guard !inputClosed else { return }
+        inputClosed = true
+        try? input.fileHandleForWriting.close()
+        let process = process
+        DispatchQueue.global().asyncAfter(deadline: .now() + 10) {
+            if process.isRunning { process.terminate() }
+        }
+    }
+
+    /// Stops the process. The conversation can still be resumed afterwards.
+    func cancel() {
+        isCancelled = true
+        finish()
+        if process.isRunning { process.terminate() }
+    }
+}
+
+/// A `LineBuffer` shared with the queue that reads the pipe.
+private final class LineBox: @unchecked Sendable {
+    private let lock = NSLock()
+    private var buffer = LineBuffer()
+
+    func append(_ chunk: Data) -> [String] { lock.withLock { buffer.append(chunk) } }
+    func flush() -> String? { lock.withLock { buffer.flush() } }
+}
+
+/// The first few kilobytes of an error output, collected off the main actor.
+private final class ErrorText: @unchecked Sendable {
+    private let lock = NSLock()
+    private var data = Data()
+
+    func append(_ chunk: Data) {
+        lock.withLock { if data.count < 8_192 { data.append(chunk) } }
+    }
+
+    var value: String { lock.withLock { String(decoding: data, as: UTF8.self) } }
+}
+#endif

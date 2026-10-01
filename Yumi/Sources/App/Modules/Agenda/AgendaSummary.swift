@@ -92,6 +92,19 @@ enum AgendaSummary {
             snapshot.subtitle += ", demain " + details.joined(separator: ", ")
         }
 
+        // The folded island announces today's events only: tomorrow is not happening now.
+        // The button joins the featured event, so it is only offered when that is the one announced.
+        if startsToday || event.start <= now {
+            let upcoming = events.filter { !$0.isAllDay && $0.start > now && calendar.isDate($0.start, inSameDayAs: now) }
+                .min { $0.start < $1.start }
+            let announced = upcoming ?? event
+            let join = ModuleControl(id: ModuleAction.primary.rawValue, symbol: "video.fill", label: "Rejoindre")
+            let text = announced.start <= now ? "En cours : \(announced.title)"
+                                              : "\(FrenchText.clock(announced.start, calendar: calendar)) \(announced.title)"
+            snapshot.live = ModuleLive(text: text, priority: ModuleLivePriority.ambient,
+                                       controls: announced == event && event.joinURL != nil ? [join] : [])
+        }
+
         snapshot.primaryAction = event.joinURL != nil ? "Rejoindre" : "Ouvrir"
         snapshot.secondaryAction = "Voir la journée"
         let delay = event.start.timeIntervalSince(now)

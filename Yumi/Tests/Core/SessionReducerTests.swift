@@ -141,6 +141,14 @@ import Foundation
         #expect(sessions[id]?.status == .waitingForUser)
     }
 
+    @Test func anotherToolStartingKeepsAPendingPermissionOnScreen() {
+        let request = PermissionRequest(tool: "Bash", command: "rm -rf build")
+        var sessions = SessionReducer.apply(.permissionRequested(id, request), to: started())
+        sessions = SessionReducer.apply(.toolStarted(id, ToolInfo(name: "Read")), to: sessions)
+        #expect(sessions[id]?.activity == .requestingPermission(request))
+        #expect(sessions[id]?.status == .waitingForUser)
+    }
+
     @Test func permissionResolvedResumesTheSession() {
         let request = PermissionRequest(tool: "Bash", command: "swift test")
         var sessions = SessionReducer.apply(.permissionRequested(id, request), to: started())

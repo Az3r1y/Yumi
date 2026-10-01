@@ -46,8 +46,16 @@ final class FocusModule: YumiModule {
     }
 
     private func tick() {
-        timer.advance(now: Date())
+        let changed = timer.advance(now: Date())
         onChange?()
         syncTicking()
+        // A phase change asks for attention for a few seconds; once every round is done nothing
+        // ticks any more, so say again when that moment has passed.
+        if changed, !timer.isRunning {
+            Task { [weak self] in
+                try? await Task.sleep(for: .seconds(FocusTimer.attentionSpan + 1))
+                self?.onChange?()
+            }
+        }
     }
 }

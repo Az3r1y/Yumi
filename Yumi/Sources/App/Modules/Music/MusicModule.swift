@@ -17,7 +17,14 @@ final class MusicModule: YumiModule {
     private var onChange: (@MainActor () -> Void)?
     private var observers: [NSObjectProtocol] = []
 
-    var snapshot: ModuleSnapshot { MusicSummary.snapshot(playing, canControl: Self.canControl) }
+    /// When the current track was paused; nil while it plays.
+    private var pausedAt: Date?
+    private var lingering: Task<Void, Never>?
+
+    var snapshot: ModuleSnapshot {
+        MusicSummary.snapshot(playing, canControl: Self.canControl,
+                              pausedFor: pausedAt.map { Date().timeIntervalSince($0) })
+    }
 
     // MARK: Lifecycle
 
@@ -40,13 +47,37 @@ final class MusicModule: YumiModule {
         for observer in observers { DistributedNotificationCenter.default().removeObserver(observer) }
         observers = []
         playing = nil
+        pausedAt = nil
+        lingering?.cancel()
+        lingering = nil
     }
 
     private func receive(_ update: PlayerUpdate) {
         let next = MusicSummary.apply(update, to: playing)
         guard next != playing, onChange != nil else { return }
+        let wasPaused = playing.map { !$0.isPlaying } ?? false
         playing = next
+        notePause(wasPaused: wasPaused)
         onChange?()
+    }
+
+    /// A paused track leaves the folded island after a while: report again when that moment comes.
+    private func notePause(wasPaused: Bool) {
+        guard let playing, !playing.isPlaying else {
+            pausedAt = nil
+            lingering?.cancel()
+            lingering = nil
+            return
+        }
+        // Still paused (the player only refreshed its details): the clock keeps running.
+        if wasPaused, pausedAt != nil { return }
+        pausedAt = Date()
+        lingering?.cancel()
+        lingering = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(MusicSummary.pausedLinger + 1))
+            guard !Task.isCancelled else { return }
+            self?.onChange?()
+        }
     }
 
     // MARK: Actions
@@ -91,8 +122,9 @@ final class MusicModule: YumiModule {
             guard case .success(let text) = result else { return }
             let update = MusicSummary.update(fromScriptResult: text, player: player)
             Task { @MainActor in
-                // A stopped player says nothing new; do not erase what a notification already told.
-                if case .track = update { self?.receive(update) }
+                // Only a track that is playing is news: a stopped player says nothing, and a track
+                // found paused was paused at an unknown time, not just now.
+                if case .track(let track) = update, track.isPlaying { self?.receive(update) }
             }
         }
         #endif
