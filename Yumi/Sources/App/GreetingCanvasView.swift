@@ -27,7 +27,7 @@ private enum GT {
 
 // MARK: - Geometry constants (640×150 reference space)
 
-private let GC0     = CGPoint(x: 320, y: 90)   // Mochi center
+private let GC0     = CGPoint(x: 320, y: 90)   // Yumi center
 private let GHB:    CGFloat = 58                // body height at full size
 private let GASP:   CGFloat = YumiSkin.bodyHW / YumiSkin.bodyHH   // body width/height ratio
 private let GEAR_X: CGFloat = 40               // ear x from small island left edge (matches BotPlacement compact x=40)
@@ -246,7 +246,7 @@ private func gRR(_ ctx: CGContext, _ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h
     ctx.closePath()
 }
 
-private func mochiPath(hw: CGFloat, hh: CGFloat) -> CGPath {
+private func yumiPath(hw: CGFloat, hh: CGFloat) -> CGPath {
     YumiSkin.bodyPath(hw: hw, hh: hh)
 }
 
@@ -290,7 +290,7 @@ private func drawHandR(_ ctx: CGContext, hw: CGFloat, hh: CGFloat, p: GreetPose,
             thickness: T2, R: hh / YumiSkin.bodyHH, rim: rim)
 }
 
-private func drawMochi(_ ctx: CGContext, p: GreetPose) {
+private func drawYumi(_ ctx: CGContext, p: GreetPose) {
     let hh = CGFloat(p.hb/2), hw = hh*GASP; guard hh > 0.4 else { return }
     let R = hh / YumiSkin.bodyHH
     // Rim light: resting gradient, turning to the working blue at the end of the sequence
@@ -340,7 +340,7 @@ private func drawMochi(_ ctx: CGContext, p: GreetPose) {
     drawHandR(ctx, hw: hw, hh: hh, p: p, rim: rim)
 
     // Body
-    let mpath = mochiPath(hw: hw, hh: hh)
+    let mpath = yumiPath(hw: hw, hh: hh)
     YumiSkin.drawBody(ctx, path: mpath, hw: hw, hh: hh, R: R, rim: rim, glow: CGFloat(p.halo))
 
     // Eyes (clipped to body)
@@ -490,7 +490,7 @@ private func drawGreeting(_ ctx: CGContext, size: CGSize, t: Double, tc: Double)
 
     // drawHeader: no icons during greeting
     drawMinis(ctx, alpha: p.minis)
-    drawMochi(ctx, p: p)
+    drawYumi(ctx, p: p)
 }
 
 // MARK: - SwiftUI View

@@ -74,7 +74,7 @@ enum BadgeType {
 
 // MARK: - Character track constants
 
-enum MochiConst {
+enum YumiConst {
     static let lookYaw: CGFloat   = 0.62   // yaw reached when the pointer is far to the side
     static let lookPitch: CGFloat = 0.5
     static let eyeShiftX: CGFloat = 0.16   // how far the eyes slide with the look (fraction of R per unit of yaw)
@@ -1334,7 +1334,7 @@ final class BotEngine: ObservableObject {
         let rim = self.rim
 
         // Body path (dome for Yumi, morph to rect for upload)
-        let bodyPath = mochiPath(rx: p.hw, ry: p.hh, morph: morph, R: p.R)
+        let bodyPath = yumiPath(rx: p.hw, ry: p.hh, morph: morph, R: p.R)
         let glow: CGFloat = isMini ? 0 : 0.45 + 0.55 * cfg.glowOpacity
 
         context.withCGContext { cg in
@@ -1349,10 +1349,10 @@ final class BotEngine: ObservableObject {
             cg.saveGState()
             cg.addPath(bodyPath)
             cg.clip()
-            let faceOffset = CGPoint(x: yaw * p.R * MochiConst.eyeShiftX,
-                                     y: -pitch * p.R * MochiConst.eyeShiftY + p.R * 0.20 * morph)
-            let gaze = CGPoint(x: clamp(yaw / MochiConst.lookYaw, -1, 1),
-                               y: clamp(-pitch / MochiConst.lookPitch, -1, 1))
+            let faceOffset = CGPoint(x: yaw * p.R * YumiConst.eyeShiftX,
+                                     y: -pitch * p.R * YumiConst.eyeShiftY + p.R * 0.20 * morph)
+            let gaze = CGPoint(x: clamp(yaw / YumiConst.lookYaw, -1, 1),
+                               y: clamp(-pitch / YumiConst.lookPitch, -1, 1))
             YumiSkin.drawBlush(cg, R: p.R, amount: blush * (1 - morph), offset: faceOffset)
             YumiSkin.drawEyes(cg, R: p.R, eyes: eyes, gaze: gaze, open: open, scale: es, offset: faceOffset)
             cg.restoreGState()
@@ -1387,8 +1387,8 @@ final class BotEngine: ObservableObject {
         let now = CACurrentMediaTime()
         let isWaving = now >= waveStart && waveStart > 0 && now < waveUntil
         let wt = CGFloat(now - waveStart)
-        let length = p.R * MochiConst.armLength * amount
-        let thick  = p.R * MochiConst.armThick * amount
+        let length = p.R * YumiConst.armLength * amount
+        let thick  = p.R * YumiConst.armThick * amount
         let rim = self.rim
 
         // Body half-dims with current squash scale
@@ -1441,7 +1441,7 @@ final class BotEngine: ObservableObject {
 
     // MARK: - Private draw helpers
 
-    private func mochiPath(rx: CGFloat, ry: CGFloat, morph: CGFloat, R: CGFloat) -> CGPath {
+    private func yumiPath(rx: CGFloat, ry: CGFloat, morph: CGFloat, R: CGFloat) -> CGPath {
         // Target mailbox dims (spec: 1.0R wide, 0.94R tall, 0.42R corner radius)
         YumiSkin.bodyPath(hw: rx, hh: ry, morph: morph,
                           boxHW: R * YumiSkin.boxHW, boxHH: R * YumiSkin.boxHH, boxCorner: R * YumiSkin.boxCorner)

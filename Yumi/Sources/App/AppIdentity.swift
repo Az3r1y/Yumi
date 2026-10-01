@@ -37,7 +37,7 @@ enum AppIdentity {
 
     // MARK: Internal
 
-    static let notificationPrefix = "notchBuddy"
+    static let notificationPrefix = "yumi"
 
     static func notification(_ name: String) -> Notification.Name {
         Notification.Name("\(notificationPrefix).\(name)")

@@ -93,7 +93,7 @@ struct IslandContainer: View {
 
             // Single BotPlacement — always alive in the view tree so spring animations
             // fire from the current position (e.g. choose at 60,101) when canvas deactivates.
-            // Hidden during upload canvas or greeting (both draw their own Mochi).
+            // Hidden during upload canvas or greeting (both draw their own Yumi).
             BotPlacement(state: state, islandW: islandWidth, islandH: islandHeight)
                 .opacity(uploadActive || greetingActive ? 0 : 1)
                 .animation(.easeInOut(duration: 0.25), value: uploadActive || greetingActive)
@@ -345,7 +345,7 @@ func botPosition(mode: IslandMode, view: IslandView, islandW: CGFloat, islandH: 
     case .expanded:
         let layout = IslandConst.viewLayouts[view]!
         let diameter = layout.botDiameter
-        // Uploading: Mochi dot rides the leading edge of the progress fill.
+        // Uploading: Yumi dot rides the leading edge of the progress fill.
         // Bar in island coords: left=36, width=526. cx = 36 + progress*526 (dot center at fill right edge).
         // cy comes from ViewLayout.botY (bar center in island coords).
         if view == .uploading {
@@ -533,7 +533,7 @@ struct TabButton: View {
     }
 }
 
-// MARK: - Compact mini mochi grid (2×2 to the right of the notch)
+// MARK: - Compact mini Yumi grid (2×2 to the right of the notch)
 
 struct CompactMiniGrid: View {
     @ObservedObject var state: AppState

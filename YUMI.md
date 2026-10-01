@@ -96,7 +96,12 @@ Fichiers que personne ne touche pendant le travail en parallèle : `NotchBuddyAp
 - Ne jamais copier d'icône, de son ou de média depuis Coucou : le dépôt est public.
 - Conserver `LICENSE` avec le copyright d'origine.
 
-## Après fusion des trois branches
+## État au 1er octobre 2026
 
-1. Renommages internes : `NotchBuddyApp`, `MochiConst`, `mochiPath`, `drawMochi`, l'état `.coucou`, le préfixe `notchBuddy.` des notifications.
-2. Recette manuelle complète (étape 7 de `ARCHITECTURE.md`).
+Les trois branches ont été fusionnées dans `main` et les renommages internes sont faits (`YumiApp`, `YumiConst`, `yumiPath`, `drawYumi`, état `.greeting`, préfixe de notifications `yumi.`). Les seules mentions restantes de Coucou dans le code sont les marqueurs des anciens hooks à retirer.
+
+Vérifié sur `main` : build Debug, 26 tests de la machine d'état, build du target App Store, script de hook et socket Yumi de bout en bout.
+
+Les branches `yumi/identite`, `yumi/personnage` et `yumi/build-docs` restent ouvertes et alignées sur `main` : on continue à y travailler, et `main` ne reçoit que du code vérifié. La répartition des fichiers ci-dessus reste valable tant que les trois sessions travaillent en parallèle.
+
+Reste à faire : recette manuelle complète dans la notch (étape 7 de `ARCHITECTURE.md`), sons définitifs (les 28 actuels sont synthétisés et provisoires), équipe de signature, puis les sujets hors migration listés à la fin de `ARCHITECTURE.md`.

@@ -57,8 +57,8 @@ import Foundation
     @Test func launchOpensTheGreeting() {
         let (fsm, log) = makeFSM()
         fsm.launch()
-        #expect(fsm.state == .coucou)
-        #expect(log.transitions == [[.hidden, .coucou]])
+        #expect(fsm.state == .greeting)
+        #expect(log.transitions == [[.hidden, .greeting]])
     }
 
     @Test func launchingTwiceReportsOneTransition() {
@@ -74,7 +74,7 @@ import Foundation
         fsm.mouseLeft()
         fsm.launch()
         try? await Task.sleep(for: Self.settle)
-        #expect(fsm.state == .coucou)
+        #expect(fsm.state == .greeting)
     }
 
     // MARK: – Hover
@@ -136,7 +136,7 @@ import Foundation
         let (greeting, _) = makeFSM()
         greeting.launch()
         greeting.click()
-        #expect(greeting.state == .coucou)
+        #expect(greeting.state == .greeting)
 
         let (home, log) = makeFSM()
         home.mouseEntered()
@@ -190,16 +190,16 @@ import Foundation
         let (fsm, log) = makeFSM(greetAuto: Self.short)
         fsm.launch()
         fsm.greetComplete()
-        #expect(fsm.state == .coucou)
+        #expect(fsm.state == .greeting)
         #expect(await reaches(.petit, fsm))
-        #expect(log.transitions == [[.hidden, .coucou], [.coucou, .petit]])
+        #expect(log.transitions == [[.hidden, .greeting], [.greeting, .petit]])
     }
 
     @Test func greetingStaysUntilTheAnimationEnds() async {
         let (fsm, _) = makeFSM(greetAuto: Self.short)
         fsm.launch()
         try? await Task.sleep(for: Self.settle)
-        #expect(fsm.state == .coucou)
+        #expect(fsm.state == .greeting)
     }
 
     @Test func greetCompleteIsIgnoredOutsideTheGreeting() async {
@@ -215,7 +215,7 @@ import Foundation
         let (fsm, _) = makeFSM(greetAuto: Self.never, greetHover: Self.short)
         fsm.launch()
         fsm.mouseEntered()
-        #expect(fsm.state == .coucou)
+        #expect(fsm.state == .greeting)
         #expect(await reaches(.petit, fsm))
     }
 
@@ -225,7 +225,7 @@ import Foundation
         fsm.mouseEntered()
         fsm.greetComplete()
         try? await Task.sleep(for: Self.settle)
-        #expect(fsm.state == .coucou)
+        #expect(fsm.state == .greeting)
     }
 
     @Test func leavingTheGreetingCollapsesAtOnce() {
@@ -233,7 +233,7 @@ import Foundation
         fsm.launch()
         fsm.mouseLeft()
         #expect(fsm.state == .petit)
-        #expect(log.transitions == [[.hidden, .coucou], [.coucou, .petit]])
+        #expect(log.transitions == [[.hidden, .greeting], [.greeting, .petit]])
     }
 
     // MARK: – Reveal
@@ -286,8 +286,8 @@ import Foundation
         fsm.mouseLeft()
         #expect(await reaches(.hidden, fsm))
         #expect(log.transitions == [
-            [.hidden, .coucou],
-            [.coucou, .petit],
+            [.hidden, .greeting],
+            [.greeting, .petit],
             [.petit, .home],
             [.home, .petit],
             [.petit, .hidden],
