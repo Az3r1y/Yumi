@@ -77,6 +77,8 @@ targets:
         # Asked the first time the user presses the matching button of a module, never at launch.
         NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
+        NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
+        NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi
@@ -114,6 +116,8 @@ targets:
         # Asked the first time the user presses the matching button of a module, never at launch.
         NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
+        NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
+        NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi.appstore

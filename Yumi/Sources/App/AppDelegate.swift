@@ -103,9 +103,26 @@ final class YumiCore {
                 NotesModule(),
                 FocusModule(),
                 MusicModule(),
+                WeatherModule(),
             ],
-            onPublish: { state.modules = $0 }
+            onPublish: { snapshots in
+                state.modules = snapshots
+                Self.trace(snapshots)
+            }
         )
+    }
+
+    /// Debug builds only: with `YUMI_TRACE_MODULES` set, prints the snapshots each time they change.
+    private static func trace(_ snapshots: [ModuleSnapshot]) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["YUMI_TRACE_MODULES"] != nil else { return }
+        for snapshot in snapshots {
+            let actions = [snapshot.primaryAction, snapshot.secondaryAction].compactMap { $0 }.joined(separator: " | ")
+            print("[\(snapshot.name)] \(snapshot.status) · \(snapshot.title) · \(snapshot.subtitle) · \(actions)\(snapshot.needsAttention ? " · !" : "")")
+        }
+        print("")
+        fflush(stdout)
+        #endif
     }
 
     func start() {
