@@ -6,7 +6,7 @@ A small companion that lives in your MacBook's notch and keeps an eye on your Cl
 
 Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependencies. The character is drawn in code.
 
-**Status: work in progress.** The app builds and runs, but the migration from its Coucou base is under way. The character is being redrawn, and the icons and sounds are not there yet. There is no packaged release: build it from source.
+**Status: work in progress.** The app builds and runs with its own character, six working modules and a chat driven by Claude Code. The interface is being redesigned and the sounds are placeholders. There is no packaged release: build it from source.
 
 ## What it does
 

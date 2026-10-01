@@ -100,6 +100,34 @@ Les chantiers A et B sont terminés et fusionnés. Le chat crée des fichiers et
 
 Le dossier de travail du chat devient le dossier Téléchargements de l'utilisateur, pour que les fichiers créés y arrivent directement.
 
+## Phase 4 : la nouvelle interface, par activités
+
+La phase 3 est terminée et fusionnée (chat piloté par Claude Code et affiché en direct, île repliée vivante). L'interface de l'île a été jugée moins sérieuse que celle de Coucou et repensée. **La maquette de référence a changé** : `design/yumi/maquette/reference.html` est maintenant la version 13. Là où elle contredit le tableau « Décisions validées » plus haut, c'est elle qui fait foi. Le personnage ne change pas.
+
+Ce qui change :
+
+| Sujet | Nouvelle décision |
+|---|---|
+| Principe | L'île montre une seule activité à la fois, et chaque activité a sa propre mise en page. Plus de rangée de pastilles, plus de cartes, plus de légende sous Yumi, plus de second carré. |
+| Boutons | Gros boutons ronds avec un symbole. Une permission se présente comme un appel entrant : rouge pour refuser, vert pour autoriser, « Toujours autoriser » en petit texte. |
+| Activités dessinées | Agenda (un bouton rejoindre), agent au travail (durée et arrêter), alerte, terminé (la coche se dessine), erreur (relancer), musique (onde, barre de lecture, trois commandes), focus (gros chiffres, deux boutons). Les autres modules suivent un modèle commun : chiffre clé en couleur, une phrase, un bouton. |
+| Barre du bas | Toujours là : la vue d'ensemble, une icône par module (celui à l'écran déplie son nom, un point signale ce qui est vivant, le nom apparaît en étiquette au survol), puis le chat et les réglages. |
+| Vue « Tous » | Tous les modules sur deux colonnes : icône, nom complet, chiffre clé. C'est ce qui s'affiche quand on ouvre l'île et que rien n'est urgent. |
+| Chat | Accessible par son icône dans la barre et par un clic sur Yumi. La réponse s'écrit en direct, l'action en cours s'affiche sous le texte. |
+| Réglages dans l'île | Sons et volume, délai avant que l'île se replie (5 s, 15 s, 30 s, 1 min, jamais ; 15 s par défaut), cigarette quand un agent travaille (sinon café). Ces réglages doivent réellement agir. |
+| Île repliée | Yumi d'un côté de la notch, l'activité principale de l'autre. Une seconde activité vit dans une bulle qui se détache de l'île comme une goutte. |
+| Lancement | Yumi seul, sans aucun texte : la goutte, les yeux dans le noir, l'ouverture, la lumière, le salut, le clin d'œil, le repli. Environ 4,5 secondes. |
+| Départ | En quittant : il salue, clin d'œil, s'endort, sa lumière s'éteint comme elle s'était allumée, la goutte remonte dans la notch. |
+| Typographie | Police du système pour le texte ; la police ronde est réservée aux gros chiffres. |
+| Taille | Les proportions de la maquette, à l'échelle déjà retenue dans l'app. |
+
+Contrats ajoutés sur `main` pour cette phase :
+
+- `Contracts/ModuleTypes.swift` : `symbol` (icône du module), `primarySymbol` et `secondarySymbol` (symboles des boutons ronds), `progress` (barre de lecture ou de minuteur).
+- `Contracts/AppLifecycle.swift` : `yumiQuitRequested` et `yumiQuitReady`, pour jouer l'animation de départ avant la fin de l'app.
+
+Deux sessions : Cœur renseigne les nouveaux champs et retarde la fin de l'app ; Île porte la maquette.
+
 ## Phase 2 : porter la maquette, répartition des fichiers
 
 Trois sessions en parallèle. Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Chaque session peut créer de nouveaux fichiers dans son propre sous-dossier.

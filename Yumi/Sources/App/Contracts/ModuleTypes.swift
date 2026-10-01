@@ -27,6 +27,24 @@ struct ModuleSnapshot: Identifiable, Equatable, Sendable {
     /// nil when nothing is happening. The folded island shows the live module with the
     /// highest priority; with none, it shows nothing on the right.
     var live: ModuleLive? = nil
+    /// SF Symbol of this module in the island's rail and overview: "calendar", "music.note".
+    var symbol: String = "circle.fill"
+    /// SF Symbols of the main and second buttons where the island draws round buttons:
+    /// "pause.fill", "forward.fill", "video.fill". nil lets the island pick a neutral arrow.
+    var primarySymbol: String? = nil
+    var secondarySymbol: String? = nil
+    /// A bar the activity view can draw: a track playing, a timer running. nil without one.
+    var progress: ModuleProgress? = nil
+}
+
+/// How far along something is, with the two labels at the ends of the bar.
+struct ModuleProgress: Equatable, Sendable {
+    /// 0 to 1.
+    var fraction: Double
+    /// Left label: "1:52".
+    var leading: String
+    /// Right label: "3:14".
+    var trailing: String
 }
 
 /// Something happening now, small enough for the folded island.
