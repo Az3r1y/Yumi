@@ -144,3 +144,22 @@ Vérifié sur `main` : build Debug, 26 tests de la machine d'état, build du tar
 Les branches `yumi/identite`, `yumi/personnage` et `yumi/build-docs` restent ouvertes et alignées sur `main` : on continue à y travailler, et `main` ne reçoit que du code vérifié. La répartition des fichiers ci-dessus reste valable tant que les trois sessions travaillent en parallèle.
 
 Reste à faire : recette manuelle complète dans la notch (étape 7 de `ARCHITECTURE.md`), sons définitifs (les 28 actuels sont synthétisés et provisoires), équipe de signature, puis les sujets hors migration listés à la fin de `ARCHITECTURE.md`.
+
+## Cœur : moteur et modules (branche `yumi/coeur`)
+
+Le chemin d'un événement : script de hook, socket, `ClaudeHookTranslator`, `EventEngine`, `SessionStore`, puis les modules et la pastille Claude Code. `Core/` et `Modules/` ne dépendent ni des vues, ni d'`AppState`, ni des sons : ils sont compilés tels quels dans les tests.
+
+| Sujet | État |
+|---|---|
+| `AppState.modules` | Rempli par `ModuleRegistry`, un snapshot par module sélectionné, dans l'ordre de sélection. Les cinq premiers vont dans l'île. La sélection est persistée sous la clé `selectedModules`. |
+| Modules livrés | `claude-code`, `agenda`, `notes`, `focus`, `music`, `weather`. Ce sont aussi les modules sélectionnés au premier lancement. |
+| `moduleAction` | Reçue par le registre, transmise au module (`primary` ou `secondary`). |
+| Claude Code | Tous les terminaux, plusieurs sessions. La pastille `integration_claude` montre la session qui attend une réponse, sinon la dernière active. |
+| Approbations | Une file : une demande par session, la plus ancienne à l'écran. Repli vers le terminal après 115 s, ou dès que le script de hook disparaît. |
+| Script de hook | Protocole 2 : le script attend un accusé de réception 2 s avant d'attendre la décision. Une app figée ne retient plus Claude Code. Les scripts plus anciens restent acceptés. |
+| Permissions | Jamais demandées au lancement, seulement au clic sur le bouton du module. Textes en français dans `project.yml`, entitlements calendrier et position dans `Resources/`. |
+| Météo | Open-Meteo, sans clé. Position arrondie au kilomètre, ou ville fixée par la préférence `weatherCity`. |
+| Notes | Fichier texte `notes.txt` dans le dossier de support. « Nouvelle note » enregistre le presse-papiers tant que l'île n'a pas de champ de saisie. |
+| Pollers hérités | Chacun ne tourne que si son intégration est cochée. |
+
+Reste à faire côté île : dessiner `AppState.modules`, remplacer les « VS Code » écrits en dur par le nom de la pastille, proposer le choix des modules et la ville de la météo dans les réglages. Reste à vérifier à la main : Musique et Spotify en lecture, Agenda et rappels après autorisation, Météo par localisation, boutons Deny et Always.

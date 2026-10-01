@@ -14,6 +14,12 @@ final class GithubPoller: @unchecked Sendable {
         timer = t
     }
 
+    /// Stops polling. Called when the integration is deselected; `start()` resumes it.
+    func stop() {
+        timer?.cancel()
+        timer = nil
+    }
+
     private func poll() {
         guard let token = KeychainStore.shared.get("github-token") else { return }
         fetchUser(token: token)

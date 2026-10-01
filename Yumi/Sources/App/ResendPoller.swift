@@ -14,6 +14,12 @@ final class ResendPoller: @unchecked Sendable {
         timer = t
     }
 
+    /// Stops polling. Called when the integration is deselected; `start()` resumes it.
+    func stop() {
+        timer?.cancel()
+        timer = nil
+    }
+
     private func poll() {
         guard let apiKey = KeychainStore.shared.get("resend-api-key") else { return }
         guard let url = URL(string: "https://api.resend.com/emails?limit=100") else { return }

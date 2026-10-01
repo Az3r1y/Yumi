@@ -70,10 +70,15 @@ targets:
         LSUIElement: YES
         NSHighResolutionCapable: YES
         NSSupportsAutomaticGraphicsSwitching: YES
-        NSAppleEventsUsageDescription: "Yumi reads the address of the page open in your browser to attach it as context, and sends the emails you confirm through Mail."
+        NSAppleEventsUsageDescription: "Yumi lit l'adresse de la page ouverte dans ton navigateur pour la joindre comme contexte, envoie par Mail les messages que tu confirmes, et met en pause ou passe au morceau suivant quand tu le demandes."
         # Not a key macOS reads: Accessibility consent is given in System Settings, with no custom text.
         # Kept as a record of why the app asks for it.
-        NSAccessibilityUsageDescription: "Yumi reads the title of the frontmost window to attach it as context, and listens for Escape and your global shortcut."
+        NSAccessibilityUsageDescription: "Yumi lit le titre de la fenêtre au premier plan pour le joindre comme contexte, et écoute la touche Échap et ton raccourci global."
+        # Asked the first time the user presses the matching button of a module, never at launch.
+        NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
+        NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
+        NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
+        NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi
@@ -108,6 +113,11 @@ targets:
         NSSupportsAutomaticGraphicsSwitching: YES
         LSApplicationCategoryType: public.app-category.developer-tools
         ITSAppUsesNonExemptEncryption: NO
+        # Asked the first time the user presses the matching button of a module, never at launch.
+        NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
+        NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
+        NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
+        NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi.appstore
@@ -123,12 +133,20 @@ targets:
   # Unit tests. Not hosted by the app: the files under test are compiled into the
   # bundle, so running the tests never launches Yumi (no socket, no Keychain, no window).
   # Only add files here that have no dependency on the rest of the app.
+  # Core/ and Modules/ as a whole follow that rule: nothing in them may use a view, AppState,
+  # the hook server or a sound. Core/ knows nothing about Modules/ either.
   YumiTests:
     type: bundle.unit-test
     platform: macOS
     sources:
       - path: Tests
       - path: Sources/App/IslandStateMachine.swift
+        group: Tests/UnderTest
+      - path: Sources/App/Core
+      - path: Sources/App/Modules
+      - path: Sources/App/Contracts/ModuleTypes.swift
+        group: Tests/UnderTest
+      - path: Sources/App/AppIdentity.swift
         group: Tests/UnderTest
     settings:
       base:
