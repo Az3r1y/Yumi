@@ -184,6 +184,8 @@ final class IslandModel: ObservableObject {
         var smokes: Bool
         /// The live module is the music, and it is playing.
         var music = false
+        /// The chat is carrying out an action right now (reading, writing, running).
+        var chatActs = false
     }
 
     /// `STATES` of the mock-up: the face, the rim colour, the habit and the pose of each view.
@@ -205,7 +207,9 @@ final class IslandModel: ObservableObject {
         let viewChanged = old?.screen != new.screen || (new.screen == .module && old?.moduleID != new.moduleID)
 
         // Face and rim: only for the views the state of the agent knows nothing about.
-        let look = open ? Self.look(for: new.screen) : nil
+        var look = open ? Self.look(for: new.screen) : nil
+        // Talking: he thinks while there is only text, and works during an action
+        if open, new.screen == .talk, new.chatActs { look = (.focused, .work) }
         setMood(look?.mood)
         setRim(look?.rim)
 

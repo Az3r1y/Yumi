@@ -5,7 +5,7 @@ import SwiftUI
 /// Debug builds only. Launch with `YUMI_ISLAND_SHOTS=<folder>` to walk the island through
 /// the launch and its eight views with example content, and save a PNG of the panel at each
 /// step, to be compared with design/yumi/maquette/reference.html.
-/// `YUMI_ISLAND_VIEW=<home|working|alert|finished|error|module|talk|drop|compact|folded-music>` instead
+/// `YUMI_ISLAND_VIEW=<home|working|alert|finished|error|module|talk|drop|compact|folded-music|chat-live>` instead
 /// opens the island on one view and leaves it there.
 @MainActor
 enum IslandDemo {
@@ -13,7 +13,7 @@ enum IslandDemo {
 
     static func startIfRequested(controller: IslandWindowController) {
         let env = ProcessInfo.processInfo.environment
-        guard !started, env["YUMI_ISLAND_SHOTS"] != nil || env["YUMI_ISLAND_VIEW"] != nil else { return }
+        guard !started, env["YUMI_ISLAND_SHOTS"] != nil || env["YUMI_ISLAND_VIEW"] != nil || env["YUMI_ISLAND_ASK"] != nil else { return }
         started = true
         // Nothing folds the island while it is being looked at
         controller.holdsOpen = true
@@ -29,6 +29,26 @@ enum IslandDemo {
                 controller.demoHover = false
                 await pause(1); shot(controller, "5-live-b")
                 NSApp.terminate(nil)
+            } else if let question = env["YUMI_ISLAND_ASK"] {
+                // A real request, through the chat service, with a picture every half second
+                await pause(6.2)
+                controller.expand(to: .prompt)
+                await pause(0.8)
+                IslandActions.send(question)
+                for i in 0..<(Int(env["YUMI_ISLAND_WAIT"] ?? "") ?? 60) {
+                    await pause(0.5)
+                    shot(controller, String(format: "7-ask-%03d", i))
+                }
+                NSApp.terminate(nil)
+            } else if env["YUMI_ISLAND_VIEW"] == "chat-live" {
+                await pause(6.2)
+                if env["YUMI_ISLAND_SHOTS"] != nil {
+                    await walkChat(controller, shots: true)
+                    NSApp.terminate(nil)
+                } else {
+                    // Again and again, to be watched
+                    while true { await walkChat(controller, shots: false); await pause(3) }
+                }
             } else if let name = env["YUMI_ISLAND_VIEW"] {
                 await pause(6.2)
                 show(name, controller)
@@ -58,6 +78,7 @@ enum IslandDemo {
         show("compact", controller)
         await pause(1.2); shot(controller, "3-compact-working")
         await walkFolded(controller)
+        await walkChat(controller, shots: true)
         NSApp.terminate(nil)
     }
 
@@ -72,6 +93,62 @@ enum IslandDemo {
             await pause(1.4);  shot(controller, "4-\(name)-c")
         }
         controller.demoHover = false
+    }
+
+    /// An answer made live, without the core: the text writes itself, a file is written with
+    /// its preview, a command fails, then the answer lands in the history.
+    private static func walkChat(_ controller: IslandWindowController, shots: Bool) async {
+        let state = AppState.shared
+        func snap(_ name: String) { if shots { shot(controller, "6-chat-\(name)") } }
+        func type(_ words: String, into live: inout ChatLive) async {
+            for word in words.split(separator: " ") {
+                live.text += (live.text.isEmpty ? "" : " ") + word
+                state.chatLive = live
+                await pause(0.07)
+            }
+        }
+        state.chatLive = nil
+        state.stateOverride = .thinking
+        state.chatHistory = [ChatMessage(role: .user, content: "Écris-moi un petit script qui dit bonjour, et lance-le")]
+        controller.expand(to: .prompt)
+        await pause(0.9); snap("0-waiting")
+
+        var live = ChatLive()
+        state.chatLive = live
+        await type("Je te prépare ça. Je crée le script dans Téléchargements, puis je le lance pour vérifier.", into: &live)
+        snap("1-text")
+
+        let lines = ["#!/bin/zsh", "# bonjour.sh", "nom=${1:-toi}", "echo \"Bonjour, $nom !\"", "date \"+Il est %H:%M.\"", "exit 0"]
+        live.activity = ChatActivity(id: "w1", kind: .writing, label: "Écrit bonjour.sh", detail: "")
+        for (index, line) in lines.enumerated() {
+            live.activity?.detail = lines[0...index].joined(separator: "\n")
+            state.chatLive = live
+            await pause(0.3)
+            if index == 2 { snap("2-writing") }
+        }
+        snap("3-written")
+        live.done.append(ChatActivity(id: "w1", kind: .writing, label: "Écrit bonjour.sh"))
+        live.activity = ChatActivity(id: "r1", kind: .running, label: "Lance zsh bonjour.sh", detail: "Bonjour, toi !\nIl est 16:42.")
+        state.chatLive = live
+        await pause(1.0); snap("4-running")
+        live.done.append(ChatActivity(id: "r1", kind: .running, label: "Lance zsh bonjour.sh"))
+        live.activity = ChatActivity(id: "r2", kind: .running, label: "Lance chmod +x bonjour.sh")
+        state.chatLive = live
+        await pause(0.7)
+        live.done.append(ChatActivity(id: "r2", kind: .running, label: "Lance chmod +x bonjour.sh", succeeded: false))
+        live.activity = nil
+        state.chatLive = live
+        await type("C'est fait : bonjour.sh est dans Téléchargements et il répond bien.", into: &live)
+        snap("5-ending")
+
+        // The core ends the answer, then files it in the history
+        state.chatLive = nil
+        state.stateOverride = nil
+        snap("6-ended")
+        await pause(0.05)
+        state.chatHistory.append(ChatMessage(role: .assistant, content: live.text))
+        await pause(0.05); snap("7-final")
+        await pause(1.2);  snap("8-settled")
     }
 
     /// The examples of the contract, with another text for the music.

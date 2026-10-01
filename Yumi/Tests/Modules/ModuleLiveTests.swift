@@ -189,3 +189,55 @@ import Foundation
         #expect(WeatherSummary.snapshot(.ready(report), now: date(1, 10), calendar: calendar).live == nil)
     }
 }
+
+@MainActor
+@Suite struct ChatAnnouncementTests {
+    private func module() -> (ClaudeCodeModule, () -> Int) {
+        let module = ClaudeCodeModule(onShow: {})
+        var changes = 0
+        module.start { changes += 1 }
+        return (module, { changes })
+    }
+    private let writing = ChatActivity(id: "w", kind: .writing, label: "Écrit bonjour.txt")
+
+    @Test func nothingWhileTheChatIsIdle() {
+        let (module, _) = module()
+        #expect(module.snapshot.live == nil)
+        #expect(ChatAnnouncement(nil) == nil)
+    }
+
+    @Test func theActionUnderWayIsAnnouncedAsAnActivity() {
+        let (module, changes) = module()
+        module.announceChat(ChatAnnouncement(ChatLive(text: "", activity: writing)))
+        #expect(module.snapshot.live == ModuleLive(text: "Écrit bonjour.txt", priority: ModuleLivePriority.activity))
+        #expect(changes() == 1)
+
+        // The text growing does not change the announcement: nothing is republished.
+        module.announceChat(ChatAnnouncement(ChatLive(text: "Je", activity: writing)))
+        module.announceChat(ChatAnnouncement(ChatLive(text: "Je crée", activity: writing)))
+        #expect(changes() == 1)
+
+        module.announceChat(ChatAnnouncement(ChatLive(text: "C'est fait", activity: nil, done: [writing])))
+        #expect(module.snapshot.live?.text == "Yumi répond")
+        module.announceChat(nil)
+        #expect(module.snapshot.live == nil)
+        #expect(changes() == 3)
+    }
+
+    @Test func waitingForAPermissionAsksForAttention() {
+        let (module, _) = module()
+        let waiting = ChatActivity(id: "b", kind: .waiting, label: "Attend ton accord", detail: "swift test")
+        module.announceChat(ChatAnnouncement(ChatLive(activity: waiting)))
+        #expect(module.snapshot.live == ModuleLive(text: "Attend ton accord", priority: ModuleLivePriority.attention))
+    }
+
+    @Test func aSessionWaitingForTheUserStaysAhead() {
+        let (module, _) = module()
+        let id = SessionID("a")
+        var sessions = SessionReducer.apply(.sessionStarted(id, ClaudeHookTranslator.agent, title: "yumi"), to: [:])
+        sessions = SessionReducer.apply(.permissionRequested(id, PermissionRequest(tool: "Bash", command: "ls")), to: sessions)
+        module.receive(.permissionRequested(id, PermissionRequest(tool: "Bash", command: "ls")), sessions: sessions)
+        module.announceChat(ChatAnnouncement(ChatLive(activity: writing)))
+        #expect(module.snapshot.live?.text == "yumi demande ton accord")
+    }
+}

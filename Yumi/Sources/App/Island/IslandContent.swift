@@ -51,7 +51,9 @@ enum IslandContent {
 
     static func caption(for screen: IslandScreen, state: AppState) -> String {
         switch screen {
-        case .talk: return state.stateOverride == .thinking ? "Il réfléchit" : "Il t'écoute"
+        case .talk:
+            if state.chatLive?.activity != nil { return "Il bosse" }
+            return state.chatLive != nil || state.stateOverride == .thinking ? "Il réfléchit" : "Il t'écoute"
         case .drop: return state.droppedFile != nil && state.view != .upload ? "Bien reçu" : "Donne !"
         default:    return ""
         }

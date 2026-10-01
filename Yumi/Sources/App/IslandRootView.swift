@@ -46,7 +46,8 @@ struct IslandScene: View {
             screen: stage == .open ? screen : IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: approval),
             moduleID: stage == .open && screen == .module ? model.selectedModule(in: state.modules)?.id : nil,
             smokes: smokes,
-            music: folded.musicPlaying)
+            music: folded.musicPlaying,
+            chatActs: state.chatLive?.activity != nil)
         let middle = IslandConst.panelWidth / 2
         let launching = model.launchStage != nil
 
@@ -104,6 +105,13 @@ struct IslandScene: View {
         .onChange(of: folded.controls.count, initial: true) { _, count in model.foldedControls = count }
         .onChange(of: situation) { old, new in model.direct(from: old, to: new) }
         .onChange(of: state.effectiveState) { old, new in model.track(state: old, new) }
+        .onChange(of: state.chatLive) { old, new in
+            // The end of an answer that created or modified something
+            if new == nil, let done = old?.done,
+               LiveChat.celebrates(done: done.map { ($0.kind.rawValue, $0.succeeded) }) {
+                model.pose(.celebrate)
+            }
+        }
         .onChange(of: state.focusTask?.steps.last) { _, step in model.track(step: step) }
         .onChange(of: stage) { _, new in
             if new == .open { openings += 1 } else { model.drawerOpen = false }

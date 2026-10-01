@@ -510,3 +510,38 @@ import Foundation
         #expect(FoldedIsland.ear(content: 500, minimum: 80, notchWidth: 184, openWidth: 300) == 80)
     }
 }
+
+// MARK: – The chat answering live
+
+@Suite struct LiveChatTests {
+
+    @Test func aReaderAtTheBottomFollowsTheAnswer() {
+        #expect(LiveChat.followsBottom(offset: 200, viewport: 170, content: 370))
+        #expect(LiveChat.followsBottom(offset: 195, viewport: 170, content: 370))
+    }
+
+    @Test func aReaderWhoScrolledUpIsLeftAlone() {
+        #expect(!LiveChat.followsBottom(offset: 40, viewport: 170, content: 370))
+        #expect(!LiveChat.followsBottom(offset: 0, viewport: 170, content: 370))
+    }
+
+    @Test func aConversationShorterThanItsViewAlwaysFollows() {
+        #expect(LiveChat.followsBottom(offset: 0, viewport: 170, content: 60))
+        #expect(LiveChat.followsBottom(offset: 0, viewport: 170, content: 170))
+    }
+
+    @Test func anAnswerThatWroteOrEditedSomethingIsCelebrated() {
+        #expect(LiveChat.celebrates(done: [("reading", true), ("writing", true)]))
+        #expect(LiveChat.celebrates(done: [("editing", true)]))
+    }
+
+    @Test func anAnswerThatOnlyReadOrRanIsNot() {
+        #expect(!LiveChat.celebrates(done: []))
+        #expect(!LiveChat.celebrates(done: [("reading", true), ("running", true), ("searching", true)]))
+    }
+
+    @Test func aFailedWriteIsNotCelebrated() {
+        #expect(!LiveChat.celebrates(done: [("writing", false), ("editing", false)]))
+        #expect(LiveChat.celebrates(done: [("writing", false), ("editing", true)]))
+    }
+}

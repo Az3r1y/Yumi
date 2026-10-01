@@ -50,6 +50,7 @@ enum ClaudeCLI {
                          "--input-format", "stream-json",
                          "--output-format", "stream-json",
                          "--verbose",
+                         "--include-partial-messages",
                          "--permission-prompt-tool", "stdio",
                          "--permission-mode", "default"]
         switch session {
@@ -86,10 +87,17 @@ enum ChatFolder {
     /// UserDefaults key of the folder Claude Code works in.
     static let key = "chatFolder"
 
-    /// The folder chosen by the user, `~/Documents/Yumi` otherwise.
-    static func path(stored: String?, home: String = NSHomeDirectory()) -> String {
+    /// The user's Downloads folder, as the system knows it.
+    static var downloads: String {
+        FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path
+            ?? NSHomeDirectory() + "/Downloads"
+    }
+
+    /// The folder chosen by the user, their Downloads folder otherwise: what the chat creates
+    /// lands where files usually arrive.
+    static func path(stored: String?, home: String = NSHomeDirectory(), downloads: String = ChatFolder.downloads) -> String {
         let chosen = (stored ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !chosen.isEmpty else { return "\(home)/Documents/Yumi" }
+        guard !chosen.isEmpty else { return downloads }
         if chosen == "~" { return home }
         if chosen.hasPrefix("~/") { return home + chosen.dropFirst(1) }
         return chosen
