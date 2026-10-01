@@ -150,6 +150,7 @@ extension AppDelegate {
                 watcher.cancel()
                 printNew()
                 if let note = state.noteMessage { print("[chat] erreur : \(note)") }
+                print("[chat] après la réponse, chatLive : \(state.chatLive == nil ? "nil" : "encore renseigné")")
             }
             print("[chat] fin")
             fflush(stdout)
@@ -174,6 +175,7 @@ final class YumiCore {
     private let mirror: ClaudeTaskMirror
     let modules: ModuleRegistry
 
+    private var chatObserver: AnyCancellable?
     private var lastSeen: [SessionID: Date] = [:]
     private var consumer: Task<Void, Never>?
 
@@ -181,9 +183,16 @@ final class YumiCore {
         ingress = EventIngress(engine: engine)
         let mirror = ClaudeTaskMirror(state: state)
         self.mirror = mirror
+        let claudeCode = ClaudeCodeModule(onShow: { mirror.show() })
+        // The chat answers through Claude Code: its module tells the folded island what it is doing.
+        // The text of the answer changes many times a second, the announcement only with the action.
+        chatObserver = state.$chatLive
+            .map(ChatAnnouncement.init)
+            .removeDuplicates()
+            .sink { [weak claudeCode] in claudeCode?.announceChat($0) }
         modules = ModuleRegistry(
             modules: [
-                ClaudeCodeModule(onShow: { mirror.show() }),
+                claudeCode,
                 AgendaModule(),
                 NotesModule(),
                 FocusModule(),
@@ -203,7 +212,7 @@ final class YumiCore {
         guard ProcessInfo.processInfo.environment["YUMI_TRACE_MODULES"] != nil else { return }
         for snapshot in snapshots {
             let actions = [snapshot.primaryAction, snapshot.secondaryAction].compactMap { $0 }.joined(separator: " | ")
-            print("[\(snapshot.name)] \(snapshot.status) · \(snapshot.title) · \(snapshot.subtitle) · \(actions)\(snapshot.needsAttention ? " · !" : "")")
+            print("[\(snapshot.name)] \(snapshot.status) · \(snapshot.title) · \(snapshot.subtitle) · \(actions)\(snapshot.needsAttention ? " · !" : "")\(snapshot.live.map { " · en direct (\($0.priority)) : \($0.text)" } ?? "")")
         }
         print("")
         fflush(stdout)
