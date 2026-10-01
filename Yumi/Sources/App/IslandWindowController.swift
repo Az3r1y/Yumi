@@ -223,9 +223,10 @@ final class IslandWindowController: NSWindowController {
     private func drawerFrame() -> CGRect? {
         guard model.drawerOpen, model.stage(for: state.mode) == .open, model.drawerHeight > 0 else { return nil }
         let island = islandFrame()
-        return CGRect(x: island.maxX - IslandConst.drawerWidth,
-                      y: island.minY - IslandConst.drawerGap - model.drawerHeight,
-                      width: IslandConst.drawerWidth, height: model.drawerHeight)
+        let width = IslandConst.drawerWidth * IslandConst.openScale
+        let height = model.drawerHeight * IslandConst.openScale
+        return CGRect(x: island.maxX - width, y: island.minY - IslandConst.drawerGap - height,
+                      width: width, height: height)
     }
 
     /// Where Yumi is: his 100 × 84 box at the scale of his seat.

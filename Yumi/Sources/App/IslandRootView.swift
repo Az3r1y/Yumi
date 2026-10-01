@@ -61,8 +61,10 @@ struct IslandScene: View {
                         .id(openings)
                         .fixedSize(horizontal: false, vertical: true)
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                            model.openHeight = min(max(height, layout.notchHeight), IslandConst.openHeightMax + layout.openInset)
+                            model.openHeight = min(max(height * IslandConst.openScale, layout.notchHeight),
+                                                   IslandConst.openHeightMax * IslandConst.openScale + layout.openInset)
                         }
+                        .scaleEffect(IslandConst.openScale, anchor: .topLeading)
                         .modifier(IslandLayer(on: stage == .open))
                 }
             }
@@ -70,7 +72,8 @@ struct IslandScene: View {
 
             // 2. The second square, detached under the island, its right edge on the island's
             IslandDrawer(state: state, model: model, shown: model.drawerOpen && stage == .open)
-                .offset(x: (IslandConst.expandedWidth - IslandConst.drawerWidth) / 2,
+                .scaleEffect(IslandConst.openScale, anchor: .topTrailing)
+                .offset(x: IslandConst.expandedWidth * IslandConst.openScale / 2 - IslandConst.drawerWidth / 2,
                         y: size.height + IslandConst.drawerGap)
 
             // 3. Yumi, above the island: he travels between seats, and what he does may

@@ -33,7 +33,7 @@ struct IslandOpenLayer: View {
                     .frame(width: 30)
                     .frame(maxHeight: .infinity)
             }
-            .padding(.top, IslandConst.openPaddingTop + model.layout.openInset)
+            .padding(.top, IslandConst.openPaddingTop + model.layout.openInset / IslandConst.openScale)
             .padding(.trailing, 10)
             .padding(.bottom, 7)
 

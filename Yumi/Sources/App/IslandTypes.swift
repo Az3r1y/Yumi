@@ -83,7 +83,7 @@ struct IslandLayout: Equatable {
         switch stage {
         case .hidden:  return CGSize(width: notchWidth, height: notchHeight)
         case .compact: return CGSize(width: notchWidth + IslandConst.compactExtra, height: notchHeight)
-        case .open:    return CGSize(width: IslandConst.expandedWidth, height: openHeight)
+        case .open:    return CGSize(width: IslandConst.expandedWidth * IslandConst.openScale, height: openHeight)
         case .drip:    return CGSize(width: notchWidth + IslandConst.dripExtra, height: IslandConst.dripHeight + notchDelta)
         case .greet:   return CGSize(width: IslandConst.greetWidth, height: IslandConst.greetHeight + notchDelta)
         }
@@ -106,7 +106,8 @@ struct IslandLayout: Equatable {
         case .compact:
             return IslandSeat(x: 28 - (notchWidth + IslandConst.compactExtra) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
         case .open:
-            return IslandSeat(x: 50 - IslandConst.expandedWidth / 2, y: 48 + openInset, scale: 0.66, opacity: 1)
+            let k = IslandConst.openScale
+            return IslandSeat(x: (50 - IslandConst.expandedWidth / 2) * k, y: 48 * k + openInset, scale: 0.66 * k, opacity: 1)
         case .drip:
             return IslandSeat(x: 0, y: 62 + notchDelta, scale: 0.42, opacity: 1)
         case .greet:
@@ -170,8 +171,11 @@ enum IslandConst {
     static let notchHeight: CGFloat = 32
     /// The compact island sticks out this much on both sides of the notch (344 for a 184 notch).
     static let compactExtra: CGFloat = 160
-    /// Open island: 480 wide, as low as the content allows.
+    /// Open island: 480 wide in the mock-up, as low as the content allows.
     static let expandedWidth: CGFloat = 480
+    /// The open island and its second square are the mock-up enlarged by this much:
+    /// at its own size it reads too small on a real screen. Change this one number to resize.
+    static let openScale: CGFloat = 1.25
     static let openHeightDefault: CGFloat = 150
     static let openHeightMax: CGFloat = 300
     /// Left column of the open island: Yumi's seat and his caption.
@@ -194,5 +198,5 @@ enum IslandConst {
 
     /// Size of the transparent panel the island lives in.
     static let panelWidth: CGFloat = 720
-    static let panelHeight: CGFloat = 460
+    static let panelHeight: CGFloat = 580
 }
