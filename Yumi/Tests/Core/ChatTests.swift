@@ -71,8 +71,11 @@ import Foundation
     }
 
     @Test func theChatFolder() {
-        #expect(ChatFolder.path(stored: nil, home: home) == "/Users/moi/Documents/Yumi")
-        #expect(ChatFolder.path(stored: "  ", home: home) == "/Users/moi/Documents/Yumi")
+        // By default, where files usually arrive: the Downloads folder the system reports.
+        #expect(ChatFolder.path(stored: nil, home: home, downloads: "/Users/moi/Downloads") == "/Users/moi/Downloads")
+        #expect(ChatFolder.path(stored: "  ", home: home, downloads: "/Volumes/x/Téléchargements") == "/Volumes/x/Téléchargements")
+        #expect(ChatFolder.downloads == FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first?.path)
+        #expect(ChatFolder.path(stored: nil) == ChatFolder.downloads)
         #expect(ChatFolder.path(stored: "~/dev/projet", home: home) == "/Users/moi/dev/projet")
         #expect(ChatFolder.path(stored: "~", home: home) == home)
         #expect(ChatFolder.path(stored: "/Volumes/travail", home: home) == "/Volumes/travail")
