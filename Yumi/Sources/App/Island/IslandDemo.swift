@@ -20,7 +20,16 @@ enum IslandDemo {
         controller.fsm.homeToPetitDelay = 3600
         controller.fsm.petitToHiddenDelay = 3600
         Task { @MainActor in
-            if let name = env["YUMI_ISLAND_VIEW"] {
+            if env["YUMI_ISLAND_SHOTS"] != nil, env["YUMI_ISLAND_VIEW"] == "live" {
+                // The folded island as it really is (a track playing, an event coming up)
+                await pause(Double(env["YUMI_ISLAND_WAIT"] ?? "") ?? 7)
+                shot(controller, "5-live-a")
+                controller.demoHover = true
+                await pause(1); shot(controller, "5-live-hover")
+                controller.demoHover = false
+                await pause(1); shot(controller, "5-live-b")
+                NSApp.terminate(nil)
+            } else if let name = env["YUMI_ISLAND_VIEW"] {
                 await pause(6.2)
                 show(name, controller)
             } else {
