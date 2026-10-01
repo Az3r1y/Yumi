@@ -75,6 +75,7 @@ targets:
         # Kept as a record of why the app asks for it.
         NSAccessibilityUsageDescription: "Yumi reads the title of the frontmost window to attach it as context, and listens for Escape and your global shortcut."
         # Asked the first time the user presses the matching button of a module, never at launch.
+        NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
     settings:
       base:
@@ -111,6 +112,7 @@ targets:
         LSApplicationCategoryType: public.app-category.developer-tools
         ITSAppUsesNonExemptEncryption: NO
         # Asked the first time the user presses the matching button of a module, never at launch.
+        NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
     settings:
       base:
