@@ -52,8 +52,11 @@ enum ClaudeSessions {
         snapshot.subtitle = FrenchText.count(sessions.count, "session ouverte", "sessions ouvertes")
         if waiting == 1 { snapshot.subtitle += ", 1 attend ta réponse" }
         if waiting > 1 { snapshot.subtitle += ", \(waiting) attendent ta réponse" }
-        if SessionHost.bundleID(for: featured.origin) != nil {
-            snapshot.secondaryAction = SessionHost.isEditor(featured.origin) ? "Ouvrir l'éditeur" : "Ouvrir le terminal"
+        switch SessionHost.kind(of: featured.origin) {
+        case .editor:   snapshot.secondaryAction = "Ouvrir l'éditeur"
+        case .terminal: snapshot.secondaryAction = "Ouvrir le terminal"
+        case .other:    snapshot.secondaryAction = "Ouvrir la session"
+        case nil:       break
         }
         snapshot.needsAttention = waiting > 0
         snapshot.live = live(sessions)
@@ -96,6 +99,19 @@ enum SessionHost {
     /// Bundle identifiers that open a folder as a project rather than as a shell.
     private static let editorMarkers = ["vscode", "vscodium", "cursor", "windsurf", "dev.zed", "jetbrains", "xcode"]
 
+    /// Code editors Yumi can open a project in, in order of preference.
+    static let knownEditors = ["com.microsoft.VSCode", "com.microsoft.VSCodeInsiders", "com.vscodium.codium",
+                               "com.todesktop.230313mzl4w4u92", "com.exafunction.windsurf", "dev.zed.Zed"]
+
+    enum Kind: Equatable, Sendable {
+        /// A terminal emulator: bringing it forward shows the session.
+        case terminal
+        /// An editor with an integrated terminal: reopening the folder focuses the right window.
+        case editor
+        /// Another application that hosts sessions (the Claude desktop app, for instance).
+        case other
+    }
+
     static func bundleID(for origin: SessionOrigin?) -> String? {
         guard let origin else { return nil }
         if !origin.hostBundleID.isEmpty { return origin.hostBundleID }
@@ -105,5 +121,23 @@ enum SessionHost {
     static func isEditor(_ origin: SessionOrigin?) -> Bool {
         guard let id = bundleID(for: origin)?.lowercased() else { return false }
         return editorMarkers.contains { id.contains($0) }
+    }
+
+    /// What kind of application hosts the session, or nil when it is unknown.
+    static func kind(of origin: SessionOrigin?) -> Kind? {
+        guard let origin, let id = bundleID(for: origin) else { return nil }
+        if isEditor(origin) { return .editor }
+        // Only terminals set TERM_PROGRAM; the known ones are also recognised by their identifier.
+        if !origin.hostName.isEmpty || knownPrograms.values.contains(id) { return .terminal }
+        return .other
+    }
+
+    /// The editor to show a session's project in: the one the session runs in, else the one the
+    /// user chose, else a known editor that is open, else a known editor that is installed.
+    static func editor(for origin: SessionOrigin?, preferred: String?, running: Set<String>,
+                       isInstalled: (String) -> Bool) -> String? {
+        if isEditor(origin), let host = bundleID(for: origin) { return host }
+        if let preferred, !preferred.isEmpty, isInstalled(preferred) { return preferred }
+        return knownEditors.first(where: running.contains) ?? knownEditors.first(where: isInstalled)
     }
 }
