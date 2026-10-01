@@ -74,6 +74,8 @@ targets:
         # Not a key macOS reads: Accessibility consent is given in System Settings, with no custom text.
         # Kept as a record of why the app asks for it.
         NSAccessibilityUsageDescription: "Yumi reads the title of the frontmost window to attach it as context, and listens for Escape and your global shortcut."
+        # Asked the first time the user presses the matching button of a module, never at launch.
+        NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi
@@ -108,6 +110,8 @@ targets:
         NSSupportsAutomaticGraphicsSwitching: YES
         LSApplicationCategoryType: public.app-category.developer-tools
         ITSAppUsesNonExemptEncryption: NO
+        # Asked the first time the user presses the matching button of a module, never at launch.
+        NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi.appstore

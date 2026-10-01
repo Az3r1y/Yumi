@@ -100,6 +100,7 @@ final class YumiCore {
             modules: [
                 ClaudeCodeModule(onShow: { mirror.show() }),
                 FocusModule(),
+                NotesModule(),
             ],
             onPublish: { state.modules = $0 }
         )
