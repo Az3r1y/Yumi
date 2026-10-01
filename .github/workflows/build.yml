@@ -2,13 +2,16 @@ name: Build
 
 on:
   push:
-    branches: [main]
   pull_request:
     branches: [main]
 
+concurrency:
+  group: build-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -23,6 +26,27 @@ jobs:
           xcodebuild \
             -project Yumi/Yumi.xcodeproj \
             -scheme Yumi \
+            -configuration Debug \
+            build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      - name: Test
+        run: |
+          xcodebuild \
+            -project Yumi/Yumi.xcodeproj \
+            -scheme Yumi \
+            -configuration Debug \
+            test \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO
+
+      # The App Store target is not shipped yet, but it must keep compiling (see YUMI.md).
+      - name: Build App Store target
+        run: |
+          xcodebuild \
+            -project Yumi/Yumi.xcodeproj \
+            -scheme YumiAppStore \
             -configuration Debug \
             build \
             CODE_SIGNING_ALLOWED=NO \
