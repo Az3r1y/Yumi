@@ -68,10 +68,80 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         core.start()
         self.core = core
         IntegrationPollers.sync(active: AppState.shared.activeIntegrations)
+        #if DEBUG
+        sendDevelopmentChatPrompts()
+        #endif
         NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
                                                name: .openFullSettings, object: nil)
     }
 }
+
+#if DEBUG
+// MARK: - Development: chat without the island
+// `YUMI_CHAT_PROMPT` sends its text to the chat a moment after launch ("||" separates several
+// messages, sent one after the other) and prints the conversation as it grows. It exercises the
+// real path, permission requests in the island included, without typing in the notch.
+// `YUMI_CHAT_ANSWERS` ("allow,deny,always") scripts the answers to the permission requests of that
+// run, in order: each one presses what the island's buttons press, a second after the request
+// appears. Without it the requests wait for a real click. Neither exists in a Release build.
+
+extension AppDelegate {
+    private func sendDevelopmentChatPrompts() {
+        guard let text = ProcessInfo.processInfo.environment["YUMI_CHAT_PROMPT"], !text.isEmpty else { return }
+        let prompts = text.components(separatedBy: "||").map { $0.trimmingCharacters(in: .whitespaces) }
+        let state = AppState.shared
+        Task { @MainActor in
+            var answers = (ProcessInfo.processInfo.environment["YUMI_CHAT_ANSWERS"] ?? "")
+                .split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+            var printed = 0
+            @MainActor func printNew() {
+                for message in state.chatHistory.dropFirst(printed) {
+                    print("[chat] \(message.role == .user ? "moi" : "yumi") : \(message.content)")
+                }
+                printed = state.chatHistory.count
+                fflush(stdout)
+            }
+            try? await Task.sleep(for: .seconds(2))
+            for prompt in prompts {
+                state.chatHistory.append(ChatMessage(role: .user, content: prompt))
+                state.noteMessage = nil
+                state.stateOverride = .thinking
+                let watcher = Task { @MainActor in
+                    var last = ""
+                    var answered: String?
+                    while !Task.isCancelled {
+                        printNew()
+                        if let request = state.pendingApproval, ChatSessionRegistry.shared.contains(request.sessionId),
+                           answered != request.command, !answers.isEmpty {
+                            answered = request.command
+                            let answer = answers.removeFirst()
+                            Task { @MainActor in
+                                try? await Task.sleep(for: .seconds(1))
+                                // Still the same request on screen: never answer another one.
+                                guard state.pendingApproval?.command == request.command,
+                                      state.pendingApproval?.sessionId == request.sessionId else { return }
+                                print("[chat] réponse scriptée : \(answer)")
+                                HookServer.shared.sendApprovalDecision(answer)
+                            }
+                        } else if state.pendingApproval == nil {
+                            answered = nil
+                        }
+                        let now = "\(state.effectiveState)\(state.pendingApproval.map { " · demande : \($0.tool) \($0.command)" } ?? "")"
+                        if now != last { print("[chat] état : \(now)"); fflush(stdout); last = now }
+                        try? await Task.sleep(for: .milliseconds(150))
+                    }
+                }
+                await ClaudeService.shared.chat(query: prompt, context: state.promptContext, state: state)
+                watcher.cancel()
+                printNew()
+                if let note = state.noteMessage { print("[chat] erreur : \(note)") }
+            }
+            print("[chat] fin")
+            fflush(stdout)
+        }
+    }
+}
+#endif
 
 // MARK: - Core
 // Composition root of everything that feeds the island: the event engine, the session store,

@@ -33,6 +33,10 @@ final class HookServer: @unchecked Sendable {
         let requestID: String
         let sessionID: SessionID
         let info: ApprovalInfo
+        /// Set for a request of the chat: the decision goes to this closure instead of a hook socket.
+        var respond: (@MainActor (String) -> Void)?
+
+        var isChat: Bool { respond != nil }
     }
 
     private init() {}
@@ -103,6 +107,15 @@ final class HookServer: @unchecked Sendable {
 
         let eventName = payload["hook_event_name"] as? String ?? ""
 
+        // A session started by the chat is followed by the chat itself, through the output of its
+        // process: its permission requests arrive there too. "ask" leaves that request undecided
+        // here, so the answer given in the island goes back through the process.
+        if let sessionID = payload["session_id"] as? String, ChatSessionRegistry.shared.contains(sessionID) {
+            sendLine(fd: fd, text: eventName == "PermissionRequest" ? #"{"permissionDecision":"ask"}"# : #"{"ok":true}"#)
+            close(fd)
+            return
+        }
+
         if eventName == "PermissionRequest" {
             // Hold fd open: Claude Code waits for our decision (up to 120s)
             let requestID = UUID().uuidString
@@ -157,15 +170,56 @@ final class HookServer: @unchecked Sendable {
         if approvals.count == 1 { showApproval(approvals[0]) }
     }
 
+    /// Queues a permission request of the chat's own Claude Code session. It is shown and answered
+    /// like any other; the decision ("allow", "always", "deny", or "ask" when nobody answered in
+    /// time) is given to `respond`.
+    @MainActor
+    func presentChatApproval(id requestID: String, session: String, tool: String, command: String,
+                             respond: @escaping @MainActor (String) -> Void) {
+        nbLog("PermissionRequest (chat) \(tool): \(command)")
+        approvals.append(PendingApproval(
+            requestID: requestID, sessionID: SessionID(session),
+            info: ApprovalInfo(sessionId: session, tool: tool, command: command),
+            respond: respond))
+        if approvals.count == 1 { showApproval(approvals[0]) }
+    }
+
+    /// Withdraws a chat request that no longer needs an answer (decided elsewhere, or its process ended).
+    /// - Parameter backToChat: false when the conversation itself was dropped: the view is left as it is.
+    @MainActor
+    func cancelChatApproval(id requestID: String, backToChat: Bool = true) {
+        guard let index = approvals.firstIndex(where: { $0.requestID == requestID && $0.isChat }) else { return }
+        let approval = approvals.remove(at: index)
+        guard index == 0 else { return }
+        if let next = approvals.first {
+            showApproval(next)
+        } else {
+            closeApprovalView(after: approval, backToChat: backToChat)
+        }
+    }
+
     /// Opens the island on a permission request. Approval always forces the island open: the user must be able to respond.
     @MainActor
     private func showApproval(_ approval: PendingApproval) {
         let state = AppState.shared
-        state.updateTask(id: ClaudeTaskMirror.taskID, state: .approval)
+        if approval.isChat {
+            // The chat is not one of the sessions of the pill: the character itself shows the request.
+            state.stateOverride = .approval
+            // Claude Code waits for the chat without limit. The time to answer is counted from the
+            // moment the request is on screen, not while it queues behind another one.
+            let requestID = approval.requestID
+            DispatchQueue.main.asyncAfter(deadline: .now() + Self.approvalTimeout) { [weak self] in
+                self?.resolveApproval(requestID, decision: "ask")
+            }
+        } else {
+            // A chat request withdrawn just before must not leave its mark on the character.
+            if state.stateOverride == .approval { state.stateOverride = .thinking }
+            state.updateTask(id: ClaudeTaskMirror.taskID, state: .approval)
+            state.focusId = ClaudeTaskMirror.taskID
+        }
         state.pendingApproval = approval.info
         state.isPinned = true
         SoundEngine.shared.play("approval")
-        state.focusId = ClaudeTaskMirror.taskID
         Self.expandIfNeeded(to: .approval)
     }
 
@@ -173,7 +227,7 @@ final class HookServer: @unchecked Sendable {
     @MainActor
     func sendApprovalDecision(_ decision: String) {
         guard let current = approvals.first else {
-            closeApprovalView()
+            closeApprovalView(after: nil)
             return
         }
         resolveApproval(current.requestID, decision: decision)
@@ -192,23 +246,33 @@ final class HookServer: @unchecked Sendable {
         case "ask":    json = #"{"permissionDecision":"ask"}"#
         default:       json = #"{"permissionDecision":"deny"}"#
         }
-        heldLock.withLock { held.removeValue(forKey: requestID) }?.finish(json)
-        ingress?.post(.permissionResolved(approval.sessionID, requestID: requestID))
+        if let respond = approval.respond {
+            respond(decision)
+        } else {
+            heldLock.withLock { held.removeValue(forKey: requestID) }?.finish(json)
+            ingress?.post(.permissionResolved(approval.sessionID, requestID: requestID))
+        }
 
         // Only the request on screen changes what the island shows.
         guard index == 0 else { return }
         if let next = approvals.first {
             showApproval(next)
         } else {
-            closeApprovalView()
+            closeApprovalView(after: approval)
         }
     }
 
     @MainActor
-    private func closeApprovalView() {
+    private func closeApprovalView(after approval: PendingApproval?, backToChat: Bool = true) {
         let state = AppState.shared
         state.pendingApproval = nil
         state.isPinned = false
+        if approval?.isChat == true {
+            // Back to the conversation the request interrupted. The chat sets the character's state.
+            if state.stateOverride == .approval { state.stateOverride = backToChat ? .thinking : nil }
+            if backToChat { state.view = .prompt }
+            return
+        }
         state.updateTask(id: ClaudeTaskMirror.taskID, state: .working)
         if let idx = state.tasks.firstIndex(where: { $0.id == ClaudeTaskMirror.taskID }) {
             state.tasks[idx].pillBadge = nil
