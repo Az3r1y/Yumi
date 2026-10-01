@@ -94,6 +94,12 @@ L'interface vue par l'île ne change pas : `ClaudeService.shared.chat(query:cont
 
 Le contrat `Contracts/ModuleTypes.swift` a gagné `ModuleSnapshot.live` (texte court, priorité, deux boutons au plus). Le cœur le renseigne, l'île repliée affiche le module vivant de plus haute priorité et ses boutons au survol. Priorités : quelqu'un attend une réponse, puis ce qui tourne (musique, focus), puis ce qui est bon à savoir (prochain rendez-vous).
 
+### Chantier C, sessions Cœur puis Île : le chat en direct
+
+Les chantiers A et B sont terminés et fusionnés. Le chat crée des fichiers et lance des commandes, mais on ne le voit pas faire : la réponse arrive d'un bloc. Le contrat `Contracts/ChatLive.swift` et `AppState.chatLive` décrivent la réponse en cours : le texte qui s'écrit mot à mot, l'action en cours (lit, écrit, lance) avec un aperçu, et les actions déjà faites. Le cœur le renseigne en continu, l'île l'affiche en direct, ouverte comme repliée.
+
+Le dossier de travail du chat devient le dossier Téléchargements de l'utilisateur, pour que les fichiers créés y arrivent directement.
+
 ## Phase 2 : porter la maquette, répartition des fichiers
 
 Trois sessions en parallèle. Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Chaque session peut créer de nouveaux fichiers dans son propre sous-dossier.

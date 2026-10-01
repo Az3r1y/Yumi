@@ -176,6 +176,9 @@ final class AppState: ObservableObject {
 
     // Chat conversation history
     @Published var chatHistory: [ChatMessage] = []
+    // The answer in progress, word by word and action by action (see Contracts/ChatLive.swift).
+    // nil when the chat is idle.
+    @Published var chatLive: ChatLive? = nil
 
     // Pending approval request from Claude Code hook
     @Published var pendingApproval: ApprovalInfo? = nil
