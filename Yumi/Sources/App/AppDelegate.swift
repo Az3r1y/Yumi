@@ -99,6 +99,7 @@ final class YumiCore {
         modules = ModuleRegistry(
             modules: [
                 ClaudeCodeModule(onShow: { mirror.show() }),
+                FocusModule(),
             ],
             onPublish: { state.modules = $0 }
         )
