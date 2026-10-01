@@ -28,22 +28,36 @@ import Foundation
         #expect(second(SessionOrigin(workingDirectory: "/dev/yumi")) == nil)
     }
 
-    @Test func aSessionInAnEditorIsShownInThatEditor() {
-        let cursor = SessionOrigin(hostBundleID: "com.todesktop.230313mzl4w4u92")
-        #expect(SessionHost.editor(for: cursor, preferred: "dev.zed.Zed", running: ["com.microsoft.VSCode"], isInstalled: { _ in true })
-                == "com.todesktop.230313mzl4w4u92")
-        #expect(SessionHost.kind(of: cursor) == .editor)
+    @Test func cursorIsAnEditorByItsRealIdentifier() {
+        #expect(SessionHost.kind(of: SessionOrigin(hostBundleID: "com.todesktop.230313mzl4w4u92")) == .editor)
     }
+}
 
-    @Test func aSessionOutsideAnEditorIsShownInTheUsersEditor() {
-        let installed: Set<String> = ["com.microsoft.VSCode", "dev.zed.Zed"]
-        // The Claude desktop app hosts the session: the project opens in the code editor, not in Claude.
-        #expect(SessionHost.editor(for: desktop, preferred: nil, running: [], isInstalled: installed.contains) == "com.microsoft.VSCode")
-        // An editor already open wins over one that is only installed.
-        #expect(SessionHost.editor(for: desktop, preferred: nil, running: ["dev.zed.Zed"], isInstalled: installed.contains) == "dev.zed.Zed")
-        // The user's choice wins over both, if it is installed.
-        #expect(SessionHost.editor(for: terminal, preferred: "dev.zed.Zed", running: ["com.microsoft.VSCode"], isInstalled: installed.contains) == "dev.zed.Zed")
-        #expect(SessionHost.editor(for: terminal, preferred: "com.gone.editor", running: [], isInstalled: installed.contains) == "com.microsoft.VSCode")
-        #expect(SessionHost.editor(for: desktop, preferred: nil, running: [], isInstalled: { _ in false }) == nil)
+@MainActor
+@Suite struct ClaudeCodeVoirTests {
+    @Test func voirShowsTheSessionsInTheIslandAndNothingElse() {
+        var shown = 0
+        let module = ClaudeCodeModule(onShow: { shown += 1 })
+        module.start {}
+
+        // No session: the island opens all the same.
+        module.perform(.primary)
+        #expect(shown == 1)
+
+        // A session hosted by the Claude desktop app, working: still the island.
+        let id = SessionID("a")
+        var sessions = SessionReducer.apply(.sessionStarted(id, ClaudeHookTranslator.agent, title: "yumi"), to: [:])
+        let origin = SessionOrigin(workingDirectory: "/dev/yumi", hostBundleID: "com.anthropic.claudefordesktop")
+        sessions = SessionReducer.apply(.sessionLocated(id, origin), to: sessions)
+        module.receive(.sessionLocated(id, origin), sessions: sessions)
+        module.perform(.primary)
+        #expect(shown == 2)
+
+        // An approval pending: the island again, where it is answered.
+        let request = PermissionRequest(tool: "Bash", command: "ls")
+        sessions = SessionReducer.apply(.permissionRequested(id, request), to: sessions)
+        module.receive(.permissionRequested(id, request), sessions: sessions)
+        module.perform(.primary)
+        #expect(shown == 3)
     }
 }
