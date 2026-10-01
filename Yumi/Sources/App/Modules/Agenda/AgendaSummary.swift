@@ -43,6 +43,11 @@ enum AgendaSummary {
 
     static func snapshot(events: [AgendaEvent], access: PermissionState, now: Date,
                          calendar: Calendar = .current) -> ModuleSnapshot {
+        plainSnapshot(events: events, access: access, now: now, calendar: calendar).withSymbols("calendar")
+    }
+
+    private static func plainSnapshot(events: [AgendaEvent], access: PermissionState, now: Date,
+                                      calendar: Calendar) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "libre",
                                       title: "Rien de prévu", subtitle: "Ta journée est libre",
                                       primaryAction: "Voir la journée", secondaryAction: nil)

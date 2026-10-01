@@ -18,6 +18,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         setupIsland()
     }
 
+    // MARK: - Quitting (Contracts/AppLifecycle.swift)
+
+    private var quit = QuitSequence()
+    private var quitObservers: [NSObjectProtocol] = []
+
+    func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        // macOS says why with the quit request when the session is ending: log out, restart, shut down.
+        let reason = NSAppleEventManager.shared().currentAppleEvent?
+            .attributeDescriptor(forKeyword: AEKeyword(kAEQuitReason))
+        let code = reason.map { $0.enumCodeValue != 0 ? $0.enumCodeValue : $0.typeCodeValue }
+        guard quit.request(systemReason: code) == .sayGoodbye else { return .terminateNow }
+
+        // The end is cancelled rather than suspended, so the island animates on a normal run loop;
+        // the app is ended for good when the island is done, or after a few seconds whatever happens.
+        quitObservers.append(NotificationCenter.default.addObserver(
+            forName: .yumiQuitReady, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.endAfterGoodbye() }
+        })
+        // The Mac is turning off or the session is closing while Yumi says goodbye: no more waiting.
+        quitObservers.append(NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.willPowerOffNotification, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.endAfterGoodbye() }
+        })
+        DispatchQueue.main.asyncAfter(deadline: .now() + QuitSequence.patience) { [weak self] in
+            self?.endAfterGoodbye()
+        }
+        NotificationCenter.default.post(name: .yumiQuitRequested, object: nil)
+        return .terminateCancel
+    }
+
+    private func endAfterGoodbye() {
+        guard quit.finish() else { return }
+        NSApp.terminate(nil)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        // A chat answer still being written would leave its Claude Code process behind.
+        ClaudeService.shared.clearConversation()
+    }
+
     // MARK: - Menu bar
 
     private func setupMenuBarItem() {

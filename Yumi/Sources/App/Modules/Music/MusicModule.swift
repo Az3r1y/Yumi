@@ -21,9 +21,15 @@ final class MusicModule: YumiModule {
     private var pausedAt: Date?
     private var lingering: Task<Void, Never>?
 
+    /// Where the track is, kept between two reports of the player.
+    private var clock: PlaybackClock?
+    private var ticking: Task<Void, Never>?
+
     var snapshot: ModuleSnapshot {
-        MusicSummary.snapshot(playing, canControl: Self.canControl,
-                              pausedFor: pausedAt.map { Date().timeIntervalSince($0) })
+        let now = Date()
+        return MusicSummary.snapshot(playing, canControl: Self.canControl,
+                                     pausedFor: pausedAt.map { now.timeIntervalSince($0) },
+                                     position: clock?.position(at: now))
     }
 
     // MARK: Lifecycle
@@ -35,7 +41,11 @@ final class MusicModule: YumiModule {
                 forName: Notification.Name(player.notificationName), object: nil, queue: .main
             ) { [weak self] note in
                 let update = MusicSummary.update(from: note.userInfo, player: player)
-                MainActor.assumeIsolated { self?.receive(update) }
+                MainActor.assumeIsolated {
+                    self?.receive(update)
+                    // Music does not say where the track is: ask, if it is already allowed.
+                    if player == .music, case .track(let track) = update, track.isPlaying { self?.askWhatIsPlaying(player) }
+                }
             }
             observers.append(observer)
             askWhatIsPlaying(player)
@@ -50,15 +60,37 @@ final class MusicModule: YumiModule {
         pausedAt = nil
         lingering?.cancel()
         lingering = nil
+        clock = nil
+        ticking?.cancel()
+        ticking = nil
     }
 
     private func receive(_ update: PlayerUpdate) {
         let next = MusicSummary.apply(update, to: playing)
         guard next != playing, onChange != nil else { return }
         let wasPaused = playing.map { !$0.isPlaying } ?? false
+        clock = PlaybackClock.next(clock, from: playing, to: next, now: Date())
         playing = next
         notePause(wasPaused: wasPaused)
+        syncTicking()
         onChange?()
+    }
+
+    /// The playback bar moves every second, but only while a track with a known position plays.
+    private func syncTicking() {
+        if clock?.isRunning == true, playing?.duration != nil, onChange != nil {
+            guard ticking == nil else { return }
+            ticking = Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(1), tolerance: .milliseconds(100))
+                    guard !Task.isCancelled else { return }
+                    self?.onChange?()
+                }
+            }
+        } else {
+            ticking?.cancel()
+            ticking = nil
+        }
     }
 
     /// A paused track leaves the folded island after a while: report again when that moment comes.
@@ -115,7 +147,7 @@ final class MusicModule: YumiModule {
         tell application id "\(player.rawValue)"
             if player state is stopped then return ""
             set t to current track
-            return (name of t) & tab & (artist of t) & tab & (album of t) & tab & (player state as text)
+            return (name of t) & tab & (artist of t) & tab & (album of t) & tab & (player state as text) & tab & (player position as text) & tab & (duration of t as text)
         end tell
         """
         PlayerScripting.run(script, on: player, askingFirst: false) { [weak self] result in

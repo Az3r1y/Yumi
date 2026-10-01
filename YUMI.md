@@ -242,3 +242,14 @@ Reste à faire côté île : afficher l'état `working` dans la vue du chat (ell
 | Île repliée | Le module Claude Code annonce l'action du chat dans `live` (priorité activité, attention pendant une attente de permission). Une session qui attend l'utilisateur reste devant. Rien quand le chat est au repos. |
 | Historique | Les lignes d'action (« Fichier créé : … ») sont toujours ajoutées à `chatHistory` : à l'île de choisir entre elles et `done` pendant la réponse. |
 | Dossier du chat | Téléchargements par défaut. Un ancien `~/Documents/Yumi` n'est ni déplacé ni supprimé. |
+
+## Cœur, phase 4 : champs de l'interface par activités
+
+| Sujet | État |
+|---|---|
+| `symbol` | Claude Code `terminal.fill`, Agenda `calendar`, Notes `note.text`, Focus `timer`, Musique `music.note`, Météo selon le ciel (`sun.max.fill`, `cloud.rain.fill`…, `cloud.sun.fill` tant que le temps n'est pas connu). |
+| `primarySymbol`, `secondarySymbol` | Déduits du libellé du bouton par une table unique (`Modules/ModuleSymbols.swift`) : chaque libellé a son symbole, `secondarySymbol` est nil quand il n'y a pas de second bouton. |
+| `progress` | Focus : avancement de la phase en cours (temps écoulé à gauche, durée de la phase à droite), figé en pause. Musique : position dans le morceau, republiée chaque seconde pendant la lecture. nil ailleurs, et nil pour la musique tant que la durée ou la position ne sont pas connues. |
+| Position de la musique | Spotify l'annonce. Pour Musique, elle est demandée au lecteur si l'automatisation est déjà accordée, sinon comptée depuis le début du morceau et figée en pause : elle peut dériver si l'utilisateur déplace la tête de lecture. |
+| Départ | `applicationShouldTerminate` annule la fin, poste `yumiQuitRequested`, et termine à la réception de `yumiQuitReady`, après six secondes au plus, ou tout de suite si l'utilisateur quitte une seconde fois. Une fermeture de session, un redémarrage ou une extinction ne sont jamais retardés. |
+| Historique du chat | Tout le texte est gardé dans l'ordre : le texte écrit avant une action entre dans `chatHistory` au moment où l'action commence, puis la ligne d'action, puis la suite. `chatLive.text` repart alors de zéro pour ne pas l'afficher deux fois. |

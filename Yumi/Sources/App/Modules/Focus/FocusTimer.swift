@@ -87,6 +87,10 @@ extension FocusTimer {
     static let attentionSpan: TimeInterval = 10
 
     func snapshot(now: Date) -> ModuleSnapshot {
+        plainSnapshot(now: now).withSymbols("timer")
+    }
+
+    private func plainSnapshot(now: Date) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "prêt",
                                       title: "Prêt à te concentrer ?",
                                       subtitle: "\(plan.rounds) sessions de \(FrenchText.minutes(plan.focus)), \(FrenchText.minutes(plan.rest)) de pause",
@@ -130,7 +134,21 @@ extension FocusTimer {
             snapshot.needsAttention = now.timeIntervalSince(at) < Self.attentionSpan
         }
         snapshot.live = live(now: now)
+        snapshot.progress = progress(now: now)
         return snapshot
+    }
+
+    /// How far the current phase is: time spent on the left, its length on the right.
+    func progress(now: Date) -> ModuleProgress? {
+        let phase: Phase
+        switch state {
+        case .running(let current, _, _), .paused(let current, _, _): phase = current
+        case .idle, .finished: return nil
+        }
+        let total = phase == .focus ? plan.focus : plan.rest
+        guard total > 0, let left = remaining(now: now) else { return nil }
+        let spent = min(total, max(0, total - left))
+        return ModuleProgress(fraction: spent / total, leading: FrenchText.trackTime(spent), trailing: FrenchText.trackTime(total))
     }
 
     /// The folded island shows the countdown while it runs, with the button of the moment.

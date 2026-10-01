@@ -68,6 +68,12 @@ struct ChatLiveTracker: Sendable {
         running.first { $0.kind == .waiting } ?? running.first
     }
 
+    /// The text written so far has gone to the history: the live text starts again from nothing,
+    /// so the island does not show it twice.
+    mutating func textCommitted() {
+        live.text = ""
+    }
+
     /// The user answered a permission request in the island.
     mutating func permissionAnswered(toolUseID: String, allowed: Bool) {
         if !allowed { refused.insert(toolUseID) }

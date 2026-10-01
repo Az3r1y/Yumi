@@ -40,6 +40,10 @@ enum ClaudeSessions {
     }
 
     static func snapshot(_ sessions: [Session]) -> ModuleSnapshot {
+        plainSnapshot(sessions).withSymbols("terminal.fill")
+    }
+
+    private static func plainSnapshot(_ sessions: [Session]) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "claude-code", name: "Claude Code", colorHex: "#FFB547",
                                       status: "au repos", title: "Aucune session ouverte",
                                       subtitle: "Lance Claude Code dans un terminal",

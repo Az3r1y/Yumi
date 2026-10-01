@@ -235,10 +235,8 @@ final class ClaudeService {
             return .failed
         }
 
-        var tools: [String: ChatToolUse] = [:]
-        var refused: Set<String> = []
+        var transcript = ChatTranscript()
         var waiting: Set<String> = []
-        var lastText = ""
         var result: ChatTurnResult?
 
         // The answer in progress, for the island (Contracts/ChatLive.swift). Words arrive by the
@@ -274,28 +272,25 @@ final class ClaudeService {
             if turn.isCancelled { continue }
             for event in ClaudeStream.events(fromLine: line) {
                 tracker.apply(event)
+                // Text followed by an action goes to the history before the line of that action,
+                // so nothing written along the way is lost when the answer is complete.
+                let lines = transcript.apply(event)
+                if !lines.isEmpty {
+                    state.chatHistory.append(contentsOf: lines.map { ChatMessage(role: .assistant, content: $0) })
+                    tracker.textCommitted()
+                }
                 publishLive()
                 switch event {
                 case .started(let id):
                     session = (id, folder)
 
-                case .messageStarted, .textDelta, .toolAnnounced:
+                case .messageStarted, .textDelta, .toolAnnounced, .text:
                     break
 
-                case .text(let text):
-                    lastText = text
-
-                case .toolStarted(let tool):
-                    tools[tool.id] = tool
+                case .toolStarted:
                     state.stateOverride = .working
 
-                case .toolFinished(let id, let failed, _):
-                    if let tool = tools.removeValue(forKey: id) {
-                        let outcome: ChatToolOutcome = refused.contains(id) ? .refused : (failed ? .failed : .done)
-                        if let line = ChatPhrases.action(tool, outcome: outcome) {
-                            state.chatHistory.append(ChatMessage(role: .assistant, content: line))
-                        }
-                    }
+                case .toolFinished:
                     if state.stateOverride == .working { state.stateOverride = .thinking }
 
                 case .permissionRequested(let request):
@@ -312,7 +307,7 @@ final class ClaudeService {
                         tracker.permissionAnswered(toolUseID: request.toolUseID, allowed: allowed)
                         if turn != nil { publishLive() }
                         if case .deny = answer {
-                            refused.insert(request.toolUseID)
+                            transcript.refuse(toolUseID: request.toolUseID)
                             state.stateOverride = .thinking
                         } else {
                             state.stateOverride = .working
@@ -357,12 +352,12 @@ final class ClaudeService {
             await showError(ChatPhrases.failure(result), state: state)
             return .failed
         }
-        let text = result.text.isEmpty ? lastText : result.text
-        guard !text.isEmpty else {
+        let last = transcript.finish(result)
+        state.chatHistory.append(contentsOf: last.map { ChatMessage(role: .assistant, content: $0) })
+        guard transcript.hasText || !last.isEmpty else {
             await showError(ChatPhrases.noAnswer, state: state)
             return .failed
         }
-        state.chatHistory.append(ChatMessage(role: .assistant, content: text))
         state.stateOverride = nil
         state.view = .prompt
         NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
