@@ -9,6 +9,7 @@ Yumi is a native macOS app: a small animated character living in the MacBook not
 ## Where things are
 - `Yumi/Sources/App/`: all Swift code. `Yumi/Resources/sounds/`: the WAV sounds. `Yumi/project.yml`: XcodeGen project.
 - `design/yumi/`: character concept sheet (concept 4, left half).
+- `Yumi/Sources/App/Core/`: typed event engine and session store. `Yumi/Sources/App/Modules/`: one folder per module, each producing a `ModuleSnapshot`. Neither may use a view, `AppState`, the hook server or a sound.
 - `Yumi/Tests/`: unit tests (Swift Testing). The bundle is not hosted by the app: a file under test is listed in the `YumiTests` target of `project.yml` and must have no dependency on the rest of the app.
 - `scripts/release.sh`: signed and notarized build. Never run it unless the user asks: with `--publish` it pushes a tag and creates a GitHub release.
 - `.github/workflows/build.yml`: build and tests on every push.
@@ -19,6 +20,10 @@ Yumi is a native macOS app: a small animated character living in the MacBook not
 cd Yumi && xcodegen && xcodebuild -scheme Yumi -configuration Debug build
 cd Yumi && xcodebuild -scheme Yumi -configuration Debug test CODE_SIGNING_ALLOWED=NO
 ```
+Also build the App Store target: `cd Yumi && xcodebuild -scheme YumiAppStore -configuration Debug build CODE_SIGNING_ALLOWED=NO`.
+
+Debug builds read two environment variables. `YUMI_SUPPORT_DIR=/some/short/path` moves the socket and the hook script there, so a development build never takes the socket of the installed app (keep the path short: a socket path is limited to 104 bytes). `YUMI_TRACE_MODULES=1` prints the module snapshots each time they change.
+
 Build in Debug before every commit. The build has 17 known warnings (concurrency and deprecated APIs): do not add any.
 
 ## Rules
