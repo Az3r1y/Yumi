@@ -9,7 +9,7 @@ enum AppIdentity {
     // MARK: Visible names
 
     static let productName   = "Yumi"
-    static let characterName = "Mochi"
+    static let characterName = "Yumi"
 
     // MARK: Persisted identifiers
 

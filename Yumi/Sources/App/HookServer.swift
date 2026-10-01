@@ -98,7 +98,7 @@ final class HookServer: @unchecked Sendable {
 
     // MARK: - Event → AppState
     // All Claude Code events route to the permanent "integration_claude" task.
-    // View switches only happen if VS Code is the currently focused mochi.
+    // View switches only happen if VS Code is the currently focused pill.
     // When not focused: state updates animate the mini bot in the pill; badge shown for alerts.
 
     @MainActor
@@ -107,7 +107,7 @@ final class HookServer: @unchecked Sendable {
         let sessionId = payload["session_id"] as? String ?? "unknown"
         let cwd = payload["cwd"] as? String ?? ""
         let rawName = URL(fileURLWithPath: cwd).lastPathComponent
-        let projectName = aliasProjectName(rawName.isEmpty ? "Session" : rawName)
+        let projectName = rawName.isEmpty ? "Session" : rawName
 
         let termProgram = payload["term_program"] as? String ?? ""
         let bundleId    = payload["bundle_id"]    as? String ?? ""
@@ -227,7 +227,7 @@ final class HookServer: @unchecked Sendable {
             // Non-alert work events: reveal compact only, never force-expand
             NotificationCenter.default.post(name: .hookReveal, object: nil)
         }
-        // Already compact and non-alert: Mochi state update is enough, no expand
+        // Already compact and non-alert: the character state update is enough, no expand
     }
 
     // MARK: - Permission request (blocking — Claude Code waits for decision)
@@ -238,7 +238,7 @@ final class HookServer: @unchecked Sendable {
         let sessionId = payload["session_id"] as? String ?? "unknown"
         let cwd       = payload["cwd"]        as? String ?? ""
         let rawName   = URL(fileURLWithPath: cwd).lastPathComponent
-        let projectName = aliasProjectName(rawName.isEmpty ? "Session" : rawName)
+        let projectName = rawName.isEmpty ? "Session" : rawName
 
         let termProgram = payload["term_program"] as? String ?? ""
         let bundleId    = payload["bundle_id"]    as? String ?? ""
@@ -360,17 +360,6 @@ final class HookServer: @unchecked Sendable {
         state.tasks[idx].steps.append(step)
         if state.tasks[idx].steps.count > 20 { state.tasks[idx].steps.removeFirst() }
         state.tasks[idx].stepIndex = state.tasks[idx].steps.count - 1
-    }
-
-    // MARK: - Project name alias mapping
-
-    private func aliasProjectName(_ name: String) -> String {
-        let aliases: [String: String] = [
-            "notch-buddy":  "Notch Buddy",
-            "notchbuddy":   "Notch Buddy",
-            "notch_buddy":  "Notch Buddy",
-        ]
-        return aliases[name.lowercased()] ?? name
     }
 
     // MARK: - French step labels
@@ -680,7 +669,7 @@ extension HookServer {
         let summary = "Reads JSON from stdin, forwards to \(AppIdentity.productName) via Unix socket, translates response."
         #endif
         return hookScriptTemplate(
-            header: "\(AppIdentity.hookScriptName) — \(AppIdentity.productName)\(variant) hook relay for Claude Code",
+            header: "\(AppIdentity.hookScriptName): \(AppIdentity.productName)\(variant) hook relay for Claude Code",
             summary: summary,
             socketPath: AppIdentity.hookScriptSocketPath
         )
