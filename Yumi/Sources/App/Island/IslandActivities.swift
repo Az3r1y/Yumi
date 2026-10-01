@@ -1,0 +1,515 @@
+import SwiftUI
+
+// The open island shows one activity at a time, each with its own layout
+// (`STATES[...].view()` in design/yumi/maquette/reference.html, version 13): a few lines
+// on the left, big round buttons on the right. No cards, no caption under Yumi.
+
+// MARK: - Building blocks
+
+/// `.a-meta`: a dot in the colour of the activity, then who it is about.
+struct ActMeta: View {
+    let color: Color
+    let text: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Circle().fill(color).frame(width: 7, height: 7)
+            Text(text)
+                .font(IslandTheme.text(11.5, .medium))
+                .foregroundStyle(IslandTheme.muted)
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+    }
+}
+
+/// `.a-title`
+struct ActTitle: View {
+    let text: String
+    var lines = 1
+
+    var body: some View {
+        Text(text)
+            .font(IslandTheme.text(17, .semibold))
+            .tracking(-0.25)
+            .foregroundStyle(IslandTheme.fg)
+            .lineLimit(lines)
+            .truncationMode(.tail)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+}
+
+/// `.a-sub`
+struct ActSub: View {
+    let text: String
+
+    var body: some View {
+        Text(text)
+            .font(IslandTheme.text(12.5, .regular))
+            .foregroundStyle(IslandTheme.muted)
+            .lineLimit(1)
+            .truncationMode(.tail)
+    }
+}
+
+/// `.a-mono`: a line of code, with an optional prompt sign in the colour of the activity.
+struct ActMono: View {
+    var prompt: String?
+    let text: String
+    var color: Color = IslandTheme.fg
+
+    var body: some View {
+        (Text(prompt.map { $0 + " " } ?? "").foregroundStyle(color) + Text(text).foregroundStyle(Color(hex: "#C9CEE0")))
+            .font(IslandTheme.mono(11.5))
+            .lineLimit(1)
+            .truncationMode(.tail)
+    }
+}
+
+/// `.a-time`: the key figure next to the buttons, in the rounded face.
+struct ActTime: View {
+    let text: String
+    let color: Color
+
+    var body: some View {
+        Text(text)
+            .font(IslandTheme.round(20, .bold))
+            .monospacedDigit()
+            .foregroundStyle(color)
+            .lineLimit(1)
+            .fixedSize()
+    }
+}
+
+/// `.rbtn`: a big round button with a symbol.
+struct RoundButton: View {
+    enum Style { case plain, tint, fill, white, bare }
+
+    var style: Style = .plain
+    let symbol: String
+    let label: String
+    var color: Color = .white
+    var small = false
+    /// The tick draws itself instead of appearing (`.rbtn .draw`).
+    var drawsCheck = false
+    let action: @MainActor () -> Void
+
+    @State private var hover = false
+
+    private var diameter: CGFloat { small ? 32 : 44 }
+
+    var body: some View {
+        Button(action: { action() }) {
+            ZStack {
+                Circle().fill(background)
+                if drawsCheck {
+                    DrawnCheck().frame(width: small ? 15 : 20, height: small ? 15 : 20)
+                } else {
+                    Image(systemName: symbol)
+                        .font(.system(size: small ? 12 : 16, weight: .bold))
+                }
+            }
+            .foregroundStyle(foreground)
+            .frame(width: style == .bare ? 30 : diameter, height: diameter)
+            .contentShape(Circle())
+            .brightness(hover ? 0.08 : 0)
+            .scaleEffect(hover ? 1.08 : 1)
+            .animation(.islandSpring(0.18), value: hover)
+        }
+        .buttonStyle(RoundPress())
+        .onHover { hover = $0 }
+        .accessibilityLabel(label)
+        .help(label)
+    }
+
+    private var background: Color {
+        switch style {
+        case .plain: return Color.white.opacity(0.15)
+        case .tint:  return color.opacity(0.28)
+        case .fill:  return color
+        case .white: return .white
+        case .bare:  return .clear
+        }
+    }
+
+    private var foreground: Color {
+        switch style {
+        case .tint:  return color
+        case .white: return .black
+        default:     return .white
+        }
+    }
+}
+
+/// `.rbtn:active { transform: scale(.9) }`
+struct RoundPress: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.9 : 1)
+            .animation(.islandEase(0.12), value: configuration.isPressed)
+    }
+}
+
+/// The tick of the mock-up (`M4.5 10.5l3.6 3.6 7.4-8` in a 20 pt box), drawn stroke by stroke:
+/// `animation: draw .5s .25s ease-out forwards`.
+struct DrawnCheck: View {
+    @State private var drawn: CGFloat = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        GeometryReader { geo in
+            let k = geo.size.width / 20
+            Path { p in
+                p.move(to: CGPoint(x: 4.5 * k, y: 10.5 * k))
+                p.addLine(to: CGPoint(x: 8.1 * k, y: 14.1 * k))
+                p.addLine(to: CGPoint(x: 15.5 * k, y: 6.1 * k))
+            }
+            .trim(from: 0, to: drawn)
+            .stroke(style: StrokeStyle(lineWidth: 2.3 * k, lineCap: .round, lineJoin: .round))
+        }
+        .onAppear {
+            if reduceMotion { drawn = 1 } else {
+                withAnimation(.easeOut(duration: 0.5).delay(0.25)) { drawn = 1 }
+            }
+        }
+    }
+}
+
+/// `.wave`: four bars that breathe, for something that plays.
+struct WaveBars: View {
+    let color: Color
+    private static let delays: [Double] = [0, 0.2, 0.45, 0.1]
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let t = timeline.date.timeIntervalSinceReferenceDate
+            HStack(spacing: 2) {
+                ForEach(0..<4, id: \.self) { i in
+                    // `@keyframes wave { 50% { height: 14px } }`, 1 s, ease-in-out
+                    let phase = (t - Self.delays[i]).truncatingRemainder(dividingBy: 1)
+                    let up = 0.5 - 0.5 * cos(phase * 2 * .pi)
+                    RoundedRectangle(cornerRadius: 2)
+                        .fill(color)
+                        .frame(width: 2.5, height: 4 + 10 * up)
+                }
+            }
+            .frame(height: 14)
+        }
+    }
+}
+
+/// `.prog` and `.times`: the bar of a track or of a timer, with a label at each end.
+struct ActProgress: View {
+    let progress: ModuleProgress
+
+    var body: some View {
+        VStack(spacing: 3) {
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.16))
+                    Capsule().fill(.white)
+                        .frame(width: geo.size.width * min(1, max(0, progress.fraction)))
+                        .animation(.linear(duration: 0.5), value: progress.fraction)
+                }
+            }
+            .frame(height: 4)
+            HStack {
+                Text(progress.leading)
+                Spacer()
+                Text(progress.trailing)
+            }
+            .font(IslandTheme.text(10, .medium))
+            .monospacedDigit()
+            .foregroundStyle(IslandTheme.faint)
+        }
+        .padding(.top, 5)
+    }
+}
+
+/// `.shim`: a light that runs along a line while something is being done.
+struct ActShimmer: View {
+    let color: Color
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            // `background-position` from -80 % to 180 % in 1.3 s, on a band 45 % wide
+            let p = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.3) / 1.3
+            GeometryReader { geo in
+                let band = geo.size.width * 0.45
+                let free = geo.size.width - band
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.white.opacity(0.12))
+                    LinearGradient(colors: [.clear, color, .clear], startPoint: .leading, endPoint: .trailing)
+                        .frame(width: band)
+                        .offset(x: free * (-0.8 + 2.6 * p))
+                }
+                .clipShape(Capsule())
+            }
+        }
+        .frame(height: 3)
+        .padding(.top, 5)
+        .padding(.bottom, 3)
+    }
+}
+
+/// `.tbtn`: a quiet text button.
+struct TextButton: View {
+    let label: String
+    let action: @MainActor () -> Void
+    @State private var hover = false
+
+    var body: some View {
+        Button(action: { action() }) {
+            Text(label)
+                .font(IslandTheme.text(11.5, .medium))
+                .foregroundStyle(hover ? Color.white : IslandTheme.muted)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .padding(.top, 3)
+    }
+}
+
+// MARK: - The row of an activity (`.act`): a few lines, then its buttons
+
+struct ActRow<Lines: View, Trail: View>: View {
+    var trailGap: CGFloat = 10
+    @ViewBuilder let lines: () -> Lines
+    @ViewBuilder let trail: () -> Trail
+
+    var body: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) { lines() }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: trailGap) { trail() }
+        }
+    }
+}
+
+// MARK: - Activities
+
+/// A module, in the layout that suits it: the agenda, the music and the focus timer have
+/// their own; the others follow the common model.
+struct ModuleActivity: View {
+    let module: ModuleSnapshot
+
+    private func primary() { IslandActions.module(module.id, "primary") }
+    private func secondary() { IslandActions.module(module.id, "secondary") }
+
+    var body: some View {
+        switch module.id {
+        case "agenda":            agenda
+        case "music", "musique":  music
+        case "focus":             focus
+        default:                  common
+        }
+    }
+
+    /// The next event, with one button: join.
+    private var agenda: some View {
+        ActRow {
+            ActMeta(color: module.color, text: module.status.isEmpty ? module.name : "\(module.name) · \(module.status)").riseIn(0)
+            ActTitle(text: module.title).riseIn(1)
+            ActSub(text: module.subtitle).riseIn(2)
+        } trail: {
+            RoundButton(style: .fill, symbol: module.primarySymbol ?? "video.fill", label: module.primaryAction,
+                        color: IslandTheme.green, action: primary)
+        }
+    }
+
+    /// The track, a playback bar, three commands.
+    private var music: some View {
+        let playing = module.live.map { $0.priority >= ModuleLivePriority.activity } ?? false
+        return ActRow(trailGap: 2) {
+            HStack(spacing: 8) {
+                ActTitle(text: module.title)
+                if playing { WaveBars(color: module.color) }
+            }
+            .riseIn(0)
+            ActSub(text: module.subtitle).riseIn(1)
+            if let progress = module.progress {
+                ActProgress(progress: progress).riseIn(2)
+            }
+        } trail: {
+            RoundButton(style: .bare, symbol: "backward.end.fill", label: "Précédent") {
+                IslandActions.module(module.id, "previous")
+            }
+            RoundButton(style: .white, symbol: module.primarySymbol ?? (playing ? "pause.fill" : "play.fill"),
+                        label: module.primaryAction, action: primary)
+            RoundButton(style: .bare, symbol: module.secondarySymbol ?? "forward.end.fill",
+                        label: module.secondaryAction ?? "Suivant", action: secondary)
+        }
+    }
+
+    /// The timer: big figures, two buttons.
+    private var focus: some View {
+        ActRow {
+            ActMeta(color: module.color, text: "\(module.name) · \(module.subtitle)").riseIn(0)
+            Text(module.status)
+                .font(IslandTheme.round(40, .bold))
+                .tracking(-0.8)
+                .monospacedDigit()
+                .foregroundStyle(module.color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+                .riseIn(1)
+            if let progress = module.progress {
+                ActProgress(progress: progress).riseIn(2)
+            }
+        } trail: {
+            RoundButton(style: .tint, symbol: module.primarySymbol ?? "pause.fill", label: module.primaryAction,
+                        color: module.color, action: primary)
+            if let second = module.secondaryAction {
+                RoundButton(symbol: module.secondarySymbol ?? "stop.fill", label: second, action: secondary)
+            }
+        }
+    }
+
+    /// The common model: the key figure in colour, one sentence, one button.
+    private var common: some View {
+        ActRow {
+            ActMeta(color: module.color, text: module.name).riseIn(0)
+            ActTitle(text: module.title).riseIn(1)
+            ActSub(text: module.subtitle).riseIn(2)
+            if let progress = module.progress {
+                ActProgress(progress: progress).riseIn(3)
+            }
+        } trail: {
+            ActTime(text: module.status, color: module.color)
+            RoundButton(symbol: module.primarySymbol ?? "arrow.right", label: module.primaryAction, action: primary)
+            if let second = module.secondaryAction, let symbol = module.secondarySymbol {
+                RoundButton(symbol: symbol, label: second, action: secondary)
+            }
+        }
+    }
+}
+
+/// An agent at work: what it does, since when.
+struct WorkingActivity: View {
+    @ObservedObject var state: AppState
+    @ObservedObject var model: IslandModel
+
+    var body: some View {
+        ActRow {
+            ActMeta(color: IslandTheme.blue, text: IslandAgent.name(state.focusTask)).riseIn(0)
+            ActTitle(text: IslandAgent.doing(state)).riseIn(1)
+            ActShimmer(color: IslandTheme.blue).riseIn(2)
+            ActSub(text: IslandAgent.files(model) ?? "Il vient de s'y mettre").riseIn(3)
+        } trail: {
+            // The minutes move on by themselves
+            TimelineView(.periodic(from: .now, by: 20)) { _ in
+                ActTime(text: IslandAgent.elapsed(model) ?? "", color: IslandTheme.blue)
+            }
+            RoundButton(symbol: "arrow.up.forward", label: "Voir") { IslandActions.openAgent(state.focusTask) }
+        }
+    }
+}
+
+/// A permission, like an incoming call: red to refuse, green to allow.
+struct AlertActivity: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        if let approval = state.pendingApproval {
+            ActRow {
+                ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
+                ActTitle(text: approval.tool == "Bash" ? "Lancer cette commande ?" : "Autoriser \(approval.tool) ?").riseIn(1)
+                ActMono(prompt: approval.tool == "Bash" ? "$" : nil, text: approval.command, color: IslandTheme.amber).riseIn(2)
+                TextButton(label: "Toujours autoriser") { HookServer.shared.sendApprovalDecision("always") }.riseIn(3)
+            } trail: {
+                RoundButton(style: .fill, symbol: "xmark", label: "Refuser", color: IslandTheme.red) {
+                    HookServer.shared.sendApprovalDecision("deny")
+                }
+                RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true) {
+                    HookServer.shared.sendApprovalDecision("allow")
+                }
+            }
+        } else {
+            // A question asked in the session: it can only be answered there
+            ActRow {
+                ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
+                ActTitle(text: state.focusTask?.steps.last ?? "Claude attend ta réponse", lines: 2).riseIn(1)
+                ActSub(text: "Réponds-lui dans la session").riseIn(2)
+            } trail: {
+                RoundButton(style: .tint, symbol: "arrow.up.forward", label: "Voir", color: IslandTheme.amber) {
+                    IslandActions.openAgent(state.focusTask)
+                }
+            }
+        }
+    }
+}
+
+/// Success: the tick draws itself.
+struct FinishedActivity: View {
+    @ObservedObject var state: AppState
+    @ObservedObject var model: IslandModel
+
+    var body: some View {
+        ActRow {
+            ActMeta(color: IslandTheme.green, text: IslandAgent.name(state.focusTask)).riseIn(0)
+            ActTitle(text: "C'est fini").riseIn(1)
+            ActSub(text: IslandAgent.finishedLine(state, model)).riseIn(2)
+        } trail: {
+            RoundButton(style: .fill, symbol: "checkmark", label: "OK", color: IslandTheme.green, drawsCheck: true) {
+                IslandActions.fold()
+            }
+        }
+    }
+}
+
+/// The error, with the line that broke.
+struct ErrorActivity: View {
+    @ObservedObject var state: AppState
+
+    var body: some View {
+        ActRow {
+            ActMeta(color: IslandTheme.red, text: IslandAgent.name(state.focusTask)).riseIn(0)
+            ActTitle(text: "Ça s'est arrêté sur une erreur").riseIn(1)
+            if let last = state.focusTask?.steps.last {
+                ActMono(text: last).riseIn(2)
+            } else {
+                ActSub(text: "Ouvre la session pour voir ce qui bloque").riseIn(2)
+            }
+        } trail: {
+            RoundButton(style: .tint, symbol: "arrow.up.forward", label: "Voir", color: IslandTheme.red) {
+                IslandActions.openAgent(state.focusTask)
+            }
+        }
+    }
+}
+
+/// A file handed to Yumi (`.dropz`), then what to do with it.
+struct DropActivity: View {
+    @ObservedObject var state: AppState
+
+    private var file: DroppedFile? { state.view == .upload ? nil : state.droppedFile }
+
+    var body: some View {
+        if let file {
+            ActRow(trailGap: 8) {
+                ActMeta(color: IslandTheme.blue, text: "Fichier reçu").riseIn(0)
+                ActTitle(text: file.name).riseIn(1)
+                ActSub(text: "Je le résume, je l'envoie ou je le range").riseIn(2)
+            } trail: {
+                RoundButton(style: .tint, symbol: "text.alignleft", label: "Résumer", color: IslandTheme.blue) { IslandActions.summarize() }
+                RoundButton(symbol: "paperplane.fill", label: "Envoyer") { IslandActions.sendByMail() }
+                RoundButton(symbol: "tray.and.arrow.down.fill", label: "Ranger") { IslandActions.putAway() }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 3) {
+                ActTitle(text: "Dépose un fichier")
+                ActSub(text: "Je le résume, je l'envoie ou je le range")
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .overlay(
+                RoundedRectangle(cornerRadius: 22)
+                    .strokeBorder(Color.white.opacity(state.fileDragOver ? 0.55 : 0.28),
+                                  style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
+            )
+            .riseIn(0)
+        }
+    }
+}

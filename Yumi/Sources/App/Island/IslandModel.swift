@@ -13,8 +13,10 @@ final class IslandModel: ObservableObject {
 
     /// The shape of the island while the launch plays; nil the rest of the time.
     @Published var launchStage: IslandStage?
-    /// The classes of `.greet` in the mock-up: lit, say, mods, bye.
+    /// The classes of `.greet` in the mock-up: lit, say, bye.
     @Published var greeting = GreetingPhase()
+    /// The sequence playing is the goodbye, not the launch.
+    @Published var leaving = false
     /// When the rings and the sparks of the greeting started.
     @Published var sparksStart: Date?
     /// True for the one change that must not be animated (the mock-up's `snap`).
@@ -23,7 +25,6 @@ final class IslandModel: ObservableObject {
     struct GreetingPhase: Equatable {
         var lit = false
         var say = false
-        var mods = false
         var bye = false
     }
 
@@ -39,10 +40,8 @@ final class IslandModel: ObservableObject {
     // MARK: Open island
 
     @Published var selectedModuleID: String?
-    @Published var drawerOpen = false
     /// Height the open island needs for what it shows: it is as low as the content allows.
     @Published var openHeight: CGFloat = IslandConst.openHeightDefault
-    @Published var drawerHeight: CGFloat = 0
 
     // MARK: What the agent has been doing (for "Depuis 12 min, 3 fichiers modifiés")
 
@@ -102,6 +101,10 @@ final class IslandModel: ObservableObject {
         modules.first { $0.needsAttention }
             ?? modules.first { $0.id != Self.agentModuleID }
             ?? modules.first
+    }
+
+    static func isBusy(_ state: BotState) -> Bool {
+        state == .working || state == .thinking || state == .searching
     }
 
     nonisolated static func isMusic(_ moduleID: String?) -> Bool {
@@ -186,6 +189,8 @@ final class IslandModel: ObservableObject {
         var music = false
         /// The chat is carrying out an action right now (reading, writing, running).
         var chatActs = false
+        /// An agent is at work.
+        var busy = false
     }
 
     /// `STATES` of the mock-up: the face, the rim colour, the habit and the pose of each view.
@@ -207,7 +212,7 @@ final class IslandModel: ObservableObject {
         let viewChanged = old?.screen != new.screen || (new.screen == .module && old?.moduleID != new.moduleID)
 
         // Face and rim: only for the views the state of the agent knows nothing about.
-        var look = open ? Self.look(for: new.screen) : nil
+        var look = open ? Self.look(for: new.screen, moduleID: new.moduleID) : nil
         // Talking: he thinks while there is only text, and works during an action
         if open, new.screen == .talk, new.chatActs { look = (.focused, .work) }
         setMood(look?.mood)
@@ -217,10 +222,13 @@ final class IslandModel: ObservableObject {
         // folded, on the home view, and on the view of the music module.
         let listening = (new.music && (!open || new.screen == .home))
             || (open && new.screen == .module && Self.isMusic(new.moduleID))
+        // An agent at work: a cigarette, or a coffee for those who turned the cigarette off.
+        // Shown wherever the island is not about something else.
+        let atWork = new.busy && (!open || new.screen == .home || new.screen == .working)
         switch new.screen {
-        case .working:
+        case _ where atWork:
             cancelLateHabit()
-            setHabit(new.smokes ? .smoke : (new.music ? .headphones : nil))
+            setHabit(new.smokes ? .smoke : .coffee)
         case .error:
             cancelLateHabit()
             setHabit(.cloud)
@@ -258,8 +266,12 @@ final class IslandModel: ObservableObject {
         habit = nil
     }
 
-    static func look(for screen: IslandScreen) -> (mood: YumiMood, rim: YumiRimTone)? {
+    static func look(for screen: IslandScreen, moduleID: String? = nil) -> (mood: YumiMood, rim: YumiRimTone)? {
         switch screen {
+        case .module where isMusic(moduleID): return nil   // his headphones bring their own face
+        case .module where moduleID == "focus": return (.focused, .think)
+        case .module where moduleID == "agenda": return (.neutral, .calm)
+        case .settings: return (.curious, .calm)
         case .home:     return nil   // the state of the agent decides (neutral and calm at rest)
         case .working:  return (.focused, .work)
         case .alert:    return (.surprised, .warn)
@@ -277,7 +289,7 @@ final class IslandModel: ObservableObject {
         case .finished: return .celebrate
         case .error:    return .squash
         case .drop:     return .stretch
-        case .home, .working, .module, .talk: return .pop
+        case .home, .working, .module, .talk, .settings: return .pop
         }
     }
 

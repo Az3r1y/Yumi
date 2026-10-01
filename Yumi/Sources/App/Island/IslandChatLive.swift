@@ -1,7 +1,7 @@
 import SwiftUI
 
 // The answer while it is being made (Contracts/ChatLive.swift): the actions already done,
-// small, above; the bubble whose text grows, with a cursor; and under it the action under
+// small, above; the answer whose text grows, with a cursor; and under it the action under
 // way, with what it is writing or printing.
 
 struct ChatLiveView: View {
@@ -20,10 +20,7 @@ struct ChatLiveView: View {
             }
 
             if !live.text.isEmpty || live.activity == nil {
-                HStack(spacing: 0) {
-                    ChatBubbleText(text: live.text, cursor: running)
-                    Spacer(minLength: 16)
-                }
+                ChatLine(text: live.text, cursor: running)
             }
 
             if running, let activity = live.activity {
@@ -34,22 +31,34 @@ struct ChatLiveView: View {
     }
 }
 
-/// `.bub` of Yumi. The same view draws the live bubble and the final one, so that one
-/// becomes the other without anything moving.
-struct ChatBubbleText: View {
+/// One line of the conversation: what the user said in a bubble on the right (`.me`), what
+/// Yumi answers as plain text (`.ans`). The same view draws the live answer and the final
+/// one, so that one becomes the other without anything moving.
+struct ChatLine: View {
     let text: String
-    var cursor = false
     var mine = false
+    var cursor = false
 
     var body: some View {
-        (Text(text) + Text(cursor ? (text.isEmpty ? "▍" : " ▍") : "").foregroundStyle(IslandTheme.muted))
-            .font(IslandTheme.text(12))
-            .lineSpacing(1.2)
-            .fixedSize(horizontal: false, vertical: true)
-            .textSelection(.enabled)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 13).fill(mine ? IslandTheme.bubbleMe : IslandTheme.surface))
+        if mine {
+            HStack(spacing: 0) {
+                Spacer(minLength: 24)
+                Text(text)
+                    .font(IslandTheme.text(12.5, .medium))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .textSelection(.enabled)
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 6)
+                    .background(RoundedRectangle(cornerRadius: 15).fill(Color.white.opacity(0.14)))
+            }
+        } else {
+            (Text(text) + Text(cursor ? (text.isEmpty ? "▍" : " ▍") : "").foregroundStyle(IslandTheme.violet))
+                .font(IslandTheme.text(13.5, .regular))
+                .lineSpacing(3)
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 }
 

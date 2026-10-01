@@ -1,9 +1,9 @@
 import SwiftUI
 
 /// The launch of the mock-up (`launch()` in design/yumi/maquette/reference.html), with the
-/// same chronology: a drop swells under the notch, two sleeping eyes open in the dark and
-/// look around, the island opens, the light comes on and the rim draws itself, he waves,
-/// his name writes itself, his modules arrive, a wink, and everything folds back.
+/// same chronology and nothing but him, no text: a drop swells under the notch, two sleeping
+/// eyes open in the dark and look around, the island opens, the light comes on and the rim
+/// draws itself, he waves, a wink, and everything folds back. And the goodbye (`quit()`).
 ///
 /// The island shapes come from `IslandModel.launchStage`; Yumi is the one `BotCanvasView`
 /// of the island, driven through Contracts/CharacterCommands.swift.
@@ -25,13 +25,13 @@ final class IslandLaunch {
 
     private func sound(_ name: String) { SoundEngine.shared.play(name) }
 
-    func start(modules: Int) {
+    func start() {
         cancelTimers()
         running = true
 
         // The island is the notch again, the greeting layer is ready behind it
         model.forgetCommands()
-        model.drawerOpen = false
+        model.leaving = false
         model.greeting = .init()
         model.sparksStart = nil
         model.snap = true
@@ -39,11 +39,11 @@ final class IslandLaunch {
 
         // The character has to be on screen to hear the first commands
         model.onActorReady { [weak self] in
-            self?.after(40) { self?.play(modules: modules) }
+            self?.after(40) { self?.play() }
         }
     }
 
-    private func play(modules: Int) {
+    private func play() {
         guard running else { return }
         let m = model
 
@@ -67,7 +67,7 @@ final class IslandLaunch {
         }
         after(1050) { m.setGaze(CGPoint(x: -1, y: 0)) }
         after(1350) { m.setGaze(CGPoint(x: 1, y: 0)) }
-        // 3. the island opens wide; still dark, the eyes find you
+        // 3. the island opens around him; still dark, the eyes find you
         after(1700) { [weak self] in
             m.launchStage = .greet
             m.setMood(.curious)   // a new mood frees the gaze: he follows the pointer again
@@ -83,31 +83,71 @@ final class IslandLaunch {
             m.sparksStart = .now
             self?.sound("greet")
         }
-        // 5. he waves, his name writes itself, then the modules he watches
-        after(2850) {
-            m.pose(.wave)
-            m.greeting.say = true
-        }
-        after(3450) { [weak self] in
-            m.greeting.mods = true
-            m.setMood(.neutral)
-            m.setRim(.joy)
-            m.setGaze(CGPoint(x: 0.9, y: 0.25))
-            for i in 0..<modules {
-                self?.after(Double(i) * 95) { self?.sound("blip") }
-            }
-        }
-        // 6. a wink, and he goes to his seat while everything folds back
-        after(4250) {
+        // 5. he waves
+        after(2850) { m.pose(.wave) }
+        // 6. a wink, and he goes to his seat while the island folds back
+        after(3750) {
             m.setMood(.wink)
             m.setRim(.calm)
         }
-        after(4700) { m.greeting.bye = true }
-        after(4900) { [weak self] in
+        after(4250) { m.greeting.bye = true }
+        after(4450) { [weak self] in
             guard let self else { return }
             self.finish()
             self.sound("close")
             self.onComplete?()
+        }
+    }
+
+    /// The goodbye (`quit()` in the mock-up): he waves, winks, falls asleep, his light goes
+    /// out, and the drop goes back up into the notch. `done` is called when it is over.
+    func leave(done: @escaping @MainActor () -> Void) {
+        cancelTimers()
+        running = true
+        let m = model
+        m.forgetCommands()
+        m.greeting = .init()
+        m.sparksStart = nil
+        m.snap = false
+        m.leaving = true
+        m.launchStage = .bye
+        m.setHabit(nil)
+        m.setLit(true)
+        m.setMood(.happy, force: true)
+        m.setRim(.joy)
+        m.setGaze(nil)
+
+        after(120) { [weak self] in
+            m.greeting.lit = true
+            m.greeting.say = true
+            m.pose(.wave)
+            self?.sound("finish")
+        }
+        after(1650) {
+            m.setMood(.wink)
+            m.setRim(.calm)
+        }
+        after(2150) {
+            m.setMood(.asleep)
+            m.greeting.lit = false
+            m.greeting.say = false
+            m.pose(.dip)
+        }
+        // His light goes out
+        after(2550) { [weak self] in
+            m.setLit(false)
+            self?.sound("close")
+        }
+        // The drop goes back up into the notch
+        after(3350) { m.launchStage = .drip }
+        after(3950) { [weak self] in
+            m.launchStage = .hidden
+            self?.sound("pop")
+        }
+        after(4500) { [weak self] in
+            self?.cancelTimers()
+            self?.running = false
+            done()
         }
     }
 

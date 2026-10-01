@@ -167,7 +167,7 @@ private struct FoldedControl: View {
                 .background(Circle().fill(hover ? IslandTheme.raise : IslandTheme.surface))
                 .contentShape(Circle())
         }
-        .buttonStyle(IslandPress())
+        .buttonStyle(RoundPress())
         .onHover { hover = $0 }
         .accessibilityLabel(control.label)
         .help(control.label)

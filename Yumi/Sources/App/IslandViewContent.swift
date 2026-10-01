@@ -1,226 +1,81 @@
 import SwiftUI
 
-// MARK: - The open island (`.open` in design/yumi/maquette/reference.html)
+// MARK: - The open island (`.open` in design/yumi/maquette/reference.html, version 13)
 //
-// 480 wide, as low as the content allows. Yumi sits on the left with a few words under him
-// (he is drawn above the island by IslandRootView, not here), one piece of information on
-// his right, three buttons (home, talk, drop), then the row of modules.
+// One activity at a time, each with its own layout, then the rail that is always there.
+// Yumi sits on the left (he is drawn above the island by IslandRootView, not here); a
+// click on him opens the chat.
 
 struct IslandOpenLayer: View {
     @ObservedObject var state: AppState
     @ObservedObject var model: IslandModel
     let screen: IslandScreen
 
+    /// The module the screen is about: the one chosen in the rail, or the agent's.
+    private var module: ModuleSnapshot? {
+        switch screen {
+        case .module: return model.selectedModule(in: state.modules)
+        case .working, .alert, .finished, .error:
+            return state.modules.first { $0.id == IslandModel.agentModuleID }
+        default: return nil
+        }
+    }
+
     var body: some View {
-        let card = IslandContent.card(for: screen, state: state, model: model)
-
         VStack(spacing: 0) {
-            // `.o-top { grid-template-columns: 96px 1fr 30px; gap: 0 8px; padding: 8px 10px 7px 0 }`
-            HStack(alignment: .top, spacing: 12) {
-                seat(caption: model.habit.map(IslandModel.caption(for:)) ?? card.caption)
-
-                Group {
-                    switch screen {
-                    case .talk: IslandTalkView(state: state)
-                    case .drop: IslandDropView(state: state)
-                    default:    IslandCardView(card: card)
-                    }
-                }
-                .id(blockID)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-
-                tabs
-                    .frame(width: 30)
+            // `.act { grid-template-columns: 92px 1fr auto; gap: 0 14px; padding: 18px 22px 8px 0; min-height: 102px }`
+            HStack(alignment: .center, spacing: wide ? 6 : 14) {
+                // Yumi's place
+                Color.clear
+                    .frame(width: IslandConst.seatColumn)
                     .frame(maxHeight: .infinity)
+                    .contentShape(Rectangle())
+                    .onTapGesture { IslandActions.pokeYumi(talking: screen == .talk) }
+
+                activity
+                    .id(activityID)
+                    .frame(maxWidth: .infinity, alignment: screen == .talk ? .topLeading : .leading)
             }
-            .padding(.top, IslandConst.openPaddingTop + model.layout.openInset / IslandConst.openScale)
-            .padding(.leading, 8)
-            .padding(.trailing, 16)
+            .frame(minHeight: IslandConst.actMinHeight)
+            .padding(.top, (wide ? 14 : IslandConst.openPaddingTop) + model.layout.openInset / IslandConst.openScale)
+            .padding(.trailing, wide ? 14 : IslandConst.openPaddingTrailing)
             .padding(.bottom, IslandConst.openPaddingBottom)
 
-            IslandDock(state: state, model: model, screen: screen)
+            IslandRail(state: state, model: model, screen: screen, moduleID: module?.id)
         }
         .frame(width: IslandConst.expandedWidth)
         .foregroundStyle(IslandTheme.fg)
     }
 
-    /// A new block plays `rise` again; a title that changes inside the same view does not.
-    private var blockID: String {
-        screen == .module ? "module-\(model.selectedModuleID ?? "")" : screen.rawValue
+    /// `.act.wide`: the overview and the settings use the whole width.
+    private var wide: Bool { screen == .home || screen == .settings }
+
+    /// A new activity plays `rise` again; what changes inside one does not.
+    private var activityID: String {
+        screen == .module ? "module-\(module?.id ?? "")" : screen.rawValue
     }
 
-    /// `.o-seat`: 82 high, the caption at the bottom. A click on Yumi makes him bounce.
-    private func seat(caption: String) -> some View {
-        Text(caption)
-            .font(IslandTheme.round(10.5, .semibold))
-            .foregroundStyle(IslandTheme.muted)
-            .lineLimit(1)
-            .fixedSize()
-            .frame(width: IslandConst.seatColumn, height: IslandConst.seatHeight, alignment: .bottom)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                SoundEngine.shared.play("pop")
-                model.pose(.boing)
-            }
-    }
-
-    /// `.o-tabs`: home, talk, drop
-    private var tabs: some View {
-        VStack(spacing: 2) {
-            IslandTab(glyph: .home, label: "Accueil", on: state.view == .overview || state.view == .empty) {
-                IslandActions.go(.overview)
-            }
-            IslandTab(glyph: .chat, label: "Parler", on: screen == .talk) {
-                IslandActions.go(.prompt)
-            }
-            IslandTab(glyph: .plus, label: "Déposer", on: screen == .drop) {
-                IslandActions.go(.upload)
+    @ViewBuilder private var activity: some View {
+        switch screen {
+        case .home:     OverviewActivity(state: state)
+        case .working:  WorkingActivity(state: state, model: model)
+        case .alert:    AlertActivity(state: state)
+        case .finished: FinishedActivity(state: state, model: model)
+        case .error:    ErrorActivity(state: state)
+        case .talk:     IslandTalkView(state: state)
+        case .settings: SettingsActivity(state: state)
+        case .drop:     DropActivity(state: state)
+        case .module:
+            if let module {
+                ModuleActivity(module: module)
+            } else {
+                OverviewActivity(state: state)
             }
         }
     }
 }
 
-/// `.ib`
-struct IslandTab: View {
-    let glyph: IslandGlyph
-    let label: String
-    let on: Bool
-    let action: () -> Void
-    @State private var hover = false
-
-    var body: some View {
-        Button(action: action) {
-            IslandGlyphView(glyph: glyph)
-                .foregroundStyle(on || hover ? IslandTheme.fg : IslandTheme.muted)
-                .frame(width: 28, height: 24)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(on ? IslandTheme.surface : (hover ? Color.white.opacity(0.07) : .clear))
-                )
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .onHover { hover = $0 }
-        .accessibilityLabel(label)
-        .help(label)
-    }
-}
-
-// MARK: - One piece of information (`.blk`)
-
-struct IslandCardView: View {
-    let card: IslandCard
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: IslandConst.lineGap) {
-            Text(card.eyebrow)
-                .font(IslandTheme.round(10, .bold))
-                .tracking(1)
-                .textCase(.uppercase)
-                .foregroundStyle(card.color)
-                .lineLimit(1)
-                .riseIn(0)
-
-            Text(card.title)
-                .font(IslandTheme.round(17, .heavy))
-                .tracking(-0.17)
-                .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
-                .riseIn(1)
-
-            Group {
-                if let code = card.code {
-                    IslandCode(text: code)
-                } else {
-                    Text(card.sub ?? "")
-                        .font(IslandTheme.text(12.5))
-                        .foregroundStyle(IslandTheme.muted)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                }
-            }
-            .riseIn(2)
-
-            IslandButtonRow(actions: card.actions, main: card.main, color: card.color)
-                .riseIn(3)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-/// `.code`
-struct IslandCode: View {
-    let text: String
-
-    var body: some View {
-        Text(text)
-            .font(IslandTheme.mono(11.5))
-            .foregroundStyle(IslandTheme.code)
-            .lineLimit(1)
-            .truncationMode(.tail)
-            .padding(.horizontal, 9)
-            .padding(.vertical, 5)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(RoundedRectangle(cornerRadius: 9).fill(IslandTheme.surface))
-    }
-}
-
-/// `.row`
-struct IslandButtonRow: View {
-    let actions: [IslandAction]
-    var main: Int?
-    var color: Color = IslandTheme.fg
-    var enabled: (IslandAction) -> Bool = { _ in true }
-
-    var body: some View {
-        HStack(spacing: 6) {
-            ForEach(Array(actions.enumerated()), id: \.element.id) { index, action in
-                IslandButton(label: action.label, main: index == main, color: color,
-                             enabled: enabled(action), action: action.run)
-            }
-        }
-        .padding(.top, 4)
-    }
-}
-
-/// `.btn`, and `.btn.main` in the colour of the card
-struct IslandButton: View {
-    let label: String
-    var main = false
-    var color: Color = IslandTheme.fg
-    var enabled = true
-    let action: @MainActor () -> Void
-    @State private var hover = false
-
-    var body: some View {
-        Button(action: { action() }) {
-            Text(label)
-                .font(IslandTheme.round(12, .bold))
-                .lineLimit(1)
-                .foregroundStyle(main ? IslandTheme.ink : IslandTheme.fg)
-                .padding(.horizontal, 11)
-                .padding(.vertical, 5)
-                .background(Capsule().fill(main ? color : (hover ? IslandTheme.raise : IslandTheme.surface)))
-                .overlay(Capsule().strokeBorder(IslandTheme.line, lineWidth: main ? 0 : 1))
-                .contentShape(Capsule())
-        }
-        .buttonStyle(IslandPress())
-        .onHover { hover = $0 }
-        .opacity(enabled ? 1 : 0.4)
-        .disabled(!enabled)
-    }
-}
-
-/// `.btn:active { transform: scale(.94) }`, `transition: transform .12s`
-struct IslandPress: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.94 : 1)
-            .animation(.islandEase(0.12), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Talk (`c.chat`)
+// MARK: - Talk (`.act.chat`)
 
 struct IslandTalkView: View {
     @ObservedObject var state: AppState
@@ -229,14 +84,14 @@ struct IslandTalkView: View {
     /// The reader is at the bottom of the conversation: it follows what arrives.
     @State private var atBottom = true
     /// The text of the answer in progress, remembered as it grows. When the answer ends it
-    /// stays on screen until the reply shows up in the history, so that the live bubble
+    /// stays on screen until the reply shows up in the history, so that the live answer
     /// becomes the final one without a blank in between.
     @State private var held: String?
     @FocusState private var focused: Bool
 
     /// The island grows with the conversation up to `IslandConst.openHeightMax`; past
     /// that, older lines scroll.
-    private let listLimit: CGFloat = 170
+    private let listLimit: CGFloat = 190
     private static let bottomID = "bottom"
 
     private struct Line: Identifiable {
@@ -250,7 +105,6 @@ struct IslandTalkView: View {
         if state.view == .note, let note = state.noteMessage {
             out.append(Line(id: "note", mine: false, text: note))
         }
-        if out.isEmpty { out.append(Line(id: "hello", mine: false, text: "Je t'écoute.")) }
         return out
     }
 
@@ -268,90 +122,79 @@ struct IslandTalkView: View {
 
     var body: some View {
         let lines = lines
-        VStack(alignment: .leading, spacing: IslandConst.lineGap) {
+        VStack(alignment: .leading, spacing: 8) {
             if let contextName {
-                Text("Avec \(contextName)")
-                    .font(IslandTheme.round(10, .bold))
-                    .tracking(1)
-                    .textCase(.uppercase)
-                    .foregroundStyle(IslandTheme.violet)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-                    .riseIn(0)
+                ActMeta(color: IslandTheme.violet, text: "Avec \(contextName)").riseIn(0)
             }
 
-            ScrollViewReader { proxy in
-                ScrollView(.vertical, showsIndicators: false) {
-                    VStack(spacing: 4) {
-                        ForEach(lines) { line in
-                            bubble(line).id(line.id)
+            if !lines.isEmpty || live != nil || state.stateOverride == .thinking {
+                ScrollViewReader { proxy in
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            ForEach(lines) { line in
+                                ChatLine(text: line.text, mine: line.mine).id(line.id)
+                            }
+                            if let live {
+                                ChatLiveView(live: live, running: state.chatLive != nil)
+                            } else if state.stateOverride == .thinking {
+                                // The core has not started the live answer yet
+                                ChatLiveView(live: ChatLive())
+                            }
+                            Color.clear.frame(height: 0).id(Self.bottomID)
                         }
-                        if let live {
-                            ChatLiveView(live: live, running: state.chatLive != nil)
-                        } else if state.stateOverride == .thinking {
-                            // The core has not started the live answer yet
-                            ChatLiveView(live: ChatLive())
-                        }
-                        Color.clear.frame(height: 0).id(Self.bottomID)
-                    }
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                        listHeight = height
-                        if atBottom { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
-                    }
-                }
-                .frame(height: min(max(listHeight, 1), listLimit))
-                .onScrollGeometryChange(for: Bool.self) { geometry in
-                    LiveChat.followsBottom(offset: geometry.contentOffset.y + geometry.contentInsets.top,
-                                           viewport: geometry.containerSize.height,
-                                           content: geometry.contentSize.height)
-                } action: { _, follows in
-                    atBottom = follows
-                }
-                .onChange(of: state.chatHistory.count) { _, _ in
-                    // A message sent or received: back to the last line, and the answer
-                    // that was held has its final bubble now
-                    held = nil
-                    atBottom = true
-                    proxy.scrollTo(Self.bottomID, anchor: .bottom)
-                }
-                .onChange(of: state.chatLive) { _, new in
-                    if let new {
-                        held = new.text.isEmpty ? nil : new.text
-                    } else if let kept = held {
-                        // If no reply ever lands in the history (an error), let go
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                            if state.chatLive == nil, held == kept { held = nil }
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                            listHeight = height
+                            if atBottom { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
                         }
                     }
+                    .frame(height: min(max(listHeight, 1), listLimit))
+                    .onScrollGeometryChange(for: Bool.self) { geometry in
+                        LiveChat.followsBottom(offset: geometry.contentOffset.y + geometry.contentInsets.top,
+                                               viewport: geometry.containerSize.height,
+                                               content: geometry.contentSize.height)
+                    } action: { _, follows in
+                        atBottom = follows
+                    }
+                    .onChange(of: state.chatHistory.count) { _, _ in
+                        // A message sent or received: back to the last line, and the answer
+                        // that was held has its final place now
+                        held = nil
+                        atBottom = true
+                        proxy.scrollTo(Self.bottomID, anchor: .bottom)
+                    }
+                    .onAppear { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
                 }
-                .onAppear { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
+                .riseIn(1)
             }
-            .riseIn(1)
 
-            // `.field`
-            TextField("", text: $text, prompt: Text("Demande quelque chose à Yumi").foregroundStyle(IslandTheme.faint))
-                .textFieldStyle(.plain)
-                .font(IslandTheme.text(12.5))
-                .foregroundStyle(IslandTheme.fg)
-                .focused($focused)
-                .onSubmit(send)
-                .padding(.horizontal, 13)
-                .padding(.vertical, 6)
-                .background(Capsule().fill(IslandTheme.surface))
-                .overlay(Capsule().strokeBorder(IslandTheme.line, lineWidth: 1))
-                .riseIn(2)
+            // `.ask`
+            HStack(spacing: 6) {
+                TextField("", text: $text, prompt: Text("Demande quelque chose").foregroundStyle(IslandTheme.faint))
+                    .textFieldStyle(.plain)
+                    .font(IslandTheme.text(13, .regular))
+                    .foregroundStyle(IslandTheme.fg)
+                    .focused($focused)
+                    .onSubmit(send)
+                RoundButton(style: .white, symbol: "arrow.up", label: "Envoyer", small: true, action: send)
+            }
+            .padding(.leading, 14)
+            .padding(.trailing, 4)
+            .padding(.vertical, 4)
+            .background(RoundedRectangle(cornerRadius: 19).fill(Color.white.opacity(0.1)))
+            .riseIn(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .onAppear { focused = true }
-    }
-
-    /// `.bub`, and `.bub.me` on the right
-    private func bubble(_ line: Line) -> some View {
-        HStack(spacing: 0) {
-            if line.mine { Spacer(minLength: 16) }
-            ChatBubbleText(text: line.text, mine: line.mine)
-            if !line.mine { Spacer(minLength: 16) }
+        .onChange(of: state.chatLive) { _, new in
+            if let new {
+                held = new.text.isEmpty ? nil : new.text
+            } else if let kept = held {
+                // If no reply ever lands in the history (an error), let go
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                    if state.chatLive == nil, held == kept { held = nil }
+                }
+            }
         }
+        .onAppear { focused = true }
     }
 
     private func send() {
@@ -359,42 +202,5 @@ struct IslandTalkView: View {
         text = ""
         IslandActions.send(query)
         focused = true
-    }
-}
-
-// MARK: - Drop (`c.drop`)
-
-struct IslandDropView: View {
-    @ObservedObject var state: AppState
-
-    private var file: DroppedFile? { state.view == .upload ? nil : state.droppedFile }
-
-    var body: some View {
-        let actions = [
-            IslandAction("Résumer") { IslandActions.summarize() },
-            IslandAction("Envoyer") { IslandActions.sendByMail() },
-            IslandAction("Ranger") { IslandActions.putAway() },
-        ]
-        // `.drop { border: 1.5px dashed rgba(255,255,255,.22); border-radius: 14px; padding: 9px 12px; gap: 4px }`
-        VStack(alignment: .leading, spacing: IslandConst.lineGap) {
-            Text(file.map { "\($0.name), j'en fais quoi ?" } ?? "Dépose ici, je m'en occupe")
-                .font(IslandTheme.round(17, .heavy))
-                .tracking(-0.17)
-                .lineLimit(1)
-                .truncationMode(.middle)
-            // Without a file, only "Résumer" has something to work on: the window in front
-            IslandButtonRow(actions: actions, main: nil) { action in
-                file != nil || action.label == "Résumer"
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(Color.white.opacity(state.fileDragOver ? 0.5 : 0.22),
-                              style: StrokeStyle(lineWidth: 1.5, dash: [5, 4]))
-        )
-        .riseIn(0)
     }
 }
