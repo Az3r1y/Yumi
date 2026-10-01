@@ -96,6 +96,31 @@ Fichiers que personne ne touche pendant le travail en parallèle : `NotchBuddyAp
 - Ne jamais copier d'icône, de son ou de média depuis Coucou : le dépôt est public.
 - Conserver `LICENSE` avec le copyright d'origine.
 
+## Direction produit et maquette de référence
+
+Yumi est un compagnon généraliste, pour le travail comme pour la vie. Trois gestes le définissent : il veille (il ne se manifeste que quand on est concerné), il reçoit (un fichier, une fenêtre, une phrase), il répond (sur place).
+
+La maquette validée est `design/yumi/maquette/reference.html` (à ouvrir dans un navigateur). C'est la référence visuelle et de mouvement pour le portage en Swift. Les fichiers `ile-v1` à `ile-v8` sont l'historique des essais.
+
+Décisions validées sur cette maquette :
+
+| Sujet | Décision |
+|---|---|
+| Taille | Île ouverte de 480 points de large, aussi basse que le contenu le permet (environ 150). |
+| Mise en page | Yumi à gauche, une seule information à droite, trois boutons (accueil, parler, déposer). |
+| Modules | Catalogue de 40, dix au plus. Les cinq premiers dans l'île, les autres dans un second carré détaché sous l'île. |
+| Apparence des modules | Par leur nom en toutes lettres, précédé de leur couleur. Pas d'abréviations. |
+| Corps | Souple : hauteur et inclinaison sont des ressorts, le contour est recalculé à chaque image. Corps de la couleur exacte de l'île. |
+| Volume | Les yeux sont posés sur une sphère (la tête tourne), reflet et éclat mobiles, lumière qui déborde à l'intérieur du contour. |
+| État | Porté par la couleur du liseré, jamais par le corps. |
+| Poses | Saut, étirer, s'écraser, secouer, célébrer. |
+| Habitudes | Clope (agent au travail), épuisé, café, casque (musique), lunettes (réussite), nuage (erreur), sifflote (attente), dodo (inactif). La cigarette doit pouvoir être désactivée. |
+| Lancement | Une goutte sous la notch, deux yeux endormis dans le noir, ils s'ouvrent et regardent autour, l'île s'ouvre, la lumière s'allume et le contour se dessine, salut, nom, modules, clin d'œil, repli. Environ 5 secondes. |
+| Débordement | Yumi est dessiné au-dessus de l'île : gouttes, fumée et poses peuvent dépasser sur les côtés et en bas, jamais au-dessus du bord supérieur de l'écran. |
+| Langue et ton | Interface en français, Yumi tutoie et parle court. |
+
+Conséquence pour le code : les sept intégrations câblées en dur et la tâche Claude unique doivent laisser la place à un système de modules. Le moteur d'événements typé de la branche `legacy-v0` est la fondation prévue.
+
 ## État au 1er octobre 2026
 
 Les trois branches ont été fusionnées dans `main` et les renommages internes sont faits (`YumiApp`, `YumiConst`, `yumiPath`, `drawYumi`, état `.greeting`, préfixe de notifications `yumi.`). Les seules mentions restantes de Coucou dans le code sont les marqueurs des anciens hooks à retirer.
