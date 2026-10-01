@@ -12,6 +12,107 @@ enum IslandView: String, CaseIterable {
     case overview, empty, approval, question, error, finished
     case confused, upload, uploading, choose, mail, prompt
     case searching, result, note, settings, greeting
+    /// Detail of one module (the one in `IslandModel.selectedModuleID`).
+    case module
+}
+
+// MARK: - What the island shows (design/yumi/maquette/reference.html)
+
+/// The eight views of the open island. Several legacy `IslandView` values, still set by
+/// the hook server and the chat service, land on the same screen.
+enum IslandScreen: String, CaseIterable {
+    case home, working, alert, finished, error, module, talk, drop
+
+    /// The screen for what the application says right now. A view that names a screen wins;
+    /// on the home view, the state of the agent decides, so that the island always shows
+    /// the most useful thing.
+    static func resolve(view: IslandView, state: BotState, approvalPending: Bool) -> IslandScreen {
+        switch view {
+        case .approval, .question:                      return .alert
+        case .finished:                                 return .finished
+        case .error:                                    return .error
+        case .prompt, .searching, .result, .note:       return .talk
+        case .upload, .uploading, .choose, .mail:       return .drop
+        case .module:                                   return .module
+        case .overview, .empty, .confused, .settings, .greeting:
+            if approvalPending { return .alert }
+            switch state {
+            case .working, .thinking, .searching:       return .working
+            case .approval, .question:                  return .alert
+            case .error:                                return .error
+            case .finished:                             return .finished
+            case .idle, .ratelimit, .sleeping, .dizzy:  return .home
+            }
+        }
+    }
+}
+
+/// The shape the island has right now. `drip` and `greet` only exist during the launch.
+enum IslandStage: String, CaseIterable {
+    case hidden, compact, open, drip, greet
+}
+
+/// Where Yumi sits (`SEATS` in the mock-up): the centre of his 100 × 84 box, as an offset
+/// from the centre of the island and a distance from the top of the screen, and his scale.
+struct IslandSeat: Equatable {
+    var x: CGFloat
+    var y: CGFloat
+    var scale: CGFloat
+    var opacity: Double
+
+    /// Side of the square frame given to `BotCanvasView`: his body, 84 units wide, takes
+    /// 68.4 % of it (1.14 × the "diameter" of the layouts, which is 0.6 × the frame).
+    static func frameSide(scale: CGFloat) -> CGFloat { 84 * scale / 0.684 }
+}
+
+/// Sizes and seats of the mock-up, fitted to the notch of this Mac.
+struct IslandLayout: Equatable {
+    var notchWidth: CGFloat = IslandConst.notchWidth
+    var notchHeight: CGFloat = IslandConst.notchHeight
+    /// A real notch hides whatever is drawn behind it; a screen without one shows everything.
+    var hasNotch = false
+
+    /// The mock-up has a 32 pt notch. A taller one pushes the launch shapes down by the difference.
+    var notchDelta: CGFloat { max(0, notchHeight - IslandConst.mockNotchHeight) }
+
+    /// Open island: the mock-up starts its content 8 pt under the top edge, which a real notch
+    /// would cover. The content then starts just under the notch instead.
+    var openInset: CGFloat { hasNotch ? max(0, notchHeight + 2 - IslandConst.openPaddingTop) : 0 }
+
+    func size(_ stage: IslandStage, openHeight: CGFloat) -> CGSize {
+        switch stage {
+        case .hidden:  return CGSize(width: notchWidth, height: notchHeight)
+        case .compact: return CGSize(width: notchWidth + IslandConst.compactExtra, height: notchHeight)
+        case .open:    return CGSize(width: IslandConst.expandedWidth, height: openHeight)
+        case .drip:    return CGSize(width: notchWidth + IslandConst.dripExtra, height: IslandConst.dripHeight + notchDelta)
+        case .greet:   return CGSize(width: IslandConst.greetWidth, height: IslandConst.greetHeight + notchDelta)
+        }
+    }
+
+    func cornerRadius(_ stage: IslandStage) -> CGFloat {
+        switch stage {
+        case .hidden, .compact: return IslandConst.roundedCorner
+        case .open, .greet:     return IslandConst.expandedCorner
+        case .drip:             return IslandConst.dripCorner
+        }
+    }
+
+    /// `SEATS`: [x in the island, y, scale, opacity]. The rim width of each seat is the
+    /// character's own business: it derives it from the size it is drawn at.
+    func seat(_ stage: IslandStage) -> IslandSeat {
+        switch stage {
+        case .hidden:
+            return IslandSeat(x: 0, y: notchHeight / 2 - 2, scale: 0.05, opacity: 0)
+        case .compact:
+            return IslandSeat(x: 28 - (notchWidth + IslandConst.compactExtra) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
+        case .open:
+            return IslandSeat(x: 50 - IslandConst.expandedWidth / 2, y: 48 + openInset, scale: 0.66, opacity: 1)
+        case .drip:
+            return IslandSeat(x: 0, y: 62 + notchDelta, scale: 0.42, opacity: 1)
+        case .greet:
+            return IslandSeat(x: 118 - IslandConst.greetWidth / 2, y: 94 + notchDelta, scale: 1, opacity: 1)
+        }
+    }
 }
 
 // MARK: - Bot State
@@ -62,86 +163,36 @@ enum AgentSource: Equatable {
     case n8n
 }
 
-// MARK: - View dimensions (from VIEWS in prototype)
-
-struct ViewLayout {
-    let height: CGFloat
-    let botX: CGFloat
-    let botY: CGFloat?         // nil = auto-centered
-    let botDiameter: CGFloat
-    let agentMode: AgentLayoutMode
-}
-
-enum AgentLayoutMode {
-    case none, grid, pills, column
-}
-
-// MARK: - Constants (from NW, NH, EW in prototype)
+// MARK: - Constants (sizes of design/yumi/maquette/reference.html)
 
 enum IslandConst {
     static let notchWidth: CGFloat  = 184
     static let notchHeight: CGFloat = 32
-    static let expandedWidth: CGFloat = 640
-    static let earRadius: CGFloat   = 14
-    static let roundedCorner: CGFloat = 14    // hidden/peek/compact
-    static let expandedCorner: CGFloat = 22
+    /// The compact island sticks out this much on both sides of the notch (344 for a 184 notch).
+    static let compactExtra: CGFloat = 160
+    /// Open island: 480 wide, as low as the content allows.
+    static let expandedWidth: CGFloat = 480
+    static let openHeightDefault: CGFloat = 150
+    static let openHeightMax: CGFloat = 300
+    /// Left column of the open island: Yumi's seat and his caption.
+    static let seatColumn: CGFloat = 96
+    static let openPaddingTop: CGFloat = 8
+    /// The notch of the mock-up. A taller real notch pushes the launch shapes down by the difference.
+    static let mockNotchHeight: CGFloat = 32
+    /// Launch: the drop under the notch, then the wide greeting.
+    static let dripExtra: CGFloat = 12
+    static let dripHeight: CGFloat = 102
+    static let greetWidth: CGFloat = 420
+    static let greetHeight: CGFloat = 168
+    /// The second square, detached under the island.
+    static let drawerWidth: CGFloat = 288
+    static let drawerGap: CGFloat = 8
 
-    static let viewLayouts: [IslandView: ViewLayout] = [
-        // Home is the reference: height 150
-        .overview:  ViewLayout(height: 160, botX: 68,  botY: nil, botDiameter: 58, agentMode: .pills),
-        // All non-chat views match home height (150) — law
-        .empty:     ViewLayout(height: 160, botX: 70,  botY: nil, botDiameter: 62, agentMode: .none),
-        .approval:  ViewLayout(height: 160, botX: 62,  botY: nil, botDiameter: 56, agentMode: .column),
-        .question:  ViewLayout(height: 160, botX: 62,  botY: nil, botDiameter: 56, agentMode: .column),
-        .error:     ViewLayout(height: 160, botX: 62,  botY: nil, botDiameter: 58, agentMode: .column),
-        .finished:  ViewLayout(height: 160, botX: 62,  botY: nil, botDiameter: 58, agentMode: .column),
-        .confused:  ViewLayout(height: 160, botX: 76,  botY: nil, botDiameter: 66, agentMode: .column),
-        .upload:    ViewLayout(height: 176, botX: 140, botY: 104, botDiameter: 62, agentMode: .column),
-        .uploading: ViewLayout(height: 176, botX: 46,  botY: 118, botDiameter: 20, agentMode: .none),
-        .choose:    ViewLayout(height: 176, botX: 60,  botY: 101, botDiameter: 52, agentMode: .column),
-        .mail:      ViewLayout(height: 240, botX: 56,  botY: nil, botDiameter: 46, agentMode: .column),
-        .prompt:    ViewLayout(height: 160, botX: 52,  botY: nil, botDiameter: 44, agentMode: .column),
-        .searching: ViewLayout(height: 160, botX: 52,  botY: nil, botDiameter: 44, agentMode: .column),
-        .result:    ViewLayout(height: 160, botX: 52,  botY: nil, botDiameter: 44, agentMode: .column),
-        .note:      ViewLayout(height: 160, botX: 60,  botY: nil, botDiameter: 50, agentMode: .column),
-        .settings:  ViewLayout(height: 160, botX: 54,  botY: nil, botDiameter: 46, agentMode: .none),
-        // Greeting: bot drawn by GreetingCanvasView; no BotPlacement needed
-        .greeting:  ViewLayout(height: 150, botX: 320, botY: 90,  botDiameter: 0,  agentMode: .none),
-    ]
+    static let roundedCorner: CGFloat = 14    // hidden and compact
+    static let expandedCorner: CGFloat = 24   // open and greeting
+    static let dripCorner: CGFloat = 80
 
-    // Project colors: every project draws from this palette
-    static let fallbackColors = ["#22C55E", "#EAB308", "#60A5FA", "#E879F9"]
-
-    // Available integration pills (matches AgentTask.integrationAgents)
-    struct IntegrationMeta {
-        let id: String
-        let name: String
-        let color: String
-    }
-    static let allIntegrations: [IntegrationMeta] = [
-        .init(id: "integration_resend",  name: "Resend",  color: "#22C55E"),
-        .init(id: "integration_n8n",     name: "n8n",     color: "#F29B38"),
-        .init(id: "integration_vercel",  name: "Vercel",  color: "#7C5CFF"),
-        .init(id: "integration_github",  name: "GitHub",  color: "#F4505E"),
-        .init(id: "integration_notion",  name: "Notion",  color: "#8C8C8C"),
-        .init(id: "integration_calcom",  name: "Cal.com", color: "#C9956A"),
-        .init(id: "integration_stripe",  name: "Stripe",  color: "#0570DE"),
-    ]
-
-    /// Returns a palette color for a project display name.
-    static func colorForProject(_ name: String) -> String {
-        return fallbackColors[abs(name.hashValue) % fallbackColors.count]
-    }
-
-    // State card wash colors (radial gradient from bottom)
-    static let washColors: [IslandView: String] = [
-        .approval:  "rgba(245,165,36,0.42)",
-        .question:  "rgba(34,211,238,0.38)",
-        .error:     "rgba(244,80,94,0.55)",
-        .finished:  "rgba(52,211,153,0.5)",
-        .confused:  "rgba(244,114,182,0.55)",
-        .searching: "rgba(99,102,241,0.5)",
-        .result:    "rgba(52,211,153,0.22)",
-        .prompt:    "rgba(99,102,241,0.22)",
-    ]
+    /// Size of the transparent panel the island lives in.
+    static let panelWidth: CGFloat = 720
+    static let panelHeight: CGFloat = 460
 }

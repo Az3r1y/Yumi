@@ -6,8 +6,7 @@ import SwiftUI
 // so it never interferes with SwiftUI hit-testing.
 
 final class FileDropNSView: NSView {
-    var onDragEntered: ((CGPoint) -> Void)?
-    var onDragUpdated: ((CGPoint) -> Void)?
+    var onDragEntered: (() -> Void)?
     var onDragExited:  (() -> Void)?
     var onFilesDropped: (([URL]) -> Void)?
 
@@ -21,13 +20,10 @@ final class FileDropNSView: NSView {
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
     override func draggingEntered(_ sender: NSDraggingInfo) -> NSDragOperation {
-        onDragEntered?(sender.draggingLocation)
+        onDragEntered?()
         return .copy
     }
-    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation {
-        onDragUpdated?(sender.draggingLocation)
-        return .copy
-    }
+    override func draggingUpdated(_ sender: NSDraggingInfo) -> NSDragOperation { .copy }
     override func draggingExited(_ sender: NSDraggingInfo?) { onDragExited?() }
 
     override func performDragOperation(_ sender: NSDraggingInfo) -> Bool {
@@ -43,22 +39,21 @@ final class FileDropNSView: NSView {
 // MARK: - File drop handler
 
 enum FileDropHandler {
+    /// Yumi was handed a file: he swallows it with a bounce, keeps a copy in his inbox, and
+    /// the drop view asks what to do with it (summarize, send, put away).
     @MainActor
-    static func handle(urls: [URL], state: AppState) async {
+    static func handle(urls: [URL], state: AppState) {
         guard let url = urls.first else { return }
         let name = url.lastPathComponent
 
-        // Start animation immediately — do NOT block on file copy.
-        // Use original URL first; swap to inbox copy once background copy finishes.
+        // A new file is a new subject for the conversation
+        IslandActions.newConversation()
+
+        // Use the original URL first; swap to the inbox copy once the background copy finishes.
         state.droppedFile = DroppedFile(url: url, name: name)
-        state.uploadProgress = 0
         state.fileDragOver = false
         state.promptContext = .file(name: name, fileURL: url)
 
-        let dur = 2.4
-        UploadSequenceEngine.shared.performDrop(uploadDuration: dur)
-
-        // Copy to inbox in background — update state when done
         let inbox = AppIdentity.inboxDirectory
         Task.detached {
             try? FileManager.default.createDirectory(at: inbox, withIntermediateDirectories: true)
@@ -66,6 +61,8 @@ enum FileDropHandler {
             try? FileManager.default.removeItem(at: dest)
             if (try? FileManager.default.copyItem(at: url, to: dest)) != nil {
                 await MainActor.run {
+                    // Still the same file: the user may have dropped another one meanwhile
+                    guard state.droppedFile?.url == url else { return }
                     state.droppedFile = DroppedFile(url: dest, name: name)
                     state.promptContext = .file(name: name, fileURL: dest)
                 }
@@ -73,52 +70,10 @@ enum FileDropHandler {
         }
 
         // Drop feedback
-        NotificationCenter.default.post(name: .botGulp, object: nil)
         SoundEngine.shared.play("approve")
-        NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
-        NotificationCenter.default.post(name: .botMorphTo, object: CGFloat(0))
+        IslandModel.shared.pose(.boing)
 
-        state.uploadDuration = dur
-        state.uploadStartTime = Date()
-        state.view = .uploading  // canvas stays active: uploadActive covers .uploading
-
-        // Canvas timeline from drop:
-        //   T_DROP → T_PROG_START : ≈1.30s  gulp + shrink + bar reveal
-        //   T_PROG_START → progEnd: dur      progress bar fills
-        //   progEnd → growEnd     : 0.70s    character grows back to choose position
-        let preProgress = USC.T_PROG_START - USC.T_DROP  // ≈1.30s
-
-        // Tick sounds — delayed to sync with canvas progress start
-        Task { @MainActor in
-            var lastTens = 0
-            let progStart = Date().addingTimeInterval(preProgress)
-            while lastTens < 9 {
-                try? await Task.sleep(nanoseconds: 80_000_000)
-                let approxP = min(1.0, max(0, Date().timeIntervalSince(progStart) / dur))
-                let tens = Int(approxP * 10)
-                if tens > lastTens {
-                    SoundEngine.shared.play("tick")
-                    lastTens = tens
-                }
-            }
-        }
-
-        // Wait for canvas progress to complete (gulp/shrink phase + upload duration)
-        try? await Task.sleep(nanoseconds: UInt64((preProgress + dur) * 1_000_000_000))
-
-        // Canvas shows checkmark at this point
-        SoundEngine.shared.play("approve")
-        NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
-
-        // Wait for grow-back animation + choose overlay settle
-        try? await Task.sleep(nanoseconds: UInt64(1_000_000_000))
-
-        // Clean up upload state
-        state.uploadProgress = 0
-        state.uploadStartTime = nil
-
-        // Switch to choose — canvas stays active (uploadActive covers .choose).
-        // Engine deactivates when user clicks a canvas choose button or navigates away.
         state.view = .choose
+        state.lastActivity = .now
     }
 }

@@ -4,6 +4,7 @@ import AppKit
 
 struct SettingsView: View {
     @ObservedObject private var state = AppState.shared
+    @AppStorage(IslandPrefs.smokeKey) private var smokes = true
     @State private var apiKey: String = KeychainStore.shared.get("anthropic-api-key") ?? ""
     @State private var launchAtStartup: Bool = (SMAppService.mainApp.status == .enabled)
     @State private var statusMessage: String = ""
@@ -268,6 +269,8 @@ struct SettingsView: View {
                                 .frame(width: 48)
                             Text("min without movement")
                         }
+                        // The cigarette habit can be turned off (YUMI.md)
+                        Toggle("Yumi smokes while an agent works", isOn: $smokes)
                     }
                     .padding(6)
                 }
