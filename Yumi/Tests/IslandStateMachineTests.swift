@@ -657,3 +657,33 @@ import Foundation
         #expect(fsm.state == .greeting)
     }
 }
+
+// MARK: – The bubble of the second activity
+
+@Suite struct FoldedBubbleTests {
+    private func module(_ id: String, live priority: Int? = nil) -> ModuleSnapshot {
+        ModuleSnapshot(id: id, name: id, colorHex: "#FFFFFF", status: "", title: "", subtitle: "",
+                       primaryAction: "Voir", secondaryAction: nil,
+                       live: priority.map { ModuleLive(text: "…", priority: $0) })
+    }
+
+    @Test func theSecondActivityIsTheNextHighestPriority() {
+        let modules = [
+            module("agenda", live: ModuleLivePriority.ambient),
+            module("music", live: ModuleLivePriority.activity),
+            module("claude-code", live: ModuleLivePriority.attention),
+        ]
+        #expect(FoldedIsland.second(in: modules, after: "claude-code")?.id == "music")
+        #expect(FoldedIsland.second(in: modules, after: "music")?.id == "claude-code")
+    }
+
+    @Test func aSingleLiveModuleLeavesNoBubble() {
+        let modules = [module("agenda"), module("music", live: ModuleLivePriority.activity)]
+        #expect(FoldedIsland.second(in: modules, after: "music") == nil)
+    }
+
+    @Test func nothingLiveLeavesNoBubble() {
+        #expect(FoldedIsland.second(in: [module("agenda"), module("music")], after: nil) == nil)
+        #expect(FoldedIsland.second(in: [module("agenda", live: ModuleLivePriority.ambient)], after: nil) == nil)
+    }
+}

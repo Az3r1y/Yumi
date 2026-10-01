@@ -60,6 +60,11 @@ struct IslandScene: View {
         ZStack(alignment: .top) {
             Color.clear
 
+            // 0. The bubble of the second activity, which leaves the folded island like a drop
+            FoldedBubble(module: stage == .compact ? FoldedIsland.second(in: state.modules, after: folded.module?.id) : nil,
+                         island: layout.size(.compact, openHeight: 0), middle: middle)
+                .opacity(stage == .compact ? 1 : 0)
+
             // 1. The island: a black shape that cuts what it contains (`overflow: hidden`)
             IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage)) {
                 ZStack(alignment: .topLeading) {

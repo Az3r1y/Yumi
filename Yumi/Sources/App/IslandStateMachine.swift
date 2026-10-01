@@ -219,6 +219,13 @@ enum FoldedIsland {
         return best.first { $0.id == shown } ?? best.first
     }
 
+    /// The second activity, shown in the bubble that detaches from the folded island: the
+    /// live module with the highest priority once the main one is set aside.
+    static func second(in modules: [ModuleSnapshot], after main: String?) -> ModuleSnapshot? {
+        guard let main else { return nil }
+        return live(in: modules.filter { $0.id != main }, shown: nil)
+    }
+
     /// True when the change of text is a new thing to read (the next track) rather than the
     /// same thing ticking (a countdown): only the first one slides.
     static func isNewLine(_ old: String, _ new: String) -> Bool {
