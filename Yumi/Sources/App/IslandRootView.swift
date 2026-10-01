@@ -40,24 +40,41 @@ struct IslandScene: View {
         let size = layout.size(stage, openHeight: model.openHeight)
         let seat = layout.seat(stage)
         let approval = state.pendingApproval != nil
-        let screen = IslandScreen.resolve(view: state.view, state: state.effectiveState, approvalPending: approval)
+        let busy = IslandModel.isBusy(state.effectiveState)
+        let resolved = IslandScreen.resolve(view: state.view, state: state.effectiveState, approvalPending: approval)
+        // The agent's module shows the agent at work while it works
+        let screen: IslandScreen = resolved == .module && busy
+            && model.selectedModule(in: state.modules)?.id == IslandModel.agentModuleID ? .working : resolved
+        let drop = layout.notchDelta / IslandConst.launchScale
         let situation = IslandModel.Situation(
             stage: stage,
             screen: stage == .open ? screen : IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: approval),
             moduleID: stage == .open && screen == .module ? model.selectedModule(in: state.modules)?.id : nil,
             smokes: smokes,
             music: folded.musicPlaying,
-            chatActs: state.chatLive?.activity != nil)
+            chatActs: state.chatLive?.activity != nil,
+            busy: busy)
         let middle = IslandConst.panelWidth / 2
         let launching = model.launchStage != nil
 
         ZStack(alignment: .top) {
             Color.clear
 
+            // 0. The bubble of the second activity, which leaves the folded island like a drop
+            FoldedBubble(module: stage == .compact ? FoldedIsland.second(in: state.modules, after: folded.module?.id) : nil,
+                         island: layout.size(.compact, openHeight: 0), middle: middle)
+                .opacity(stage == .compact ? 1 : 0)
+
             // 1. The island: a black shape that cuts what it contains (`overflow: hidden`)
             IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage)) {
                 ZStack(alignment: .topLeading) {
-                    IslandGreetingLayer(phase: model.greeting, modules: model.pinned(state.modules), drop: layout.notchDelta / IslandConst.launchScale)
+                    // The halo of the launch, or of the goodbye with its few words
+                    IslandGreetingLayer(phase: model.greeting,
+                                        center: model.leaving ? CGPoint(x: 150, y: 70 + drop) : CGPoint(x: 130, y: 86 + drop),
+                                        size: model.leaving
+                                            ? CGSize(width: IslandConst.byeWidth, height: IslandConst.byeHeight + drop)
+                                            : CGSize(width: IslandConst.greetWidth, height: IslandConst.greetHeight + drop),
+                                        words: model.leaving ? "À tout à l'heure" : nil)
                         .scaleEffect(IslandConst.launchScale, anchor: .topLeading)
                         .modifier(IslandLayer(on: launching))
 
@@ -84,13 +101,7 @@ struct IslandScene: View {
             }
             .animation(model.snap ? nil : .islandSpring(), value: size)
 
-            // 2. The second square, detached under the island, its right edge on the island's
-            IslandDrawer(state: state, model: model, shown: model.drawerOpen && stage == .open)
-                .scaleEffect(IslandConst.openScale, anchor: .topTrailing)
-                .offset(x: IslandConst.expandedWidth * IslandConst.openScale / 2 - IslandConst.drawerWidth / 2,
-                        y: size.height + IslandConst.drawerGap)
-
-            // 3. Yumi, above the island: he travels between seats, and what he does may
+            // 2. Yumi, above the island: he travels between seats, and what he does may
             //    spill over its sides and below it.
             IslandActor(state: state, x: middle + seat.x, y: seat.y, scale: seat.scale)
                 .animation(model.snap ? nil : .islandSpring(), value: seat)
@@ -114,7 +125,7 @@ struct IslandScene: View {
         }
         .onChange(of: state.focusTask?.steps.last) { _, step in model.track(step: step) }
         .onChange(of: stage) { _, new in
-            if new == .open { openings += 1 } else { model.drawerOpen = false }
+            if new == .open { openings += 1 }
         }
     }
 }

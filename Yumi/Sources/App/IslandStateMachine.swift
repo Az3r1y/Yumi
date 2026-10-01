@@ -18,8 +18,26 @@ final class IslandStateMachine {
     /// Fired on every transition: (from, to)
     var onTransition: ((State, State) -> Void)?
 
-    /// home → petit delay (seconds). Override for debug.
-    var homeToPetitDelay: TimeInterval = 15
+    /// home → petit delay (seconds): the user's setting.
+    var homeToPetitDelay: TimeInterval = 15 {
+        didSet {
+            // A countdown already running starts again with the new delay
+            guard homeToPetitDelay != oldValue, homeCollapseWork != nil else { return }
+            scheduleHomeCollapse()
+        }
+    }
+    /// false when the user chose "never": the open island only folds when asked to.
+    var foldsByItself = true {
+        didSet {
+            guard foldsByItself != oldValue, state == .home else { return }
+            if !foldsByItself {
+                homeCollapseWork?.cancel()
+                homeCollapseWork = nil
+            } else if !hovered && !pinned {
+                scheduleHomeCollapse()
+            }
+        }
+    }
     /// petit → hidden delay (seconds). Override for debug.
     var petitToHiddenDelay: TimeInterval = 60
     /// greeting → petit if `greetComplete()` never comes. The launch lasts about 5 s.
@@ -105,7 +123,13 @@ final class IslandStateMachine {
         enterPetit()
     }
 
-    /// The launch sequence reached its end (about 4.9 s).
+    /// The user quits: the goodbye plays like the launch, and nothing interrupts it.
+    func leave() {
+        cancelTimers()
+        transition(to: .greeting)
+    }
+
+    /// The launch sequence reached its end (about 4.5 s).
     func greetComplete() {
         guard state == .greeting else { return }
         enterPetit()
@@ -145,6 +169,8 @@ final class IslandStateMachine {
 
     private func scheduleHomeCollapse() {
         homeCollapseWork?.cancel()
+        homeCollapseWork = nil
+        guard foldsByItself else { return }
         let item = DispatchWorkItem { [weak self] in
             guard let self, self.state == .home, !self.pinned else { return }
             self.enterPetit()
@@ -191,6 +217,13 @@ enum FoldedIsland {
         guard let top = modules.compactMap({ $0.live?.priority }).max() else { return nil }
         let best = modules.filter { $0.live?.priority == top }
         return best.first { $0.id == shown } ?? best.first
+    }
+
+    /// The second activity, shown in the bubble that detaches from the folded island: the
+    /// live module with the highest priority once the main one is set aside.
+    static func second(in modules: [ModuleSnapshot], after main: String?) -> ModuleSnapshot? {
+        guard let main else { return nil }
+        return live(in: modules.filter { $0.id != main }, shown: nil)
     }
 
     /// True when the change of text is a new thing to read (the next track) rather than the

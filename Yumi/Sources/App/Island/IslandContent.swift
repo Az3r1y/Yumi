@@ -1,219 +1,85 @@
 import AppKit
 import SwiftUI
 
-// What the open island says: one piece of information, a few words under Yumi, and the
-// buttons that go with it (`STATES[...].content()` in the mock-up). Built from `AppState`.
+// The words of the open island and what its buttons do. Built from `AppState`.
 
-struct IslandAction: Identifiable {
-    let id: String
-    let label: String
-    let run: @MainActor () -> Void
-
-    init(_ label: String, id: String? = nil, run: @escaping @MainActor () -> Void) {
-        self.id = id ?? label
-        self.label = label
-        self.run = run
-    }
-}
-
-/// `block(c)` of the mock-up: eyebrow, title, then one line of text or of code, then buttons.
-struct IslandCard {
-    var eyebrow: String
-    var color: Color
-    var title: String
-    var sub: String?
-    var code: String?
-    var actions: [IslandAction] = []
-    /// Index of the main button, the one in the colour of the card.
-    var main: Int? = 0
-    /// The few words under Yumi.
-    var caption: String
-}
-
+/// What the island says about the agent (Claude Code): who, what, since when.
 @MainActor
-enum IslandContent {
+enum IslandAgent {
 
-    // MARK: - Cards
-
-    static func card(for screen: IslandScreen, state: AppState, model: IslandModel) -> IslandCard {
-        switch screen {
-        case .home:     return home(state, model)
-        case .working:  return working(state, model)
-        case .alert:    return alert(state)
-        case .finished: return finished(state, model)
-        case .error:    return error(state)
-        case .module:   return module(state, model)
-        case .talk, .drop:
-            // These two have their own layout; only the caption is used.
-            return IslandCard(eyebrow: "", color: IslandTheme.blue, title: "", caption: caption(for: screen, state: state))
-        }
-    }
-
-    static func caption(for screen: IslandScreen, state: AppState) -> String {
-        switch screen {
-        case .talk:
-            if state.chatLive?.activity != nil { return "Il bosse" }
-            return state.chatLive != nil || state.stateOverride == .thinking ? "Il réfléchit" : "Il t'écoute"
-        case .drop: return state.droppedFile != nil && state.view != .upload ? "Bien reçu" : "Donne !"
-        default:    return ""
-        }
-    }
-
-    private static func home(_ state: AppState, _ model: IslandModel) -> IslandCard {
-        let caption = state.effectiveState == .ratelimit ? "Limite atteinte" : "Tout est calme"
-        guard let m = model.featuredModule(in: state.modules) else {
-            return IslandCard(eyebrow: "Maintenant", color: IslandTheme.blue,
-                              title: "Rien à signaler",
-                              sub: "Dépose un fichier ou parle-moi",
-                              actions: [IslandAction("Parler") { IslandActions.go(.prompt) }],
-                              caption: caption)
-        }
-        return IslandCard(eyebrow: "Maintenant", color: IslandTheme.blue,
-                          title: m.title, sub: m.subtitle,
-                          actions: [
-                              IslandAction(m.primaryAction, id: "primary") { IslandActions.module(m.id, "primary") },
-                              IslandAction("Plus tard", id: "later") { IslandActions.fold() },
-                          ],
-                          caption: caption)
-    }
-
-    private static func working(_ state: AppState, _ model: IslandModel) -> IslandCard {
-        let task = state.focusTask
-        var title: String
-        var sub = elapsed(since: model.workStart)
-        switch state.effectiveState {
-        case .thinking:  title = "Claude réfléchit"
-        case .searching: title = "Claude cherche"
-        default:
-            if let phrase = task?.steps.last.flatMap(sentence(forStep:)) {
-                title = phrase
-            } else {
-                title = "Claude travaille"
-            }
-        }
-        if task?.source == .n8n { title = task?.steps.first ?? "Un workflow tourne" }
-        let files = model.filesTouched.count
-        if files > 0 {
-            let text = files == 1 ? "1 fichier modifié" : "\(files) fichiers modifiés"
-            sub = sub.isEmpty ? text : "\(sub), \(text)"
-        }
-        if sub.isEmpty { sub = "Il vient de s'y mettre" }
-        return IslandCard(eyebrow: eyebrow(task), color: IslandTheme.blue,
-                          title: title, sub: sub,
-                          actions: [
-                              IslandAction("Voir") { IslandActions.openAgent(task) },
-                              IslandAction("Plus tard") { IslandActions.fold() },
-                          ],
-                          caption: "Il bosse")
-    }
-
-    private static func alert(_ state: AppState) -> IslandCard {
-        let task = state.focusTask
-        if let approval = state.pendingApproval {
-            let title = approval.tool == "Bash" ? "Claude veut lancer une commande" : "Claude veut utiliser \(approval.tool)"
-            return IslandCard(eyebrow: eyebrow(task), color: IslandTheme.amber,
-                              title: title, code: approval.command,
-                              actions: [
-                                  IslandAction("Refuser") { HookServer.shared.sendApprovalDecision("deny") },
-                                  IslandAction("Toujours") { HookServer.shared.sendApprovalDecision("always") },
-                                  IslandAction("Autoriser") { HookServer.shared.sendApprovalDecision("allow") },
-                              ],
-                              main: 2,
-                              caption: "Il a besoin de toi")
-        }
-        // A question asked in the session: it can only be answered there
-        return IslandCard(eyebrow: eyebrow(task), color: IslandTheme.amber,
-                          title: task?.steps.last ?? "Claude attend ta réponse",
-                          sub: "Réponds-lui dans la session",
-                          actions: [
-                              IslandAction("Voir") { IslandActions.openAgent(task) },
-                              IslandAction("Plus tard") { IslandActions.fold() },
-                          ],
-                          caption: "Il a besoin de toi")
-    }
-
-    private static func finished(_ state: AppState, _ model: IslandModel) -> IslandCard {
-        let task = state.focusTask
-        let files = model.filesTouched.count
-        var sub = task?.steps.last ?? "La session est terminée"
-        if files > 0, let start = model.workStart {
-            let minutes = max(1, Int(((model.workEnd ?? .now).timeIntervalSince(start) / 60).rounded()))
-            let filesText = files == 1 ? "1 fichier modifié" : "\(files) fichiers modifiés"
-            sub = "\(filesText) en \(minutes) \(minutes == 1 ? "minute" : "minutes")"
-        }
-        return IslandCard(eyebrow: eyebrow(task), color: IslandTheme.green,
-                          title: "C'est fini", sub: sub,
-                          actions: [
-                              IslandAction("Voir") { IslandActions.openAgent(task); IslandActions.fold() },
-                              IslandAction("OK") { IslandActions.fold() },
-                          ],
-                          caption: "Bien joué")
-    }
-
-    private static func error(_ state: AppState) -> IslandCard {
-        let task = state.focusTask
-        var card = IslandCard(eyebrow: eyebrow(task), color: IslandTheme.red,
-                              title: "Claude s'est arrêté sur une erreur",
-                              actions: [
-                                  IslandAction("Voir") { IslandActions.openAgent(task) },
-                                  IslandAction("OK") { IslandActions.fold() },
-                              ],
-                              caption: "Aïe")
-        if let last = task?.steps.last {
-            card.code = last
-        } else {
-            card.sub = "Ouvre la session pour voir ce qui bloque"
-        }
-        return card
-    }
-
-    private static func module(_ state: AppState, _ model: IslandModel) -> IslandCard {
-        guard let m = model.selectedModule(in: state.modules) else {
-            return IslandCard(eyebrow: "Modules", color: IslandTheme.blue,
-                              title: "Aucun module", sub: "Choisis-en dans les réglages",
-                              actions: [IslandAction("Gérer") { IslandActions.manageModules() }],
-                              caption: "Tout est calme")
-        }
-        var actions = [IslandAction(m.primaryAction, id: "primary") { IslandActions.module(m.id, "primary") }]
-        if let second = m.secondaryAction {
-            actions.append(IslandAction(second, id: "secondary") { IslandActions.module(m.id, "secondary") })
-        }
-        return IslandCard(eyebrow: m.name, color: Color(hex: m.colorHex),
-                          title: m.title, sub: m.subtitle,
-                          actions: actions,
-                          caption: m.status)
-    }
-
-    // MARK: - Words
-
-    private static func eyebrow(_ task: AgentTask?) -> String {
+    /// "Claude Code · yumi"
+    static func name(_ task: AgentTask?) -> String {
         guard let task else { return "Claude Code" }
         let source = task.source == .n8n ? "n8n" : "Claude Code"
         // "VS Code" is the name of the task while no session has given its project
         return task.name.isEmpty || task.name == "VS Code" || task.name == source ? source : "\(source) · \(task.name)"
     }
 
-    /// "Modifie · IslandRootView.swift" → "Claude modifie IslandRootView.swift".
+    /// "Écrit les tests": the current step as a sentence without its subject.
+    static func doing(_ state: AppState) -> String {
+        switch state.effectiveState {
+        case .thinking:  return "Réfléchit"
+        case .searching: return "Cherche"
+        default:
+            if state.focusTask?.source == .n8n { return state.focusTask?.steps.first ?? "Un workflow tourne" }
+            return state.focusTask?.steps.last.flatMap(sentence(forStep:)) ?? "Travaille"
+        }
+    }
+
+    /// "Modifie · IslandRootView.swift" → "Modifie IslandRootView.swift".
     /// The labels are the ones of HookServer.frenchStep.
     private static func sentence(forStep step: String) -> String? {
         let verbs: [String: String] = [
-            "Exécute": "exécute", "Lit": "lit", "Écrit": "écrit", "Modifie": "modifie",
-            "Cherche": "cherche", "Recherche": "cherche", "Recherche web": "cherche sur le web",
-            "Récupère": "récupère", "Liste": "liste", "Tâches": "met à jour ses tâches",
-            "Agent": "lance un agent", "Notebook": "modifie un notebook",
+            "Exécute": "Exécute", "Lit": "Lit", "Écrit": "Écrit", "Modifie": "Modifie",
+            "Cherche": "Cherche", "Recherche": "Cherche", "Recherche web": "Cherche sur le web",
+            "Récupère": "Récupère", "Liste": "Liste", "Tâches": "Met à jour ses tâches",
+            "Agent": "Lance un agent", "Notebook": "Modifie un notebook",
         ]
         let parts = step.components(separatedBy: " · ")
         guard let verb = verbs[parts[0]] else { return nil }
         let detail = parts.dropFirst().joined(separator: " · ")
-        return detail.isEmpty ? "Claude \(verb)" : "Claude \(verb) \(detail)"
+        return detail.isEmpty ? verb : "\(verb) \(detail)"
     }
 
-    private static func elapsed(since start: Date?) -> String {
-        guard let start else { return "" }
-        let minutes = Int(Date.now.timeIntervalSince(start) / 60)
-        if minutes < 1 { return "Depuis moins d'une minute" }
-        if minutes < 60 { return "Depuis \(minutes) min" }
-        return "Depuis \(minutes / 60) h \(String(format: "%02d", minutes % 60))"
+    static func files(_ model: IslandModel) -> String? {
+        let count = model.filesTouched.count
+        if count == 0 { return nil }
+        return count == 1 ? "1 fichier modifié" : "\(count) fichiers modifiés"
+    }
+
+    /// "12 min": how long he has been at it.
+    static func elapsed(_ model: IslandModel, until end: Date = .now) -> String? {
+        guard let start = model.workStart else { return nil }
+        let minutes = Int(end.timeIntervalSince(start) / 60)
+        if minutes < 1 { return "< 1 min" }
+        if minutes < 60 { return "\(minutes) min" }
+        return "\(minutes / 60) h \(String(format: "%02d", minutes % 60))"
+    }
+
+    static func finishedLine(_ state: AppState, _ model: IslandModel) -> String {
+        if let files = files(model), let time = elapsed(model, until: model.workEnd ?? .now) {
+            return "\(files) en \(time)"
+        }
+        return state.focusTask?.steps.last ?? "La session est terminée"
+    }
+}
+
+/// How a module looks in the island (Contracts/ModuleTypes.swift).
+extension ModuleSnapshot {
+    var color: Color { Color(hex: colorHex) }
+
+    /// Its SF Symbol; a module that gives none gets one from what it is.
+    var glyph: String {
+        guard symbol == "circle.fill" else { return symbol }
+        switch id {
+        case "claude-code":       return "terminal"
+        case "agenda":            return "calendar"
+        case "notes":             return "note.text"
+        case "focus":             return "timer"
+        case "music", "musique":  return "music.note"
+        case "weather", "meteo":  return "sun.max"
+        default:                  return symbol
+        }
     }
 }
 
@@ -231,7 +97,6 @@ enum IslandActions {
     /// Shows another view of the open island.
     static func go(_ view: IslandView) {
         leaveChatError(next: view)
-        IslandModel.shared.drawerOpen = false
         #if !APPSTORE
         if view == .prompt, state.promptContext == nil {
             state.promptContext = WindowContextCapture.captureActive(from: state.lastExternalApp)
@@ -249,7 +114,6 @@ enum IslandActions {
     static func showModule(_ id: String) {
         leaveChatError(next: .module)
         IslandModel.shared.selectedModuleID = id
-        IslandModel.shared.drawerOpen = false
         state.view = .module
         state.lastActivity = .now
         tap()
@@ -272,14 +136,14 @@ enum IslandActions {
         state.lastActivity = .now
     }
 
-    static func toggleDrawer() {
-        let model = IslandModel.shared
-        model.drawerOpen.toggle()
-        SoundEngine.shared.play(model.drawerOpen ? "open" : "close")
+    /// A click on Yumi: he bounces, and the chat opens.
+    static func pokeYumi(talking: Bool) {
+        SoundEngine.shared.play("pop")
+        IslandModel.shared.pose(.boing)
+        if !talking { go(.prompt) }
     }
 
     static func manageModules() {
-        IslandModel.shared.drawerOpen = false
         NotificationCenter.default.post(name: .openFullSettings, object: nil)
         tap()
     }

@@ -73,13 +73,13 @@ enum IslandDemo {
 
     private static func walk(_ controller: IslandWindowController) async {
         // The launch: one picture every 250 ms
-        for i in 0..<24 {
+        for i in 0..<22 {
             await pause(0.25)
             shot(controller, String(format: "0-launch-%02d", i))
         }
         await pause(0.6)
         shot(controller, "1-compact")
-        for name in ["home", "working", "alert", "finished", "error", "module", "music", "talk", "drop", "file", "drawer"] {
+        for name in ["home", "module", "working", "alert", "finished", "error", "music", "focus", "weather", "talk", "settings", "drop", "file"] {
             show(name, controller)
             await pause(0.45); shot(controller, "2-\(name)-a")
             await pause(2.2);  shot(controller, "2-\(name)-b")
@@ -88,6 +88,12 @@ enum IslandDemo {
         await pause(1.2); shot(controller, "3-compact-working")
         await walkFolded(controller)
         await walkChat(controller, shots: true)
+        // The goodbye: one picture every 250 ms
+        controller.quitRequested()
+        for i in 0..<19 {
+            await pause(0.25)
+            shot(controller, String(format: "8-bye-%02d", i))
+        }
         NSApp.terminate(nil)
     }
 
@@ -160,10 +166,21 @@ enum IslandDemo {
         await pause(1.2);  snap("8-settled")
     }
 
-    /// The examples of the contract, with another text for the music.
+    /// The examples of the contract, with another text for the music, and the fields of the
+    /// activity interface filled in as the core will.
     private static func examples(music: String?, agenda: Bool = true) -> [ModuleSnapshot] {
         ModuleCatalog.placeholders.map { module in
             var module = module
+            switch module.id {
+            case "agenda": module.primarySymbol = "video.fill"
+            case "music":
+                module.progress = ModuleProgress(fraction: 0.58, leading: "1:52", trailing: "3:14")
+                module.subtitle = "Halo Nord"
+            case "focus":
+                module.subtitle = "session 2 sur 4"
+                module.live = ModuleLive(text: "18:42", priority: ModuleLivePriority.activity)
+            default: break
+            }
             if module.id == "music" {
                 if let music { module.live?.text = music } else { module.live = nil }
             }
@@ -178,7 +195,7 @@ enum IslandDemo {
         state.pendingApproval = nil
         state.isPinned = false
         state.stateOverride = nil
-        model.drawerOpen = false
+        state.modules = examples(music: "Lueur · Halo Nord")
         if let i = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) {
             state.tasks[i].name = "yumi"
             state.tasks[i].steps = ["Lit · YUMI.md", "Modifie · IslandRootView.swift", "Écrit · IslandModel.swift",
@@ -189,7 +206,8 @@ enum IslandDemo {
             controller.expand(to: .overview)
         case "working":
             state.stateOverride = .working
-            controller.expand(to: .overview)
+            model.selectedModuleID = IslandModel.agentModuleID
+            controller.expand(to: .module)
         case "alert":
             state.stateOverride = .approval
             state.pendingApproval = ApprovalInfo(sessionId: "demo", tool: "Bash", command: "xcodebuild -scheme Yumi test")
@@ -218,9 +236,11 @@ enum IslandDemo {
         case "file":
             state.droppedFile = DroppedFile(url: URL(fileURLWithPath: "/tmp/Contrat-v3.pdf"), name: "Contrat-v3.pdf")
             controller.expand(to: .choose)
-        case "drawer":
-            controller.expand(to: .overview)
-            model.drawerOpen = true
+        case "focus", "weather":
+            model.selectedModuleID = name
+            controller.expand(to: .module)
+        case "settings":
+            controller.expand(to: .settings)
         case "folded-music":
             controller.demoHover = false
             state.modules = examples(music: "Lueur · Halo Nord")

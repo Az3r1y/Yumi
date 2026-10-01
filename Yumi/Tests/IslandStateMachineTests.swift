@@ -545,3 +545,145 @@ import Foundation
         #expect(LiveChat.celebrates(done: [("writing", false), ("editing", true)]))
     }
 }
+
+// MARK: – The fold delay of the settings, and leaving
+
+@Suite @MainActor struct IslandFoldSettingTests {
+    typealias State = IslandStateMachine.State
+    static let short: TimeInterval = 0.05
+    static let settle: Duration = .milliseconds(250)
+
+    private func reaches(_ expected: State, _ fsm: IslandStateMachine, timeout: TimeInterval = 5) async -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while fsm.state != expected {
+            if Date() > deadline { return false }
+            try? await Task.sleep(for: .milliseconds(5))
+        }
+        return true
+    }
+
+    @Test func withNeverTheOpenIslandStaysOpen() async {
+        let fsm = IslandStateMachine()
+        fsm.homeToPetitDelay = Self.short
+        fsm.foldsByItself = false
+        fsm.open()
+        try? await Task.sleep(for: Self.settle)
+        #expect(fsm.state == .home)
+
+        fsm.mouseEntered()
+        fsm.mouseLeft()
+        try? await Task.sleep(for: Self.settle)
+        #expect(fsm.state == .home)
+    }
+
+    @Test func choosingNeverCancelsACountdown() async {
+        let fsm = IslandStateMachine()
+        fsm.homeToPetitDelay = Self.short
+        fsm.open()
+        fsm.foldsByItself = false
+        try? await Task.sleep(for: Self.settle)
+        #expect(fsm.state == .home)
+    }
+
+    @Test func choosingADelayAgainFoldsTheIsland() async {
+        let fsm = IslandStateMachine()
+        fsm.homeToPetitDelay = Self.short
+        fsm.foldsByItself = false
+        fsm.open()
+        fsm.foldsByItself = true
+        #expect(await reaches(.petit, fsm))
+    }
+
+    @Test func choosingADelayWhileHoveredDoesNotFold() async {
+        let fsm = IslandStateMachine()
+        fsm.homeToPetitDelay = Self.short
+        fsm.foldsByItself = false
+        fsm.mouseEntered()
+        fsm.open()
+        fsm.foldsByItself = true
+        try? await Task.sleep(for: Self.settle)
+        #expect(fsm.state == .home)
+    }
+
+    @Test func neverStillFoldsWhenAsked() {
+        let fsm = IslandStateMachine()
+        fsm.foldsByItself = false
+        fsm.open()
+        fsm.collapse()
+        #expect(fsm.state == .petit)
+    }
+
+    @Test func aShorterDelayAppliesToTheCountdownAlreadyRunning() async {
+        let fsm = IslandStateMachine()
+        fsm.homeToPetitDelay = 60
+        fsm.open()
+        fsm.homeToPetitDelay = Self.short
+        #expect(await reaches(.petit, fsm))
+    }
+
+    @Test func aNewDelayDoesNotStartACountdownWhileHovered() async {
+        let fsm = IslandStateMachine()
+        fsm.homeToPetitDelay = 60
+        fsm.mouseEntered()
+        fsm.open()
+        fsm.homeToPetitDelay = Self.short
+        try? await Task.sleep(for: Self.settle)
+        #expect(fsm.state == .home)
+    }
+
+    @Test func leavingTakesOverFromEveryState() {
+        for prepare in [{ (_: IslandStateMachine) in }, { $0.mouseEntered() }, { $0.open() }, { $0.launch() }] {
+            let fsm = IslandStateMachine()
+            prepare(fsm)
+            fsm.leave()
+            #expect(fsm.state == .greeting)
+        }
+    }
+
+    @Test func nothingInterruptsTheGoodbye() async {
+        let fsm = IslandStateMachine()
+        fsm.homeToPetitDelay = Self.short
+        fsm.petitToHiddenDelay = Self.short
+        fsm.greetingTimeout = Self.short
+        fsm.open()
+        fsm.mouseLeft()
+        fsm.leave()
+        fsm.mouseEntered()
+        fsm.click()
+        fsm.mouseLeft()
+        fsm.reveal()
+        fsm.collapse()
+        try? await Task.sleep(for: Self.settle)
+        #expect(fsm.state == .greeting)
+    }
+}
+
+// MARK: – The bubble of the second activity
+
+@Suite struct FoldedBubbleTests {
+    private func module(_ id: String, live priority: Int? = nil) -> ModuleSnapshot {
+        ModuleSnapshot(id: id, name: id, colorHex: "#FFFFFF", status: "", title: "", subtitle: "",
+                       primaryAction: "Voir", secondaryAction: nil,
+                       live: priority.map { ModuleLive(text: "…", priority: $0) })
+    }
+
+    @Test func theSecondActivityIsTheNextHighestPriority() {
+        let modules = [
+            module("agenda", live: ModuleLivePriority.ambient),
+            module("music", live: ModuleLivePriority.activity),
+            module("claude-code", live: ModuleLivePriority.attention),
+        ]
+        #expect(FoldedIsland.second(in: modules, after: "claude-code")?.id == "music")
+        #expect(FoldedIsland.second(in: modules, after: "music")?.id == "claude-code")
+    }
+
+    @Test func aSingleLiveModuleLeavesNoBubble() {
+        let modules = [module("agenda"), module("music", live: ModuleLivePriority.activity)]
+        #expect(FoldedIsland.second(in: modules, after: "music") == nil)
+    }
+
+    @Test func nothingLiveLeavesNoBubble() {
+        #expect(FoldedIsland.second(in: [module("agenda"), module("music")], after: nil) == nil)
+        #expect(FoldedIsland.second(in: [module("agenda", live: ModuleLivePriority.ambient)], after: nil) == nil)
+    }
+}

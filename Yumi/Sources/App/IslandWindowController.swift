@@ -18,6 +18,8 @@ final class IslandWindowController: NSWindowController {
     var holdsOpen = false
     /// Debug walk-through: as if the pointer were on the folded island.
     var demoHover = false
+    /// The user quit: the goodbye is playing, nothing else happens.
+    private var leaving = false
     private var frameTimer: Timer?
     private var monitors: [Any] = []
     private var subscriptions: Set<AnyCancellable> = []
@@ -142,7 +144,7 @@ final class IslandWindowController: NSWindowController {
                 // own shapes: the mode is "expanded" for its whole length.
                 self.state.view = .greeting
                 self.setMode(.expanded, sound: false)
-                self.launch.start(modules: self.model.pinned(self.state.modules).count)
+                if self.leaving { self.startGoodbye() } else { self.launch.start() }
             }
         }
     }
@@ -152,7 +154,6 @@ final class IslandWindowController: NSWindowController {
         IslandActions.leaveChatError(next: nil)
         state.isPinned = false
         fsm.pinned = false
-        model.drawerOpen = false
         if state.view != .overview { state.view = .overview }
         window?.resignKey()
     }
@@ -177,10 +178,7 @@ final class IslandWindowController: NSWindowController {
         let local = CGPoint(x: mouse.x - pf.minX, y: mouse.y - pf.minY)
 
         // The island and, when it is out, the second square under it
-        var inIsland = islandFrame().insetBy(dx: -6, dy: -6).contains(local)
-        if !inIsland, let drawer = drawerFrame() {
-            inIsland = drawer.insetBy(dx: -6, dy: -IslandConst.drawerGap).contains(local)
-        }
+        let inIsland = islandFrame().insetBy(dx: -6, dy: -6).contains(local)
 
         // Toggle click-through
         let shouldAcceptMouse = inIsland || inAttachDrag || attachDragStart != nil
@@ -193,7 +191,9 @@ final class IslandWindowController: NSWindowController {
 
         // An alert that waits for an answer keeps the island open; the delay is the user's
         fsm.pinned = state.isPinned
-        if !holdsOpen { fsm.homeToPetitDelay = max(3, state.autoCloseInterval) }
+        // 0 is "never"
+        fsm.foldsByItself = !holdsOpen && state.autoCloseInterval > 0
+        if state.autoCloseInterval > 0 { fsm.homeToPetitDelay = max(3, state.autoCloseInterval) }
 
         // Feed FSM hover enter/leave
         if inIsland && !wasInIsland {
@@ -224,15 +224,6 @@ final class IslandWindowController: NSWindowController {
         let panel = window?.frame.size ?? CGSize(width: IslandConst.panelWidth, height: IslandConst.panelHeight)
         return CGRect(x: (panel.width - size.width) / 2, y: panel.height - size.height,
                       width: size.width, height: size.height)
-    }
-
-    private func drawerFrame() -> CGRect? {
-        guard model.drawerOpen, model.stage(for: state.mode) == .open, model.drawerHeight > 0 else { return nil }
-        let island = islandFrame()
-        let width = IslandConst.drawerWidth * IslandConst.openScale
-        let height = model.drawerHeight * IslandConst.openScale
-        return CGRect(x: island.maxX - width, y: island.minY - IslandConst.drawerGap - height,
-                      width: width, height: height)
     }
 
     /// The buttons of the folded island: against its right edge, on its whole height.
@@ -272,6 +263,7 @@ final class IslandWindowController: NSWindowController {
     /// Opens the island on a view. Alerts, the menu bar item, the shortcut, a file dragged
     /// over the notch and a window handed to Yumi all come through here.
     func expand(to view: IslandView) {
+        guard !leaving else { return }
         if fsm.state == .home {
             IslandActions.leaveChatError(next: view)
             state.view = view
@@ -383,6 +375,22 @@ final class IslandWindowController: NSWindowController {
         #endif
     }
 
+    // MARK: - Leaving (Contracts/AppLifecycle.swift)
+
+    /// The core holds the end of the app while Yumi says goodbye.
+    func quitRequested() {
+        guard !leaving else { return }
+        leaving = true
+        launch.cancel()
+        if fsm.state == .greeting { startGoodbye() } else { fsm.leave() }
+    }
+
+    private func startGoodbye() {
+        launch.leave {
+            NotificationCenter.default.post(name: .yumiQuitReady, object: nil)
+        }
+    }
+
     // MARK: - What the rest of the application asks of the island
 
     private func startObservers() {
@@ -399,6 +407,10 @@ final class IslandWindowController: NSWindowController {
         // Hook server compact reveal (non-alert work events: session start, tool use, etc.)
         center.publisher(for: .hookReveal)
             .sink { [weak self] _ in self?.fsm.reveal() }
+            .store(in: &subscriptions)
+
+        center.publisher(for: .yumiQuitRequested)
+            .sink { [weak self] _ in self?.quitRequested() }
             .store(in: &subscriptions)
 
         // Collapse requests from views (OK button, etc.)
@@ -443,7 +455,7 @@ final class IslandWindowController: NSWindowController {
         let now = Set(modules.filter(\.needsAttention).map(\.id))
         defer { attentive = now }
         guard let fresh = modules.first(where: { $0.needsAttention && !attentive.contains($0.id) }),
-              fsm.state != .greeting, state.pendingApproval == nil else { return }
+              fsm.state != .greeting, state.pendingApproval == nil, !holdsOpen else { return }
         model.selectedModuleID = fresh.id
         expand(to: .module)
     }

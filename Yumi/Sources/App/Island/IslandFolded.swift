@@ -60,7 +60,9 @@ struct FoldedContent: Equatable {
     static func width(of text: String) -> CGFloat {
         let base = NSFont.systemFont(ofSize: 12, weight: .bold)
         let font = base.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: 12) } ?? base
-        return ceil((text as NSString).size(withAttributes: [.font: font]).width) + 2
+        // Figures are drawn at a fixed width, a little wider than their natural one
+        let figures = CGFloat(text.filter(\.isNumber).count)
+        return ceil((text as NSString).size(withAttributes: [.font: font]).width) + 2 + figures * 1.5
     }
 }
 
@@ -167,9 +169,126 @@ private struct FoldedControl: View {
                 .background(Circle().fill(hover ? IslandTheme.raise : IslandTheme.surface))
                 .contentShape(Circle())
         }
-        .buttonStyle(IslandPress())
+        .buttonStyle(RoundPress())
         .onHover { hover = $0 }
         .accessibilityLabel(control.label)
         .help(control.label)
+    }
+}
+
+// MARK: - The bubble of the second activity
+
+/// A second activity lives in a bubble that detaches from the folded island like a drop
+/// (`#goo`, `#bub` in the mock-up): the two black shapes are blurred then thresholded
+/// together, so that they pull on each other while the bubble leaves.
+struct FoldedBubble: View {
+    let module: ModuleSnapshot?
+    /// Size of the folded island, and where its middle is in the panel.
+    let island: CGSize
+    let middle: CGFloat
+
+    var body: some View {
+        let on = module != nil
+        ZStack(alignment: .topLeading) {
+            GooWidth(width: island.width, height: island.height, middle: middle, out: on ? 1 : 0)
+                .animation(.islandSpring(), value: island.width)
+
+            // `#bubc`: what the bubble holds
+            BubbleSlide(out: on ? 1 : 0, islandRight: middle + island.width / 2, height: island.height) {
+                Group {
+                    if let module {
+                        if IslandModel.isMusic(module.id), (module.live?.priority ?? 0) >= ModuleLivePriority.activity {
+                            WaveBars(color: module.color)
+                        } else {
+                            Image(systemName: module.glyph)
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(module.color)
+                        }
+                    }
+                }
+                .opacity(on ? 1 : 0)
+                .animation(.islandEase(0.25), value: on)
+            }
+            .animation(.islandSpring(0.7), value: on)
+            .animation(.islandSpring(), value: island.width)
+        }
+        .allowsHitTesting(false)
+    }
+}
+
+/// Where the bubble is: hidden inside the island's right end, or `bubbleGap` away from it.
+private func bubbleLeft(islandRight: CGFloat, out: CGFloat) -> CGFloat {
+    islandRight - IslandConst.bubbleWidth + (IslandConst.bubbleWidth + IslandConst.bubbleGap) * out
+}
+
+/// The island's width follows its own spring; the bubble inside follows another.
+private struct GooWidth: View, Animatable {
+    var width: CGFloat
+    let height: CGFloat
+    let middle: CGFloat
+    let out: CGFloat
+
+    nonisolated var animatableData: CGFloat {
+        get { width }
+        set { width = newValue }
+    }
+
+    var body: some View {
+        GooShapes(width: width, height: height, middle: middle, out: out)
+            .animation(.islandSpring(0.7), value: out)
+    }
+}
+
+private struct GooShapes: View, Animatable {
+    let width: CGFloat
+    let height: CGFloat
+    let middle: CGFloat
+    var out: CGFloat
+
+    nonisolated var animatableData: CGFloat {
+        get { out }
+        set { out = newValue }
+    }
+
+    var body: some View {
+        Canvas { context, _ in
+            // `feGaussianBlur stdDeviation="5"` then alpha × 22 − 10
+            context.addFilter(.alphaThreshold(min: 0.455, color: .black))
+            context.addFilter(.blur(radius: 5))
+            context.drawLayer { layer in
+                // The island, a little inside its crisp shape, and taller than the screen
+                // so that its top edge is not eaten by the blur
+                let body = CGRect(x: middle - width / 2 + 2, y: -24, width: width - 4, height: height + 24 - 1)
+                layer.fill(Path(roundedRect: body, cornerRadius: IslandConst.roundedCorner), with: .color(.black))
+                let left = bubbleLeft(islandRight: middle + width / 2, out: out)
+                let bubble = CGRect(x: left, y: 0, width: IslandConst.bubbleWidth, height: height)
+                layer.fill(Path(roundedRect: bubble, cornerRadius: height / 2), with: .color(.black))
+            }
+        }
+    }
+}
+
+private struct BubbleSlide<Content: View>: View, Animatable {
+    var out: CGFloat
+    var islandRight: CGFloat
+    let height: CGFloat
+    let content: Content
+
+    init(out: CGFloat, islandRight: CGFloat, height: CGFloat, @ViewBuilder content: () -> Content) {
+        self.out = out
+        self.islandRight = islandRight
+        self.height = height
+        self.content = content()
+    }
+
+    nonisolated var animatableData: AnimatablePair<CGFloat, CGFloat> {
+        get { AnimatablePair(out, islandRight) }
+        set { out = newValue.first; islandRight = newValue.second }
+    }
+
+    var body: some View {
+        content
+            .frame(width: IslandConst.bubbleWidth, height: height)
+            .position(x: bubbleLeft(islandRight: islandRight, out: out) + IslandConst.bubbleWidth / 2, y: height / 2)
     }
 }

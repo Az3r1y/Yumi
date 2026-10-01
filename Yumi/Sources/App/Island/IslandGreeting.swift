@@ -1,14 +1,17 @@
 import SwiftUI
 
-// The wide greeting of the launch (`.greet` in the mock-up, 420 × 168): a halo behind Yumi,
-// his name letter by letter, a line under it, and the modules he watches. Yumi himself is
-// the island's one character, drawn above; this layer only holds what surrounds him.
+// What surrounds Yumi while he arrives and while he leaves (`.greet` in the mock-up): a halo
+// behind him, and nothing else at launch. No name, no words. Yumi himself is the island's
+// one character, drawn above; this layer only holds the light.
 
 struct IslandGreetingLayer: View {
     let phase: IslandModel.GreetingPhase
-    let modules: [ModuleSnapshot]
-    /// Extra distance from the top when the notch is taller than the mock-up's.
-    let drop: CGFloat
+    /// Where the halo is centred, in the layer's own units.
+    let center: CGPoint
+    /// Size of the layer, in its own units.
+    let size: CGSize
+    /// A few words under Yumi: only the goodbye has some.
+    var words: String?
 
     private var glowOn: Bool { phase.lit && !phase.bye }
 
@@ -16,7 +19,7 @@ struct IslandGreetingLayer: View {
         ZStack(alignment: .topLeading) {
             Color.clear
 
-            // `.g-glow`: centred on Yumi (118, 96), 320 × 240, blooms when the light comes on
+            // `.g-glow`: 320 × 240, blooms when the light comes on
             EllipticalGradient(
                 stops: [
                     .init(color: Color(red: 139 / 255, green: 108 / 255, blue: 255 / 255).opacity(0.46), location: 0),
@@ -30,78 +33,21 @@ struct IslandGreetingLayer: View {
             .animation(.islandSpring(1), value: phase.lit)
             .opacity(glowOn ? 1 : 0)
             .animation(.islandEase(phase.bye ? 0.22 : 0.8), value: glowOn)
-            .position(x: 118, y: 96 + drop)
+            .position(center)
 
-            // `.g-word`: 800 46px/1, each letter with its own gradient, 75 ms apart
-            HStack(spacing: 0) {
-                ForEach(Array("Yumi".enumerated()), id: \.offset) { index, letter in
-                    Text(String(letter))
-                        .font(IslandTheme.round(46, .heavy))
-                        .tracking(-0.92)
-                        .foregroundStyle(LinearGradient(
-                            stops: [
-                                .init(color: IslandTheme.blue, location: 0),
-                                .init(color: IslandTheme.violet, location: 0.55),
-                                .init(color: IslandTheme.pink, location: 1),
-                            ],
-                            // 120deg
-                            startPoint: UnitPoint(x: 0.07, y: 0.25), endPoint: UnitPoint(x: 0.93, y: 0.75)))
-                        .modifier(LetterIn(on: phase.say, duration: 0.55, delay: Double(index) * 0.075))
-                }
+            // `.g-bye`
+            if let words {
+                Text(words)
+                    .font(IslandTheme.text(13, .semibold))
+                    .foregroundStyle(IslandTheme.muted)
+                    .frame(width: size.width)
+                    .offset(y: 104)
+                    .opacity(phase.say ? 1 : 0)
+                    .animation(.islandEase(0.4), value: phase.say)
             }
-            .fixedSize()
-            // The mock-up's line box is 46 high; a text view is taller by its leading
-            .frame(height: 46)
-            .offset(x: 208, y: 46 + drop)
-            .opacity(phase.bye ? 0 : 1)
-            .animation(.islandEase(0.22), value: phase.bye)
-
-            // `.g-tag`
-            Text("Je garde un œil sur tout")
-                .font(IslandTheme.round(12, .semibold))
-                .foregroundStyle(IslandTheme.muted)
-                .fixedSize()
-                .modifier(LetterIn(on: phase.say, duration: 0.5, delay: 0.38))
-                .offset(x: 210, y: 98 + drop)
-                .opacity(phase.bye ? 0 : 1)
-                .animation(.islandEase(0.22), value: phase.bye)
-
-            // `.g-mods`: left 204, top 121, right 12, wrapping, 95 ms apart
-            FlowLayout(spacing: 9, lineSpacing: 4) {
-                ForEach(Array(modules.enumerated()), id: \.element.id) { index, module in
-                    HStack(spacing: 0) {
-                        ModuleDot(color: Color(hex: module.colorHex))
-                        Text(module.name)
-                            .font(IslandTheme.round(10.5, .bold))
-                            .foregroundStyle(IslandTheme.muted)
-                            .lineLimit(1)
-                    }
-                    .fixedSize()
-                    .modifier(LetterIn(on: phase.mods, duration: 0.42, delay: Double(index) * 0.095))
-                }
-            }
-            .frame(width: IslandConst.greetWidth - 204 - 12, alignment: .leading)
-            .offset(x: 204, y: 121 + drop)
-            .opacity(phase.bye ? 0 : 1)
-            .animation(.islandEase(0.22), value: phase.bye)
         }
-        .frame(width: IslandConst.greetWidth, height: IslandConst.greetHeight + drop, alignment: .topLeading)
+        .frame(width: size.width, height: size.height, alignment: .topLeading)
         .allowsHitTesting(false)
-    }
-}
-
-/// `@keyframes letter { from { opacity: 0; transform: translateY(16px) scale(.6) } to { opacity: 1; transform: none } }`
-private struct LetterIn: ViewModifier {
-    let on: Bool
-    let duration: Double
-    let delay: Double
-
-    func body(content: Content) -> some View {
-        content
-            .opacity(on ? 1 : 0)
-            .scaleEffect(on ? 1 : 0.6)
-            .offset(y: on ? 0 : 16)
-            .animation(on ? .islandSpring(duration).delay(delay) : nil, value: on)
     }
 }
 

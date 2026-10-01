@@ -21,11 +21,11 @@ enum IslandView: String, CaseIterable {
 /// The eight views of the open island. Several legacy `IslandView` values, still set by
 /// the hook server and the chat service, land on the same screen.
 enum IslandScreen: String, CaseIterable {
-    case home, working, alert, finished, error, module, talk, drop
+    /// `home` is the overview ("Tous"): what the island opens on when nothing is urgent.
+    case home, working, alert, finished, error, module, talk, drop, settings
 
     /// The screen for what the application says right now. A view that names a screen wins;
-    /// on the home view, the state of the agent decides, so that the island always shows
-    /// the most useful thing.
+    /// on the home view, only what is urgent takes its place.
     static func resolve(view: IslandView, state: BotState, approvalPending: Bool) -> IslandScreen {
         switch view {
         case .approval, .question:                      return .alert
@@ -34,22 +34,24 @@ enum IslandScreen: String, CaseIterable {
         case .prompt, .searching, .result, .note:       return .talk
         case .upload, .uploading, .choose, .mail:       return .drop
         case .module:                                   return .module
-        case .overview, .empty, .confused, .settings, .greeting:
+        case .settings:                                 return .settings
+        case .overview, .empty, .confused, .greeting:
             if approvalPending { return .alert }
             switch state {
-            case .working, .thinking, .searching:       return .working
             case .approval, .question:                  return .alert
             case .error:                                return .error
             case .finished:                             return .finished
-            case .idle, .ratelimit, .sleeping, .dizzy:  return .home
+            case .working, .thinking, .searching, .idle, .ratelimit, .sleeping, .dizzy:
+                return .home
             }
         }
     }
 }
 
-/// The shape the island has right now. `drip` and `greet` only exist during the launch.
+/// The shape the island has right now. `drip` and `greet` only exist during the launch,
+/// `bye` during the goodbye.
 enum IslandStage: String, CaseIterable {
-    case hidden, compact, open, drip, greet
+    case hidden, compact, open, drip, greet, bye
 }
 
 /// Where Yumi sits (`SEATS` in the mock-up): the centre of his 100 × 84 box, as an offset
@@ -80,7 +82,7 @@ struct IslandLayout: Equatable {
 
     /// Open island: the mock-up starts its content 8 pt under the top edge, which a real notch
     /// would cover. The content then starts just under the notch instead.
-    var openInset: CGFloat { hasNotch ? max(0, notchHeight + 10 - IslandConst.openPaddingTop * IslandConst.openScale) : 0 }
+    var openInset: CGFloat { hasNotch ? max(0, notchHeight + 8 - IslandConst.openPaddingTop * IslandConst.openScale) : 0 }
 
     func size(_ stage: IslandStage, openHeight: CGFloat) -> CGSize {
         let k = IslandConst.openScale, l = IslandConst.launchScale
@@ -90,6 +92,7 @@ struct IslandLayout: Equatable {
         case .open:    return CGSize(width: IslandConst.expandedWidth * IslandConst.openScale, height: openHeight)
         case .drip:    return CGSize(width: (notchWidth + IslandConst.dripExtra) * l, height: IslandConst.dripHeight * l + notchDelta)
         case .greet:   return CGSize(width: IslandConst.greetWidth * l, height: IslandConst.greetHeight * l + notchDelta)
+        case .bye:     return CGSize(width: IslandConst.byeWidth * l, height: IslandConst.byeHeight * l + notchDelta)
         }
     }
 
@@ -97,7 +100,7 @@ struct IslandLayout: Equatable {
         switch stage {
         case .hidden, .compact: return IslandConst.roundedCorner
         case .open:             return IslandConst.expandedCorner * IslandConst.openScale
-        case .greet:            return IslandConst.expandedCorner * IslandConst.launchScale
+        case .greet, .bye:      return IslandConst.expandedCorner * IslandConst.launchScale
         case .drip:             return IslandConst.dripCorner * IslandConst.launchScale
         }
     }
@@ -112,11 +115,13 @@ struct IslandLayout: Equatable {
         case .compact:
             return IslandSeat(x: 28 - (notchWidth + compactEar * 2) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
         case .open:
-            return IslandSeat(x: (58 - IslandConst.expandedWidth / 2) * k, y: (IslandConst.openPaddingTop + IslandConst.seatHeight / 2 + 7) * k + openInset, scale: 0.66 * k, opacity: 1)
+            return IslandSeat(x: (50 - IslandConst.expandedWidth / 2) * k, y: 56 * k + openInset, scale: 0.68 * k, opacity: 1)
         case .drip:
             return IslandSeat(x: 0, y: 62 * l + notchDelta, scale: 0.42 * l, opacity: 1)
         case .greet:
-            return IslandSeat(x: (118 - IslandConst.greetWidth / 2) * l, y: 94 * l + notchDelta, scale: l, opacity: 1)
+            return IslandSeat(x: (130 - IslandConst.greetWidth / 2) * l, y: 84 * l + notchDelta, scale: l, opacity: 1)
+        case .bye:
+            return IslandSeat(x: (150 - IslandConst.byeWidth / 2) * l, y: 62 * l + notchDelta, scale: 0.86 * l, opacity: 1)
         }
     }
 }
@@ -197,26 +202,29 @@ enum IslandConst {
     static let openHeightDefault: CGFloat = 150
     static let openHeightMax: CGFloat = 340
     /// Left column of the open island: Yumi's seat and his caption.
-    static let seatColumn: CGFloat = 96
-    // The mock-up packs the open island tightly (8 pt above, 82 pt seat, 4 pt between lines).
-    // On a real screen it needs air: these are the looser values.
-    static let openPaddingTop: CGFloat = 20
-    static let openPaddingBottom: CGFloat = 18
-    static let seatHeight: CGFloat = 100
-    static let lineGap: CGFloat = 8
+    static let seatColumn: CGFloat = 92
+    /// `.act { padding: 18px 22px 8px 0; min-height: 102px }`
+    static let openPaddingTop: CGFloat = 18
+    static let openPaddingBottom: CGFloat = 8
+    static let openPaddingTrailing: CGFloat = 22
+    static let actMinHeight: CGFloat = 76
     /// The notch of the mock-up. A taller real notch pushes the launch shapes down by the difference.
     static let mockNotchHeight: CGFloat = 32
     /// Launch: the drop under the notch, then the wide greeting.
     static let dripExtra: CGFloat = 12
     static let dripHeight: CGFloat = 102
-    static let greetWidth: CGFloat = 420
-    static let greetHeight: CGFloat = 168
+    static let greetWidth: CGFloat = 260
+    static let greetHeight: CGFloat = 150
+    /// The goodbye: a little wider, Yumi in the middle.
+    static let byeWidth: CGFloat = 300
+    static let byeHeight: CGFloat = 132
     /// The second square, detached under the island.
-    static let drawerWidth: CGFloat = 288
-    static let drawerGap: CGFloat = 8
+    /// The bubble of the second activity, detached from the folded island.
+    static let bubbleWidth: CGFloat = 34
+    static let bubbleGap: CGFloat = 10
 
     static let roundedCorner: CGFloat = 14    // hidden and compact
-    static let expandedCorner: CGFloat = 24   // open and greeting
+    static let expandedCorner: CGFloat = 38   // open and greeting
     static let dripCorner: CGFloat = 80
 
     /// Size of the transparent panel the island lives in.
