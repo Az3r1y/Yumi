@@ -54,11 +54,14 @@ final class ClaudeCodeModule: YumiModule {
     func perform(_ action: ModuleAction) {
         switch action {
         case .primary:
-            // "Voir" stays in Yumi: the island opens on the sessions (on the approval if one is
-            // pending). It never brings another application forward.
-            onShow()
+            // A pending approval is answered in the island. Otherwise "Voir" goes where the
+            // conversation is: the application the session runs in, whichever it is.
+            let approvalPending = sessions.contains {
+                if case .requestingPermission = $0.activity { return true }
+                return false
+            }
+            if approvalPending || !Self.bringToFront(sessions.first?.origin) { onShow() }
         case .secondary:
-            // The second button is the way out: it names the application it brings forward.
             Self.bringToFront(sessions.first?.origin)
         }
     }

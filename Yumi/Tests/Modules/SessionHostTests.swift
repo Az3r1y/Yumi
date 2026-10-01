@@ -35,29 +35,32 @@ import Foundation
 
 @MainActor
 @Suite struct ClaudeCodeVoirTests {
-    @Test func voirShowsTheSessionsInTheIslandAndNothingElse() {
+    @Test func withoutASessionOrWithAnApprovalPendingVoirOpensTheIsland() {
         var shown = 0
         let module = ClaudeCodeModule(onShow: { shown += 1 })
         module.start {}
-
-        // No session: the island opens all the same.
         module.perform(.primary)
         #expect(shown == 1)
 
-        // A session hosted by the Claude desktop app, working: still the island.
+        // A session whose host is unknown: nowhere to go but the island.
         let id = SessionID("a")
         var sessions = SessionReducer.apply(.sessionStarted(id, ClaudeHookTranslator.agent, title: "yumi"), to: [:])
-        let origin = SessionOrigin(workingDirectory: "/dev/yumi", hostBundleID: "com.anthropic.claudefordesktop")
-        sessions = SessionReducer.apply(.sessionLocated(id, origin), to: sessions)
-        module.receive(.sessionLocated(id, origin), sessions: sessions)
+        module.receive(.sessionStarted(id, ClaudeHookTranslator.agent, title: "yumi"), sessions: sessions)
         module.perform(.primary)
         #expect(shown == 2)
 
-        // An approval pending: the island again, where it is answered.
+        // An approval pending, even with a known host: it is answered in the island.
+        let origin = SessionOrigin(workingDirectory: "/dev/yumi", hostBundleID: "com.example.not-installed")
         let request = PermissionRequest(tool: "Bash", command: "ls")
+        sessions = SessionReducer.apply(.sessionLocated(id, origin), to: sessions)
         sessions = SessionReducer.apply(.permissionRequested(id, request), to: sessions)
         module.receive(.permissionRequested(id, request), sessions: sessions)
         module.perform(.primary)
         #expect(shown == 3)
+    }
+
+    @Test func anApplicationThatIsNotInstalledCannotBeBroughtForward() {
+        #expect(!ClaudeCodeModule.bringToFront(SessionOrigin(hostBundleID: "com.example.not-installed")))
+        #expect(!ClaudeCodeModule.bringToFront(nil))
     }
 }

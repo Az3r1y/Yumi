@@ -740,7 +740,9 @@ final class ClaudeTaskMirror {
     private func refresh(_ sessions: [SessionID: Session]) {
         guard let idx = state.tasks.firstIndex(where: { $0.id == Self.taskID }) else { return }
         var task = state.tasks[idx]
-        if let session = ClaudeSessions.ordered(sessions).first {
+        let featured = ClaudeSessions.ordered(sessions).first
+        Self.featuredOrigin = featured?.origin
+        if let session = featured {
             task.name = ClaudeSessions.projectName(session)
             if let cwd = session.origin?.workingDirectory, !cwd.isEmpty { task.sessionCwd = cwd }
             task.steps = steps[session.id] ?? []
@@ -801,6 +803,16 @@ final class ClaudeTaskMirror {
         guard let idx = state.tasks.firstIndex(where: { $0.id == Self.taskID }),
               state.tasks[idx].pillBadge != badge else { return }
         state.tasks[idx].pillBadge = badge
+    }
+
+    /// Where the session shown by the pill runs.
+    private static var featuredOrigin: SessionOrigin?
+
+    /// Brings forward the application the session of the pill runs in: its terminal, its editor
+    /// (on the project), or the Claude app. Never another one. Returns false when it is unknown.
+    @discardableResult
+    static func openSession() -> Bool {
+        ClaudeCodeModule.bringToFront(featuredOrigin)
     }
 
     /// Opens the island on the Claude Code sessions: on the pending approval if there is one.
