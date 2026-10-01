@@ -1,0 +1,50 @@
+import Foundation
+
+// MARK: - Module contract
+// A module is one thing Yumi watches: Claude Code, the calendar, a timer, the weather.
+// The core fills `AppState.modules` with snapshots; the island draws them. Both sides
+// rely on this file, so neither edits it during the parallel work (see YUMI.md).
+
+/// What the island needs to draw one module, and nothing else.
+struct ModuleSnapshot: Identifiable, Equatable, Sendable {
+    let id: String
+    /// Shown in full in the island. No abbreviations.
+    var name: String
+    /// Hex colour, e.g. "#5B8CFF".
+    var colorHex: String
+    /// One or two words: "14:30", "2 sessions", "19°".
+    var status: String
+    /// Headline of the detail view: "Point produit dans 12 min".
+    var title: String
+    /// One line under the headline.
+    var subtitle: String
+    /// Label of the main button, and of the optional second one.
+    var primaryAction: String
+    var secondaryAction: String?
+    /// True when the user should look now. The island may open by itself.
+    var needsAttention: Bool = false
+}
+
+enum ModuleCatalog {
+    /// Modules shown in the island itself; the others go in the second square.
+    static let pinnedLimit = 5
+    /// Modules the user can have selected at once.
+    static let selectionLimit = 10
+
+    /// Example data so the island can be built before the real modules exist.
+    /// The core replaces `AppState.modules` with live snapshots.
+    static let placeholders: [ModuleSnapshot] = [
+        .init(id: "claude-code", name: "Claude Code", colorHex: "#FFB547", status: "2 sessions", title: "yumi : écrit les tests", subtitle: "2 sessions ouvertes, 1 attend ta réponse", primaryAction: "Voir", secondaryAction: "Ouvrir le terminal"),
+        .init(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "14:30", title: "Point produit dans 12 min", subtitle: "14:30 à 15:00, en visio", primaryAction: "Rejoindre", secondaryAction: "Voir la journée"),
+        .init(id: "notes", name: "Notes", colorHex: "#F2C744", status: "3", title: "Dernière note", subtitle: "Idée : mode nuit pour Yumi", primaryAction: "Nouvelle note", secondaryAction: "Tout voir"),
+        .init(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "18:42", title: "Focus en cours", subtitle: "Session 2 sur 4, reste 18 min 42", primaryAction: "Pause", secondaryAction: "Arrêter"),
+        .init(id: "music", name: "Musique", colorHex: "#F58AD9", status: "lecture", title: "Lueur", subtitle: "Halo Nord, Premières heures", primaryAction: "Pause", secondaryAction: "Suivant"),
+        .init(id: "weather", name: "Météo", colorHex: "#7FD0FF", status: "19°", title: "19° et des éclaircies", subtitle: "Pluie vers 18 h, prends une veste", primaryAction: "Détail", secondaryAction: nil),
+    ]
+}
+
+extension Notification.Name {
+    /// Posted by the island when a module button is pressed.
+    /// userInfo: ["module": String (module id), "action": String ("primary" or "secondary")]
+    static let moduleAction = AppIdentity.notification("moduleAction")
+}

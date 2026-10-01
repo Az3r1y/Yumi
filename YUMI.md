@@ -75,17 +75,30 @@ Correspondance proposée entre les états existants et les expressions de la pla
 | émote `wink` | clin d'œil |
 | émote `love`, `surprised` | à dessiner dans le même style |
 
-## Répartition des fichiers
+## Phase 2 : porter la maquette, répartition des fichiers
 
-Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Personne ne renomme de type ni de fichier partagé : ces renommages se font à la fin, après fusion.
+Trois sessions en parallèle. Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Chaque session peut créer de nouveaux fichiers dans son propre sous-dossier.
 
 | Session | Branche | Fichiers possédés |
 |---|---|---|
-| 1. Identité et hooks | `yumi/identite` | `HookServer.swift`, `ClaudeService.swift`, `AppDelegate.swift`, `SettingsView.swift`, `FileDropView.swift`, `N8nPoller.swift`, `IslandViewContent.swift`, `IslandTypes.swift`, `IslandWindowController.swift`, nouveau `AppIdentity.swift` |
-| 2. Personnage et créations | `yumi/personnage` | `BotEngine.swift`, `BotCanvasView.swift`, `GreetingCanvasView.swift`, `UploadCanvasView.swift`, `UploadSequenceEngine.swift`, `Yumi/Assets.xcassets/` (vide : icônes à créer), `Yumi/Resources/sounds/` (vide : 28 sons à créer) |
-| 3. Build, docs, licence | `yumi/build-docs` | `Yumi/project.yml`, `Yumi/Resources/*.entitlements`, `scripts/` (script de release à écrire), `.github/`, `README.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `ATTRIBUTION.md`, `LICENSE`, `docs/` (site à écrire), nouveau target de tests |
+| Personnage | `yumi/personnage` | `BotEngine.swift`, `BotCanvasView.swift`, nouveau dossier `Character/` |
+| Île | `yumi/ile` | `IslandRootView.swift`, `IslandViewContent.swift`, `IslandTypes.swift`, `IslandWindowController.swift`, `IslandStateMachine.swift` et ses tests, `GreetingCanvasView.swift`, `UploadCanvasView.swift`, `UploadSequenceEngine.swift`, `FileDropView.swift`, `SettingsView.swift`, `SoundEngine.swift`, nouveau dossier `Island/` |
+| Cœur | `yumi/coeur` | `AppState.swift`, `AppDelegate.swift`, `AppIdentity.swift`, `HookServer.swift`, `ClaudeService.swift`, `WindowContextCapture.swift`, tous les `*Poller.swift`, `Yumi/project.yml`, nouveaux dossiers `Core/` et `Modules/`, nouveaux fichiers de tests |
 
-Fichiers que personne ne touche pendant le travail en parallèle : `NotchBuddyApp.swift`, `AppState.swift`, `IslandStateMachine.swift`, `IslandRootView.swift`, les autres pollers, `WindowContextCapture.swift`, `ARCHITECTURE.md`, `YUMI.md`.
+### Les contrats entre sessions
+
+Deux fichiers dans `Contracts/` sont déjà sur `main` et servent d'interface. **Personne ne les modifie pendant le travail en parallèle** ; si un contrat doit changer, on s'arrête et on le décide ensemble.
+
+- `Contracts/CharacterCommands.swift` : l'île commande le personnage par notifications (`yumiPose`, `yumiHabit`, `yumiMood`, `yumiRim`, `yumiLit`, `yumiGaze`). La session Personnage les écoute, la session Île les émet. L'île ne touche jamais au moteur du personnage, et le place où elle veut à la taille qu'elle veut avec `BotCanvasView`.
+- `Contracts/ModuleTypes.swift` : le cœur remplit `AppState.modules` avec des `ModuleSnapshot`, l'île les dessine. Les cinq premiers vont dans l'île, les suivants dans le second carré. L'île signale un clic par la notification `moduleAction`. `AppState.modules` contient des données d'exemple tant que le cœur ne les remplace pas.
+
+### Premiers modules réels
+
+Claude Code, Agenda, Notes et rappels, Focus, Musique, Météo. Ils se branchent sur le Mac sans compte externe. Notion, n8n, Make et ChatGPT viennent ensuite.
+
+### La maquette est la source
+
+`design/yumi/maquette/reference.html` contient les formules exactes : le contour du corps (`bodyPath`), les ressorts et leurs constantes (`Blob`), chaque pose (`POSE_FX`), chaque habitude (`SCENES`), les visages (`MOODS`), les couleurs de liseré (`RIMS`), les places de Yumi (`SEATS`) et la chronologie du lancement (`launch`). On porte ces valeurs, on ne les réinvente pas.
 
 ## Règles communes
 
@@ -93,6 +106,7 @@ Fichiers que personne ne touche pendant le travail en parallèle : `NotchBuddyAp
 - Compiler en Debug avant chaque commit : `cd Yumi && xcodegen && xcodebuild -scheme Yumi -configuration Debug build`.
 - État de référence : le build Debug réussit sur `main` avec 19 avertissements (concurrence et API dépréciées). Ne pas en ajouter.
 - Chaque session pousse sur sa propre branche, jamais sur `main`.
+- Quand un rendu est porté, le comparer à la maquette ouverte dans un navigateur.
 - Ne jamais copier d'icône, de son ou de média depuis Coucou : le dépôt est public.
 - Conserver `LICENSE` avec le copyright d'origine.
 

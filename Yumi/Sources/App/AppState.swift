@@ -180,6 +180,10 @@ final class AppState: ObservableObject {
     // Pending approval request from Claude Code hook
     @Published var pendingApproval: ApprovalInfo? = nil
 
+    // Modules shown in the island, pinned ones first (see Contracts/ModuleTypes.swift).
+    // Example data until the core feeds live snapshots.
+    @Published var modules: [ModuleSnapshot] = ModuleCatalog.placeholders
+
     // MARK: - Init (loads persisted settings)
 
     private init() {
