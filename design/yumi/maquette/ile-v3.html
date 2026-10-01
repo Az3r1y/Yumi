@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maquette île Yumi</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@500;600;700;800&display=swap">
+<style>
+/* Layout: one compact island on a stage, its states and poses below, then the module catalogue and the character sheet. */
+:root {
+  --page: #F3F3F7; --panel: #FFFFFF; --ink: #10121C; --muted: #5F6478; --line: #DDDEE8; --chip: #E9EAF2; --accent: #5B5BF0;
+  /* The island is one fixed object: same values in both themes */
+  --isl: #000000; --isl-surface: #14161F; --isl-raise: #1F2231; --isl-line: rgba(255,255,255,.09);
+  --isl-fg: #F4F5F8; --isl-muted: #8D92A8; --isl-faint: #5A5F74;
+  --wall-a: #1B1F3A; --wall-b: #3A2B5E; --wall-c: #0E1020;
+  --blue: #5B8CFF; --violet: #8B6CFF; --pink: #F58AD9; --amber: #FFB547; --red: #FF5D6C; --green: #3DDC97;
+  --round: ui-rounded, "SF Pro Rounded", "Nunito", -apple-system, "Segoe UI", sans-serif;
+  --text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Nunito", sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --spring: cubic-bezier(.32,1.22,.42,1);
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --page: #0B0D16; --panel: #141722; --ink: #F1F2F7; --muted: #9A9FB5; --line: #262A3A; --chip: #1C2030; --accent: #8E8BFF; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --page: #0B0D16; --panel: #141722; --ink: #F1F2F7; --muted: #9A9FB5; --line: #262A3A; --chip: #1C2030; --accent: #8E8BFF; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--page); color: var(--ink); font-family: var(--text); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 28px 64px }
+.wrap { max-width: 860px; margin-inline: auto; display: flex; flex-direction: column; gap: 22px }
+h1, h2, h3 { font-family: var(--round); margin: 0; text-wrap: balance }
+h1 { font-size: 30px; font-weight: 800; letter-spacing: -.01em }
+h2 { font-size: 20px; font-weight: 800; margin-top: 10px }
+h3 { font-size: 12.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted) }
+p { margin: 0; max-width: 68ch }
+.lede, .hint { color: var(--muted) }
+.hint { font-size: 13.5px; min-height: 2.9em }
+.col { display: flex; flex-direction: column; gap: 8px }
+.switch { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.sw { all: unset; font: 700 13px var(--round); padding: 7px 13px; border-radius: 999px; background: var(--chip); color: var(--muted); cursor: pointer }
+.sw:hover { color: var(--ink) }
+.sw[aria-pressed="true"] { background: var(--ink); color: var(--page) }
+.sw.ghost { background: none; box-shadow: inset 0 0 0 1.5px var(--line) }
+.sw:focus-visible, .ib:focus-visible, .btn:focus-visible, .pill:focus-visible, .tile:focus-visible, .cat button:focus-visible, button.face:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px }
+.lab { font: 700 12.5px var(--round); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 4px; min-width: 52px }
+
+/* Stage */
+.stage { border-radius: 18px; overflow: hidden; background: radial-gradient(120% 140% at 20% 0%, var(--wall-b), var(--wall-a) 45%, var(--wall-c)); position: relative }
+.scaler { width: 720px; height: 312px; transform-origin: top left; position: relative; margin-inline: auto }
+.menubar { position: absolute; inset: 0 0 auto 0; height: 32px; display: flex; align-items: center; justify-content: space-between; padding: 0 16px; color: rgba(255,255,255,.82); font: 600 12px var(--text) }
+.menubar span { display: flex; gap: 14px } .menubar i { font-style: normal; opacity: .7 }
+.island { position: absolute; top: 0; left: 50%; transform: translateX(-50%); background: var(--isl); color: var(--isl-fg); font-family: var(--round);
+  width: 184px; height: 32px; border-radius: 0 0 14px 14px; overflow: hidden;
+  transition: width .55s var(--spring), height .55s var(--spring), border-radius .4s ease }
+.island[data-mode="compact"] { cursor: pointer }
+.island[data-mode="open"], .island[data-mode="greet"] { border-radius: 0 0 24px 24px }
+.layer { position: absolute; top: 0; left: 0; opacity: 0; pointer-events: none; transition: opacity .14s ease }
+.island[data-mode="compact"] .compact, .island[data-mode="open"] .open { opacity: 1; pointer-events: auto; transition: opacity .28s ease .16s }
+.compact { width: 344px; height: 32px; display: flex; align-items: center; justify-content: flex-end; padding: 0 14px }
+.mini { display: flex; align-items: center; gap: 7px; font: 700 12px var(--round); font-variant-numeric: tabular-nums }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c, var(--blue)); flex: none; display: inline-block }
+
+/* The actor: one Yumi that travels between seats */
+#actor { position: absolute; left: 0; top: 0; width: 100px; height: 84px; z-index: 3; cursor: pointer; transform-origin: 50% 50%;
+  transition: transform .55s var(--spring), opacity .25s ease }
+#actor.snap { transition: none }
+#fx { position: absolute; left: 0; top: 0; width: 0; height: 0; z-index: 2; pointer-events: none }
+#fx i { position: absolute; left: -32px; top: -32px; width: 64px; height: 64px; border-radius: 50%; border: 2px solid var(--c); opacity: 0 }
+#fx b { position: absolute; left: -3px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--c); opacity: 0 }
+#fx.go i { animation: ring 1s cubic-bezier(.2,.7,.3,1) forwards; animation-delay: var(--d) }
+#fx.go b { animation: fly .85s cubic-bezier(.2,.7,.3,1) forwards; animation-delay: var(--d) }
+@keyframes ring { 0% { opacity: .9; transform: scale(.5) } 100% { opacity: 0; transform: scale(3.4) } }
+@keyframes fly { 0% { opacity: 1; transform: rotate(var(--a)) translateX(34px) scale(1) } 100% { opacity: 0; transform: rotate(var(--a)) translateX(150px) scale(.3) } }
+
+/* Open island: 480 wide, as low as the content allows */
+.open { width: 480px }
+.o-top { display: grid; grid-template-columns: 96px 1fr 30px; gap: 0 8px; padding: 8px 10px 7px 0 }
+.o-seat { display: flex; align-items: flex-end; justify-content: center; height: 82px }
+.o-tabs { display: flex; flex-direction: column; gap: 2px; justify-content: center }
+.cap { font: 600 10.5px var(--round); color: var(--isl-muted); white-space: nowrap }
+.o-dock { display: flex; align-items: center; gap: 5px; margin: 0 12px; padding: 7px 0 10px; border-top: 1px solid var(--isl-line); overflow: hidden }
+.o-dock .gap { flex: 1 }
+.pill { min-width: 0 } .pill .st { overflow: hidden; text-overflow: ellipsis }
+.in > * { animation: rise .42s var(--spring) both }
+.in > *:nth-child(2) { animation-delay: .045s } .in > *:nth-child(3) { animation-delay: .09s } .in > *:nth-child(4) { animation-delay: .135s }
+@keyframes rise { from { opacity: 0; transform: translateY(8px) scale(.98); filter: blur(5px) } }
+.blk { display: flex; flex-direction: column; gap: 4px; min-width: 0; justify-content: center; flex: 1 }
+.eyebrow { font: 700 10px var(--round); letter-spacing: .1em; text-transform: uppercase; color: var(--c, var(--isl-muted)) }
+.title { font: 800 17px/1.18 var(--round); letter-spacing: -.01em }
+.sub { font: 500 12.5px/1.3 var(--text); color: var(--isl-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 2px }
+.btn { all: unset; font: 700 12px var(--round); padding: 5px 11px; border-radius: 999px; background: var(--isl-surface); color: var(--isl-fg); cursor: pointer; box-shadow: inset 0 0 0 1px var(--isl-line); transition: transform .12s }
+.btn:hover { background: var(--isl-raise) } .btn:active { transform: scale(.94) }
+.btn.main { background: var(--c, var(--isl-fg)); color: #06070C; box-shadow: none }
+.code { font: 500 11.5px var(--mono); background: var(--isl-surface); border-radius: 9px; padding: 5px 9px; color: #D6DAEA; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.field { background: var(--isl-surface); border-radius: 999px; padding: 6px 13px; font: 500 12.5px var(--text); color: var(--isl-faint); box-shadow: inset 0 0 0 1px var(--isl-line) }
+.bub { font: 500 12px/1.35 var(--text); padding: 6px 10px; border-radius: 13px; max-width: 94%; background: var(--isl-surface); align-self: flex-start }
+.bub.me { align-self: flex-end; background: #23263A }
+.drop { border: 1.5px dashed rgba(255,255,255,.22); border-radius: 14px; padding: 9px 12px; display: grid; gap: 4px }
+.ib { all: unset; width: 28px; height: 24px; border-radius: 12px; display: grid; place-items: center; color: var(--isl-muted); cursor: pointer }
+.ib:hover { background: rgba(255,255,255,.07); color: var(--isl-fg) }
+.ib[aria-pressed="true"] { background: var(--isl-surface); color: var(--isl-fg) }
+.ib svg { width: 14px; height: 14px }
+.pill { all: unset; display: flex; align-items: center; gap: 5px; padding: 3px 9px 3px 4px; border-radius: 999px; background: var(--isl-surface); font: 700 10.5px var(--round); color: var(--isl-muted); white-space: nowrap; cursor: pointer; font-variant-numeric: tabular-nums; transition: transform .15s }
+.pill:hover { color: var(--isl-fg); background: var(--isl-raise); transform: translateY(-1px) }
+.pill[aria-pressed="true"] { color: var(--isl-fg); box-shadow: inset 0 0 0 1.5px var(--c) }
+.pill i, .tile i { width: 19px; height: 19px; border-radius: 50%; background: #000; display: grid; place-items: center; font: 800 8px var(--round); color: var(--c); font-style: normal; flex: none }
+.pill.more { padding: 3px 9px }
+
+/* The second square: the other modules */
+#drawer { position: absolute; left: calc(50% + 240px - 288px); width: 288px; background: var(--isl); border-radius: 20px; padding: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+  transform-origin: 78% 0; transform: scale(.6) translateY(-14px); opacity: 0; pointer-events: none; transition: transform .38s var(--spring), opacity .18s ease; font-family: var(--round) }
+#drawer.on { transform: none; opacity: 1; pointer-events: auto }
+.tile { all: unset; background: var(--isl-surface); border-radius: 13px; padding: 7px 8px; display: flex; flex-direction: column; gap: 5px; cursor: pointer; min-width: 0; color: var(--isl-fg); transition: transform .15s, background .15s }
+.tile:hover { background: var(--isl-raise); transform: translateY(-2px) }
+.tile .n { font: 700 10px var(--round); color: var(--isl-muted); display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden }
+.tile .v { font: 800 13px/1.1 var(--round); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+#drawer.on .tile { animation: rise .4s var(--spring) both; animation-delay: calc(var(--i) * 35ms) }
+
+/* Yumi */
+.yumi { display: block; overflow: visible; flex: none }
+.yumi .breath, .yumi .pose { transform-box: fill-box; transform-origin: 50% 100% }
+.yumi .breath { animation: breath 4.2s ease-in-out infinite }
+.yumi .tiltg, .yumi .es, .yumi .lidt, .yumi .lidb, .yumi .eyes, .yumi .arm { transform-box: view-box }
+.yumi .tiltg { transform-origin: 50px 76px; transform: rotate(calc(var(--tilt, 0) * 1deg)); transition: transform .4s var(--spring) }
+.yumi .eyes { transform-origin: 50px 45px; transition: transform .25s var(--spring) }
+.yumi .es, .yumi .lidt, .yumi .lidb { transition: transform .26s cubic-bezier(.3,1.3,.5,1) }
+.yumi .eye { transform-box: fill-box; transform-origin: center; animation: blink 5.4s infinite }
+.yumi .pupil { transform: translate(calc(var(--lx, 0) * 3.2px), calc(var(--ly, 0) * 2.8px)); transition: transform .14s ease-out }
+.yumi[data-fixed] .pupil { transition: transform .3s var(--spring) }
+.yumi .psg { transform-box: fill-box; transform-origin: center; transform: scale(var(--ps, 1)); transition: transform .26s var(--spring) }
+.yumi .shut { transition: opacity .12s ease }
+.yumi stop { transition: stop-color .5s ease }
+.yumi .s1 { stop-color: var(--r1) } .yumi .s2 { stop-color: var(--r2) } .yumi .s3 { stop-color: var(--r3) }
+.yumi .rim { stroke-width: var(--rw, 2.6); transition: stroke-width .4s ease }
+.yumi .glow { stroke-width: calc(var(--rw, 2.6) * 2.2) }
+.yumi[data-alert] .glow { animation: pulse 1.1s ease-in-out infinite }
+.yumi .arm { opacity: 0 } .yumi .arm.l { transform-origin: 17px 52px } .yumi .arm.r { transform-origin: 83px 52px }
+.yumi .zz, .yumi .spark { opacity: 0; transform-box: fill-box; transform-origin: center }
+#actor:hover .eyes { transform: scale(1.09) }
+@keyframes breath { 50% { transform: scale(1.015, .975) } }
+@keyframes blink { 0%, 95.5%, 100% { transform: scaleY(1) } 97.5% { transform: scaleY(.08) } }
+@keyframes pulse { 50% { opacity: .35 } }
+.yumi[data-pose="saut"] .pose { animation: p-saut .78s cubic-bezier(.3,.6,.4,1) }
+.yumi[data-pose="etirer"] .pose { animation: p-etirer 1.3s ease-in-out }
+.yumi[data-pose="ecraser"] .pose { animation: p-ecraser 1.1s ease-in-out }
+.yumi[data-pose="secouer"] .pose { animation: p-secouer .7s ease-in-out }
+.yumi[data-pose="celebrer"] .pose { animation: p-celebrer 1.5s cubic-bezier(.3,.6,.4,1) }
+.yumi[data-pose="celebrer"] .arm.l { animation: p-arml 1.5s ease-in-out } .yumi[data-pose="celebrer"] .arm.r { animation: p-armr 1.5s ease-in-out }
+.yumi[data-pose="celebrer"] .spark { animation: p-spark 1.5s ease-out }
+.yumi[data-pose="celebrer"] .sp2 { animation-delay: .15s } .yumi[data-pose="celebrer"] .sp3 { animation-delay: .3s }
+.yumi[data-pose="salut"] .pose { animation: p-salut 1.5s ease-in-out }
+.yumi[data-pose="salut"] .arm.l { animation: p-arml 1.5s ease-in-out } .yumi[data-pose="salut"] .arm.r { animation: p-armr 1.5s ease-in-out }
+.yumi[data-pose="creux"] .pose { animation: p-creux .34s ease-in-out }
+.yumi[data-pose="arrive"] .pose { animation: p-arrive .5s ease-out }
+.yumi[data-pose="pop"] .pose { animation: p-pop .38s ease-out }
+.yumi[data-pose="boing"] .pose { animation: p-boing .6s ease-out }
+.yumi[data-pose="sommeil"] .pose { transform: scale(1.2, .6); transition: transform .6s var(--spring) }
+.yumi[data-pose="sommeil"] .breath { animation-duration: 6s }
+.yumi[data-pose="sommeil"] .zz { animation: p-zz 2.6s ease-in-out infinite } .yumi[data-pose="sommeil"] .z2 { animation-delay: .8s } .yumi[data-pose="sommeil"] .z3 { animation-delay: 1.6s }
+@keyframes p-saut { 0% { transform: scale(1.14, .84) } 35% { transform: translateY(-26px) scale(.9, 1.14) } 55% { transform: translateY(-26px) scale(1, 1) } 80% { transform: scale(1.14, .84) } 100% { transform: none } }
+@keyframes p-etirer { 30%, 65% { transform: scale(.78, 1.34) } 82% { transform: scale(1.08, .92) } }
+@keyframes p-ecraser { 25%, 65% { transform: scale(1.3, .55) } 82% { transform: scale(.94, 1.08) } }
+@keyframes p-secouer { 15% { transform: translateX(-5px) rotate(-6deg) } 30% { transform: translateX(5px) rotate(6deg) } 45% { transform: translateX(-4px) rotate(-5deg) } 60% { transform: translateX(4px) rotate(4deg) } 80% { transform: translateX(-2px) rotate(-2deg) } }
+@keyframes p-celebrer { 0%, 46% { transform: scale(1.12, .86) } 20%, 66% { transform: translateY(-18px) scale(.94, 1.1) } 40%, 86% { transform: scale(1.1, .9) } 100% { transform: none } }
+@keyframes p-salut { 0% { transform: scale(.94, 1.1) } 12% { transform: translateX(3px) rotate(3deg) } 30% { transform: translateX(-4px) rotate(-4deg) translateY(-2px) } 48% { transform: translateX(4px) rotate(4deg) } 66% { transform: translateX(-3px) rotate(-3deg) translateY(-2px) } 84% { transform: translateX(2px) rotate(2deg) } 100% { transform: none } }
+@keyframes p-arml { 0%, 100% { opacity: 0; transform: rotate(45deg) } 10%, 88% { opacity: 1 } 22%, 52%, 80% { transform: rotate(-14deg) } 37%, 66% { transform: rotate(16deg) } }
+@keyframes p-armr { 0%, 100% { opacity: 0; transform: rotate(-45deg) } 10%, 88% { opacity: 1 } 22%, 52%, 80% { transform: rotate(14deg) } 37%, 66% { transform: rotate(-16deg) } }
+@keyframes p-spark { 0% { opacity: 0; transform: scale(.2) } 30% { opacity: 1; transform: scale(1.1) rotate(20deg) } 100% { opacity: 0; transform: scale(.6) translateY(-10px) rotate(60deg) } }
+@keyframes p-creux { 55% { transform: scale(1.1, .82) } }
+@keyframes p-arrive { 0% { transform: scale(.7, 1.35) } 45% { transform: scale(1.16, .82) } 75% { transform: scale(.96, 1.05) } }
+@keyframes p-pop { 30% { transform: scale(1.1, .88) } 65% { transform: scale(.95, 1.06) } }
+@keyframes p-boing { 15% { transform: scale(1.28, .66) } 40% { transform: scale(.86, 1.18) translateY(-6px) } 62% { transform: scale(1.08, .93) } 82% { transform: scale(.98, 1.02) } }
+@keyframes p-zz { 0% { opacity: 0; transform: translate(0, 4px) scale(.6) } 30% { opacity: 1 } 100% { opacity: 0; transform: translate(8px, -14px) scale(1.1) } }
+@media (prefers-reduced-motion: reduce) { .yumi .breath, .yumi .eye, .yumi .pose, .yumi .arm, .in > *, #fx i, #fx b { animation: none !important } .island, .layer, #actor, #drawer { transition: none } }
+
+/* Catalogue and sheet */
+.block { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+.cathead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap }
+.count { font: 800 15px var(--round); font-variant-numeric: tabular-nums } .count.full { color: var(--accent) }
+.cat { display: grid; grid-template-columns: 112px 1fr; gap: 10px; align-items: start }
+.cat > span { font: 700 12px var(--round); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding-top: 7px }
+.cat > div { display: flex; flex-wrap: wrap; gap: 6px }
+.cat button { all: unset; font: 700 12.5px var(--round); padding: 6px 11px 6px 8px; border-radius: 999px; background: var(--chip); color: var(--muted); cursor: pointer; display: flex; align-items: center; gap: 6px }
+.cat button[aria-pressed="true"] { background: var(--ink); color: var(--page) }
+.cat button[disabled] { opacity: .4; cursor: not-allowed }
+.cat button em { font-style: normal; font-weight: 600; opacity: .6; font-size: 11px }
+@media (max-width: 560px) { .cat { grid-template-columns: 1fr } .cat > span { padding-top: 0 } }
+.faces { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px }
+.face { all: unset; background: var(--isl); border-radius: 14px; padding: 14px 6px 8px; display: grid; justify-items: center; gap: 6px; font: 700 11.5px var(--round); color: var(--isl-muted); text-align: center }
+button.face { cursor: pointer; padding-top: 28px } button.face:hover { color: var(--isl-fg) }
+</style>
+
+<div class="wrap">
+  <div class="col">
+    <h1>Yumi dans la notch</h1>
+    <p class="lede">Version compacte : une île de 480 points de large, cinq modules visibles, les autres dans un second carré. Clique sur Lancement pour voir l'arrivée de Yumi. Les contenus affichés sont des exemples.</p>
+  </div>
+
+  <div class="stage" id="stage">
+    <div class="scaler" id="scaler">
+      <div class="menubar"><span><b>Yumi</b><i>Fichier</i><i>Édition</i></span><span style="font-variant-numeric:tabular-nums">mar. 1 oct. 14:18</span></div>
+      <div class="island" id="island" data-mode="open">
+        <div id="fx"></div>
+        <div id="actor"></div>
+        <div class="layer compact" id="compact"><div class="mini"><span class="dot" style="--c:var(--amber)"></span>14:30</div></div>
+        <div class="layer open" id="open">
+          <div class="o-top"><div class="o-seat"><span class="cap" id="cap"></span></div><div id="view" style="min-width:0;display:flex"></div><div class="o-tabs" id="tabs"></div></div>
+          <div class="o-dock" id="dock"></div>
+        </div>
+      </div>
+      <div id="drawer"></div>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="switch" id="states" role="group" aria-label="État de l'île"><span class="lab">États</span></div>
+    <div class="switch" id="poses" role="group" aria-label="Poses de Yumi"><span class="lab">Poses</span></div>
+    <p class="hint" id="hint"></p>
+  </div>
+
+  <h2>Modules</h2>
+  <div class="block">
+    <div class="cathead">
+      <p class="lede">Quarante modules au catalogue, dix au plus. Les cinq premiers choisis vont dans l'île, les suivants dans le second carré.</p>
+      <span class="count" id="count"></span>
+    </div>
+    <div class="col" id="catalog" style="gap:12px"></div>
+  </div>
+
+  <h2>Le personnage</h2>
+  <div class="block">
+    <h3>Poses de la planche</h3>
+    <div class="faces" id="posegal"></div>
+  </div>
+  <div class="block">
+    <h3>Expressions</h3>
+    <div class="faces" id="faces"></div>
+  </div>
+  <div class="block">
+    <h3>La lumière de contour porte l'état</h3>
+    <p class="lede">Le corps reste noir. C'est le liseré qui change de couleur, ce qui garde Yumi lisible sur l'île noire, même à 20 points.</p>
+    <div class="faces" id="rims"></div>
+  </div>
+</div>
+
+<script>
+/* ---------- Yumi: one SVG whose face is driven by CSS variables, so expressions blend instead of snapping ---------- */
+const RIMS = {
+  calm: ['#5B8CFF', '#8B6CFF', '#F58AD9'], work: ['#3F7BFF', '#4FA0FF', '#7FD0FF'], think: ['#7B5CFF', '#9B7BFF', '#C9A8FF'],
+  warn: ['#FF9A3D', '#FFB547', '#FFD37A'], error: ['#FF4D5E', '#FF5D6C', '#FF9AA4'], done: ['#22C98A', '#3DDC97', '#9BF0C8'], joy: ['#B07BFF', '#F58AD9', '#FFB3E6'],
+};
+const BASE = { esl: 1, esr: 1, ps: 1, tl: 0, tr: 0, al: 0, ar: 0, bl: 0, br: 0, cl: 0, cr: 0, tilt: 0 };
+const MOODS = {
+  neutre: {}, heureux: { bl: .42, br: .42 }, curieux: { esl: .92, esr: 1.14, tilt: 7 },
+  concentre: { tl: .38, tr: .38, look: [0, .5] }, reflechi: { tl: .16, tr: .16, look: [.8, -.8] },
+  surpris: { esl: 1.16, esr: 1.16, ps: .72 }, inquiet: { tl: .3, tr: .3, al: -16, ar: 16 }, agace: { tl: .4, tr: .4, al: 16, ar: -16 },
+  clin: { tr: 1.1, cr: 1 }, sommeil: { tl: 1.1, tr: 1.1, cl: 1, cr: 1 },
+};
+const BODY = 'M8 62C8 31 27 8 50 8s42 23 42 54c0 10-10 14-42 14S8 72 8 62Z';
+const STAR = 'M0-5 1.3-1.3 5 0 1.3 1.3 0 5-1.3 1.3-5 0-1.3-1.3Z';
+let uid = 0;
+
+function moodVars(mood, rim) {
+  const m = Object.assign({}, BASE, MOODS[mood]), [r1, r2, r3] = RIMS[rim], v = { r1, r2, r3 };
+  for (const k in BASE) v[k] = m[k];
+  if (m.look) { v.lx = m.look[0]; v.ly = m.look[1] }
+  return { v, fixed: !!m.look };
+}
+function setMood(el, mood, rim) {
+  const { v, fixed } = moodVars(mood, rim);
+  for (const k in v) el.style.setProperty('--' + k, v[k]);
+  if (fixed) el.dataset.fixed = ''; else delete el.dataset.fixed;
+  el.setAttribute('aria-label', 'Yumi, ' + mood);
+}
+function eye(cx, s) {
+  const o = `transform-origin:${cx}px 45px;`;
+  return `<g class="es" style="${o}transform:scale(var(--es${s}))"><g class="eye"><ellipse cx="${cx}" cy="45" rx="9" ry="11" fill="#fff"/><g class="pupil"><g class="psg"><circle cx="${cx}" cy="46" r="5.2" fill="#05060A"/><circle cx="${cx + 1.8}" cy="43.8" r="1.5" fill="#fff"/></g></g></g></g>
+    <rect class="lidt" x="${cx - 17}" y="8" width="34" height="26" fill="#05060A" style="${o}transform:rotate(calc(var(--a${s}) * 1deg)) translateY(calc(var(--t${s}) * 25px - 3px))"/>
+    <ellipse class="lidb" cx="${cx}" cy="68" rx="16" ry="12" fill="#05060A" style="transform:translateY(calc(var(--b${s}) * -22px))"/>
+    <path class="shut" d="M${cx - 8} 45q8 6 16 0" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" style="opacity:var(--c${s})"/>`;
+}
+function yumi({ size = 100, mood = 'neutre', rim = 'calm', rimW = 2.6, pose = '', cls = '' } = {}) {
+  const id = 'y' + (++uid), g = `url(#${id}g)`, { v, fixed } = moodVars(mood, rim);
+  const vars = Object.entries(v).map(([k, x]) => `--${k}:${x}`).join(';');
+  const arm = (side, d) => `<g class="arm ${side}"><path d="${d}" stroke="${g}" stroke-width="12" stroke-linecap="round" fill="none"/><path d="${d}" stroke="#05060A" stroke-width="8.4" stroke-linecap="round" fill="none"/></g>`;
+  return `<svg class="yumi ${cls}" ${fixed ? 'data-fixed' : ''} ${pose ? `data-pose="${pose}"` : ''} viewBox="0 0 100 84" width="${size}" height="${size * .84}" style="${vars};--rw:${rimW}" role="img" aria-label="Yumi, ${mood}">
+    <defs>
+      <linearGradient id="${id}g" x1="0" x2="1"><stop offset="0" class="s1"/><stop offset=".5" class="s2"/><stop offset="1" class="s3"/></linearGradient>
+      <linearGradient id="${id}f" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".28"/><stop offset=".55" stop-color="#fff"/></linearGradient>
+      <mask id="${id}m"><rect x="-10" y="-10" width="120" height="110" fill="url(#${id}f)"/></mask>
+      <clipPath id="${id}c"><path d="${BODY}"/></clipPath>
+      <filter id="${id}b" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.2"/></filter>
+    </defs>
+    <g class="tiltg"><g class="pose"><g class="breath">
+      <ellipse cx="50" cy="78" rx="34" ry="4" fill="${g}" opacity=".35" filter="url(#${id}b)"/>
+      ${arm('l', 'M17 52 5 37')}${arm('r', 'M83 52 95 37')}
+      <path class="glow" d="${BODY}" fill="none" stroke="${g}" filter="url(#${id}b)" mask="url(#${id}m)" opacity=".85"/>
+      <path d="${BODY}" fill="#05060A"/>
+      <path class="rim" d="${BODY}" fill="none" stroke="${g}" mask="url(#${id}m)"/>
+      <g clip-path="url(#${id}c)"><g class="eyes">${eye(37, 'l')}${eye(63, 'r')}</g></g>
+    </g></g></g>
+    <g fill="${g}"><g transform="translate(8 14)"><path class="spark" d="${STAR}"/></g><g transform="translate(92 10) scale(1.3)"><path class="spark sp2" d="${STAR}"/></g><g transform="translate(50 -4) scale(.9)"><path class="spark sp3" d="${STAR}"/></g></g>
+    <g fill="#9BB8FF" font-family="ui-rounded, Nunito, sans-serif" font-weight="800"><text class="zz" x="78" y="26" font-size="9">z</text><text class="zz z2" x="86" y="16" font-size="12">z</text><text class="zz z3" x="94" y="6" font-size="15">Z</text></g>
+  </svg>`;
+}
+const POSE_MS = { saut: 800, etirer: 1320, ecraser: 1120, secouer: 720, celebrer: 1520, salut: 1520, creux: 360, arrive: 520, pop: 400, boing: 620 };
+function playPose(el, name) {
+  if (!el) return;
+  el.removeAttribute('data-pose'); void el.getBoundingClientRect(); el.dataset.pose = name;
+  if (POSE_MS[name]) setTimeout(() => { if (el.dataset.pose === name) el.removeAttribute('data-pose') }, POSE_MS[name]);
+}
+
+/* ---------- Sound (synthesized, starts on the first click) ---------- */
+let AC = null, soundOn = true;
+function tone(f, t, d, type = 'sine', g = .1, f2) {
+  const o = AC.createOscillator(), a = AC.createGain(), s = AC.currentTime + t;
+  o.type = type; o.frequency.setValueAtTime(f, s); if (f2) o.frequency.exponentialRampToValueAtTime(f2, s + d);
+  a.gain.setValueAtTime(0.0001, s); a.gain.linearRampToValueAtTime(g, s + .015); a.gain.exponentialRampToValueAtTime(.0001, s + d);
+  o.connect(a).connect(AC.destination); o.start(s); o.stop(s + d + .05);
+}
+const SND = {
+  greet: () => { [523, 659, 784, 1047].forEach((f, i) => tone(f, i * .1, .55, 'triangle', .09)); tone(1568, .42, .7, 'sine', .04) },
+  pop: () => tone(280, 0, .16, 'sine', .14, 720),
+  open: () => tone(420, 0, .18, 'sine', .07, 640),
+  close: () => tone(520, 0, .16, 'sine', .06, 330),
+  tap: () => tone(880, 0, .06, 'triangle', .05),
+  alert: () => { tone(740, 0, .18, 'triangle', .09); tone(988, .16, .3, 'triangle', .09) },
+  done: () => { [659, 880, 1319].forEach((f, i) => tone(f, i * .09, .5, 'triangle', .08)) },
+};
+function snd(n) {
+  if (!soundOn) return;
+  try { AC = AC || new (window.AudioContext || window.webkitAudioContext)(); if (AC.state === 'suspended') AC.resume(); SND[n]() } catch (e) {}
+}
+
+
+/* ---------- Modules ---------- */
+const ALL = [
+  ['claude-code', 'Claude Code', 'IA', '#FFB547', '2 sessions', 'yumi : écrit les tests', '2 sessions ouvertes, 1 attend ta réponse', 'Voir', 'Ouvrir le terminal'],
+  ['chatgpt', 'ChatGPT', 'IA', '#3DDC97', 'prêt', 'Reprendre « Plan de lancement »', 'Dernier échange il y a 2 h', 'Continuer', 'Nouvelle question'],
+  ['claude', 'Claude', 'IA', '#E8956B', 'prêt', 'Demander à Claude', 'Avec le fichier ou la fenêtre en cours', 'Demander', 'Historique'],
+  ['gemini', 'Gemini', 'IA', '#5B8CFF', 'prêt', 'Demander à Gemini', 'Recherche et documents Google', 'Demander', 'Historique'],
+  ['cursor', 'Cursor', 'IA', '#C9CCDA', '1 agent', 'Agent en cours sur api-clients', 'Refactor du module de paiement', 'Voir', 'Arrêter'],
+  ['perplexity', 'Perplexity', 'IA', '#4FD1C5', 'prêt', 'Chercher avec des sources', 'Dernière recherche : écrans 27 pouces', 'Chercher', 'Historique'],
+  ['n8n', 'n8n', 'Automatisation', '#FF6D5A', '12 runs', 'Tous les workflows tournent', "12 exécutions aujourd'hui, aucune erreur", 'Ouvrir', 'Relancer le dernier'],
+  ['make', 'Make', 'Automatisation', '#B07BFF', '1 erreur', 'Un scénario a échoué', '« Factures vers Notion », étape 3, il y a 8 min', "Voir l'erreur", 'Relancer'],
+  ['zapier', 'Zapier', 'Automatisation', '#FF8A3D', '5 zaps', '5 zaps actifs', 'Dernier déclenchement il y a 20 min', 'Ouvrir', 'Mettre en pause'],
+  ['notion', 'Notion', 'Travail', '#E6E6EA', '3 pages', "3 pages modifiées aujourd'hui", 'Roadmap Yumi, Notes de réunion, Idées', 'Ouvrir Roadmap', 'Nouvelle page'],
+  ['linear', 'Linear', 'Travail', '#8B8CFF', '4 tickets', '4 tickets pour toi', '2 en cours, 1 urgent : crash au lancement', 'Voir', 'Créer un ticket'],
+  ['github', 'GitHub', 'Travail', '#C9CCDA', '2 PR', '2 demandes de relecture', 'yumi 12 et yumi 14 attendent ton avis', 'Relire', 'Mes PR'],
+  ['vercel', 'Vercel', 'Travail', '#F4F5F8', 'en ligne', 'Dernier déploiement réussi', 'site-yumi, branche main, il y a 6 min', 'Ouvrir', 'Journaux'],
+  ['figma', 'Figma', 'Travail', '#F58AD9', '2 comm.', '2 nouveaux commentaires', 'Sur « Île v2 », par Léa', 'Répondre', 'Ouvrir'],
+  ['slack', 'Slack', 'Travail', '#F2C744', '5 non lus', '5 messages non lus', 'Dont une mention dans produit', 'Lire', 'Passer en absent'],
+  ['mail', 'Mail', 'Travail', '#5BB8FF', '8 non lus', '8 mails non lus', '2 semblent importants', 'Voir les 2', 'Tout marquer lu'],
+  ['drive', 'Drive', 'Travail', '#3DDC97', 'à jour', 'Tout est synchronisé', 'Dernier fichier : Budget T4.xlsx', 'Ouvrir', 'Chercher'],
+  ['stripe', 'Stripe', 'Travail', '#8B6CFF', '+240 €', "3 paiements aujourd'hui", '240 € encaissés, solde 1 870 €', 'Voir', 'Tableau de bord'],
+  ['supabase', 'Supabase', 'Travail', '#3DDC97', 'sain', 'Base en bonne santé', '18 % du quota utilisé', 'Ouvrir', 'Journaux'],
+  ['calcom', 'Cal.com', 'Travail', '#C9956A', '1 résa', 'Une nouvelle réservation', 'Jeudi 10:00, appel découverte', 'Voir', 'Copier mon lien'],
+  ['agenda', 'Agenda', 'Organisation', '#5B8CFF', '14:30', 'Point produit dans 12 min', '14:30 à 15:00, en visio', 'Rejoindre', 'Voir la journée'],
+  ['rappels', 'Rappels', 'Organisation', '#FF9A3D', '2', "2 rappels aujourd'hui", '18:00 Appeler le garage', 'Fait', 'Reporter'],
+  ['notes', 'Notes', 'Organisation', '#F2C744', '3', 'Dernière note', 'Idée : mode nuit pour Yumi', 'Nouvelle note', 'Tout voir'],
+  ['taches', 'Tâches', 'Organisation', '#FF5D6C', '5', "5 tâches pour aujourd'hui", 'La prochaine : envoyer le devis', 'Terminer', 'Tout voir'],
+  ['focus', 'Focus', 'Organisation', '#8B6CFF', '18:42', 'Focus en cours', 'Session 2 sur 4, reste 18 min 42', 'Pause', 'Arrêter'],
+  ['presse', 'Presse-papiers', 'Organisation', '#9AA0B8', '12', '12 éléments copiés', 'Dernier : un lien vers la maquette', 'Coller', 'Historique'],
+  ['fichiers', 'Fichiers', 'Organisation', '#7FD0FF', '1', 'Un fichier en attente', 'Contrat-v3.pdf déposé il y a 5 min', 'Résumer', 'Envoyer'],
+  ['traduire', 'Traduire', 'Organisation', '#4FD1C5', 'prêt', 'Traduire la sélection', 'Français vers anglais', 'Traduire', 'Changer de langue'],
+  ['musique', 'Musique', 'Vie', '#F58AD9', 'lecture', 'Lueur', 'Halo Nord, Premières heures', 'Pause', 'Suivant'],
+  ['meteo', 'Météo', 'Vie', '#7FD0FF', '19°', '19° et des éclaircies', 'Pluie vers 18 h, prends une veste', 'Détail', 'Changer de ville'],
+  ['messages', 'Messages', 'Vie', '#3DDC97', '2', '2 nouveaux messages', 'Maman : « Tu viens dimanche ? »', 'Répondre', 'Plus tard'],
+  ['activite', 'Activité', 'Vie', '#FF5D6C', '6 240', "6 240 pas aujourd'hui", 'Encore 1 760 pour ton objectif', 'Voir', 'Lancer une marche'],
+  ['budget', 'Budget', 'Vie', '#3DDC97', '38 €', "38 € dépensés aujourd'hui", 'Reste 412 € ce mois-ci', 'Voir', 'Ajouter une dépense'],
+  ['trajets', 'Trajets', 'Vie', '#5B8CFF', '24 min', "24 min jusqu'à la maison", 'Trafic fluide, départ conseillé à 17:30', 'Itinéraire', 'Autre adresse'],
+  ['colis', 'Colis', 'Vie', '#FFB547', '1', 'Un colis arrive demain', 'Écran 27 pouces, entre 9 h et 13 h', 'Suivre', 'Ajouter un colis'],
+  ['bourse', 'Bourse', 'Vie', '#3DDC97', '+1,2 %', 'Ton portefeuille monte', "+1,2 % aujourd'hui", 'Voir', 'Ajouter une valeur'],
+  ['actus', 'Actus', 'Vie', '#C9CCDA', '5', '5 titres pour toi', 'Résumés en une phrase chacun', 'Lire', 'Résumer'],
+  ['maison', 'Maison', 'Vie', '#FFD37A', '3 allumés', '3 lumières allumées', 'Salon, bureau, entrée', 'Tout éteindre', 'Scènes'],
+  ['mac', 'Mac', 'Vie', '#9AA0B8', '82 %', 'Batterie à 82 %', 'Environ 6 h restantes, 41 Go libres', 'Détail', 'Mode économie'],
+  ['anniv', 'Anniversaires', 'Vie', '#F58AD9', 'demain', 'Anniversaire de Karim demain', 'Tu veux un rappel à 9 h ?', 'Me rappeler', 'Écrire un mot'],
+].map(([id, name, cat, c, status, title, sub, a1, a2]) => {
+  const w = name.split(/[\s.-]+/).filter(Boolean);
+  return { id, name, cat, c, status, title, sub, a1, a2, mono: (w.length > 1 ? w[0][0] + w[1][0] : name.slice(0, 2)).toUpperCase() };
+});
+
+const BY = Object.fromEntries(ALL.map(m => [m.id, m]));
+const MAX = 10, PINNED = 5;
+let sel = ['claude-code', 'agenda', 'notion', 'chatgpt', 'n8n', 'make', 'focus', 'notes', 'musique', 'meteo'];
+try { const s = JSON.parse(localStorage.getItem('yumi-mods-v3') || 'null'); if (Array.isArray(s) && s.length) sel = s.filter(id => BY[id]).slice(0, MAX) } catch (e) {}
+const mods = () => sel.map(id => BY[id]);
+
+/* ---------- States ---------- */
+let cur = 'accueil', activeMod = 'notion', sleeping = false, drawerOn = false, timers = [];
+const STATES = {
+  lancement: { label: 'Lancement', hint: "Yumi sort de la notch comme une goutte, gonfle, regarde autour de lui, prend son élan, salue des deux bras dans un halo de lumière, puis va s'asseoir à sa place pendant que l'île se replie." },
+  masquee: { label: 'Masquée', mode: 'hidden', hint: "Rien à signaler : l'île se confond avec la notch. Elle réapparaît au survol." },
+  repliee: { label: 'Repliée', mode: 'compact', mood: 'neutre', rim: 'calm', hint: 'Yumi reste discret et affiche le prochain repère. Un clic ouvre.' },
+  accueil: { label: 'Accueil', mode: 'open', mood: 'neutre', rim: 'calm', cap: 'Tout est calme', hint: "Une seule chose à l'écran, la plus utile maintenant. Cinq modules en bas, le bouton à droite ouvre le second carré.",
+    content: () => ({ eyebrow: 'Maintenant', c: 'var(--blue)', title: 'Point produit dans 12 min', sub: '14:30 à 15:00, en visio', acts: [['Rejoindre'], ['Plus tard']], main: 0 }) },
+  alerte: { label: 'Alerte', mode: 'open', mood: 'surpris', rim: 'warn', pose: 'secouer', snd: 'alert', alert: true, cap: 'Il a besoin de toi', hint: "Seul cas où Yumi s'ouvre de lui-même. Il se secoue et son contour pulse. Clique sur Autoriser.",
+    content: () => ({ eyebrow: 'Claude Code · yumi', c: 'var(--amber)', title: 'Claude veut lancer une commande', code: 'xcodebuild -scheme Yumi test', acts: [['Refuser', 'accueil'], ['Toujours', 'termine'], ['Autoriser', 'termine']], main: 2 }) },
+  termine: { label: 'Terminé', mode: 'open', mood: 'heureux', rim: 'done', pose: 'celebrer', snd: 'done', cap: 'Bien joué', hint: 'Quand une tâche se termine, Yumi fête ça : deux sauts, les bras en l\'air, des étincelles.',
+    content: () => ({ eyebrow: 'Claude Code · yumi', c: 'var(--green)', title: "C'est fini, 26 tests au vert", sub: '3 fichiers modifiés en 4 minutes', acts: [['Voir'], ['OK', 'accueil']], main: 0 }) },
+  module: { label: 'Module', mode: 'open', mood: 'curieux', rim: 'calm', hint: "Le détail d'un module. Clique sur un module de l'île ou du second carré pour en changer.",
+    content: () => { const m = BY[activeMod] || mods()[0]; return { eyebrow: m.name, c: m.c, title: m.title, sub: m.sub, acts: [[m.a1], [m.a2]], main: 0, cap: m.status } } },
+  parler: { label: 'Parler', mode: 'open', mood: 'reflechi', rim: 'think', cap: 'Il réfléchit', hint: 'Le chat garde le contexte de ce que tu lui as donné : fichier, fenêtre ou note.',
+    content: () => ({ c: 'var(--violet)', chat: [[1, 'Résume-moi ce PDF en trois points'], [0, 'Budget validé à 42 k€, livraison le 14 novembre, un risque sur le prestataire vidéo.']] }) },
+  deposer: { label: 'Déposer', mode: 'open', mood: 'surpris', rim: 'calm', pose: 'etirer', cap: 'Donne !', hint: "Tu lui donnes un fichier ou une fenêtre, il s'étire pour l'attraper et propose quoi en faire.",
+    content: () => ({ c: 'var(--blue)', drop: true, acts: [['Résumer'], ['Envoyer'], ['Ranger']] }) },
+};
+
+/* ---------- Render helpers ---------- */
+const I = { chat: '<path d="M3 4h12v8H8l-3 3v-3H3z"/>', plus: '<path d="M9 3v12M3 9h12"/>', home: '<path d="M3 8.2 9 3l6 5.2V15H3z"/>' };
+const ico = (n) => `<svg viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${I[n]}</svg>`;
+const tab = (i, go, label) => `<button class="ib" data-go="${go}" aria-label="${label}" aria-pressed="${cur === go}">${ico(i)}</button>`;
+const btns = (c) => (c.acts || []).map(([l, go], i) => `<button class="btn ${i === c.main ? 'main' : ''}" ${go ? `data-go="${go}"` : 'data-tap'} style="--c:${c.c}">${l}</button>`).join('');
+function block(c) {
+  if (c.chat) return `<div class="blk in">${c.chat.map(([me, t]) => `<div class="bub ${me ? 'me' : ''}">${t}</div>`).join('')}<div class="field">Demande quelque chose à Yumi</div></div>`;
+  if (c.drop) return `<div class="blk in"><div class="drop"><div class="title">Dépose ici, je m'en occupe</div><div class="row">${btns(c)}</div></div></div>`;
+  return `<div class="blk in"><div class="eyebrow" style="--c:${c.c}">${c.eyebrow}</div><div class="title">${c.title}</div>${c.code ? `<div class="code">${c.code}</div>` : `<div class="sub">${c.sub}</div>`}<div class="row">${btns(c)}</div></div>`;
+}
+function dock() {
+  const m = mods(), rest = m.length - PINNED;
+  const pill = (x) => `<button class="pill" data-mod="${x.id}" style="--c:${x.c}" title="${x.name}" aria-pressed="${cur === 'module' && activeMod === x.id}"><i>${x.mono}</i><span class="st">${x.status}</span></button>`;
+  return m.slice(0, PINNED).map(pill).join('') + (rest > 0 ? `<button class="pill more" id="morebtn" aria-pressed="${drawerOn}" aria-label="Autres modules" style="--c:var(--isl-fg)">+${rest}</button>` : '')
+    + '<span class="gap"></span>';
+}
+function drawer() {
+  const rest = mods().slice(PINNED);
+  $('drawer').innerHTML = rest.map((x, i) => `<button class="tile" data-mod="${x.id}" style="--c:${x.c};--i:${i}"><span class="n"><i>${x.mono}</i>${x.name}</span><span class="v">${x.status}</span></button>`).join('')
+    + `<button class="tile" data-manage style="--c:var(--isl-muted);--i:${rest.length}"><span class="n"><i>+</i>Modules</span><span class="v">Gérer</span></button>`;
+}
+
+/* ---------- Driving the island ---------- */
+const $ = (id) => document.getElementById(id);
+const island = $('island'), actor = $('actor');
+actor.innerHTML = yumi({ size: 100, cls: 'main' });
+const Y = actor.firstElementChild;
+const after = (ms, fn) => timers.push(setTimeout(fn, ms));
+function size(w, h) { island.style.width = w + 'px'; island.style.height = h + 'px'; $('drawer').style.top = h + 8 + 'px' }
+const SEATS = { hidden: [92, 14, .05, 0, 6], compact: [28, 16, .27, 1, 6.5], open: [50, 44, .66, 1, 3], greet: [180, 76, 1, 1, 2.6] };
+function seat(name, snap) {
+  const [x, y, s, o, rw] = SEATS[name];
+  actor.classList.toggle('snap', !!snap);
+  actor.style.transform = `translate(${x - 50}px, ${y - 42}px) scale(${s})`;
+  actor.style.opacity = o; Y.style.setProperty('--rw', rw);
+  if (snap) void actor.offsetWidth;
+}
+function setDrawer(on) { drawerOn = on && island.dataset.mode === 'open'; $('drawer').classList.toggle('on', drawerOn); const b = $('morebtn'); if (b) b.setAttribute('aria-pressed', drawerOn) }
+
+function show(key, quiet) {
+  timers.forEach(clearTimeout); timers = []; $('fx').className = '';
+  const prev = island.dataset.mode, s = STATES[key];
+  cur = key;
+  $('hint').textContent = s.hint;
+  [...$('states').querySelectorAll('.sw')].forEach(b => b.setAttribute('aria-pressed', b.dataset.k === key));
+  if (key === 'lancement') return launch();
+  island.dataset.mode = s.mode; actor.classList.remove('snap');
+  if (s.mode !== 'open') setDrawer(false);
+  if (s.alert) Y.dataset.alert = ''; else delete Y.dataset.alert;
+  if (s.mode === 'hidden') { size(184, 32); seat('hidden'); if (!quiet && prev !== 'hidden') snd('close') }
+  if (s.mode === 'compact') { size(344, 32); seat('compact'); setMood(Y, sleeping ? 'sommeil' : s.mood, s.rim); if (!quiet) snd(prev === 'open' ? 'close' : 'pop') }
+  if (s.mode === 'open') {
+    const c = s.content();
+    $('view').innerHTML = block(c); $('cap').textContent = c.cap || s.cap; $('dock').innerHTML = dock(); $('tabs').innerHTML = tab('home', 'accueil', 'Accueil') + tab('chat', 'parler', 'Parler') + tab('plus', 'deposer', 'Déposer'); drawer();
+    size(480, $('open').offsetHeight); seat('open');
+    setMood(Y, sleeping ? 'sommeil' : s.mood, s.rim);
+    if (!quiet) snd(s.snd || (prev === 'open' ? 'tap' : 'open'));
+  }
+  if (sleeping) Y.dataset.pose = 'sommeil'; else if (s.mode !== 'hidden') playPose(Y, s.pose || 'pop');
+  look(lastX, lastY);
+}
+
+/* Launch: Yumi grows out of the notch, looks around, dips, waves in a halo, then goes to sit in the folded island */
+function launch() {
+  sleeping = false; setDrawer(false); delete Y.dataset.alert; Y.removeAttribute('data-pose');
+  island.dataset.mode = 'greet'; size(184, 32); setMood(Y, 'neutre', 'calm'); seat('hidden', true);
+  const fx = $('fx');
+  fx.style.transform = 'translate(180px, 76px)';
+  fx.innerHTML = ['var(--blue)', 'var(--violet)', 'var(--pink)'].map((c, i) => `<i style="--c:${c};--d:${i * .13}s"></i>`).join('')
+    + Array.from({ length: 12 }, (_, i) => `<b style="--c:${['var(--blue)', 'var(--violet)', 'var(--pink)'][i % 3]};--a:${i * 30 + 8}deg;--d:${(i % 4) * .03}s"></b>`).join('');
+  const gaze = (x, y) => { Y.dataset.fixed = ''; Y.style.setProperty('--lx', x); Y.style.setProperty('--ly', y) };
+  after(60, () => { actor.classList.remove('snap'); size(360, 136); seat('greet'); snd('open') });
+  after(330, () => playPose(Y, 'arrive'));
+  after(700, () => setMood(Y, 'heureux', 'calm'));
+  after(1050, () => { setMood(Y, 'curieux', 'calm'); gaze(-1, -.1) });
+  after(1380, () => gaze(1, -.1));
+  after(1720, () => { setMood(Y, 'neutre', 'calm'); gaze(0, .3); playPose(Y, 'creux') });
+  after(1980, () => { setMood(Y, 'heureux', 'joy'); playPose(Y, 'salut'); fx.className = 'go'; snd('greet') });
+  after(2650, () => { setMood(Y, 'neutre', 'joy'); gaze(.6, -.6) });
+  after(3250, () => setMood(Y, 'heureux', 'calm'));
+  after(3750, () => { cur = 'repliee'; show('repliee', true); snd('close'); $('hint').textContent = STATES.lancement.hint });
+}
+
+$('states').insertAdjacentHTML('beforeend', Object.entries(STATES).map(([k, s]) => `<button class="sw" data-k="${k}" aria-pressed="false">${s.label}</button>`).join('') + `<button class="sw ghost" id="soundbtn">Son activé</button>`);
+$('states').addEventListener('click', e => {
+  const b = e.target.closest('.sw'); if (!b) return;
+  if (b.id === 'soundbtn') { soundOn = !soundOn; b.textContent = soundOn ? 'Son activé' : 'Son coupé'; snd('tap'); return }
+  sleeping = false; setDrawer(false); show(b.dataset.k);
+});
+function pick(e) {
+  const m = e.target.closest('[data-mod]'), go = e.target.closest('[data-go]');
+  if (e.target.closest('[data-manage]')) { setDrawer(false); $('catalog').scrollIntoView({ behavior: 'smooth', block: 'center' }); return true }
+  if (m) { activeMod = m.dataset.mod; setDrawer(false); show('module'); return true }
+  if (go) { setDrawer(false); show(go.dataset.go); return true }
+  return false;
+}
+island.addEventListener('click', e => {
+  if (island.dataset.mode === 'compact') return show('accueil');
+  if (island.dataset.mode !== 'open') return;
+  if (e.target.closest('#morebtn')) { setDrawer(!drawerOn); snd(drawerOn ? 'open' : 'close'); return }
+  if (pick(e)) return;
+  if (e.target.closest('#actor')) { snd('pop'); return playPose(Y, 'boing') }
+  if (e.target.closest('[data-tap]')) { snd('tap'); playPose(Y, 'pop') }
+});
+$('drawer').addEventListener('click', pick);
+island.addEventListener('mouseenter', () => { if (island.dataset.mode === 'hidden') show('repliee') });
+
+/* Poses */
+const POSES = [['saut', 'Saut', 'neutre'], ['etirer', 'Étirer', 'surpris'], ['ecraser', "S'écraser", 'inquiet'], ['secouer', 'Secouer', 'agace'], ['celebrer', 'Célébrer', 'heureux'], ['sommeil', 'Sommeil', 'sommeil']];
+$('poses').insertAdjacentHTML('beforeend', POSES.map(([k, l]) => `<button class="sw" data-p="${k}">${l}</button>`).join(''));
+$('poses').addEventListener('click', e => {
+  const b = e.target.closest('.sw'); if (!b) return;
+  const p = b.dataset.p;
+  if (!['open', 'compact'].includes(STATES[cur].mode)) cur = 'accueil';
+  sleeping = p === 'sommeil'; show(cur, true);
+  if (!sleeping) { playPose(Y, p); snd(p === 'celebrer' ? 'done' : 'pop') } else snd('close');
+});
+$('posegal').innerHTML = POSES.map(([k, l, mood]) => `<button class="face" data-p="${k}">${yumi({ size: 72, mood, pose: k === 'sommeil' ? k : '' })}${l}</button>`).join('');
+$('posegal').addEventListener('click', e => { const b = e.target.closest('.face'); if (b && b.dataset.p !== 'sommeil') playPose(b.querySelector('.yumi'), b.dataset.p) });
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!calm) {
+  let gi = 0;
+  setInterval(() => { const cells = [...$('posegal').children].filter(b => b.dataset.p !== 'sommeil'); const b = cells[gi++ % cells.length]; playPose(b.querySelector('.yumi'), b.dataset.p) }, 1700);
+  /* Idle life: now and then Yumi glances somewhere on his own */
+  setInterval(() => {
+    if (sleeping || cur === 'lancement' || Y.dataset.pose || Y.dataset.fixed !== undefined || island.dataset.mode === 'hidden') return;
+    Y.dataset.fixed = ''; Y.style.setProperty('--lx', (Math.random() * 2 - 1).toFixed(2)); Y.style.setProperty('--ly', (Math.random() * 1.2 - .6).toFixed(2));
+    setTimeout(() => { if (cur !== 'lancement' && !MOODS[STATES[cur].mood || 'neutre'].look) { delete Y.dataset.fixed; look(lastX, lastY) } }, 900);
+  }, 6500);
+}
+
+/* Catalogue */
+function catalog() {
+  const cats = [...new Set(ALL.map(m => m.cat))], full = sel.length >= MAX;
+  $('catalog').innerHTML = cats.map(cat => `<div class="cat"><span>${cat}</span><div>${ALL.filter(m => m.cat === cat).map(m => { const i = sel.indexOf(m.id), on = i >= 0; return `<button data-id="${m.id}" aria-pressed="${on}" ${!on && full ? 'disabled' : ''}><i class="dot" style="--c:${m.c}"></i>${m.name}${on ? `<em>${i < PINNED ? 'île' : 'carré'}</em>` : ''}</button>` }).join('')}</div></div>`).join('');
+  $('count').textContent = `${sel.length} sur ${MAX} choisis`;
+  $('count').classList.toggle('full', full);
+}
+$('catalog').addEventListener('click', e => {
+  const b = e.target.closest('button[data-id]'); if (!b || b.disabled) return;
+  const id = b.dataset.id;
+  if (sel.includes(id)) { if (sel.length > 1) sel = sel.filter(x => x !== id) } else if (sel.length < MAX) sel.push(id);
+  try { localStorage.setItem('yumi-mods-v3', JSON.stringify(sel)) } catch (err) {}
+  if (!sel.includes(activeMod)) activeMod = sel[0];
+  catalog(); snd('tap'); if (STATES[cur].mode === 'open') { const d = drawerOn; show(cur, true); setDrawer(d) }
+});
+
+/* Character sheet */
+const FACE = { neutre: 'Neutre', heureux: 'Heureux', curieux: 'Curieux', concentre: 'Concentré', reflechi: 'Réfléchi', surpris: 'Surpris', inquiet: 'Inquiet', agace: 'Agacé', clin: "Clin d'œil", sommeil: 'Sommeil' };
+$('faces').innerHTML = Object.keys(MOODS).map(k => `<div class="face">${yumi({ size: 68, mood: k })}${FACE[k]}</div>`).join('');
+const RIML = { calm: ['Au repos', 'neutre'], work: ['Au travail', 'concentre'], think: ['Réfléchit', 'reflechi'], warn: ['Attend ta réponse', 'surpris'], error: ['Erreur', 'inquiet'], done: ['Terminé', 'heureux'], joy: ['Content', 'clin'] };
+$('rims').innerHTML = Object.entries(RIML).map(([k, [l, m]]) => `<div class="face">${yumi({ size: 68, mood: m, rim: k })}${l}</div>`).join('');
+
+/* Gaze follows the pointer */
+let lastX = innerWidth / 2, lastY = innerHeight / 2;
+function look(x, y) {
+  lastX = x; lastY = y;
+  document.querySelectorAll('.yumi:not([data-fixed])').forEach(el => {
+    const r = el.getBoundingClientRect(); if (!r.width) return;
+    el.style.setProperty('--lx', Math.tanh((x - r.left - r.width / 2) / 220).toFixed(3));
+    el.style.setProperty('--ly', Math.tanh((y - r.top - r.height / 2) / 180).toFixed(3));
+  });
+}
+addEventListener('pointermove', e => look(e.clientX, e.clientY), { passive: true });
+
+/* Scale the stage to the available width */
+function fit() { const w = $('stage').clientWidth, k = Math.min(1, w / 720); $('scaler').style.transform = `scale(${k})`; $('stage').style.height = 312 * k + 'px' }
+addEventListener('resize', fit); fit();
+catalog(); seat('open', true); show(cur, true);
+</script>
