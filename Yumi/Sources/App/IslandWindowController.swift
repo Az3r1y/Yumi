@@ -7,27 +7,23 @@ final class IslandWindowController: NSWindowController {
 
     private var islandPanel: IslandPanel!
     private var state: AppState { AppState.shared }
+    private let model = IslandModel.shared
 
-    // State machine (replaces all hover/absence/auto-close timers)
+    // State machine (hover, auto-close, launch)
     let fsm = IslandStateMachine()
+    private let launch = IslandLaunch()
 
     private var wasInIsland = false
+    /// Debug walk-through: the island does not fold by itself.
+    var holdsOpen = false
     private var frameTimer: Timer?
-    private var keyMonitor: Any?
-    private var viewSubscription: AnyCancellable?
+    private var monitors: [Any] = []
+    private var subscriptions: Set<AnyCancellable> = []
 
-    // Confused recovery timer (set by handleDizzy)
-    private var confusedRecoveryTimer: DispatchWorkItem?
-
-    // Finished-pin timer
-    private var finishedPinTimer: DispatchWorkItem?
-
-    // Bot-head hover (love emote — mirrors prototype botHover())
-    private var hoverTimer: DispatchWorkItem?
-    private var botHoverTimer: DispatchWorkItem?
-    private var botHovering: Bool = false
-    private var lastLoveTime: Double = 0
-    private var botHoverStartPos: CGPoint = .zero
+    /// The view the island opens on, when something other than a click opens it.
+    private var pendingView: IslandView?
+    /// Modules that were already asking for attention: only a new one opens the island.
+    private var attentive: Set<String> = []
 
     // Window attach drag (M8)
     private var attachDragStart: NSPoint? = nil
@@ -39,17 +35,12 @@ final class IslandWindowController: NSWindowController {
     private var highlightPanel: NSPanel? = nil
     private var highlightWindowPid: pid_t = 0
 
-    // Notch real dimensions (set on init)
-    private var notchW: CGFloat = IslandConst.notchWidth
-    private var notchH: CGFloat = IslandConst.notchHeight
-
     convenience init() {
-        let screen = Self.notchScreen() ?? NSScreen.main!
-        let nW = Self.notchWidth(for: screen)
-        let nH = Self.notchHeight(for: screen)
+        let notch = Self.notchScreen()
+        let screen = notch ?? NSScreen.main ?? NSScreen.screens[0]
 
-        let panelW: CGFloat = 720
-        let panelH: CGFloat = 320
+        let panelW = IslandConst.panelWidth
+        let panelH = IslandConst.panelHeight
         let sf = screen.frame
         let panel = IslandPanel(
             contentRect: NSRect(x: sf.midX - panelW/2, y: sf.maxY - panelH,
@@ -57,17 +48,16 @@ final class IslandWindowController: NSWindowController {
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered, defer: false
         )
-        panel.notchWidth  = nW
-        panel.notchHeight = nH
 
         self.init(window: panel)
         self.islandPanel = panel
-        self.notchW = nW
-        self.notchH = nH
-        setupPanel(screen: screen)
+        model.layout = IslandLayout(notchWidth: Self.notchWidth(for: screen),
+                                    notchHeight: Self.notchHeight(for: screen),
+                                    hasNotch: notch != nil)
+        setupPanel()
     }
 
-    private func setupPanel(screen: NSScreen) {
+    private func setupPanel() {
         guard let panel = window as? IslandPanel else { return }
         panel.backgroundColor = .clear
         panel.isOpaque = false
@@ -77,8 +67,9 @@ final class IslandWindowController: NSWindowController {
         panel.ignoresMouseEvents = true
 
         // Propagate real notch dimensions to AppState
-        AppState.shared.notchWidth  = notchW
-        AppState.shared.notchHeight = notchH
+        state.notchWidth  = model.layout.notchWidth
+        state.notchHeight = model.layout.notchHeight
+        attentive = Set(state.modules.filter(\.needsAttention).map(\.id))
 
         let contentSize = panel.contentRect(forFrameRect: panel.frame).size
 
@@ -91,64 +82,41 @@ final class IslandWindowController: NSWindowController {
         hosting.frame = NSRect(origin: .zero, size: contentSize)
         hosting.autoresizingMask = [.width, .height]
 
-        // FileDropNSView sits below the hosting view (hitTest returns nil → no mouse interference).
+        // FileDropNSView sits above the hosting view (hitTest returns nil → no mouse interference).
         // AppKit routes NSDraggingDestination events to registered views independently of hitTest.
         let dropView = FileDropNSView(frame: NSRect(origin: .zero, size: contentSize))
         dropView.autoresizingMask = [.width, .height]
-        dropView.onDragEntered = { [weak self] loc in
-            Task { @MainActor in
-                let iLoc = self?.windowToIsland(loc) ?? CGPoint(x: 320, y: 88)
-                AppState.shared.fileDragOver = true
-                // enterZone sets isActive=true BEFORE hookExpand triggers re-render,
-                // so IslandContainer sees isActive=true when state.view becomes .upload.
-                UploadSequenceEngine.shared.enterZone(x: iLoc.x, y: iLoc.y)
-                NotificationCenter.default.post(name: .hookExpand, object: IslandView.upload)
-                NotificationCenter.default.post(name: .botMorphTo, object: CGFloat(1))
-            }
-        }
-        dropView.onDragUpdated = { [weak self] loc in
-            Task { @MainActor in
-                let iLoc = self?.windowToIsland(loc) ?? CGPoint(x: 320, y: 88)
-                UploadSequenceEngine.shared.updateCursor(x: iLoc.x, y: iLoc.y)
-            }
+        dropView.onDragEntered = { [weak self] in
+            // He opens on the drop view and stretches up to catch the file
+            AppState.shared.fileDragOver = true
+            self?.expand(to: .upload)
         }
         dropView.onDragExited = {
-            Task { @MainActor in
-                AppState.shared.fileDragOver = false
-                // Do NOT collapse — drag session still active; island stays open.
-                NotificationCenter.default.post(name: .botMorphTo, object: CGFloat(0))
-                UploadSequenceEngine.shared.exitZone()
-            }
+            // Do NOT collapse — drag session still active; island stays open.
+            AppState.shared.fileDragOver = false
         }
         dropView.onFilesDropped = { urls in
-            Task { @MainActor in
-                await FileDropHandler.handle(urls: urls, state: AppState.shared)
-            }
+            FileDropHandler.handle(urls: urls, state: AppState.shared)
         }
 
         container.addSubview(hosting)    // z-bottom: SwiftUI + mouse events
         container.addSubview(dropView)   // z-top: drag only (hitTest→nil, transparent to mouse)
         panel.contentView = container
 
-        startPolling()
-        startKeyMonitor()
         wireFSM()
-
-        // Make panel key whenever the prompt/chat view becomes active
-        // (nonactivatingPanel never auto-becomes key, but TextField needs it)
-        viewSubscription = state.$view
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] newView in
-                guard let self else { return }
-                if newView == .prompt {
-                    self.islandPanel.makeKey()
-                }
-            }
+        startPolling()
+        startMonitors()
+        startObservers()
+        #if DEBUG
+        IslandDemo.startIfRequested(controller: self)
+        #endif
     }
 
     // MARK: - FSM wiring
 
     private func wireFSM() {
+        launch.onComplete = { [weak self] in self?.fsm.greetComplete() }
+
         fsm.onTransition = { [weak self] from, to in
             guard let self else { return }
             switch to {
@@ -156,47 +124,45 @@ final class IslandWindowController: NSWindowController {
                 self.setMode(.hidden)
 
             case .petit:
-                if from == .greeting {
-                    // Fire interrupt first so canvas collapse starts before mode change
-                    NotificationCenter.default.post(name: .greetingInterrupt, object: nil)
-                } else if from == .hidden {
-                    SoundEngine.shared.play("peek")
-                }
-                // setMode BEFORE changing view: onChange(of: state.view) guards on .expanded,
-                // so setting view while already compact won't trigger a spurious open animation.
-                self.setMode(.compact)
-                if from == .greeting { self.state.view = self.defaultView() }
-                // Start 60s hide timer if mouse is not currently over the island
-                if !self.wasInIsland { self.fsm.mouseLeft() }
+                if from == .hidden { SoundEngine.shared.play("peek") }
+                // The launch plays its own sounds
+                self.setMode(.compact, sound: from != .greeting)
+                self.leaveOpenIsland()
 
             case .home:
-                self.expand(to: self.defaultView())
-                // Start collapse timer if mouse not currently hovering
-                if !self.wasInIsland {
-                    self.fsm.mouseLeft()
-                }
+                if from == .greeting { self.launch.cancel() }
+                self.state.view = self.pendingView ?? .overview
+                self.pendingView = nil
+                self.setMode(.expanded, sound: from != .greeting)
 
             case .greeting:
-                self.expand(to: .greeting)
+                // Yumi only lives while the island is not hidden, and the launch draws its
+                // own shapes: the mode is "expanded" for its whole length.
+                self.state.view = .greeting
+                self.setMode(.expanded, sound: false)
+                self.launch.start(modules: self.model.pinned(self.state.modules).count)
             }
         }
+    }
 
-        // FSM observes greetComplete notification
-        NotificationCenter.default.addObserver(
-            forName: .greetComplete, object: nil, queue: .main
-        ) { [weak self] _ in
-            self?.fsm.greetComplete()
-        }
+    /// What is left behind when the island folds: the view, the key window, a chat error.
+    private func leaveOpenIsland() {
+        IslandActions.leaveChatError(next: nil)
+        state.isPinned = false
+        fsm.pinned = false
+        model.drawerOpen = false
+        if state.view != .overview { state.view = .overview }
+        window?.resignKey()
     }
 
     // MARK: - 60 Hz polling loop
 
     private func startPolling() {
-        frameTimer = Timer.scheduledTimer(withTimeInterval: 1.0/60.0, repeats: true) { [weak self] _ in
-            guard let self else { return }
-            Task { @MainActor in self.pollFrame() }
+        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.pollFrame() }
         }
-        RunLoop.main.add(frameTimer!, forMode: .common)
+        RunLoop.main.add(timer, forMode: .common)
+        frameTimer = timer
     }
 
     private func pollFrame() {
@@ -208,9 +174,11 @@ final class IslandWindowController: NSWindowController {
         let pf = panel.frame
         let local = CGPoint(x: mouse.x - pf.minX, y: mouse.y - pf.minY)
 
-        // Island rect in panel coords
-        let islandRect = panel.currentIslandFrame(nw: notchW, nh: notchH)
-        let inIsland   = islandRect.insetBy(dx: -6, dy: -6).contains(local)
+        // The island and, when it is out, the second square under it
+        var inIsland = islandFrame().insetBy(dx: -6, dy: -6).contains(local)
+        if !inIsland, let drawer = drawerFrame() {
+            inIsland = drawer.insetBy(dx: -6, dy: -IslandConst.drawerGap).contains(local)
+        }
 
         // Toggle click-through
         let shouldAcceptMouse = inIsland || inAttachDrag || attachDragStart != nil
@@ -221,42 +189,20 @@ final class IslandWindowController: NSWindowController {
             }
         }
 
-        // Mouse in screen coords (Y flipped, origin top-left) for Bot look-at
-        let screenH = panel.screen?.frame.height ?? NSScreen.main!.frame.height
-        let newPos = CGPoint(x: mouse.x - (panel.screen?.frame.minX ?? 0), y: screenH - mouse.y)
-        let cur = AppState.shared.mousePosition
-        if abs(newPos.x - cur.x) > 1 || abs(newPos.y - cur.y) > 1 {
-            AppState.shared.mousePosition = newPos
-        }
+        // An alert that waits for an answer keeps the island open; the delay is the user's
+        fsm.pinned = state.isPinned
+        if !holdsOpen { fsm.homeToPetitDelay = max(3, state.autoCloseInterval) }
 
         // Feed FSM hover enter/leave
         if inIsland && !wasInIsland {
             guard !inAttachDrag else { wasInIsland = inIsland; return }
-            // If in greeting: tell greeting to stay open (tc → infinity)
-            if fsm.state == .greeting {
-                NotificationCenter.default.post(name: .greetingHover, object: nil)
-            }
             fsm.mouseEntered()
         }
         if !inIsland && wasInIsland {
             fsm.mouseLeft()
         }
+        if inIsland { state.lastActivity = .now }
         wasInIsland = inIsland
-
-        // Bot-head hover (love emote)
-        let overBot = state.mode == .expanded && state.stateOverride == nil && isBotHit(local)
-        if overBot && !botHovering { botHoverIn(mousePos: NSEvent.mouseLocation) }
-        if !overBot && botHovering { botHoverOut() }
-        botHovering = overBot
-        if botHovering {
-            let m = NSEvent.mouseLocation
-            let dist = hypot(m.x - botHoverStartPos.x, m.y - botHoverStartPos.y)
-            if dist > 40 {
-                botHoverStartPos = m
-                botHoverTimer?.cancel()
-                scheduleLoveTimer()
-            }
-        }
 
         // Ghost character follows cursor + window highlight during drag (60 Hz, no throttle)
         if inAttachDrag {
@@ -265,222 +211,228 @@ final class IslandWindowController: NSWindowController {
         }
     }
 
-    private var lastMouse: CGPoint = .zero
+    // MARK: - Geometry (panel coordinates, origin bottom-left)
 
-    // MARK: - Bot-head hover (love emote — mirrors prototype botHover())
-
-    private func botHoverIn(mousePos: CGPoint) {
-        guard state.mode == .expanded, state.stateOverride == nil else { return }
-        guard CACurrentMediaTime() - lastLoveTime > 6 else { return }
-        botHoverStartPos = mousePos
-        NotificationCenter.default.post(name: .botBlink, object: nil)
-        NotificationCenter.default.post(name: .botSetTgEs, object: CGFloat(1.08))
-        SoundEngine.shared.play("hover")
-        scheduleLoveTimer()
+    private func islandFrame() -> CGRect {
+        let size = model.islandSize(for: state.mode)
+        let panel = window?.frame.size ?? CGSize(width: IslandConst.panelWidth, height: IslandConst.panelHeight)
+        return CGRect(x: (panel.width - size.width) / 2, y: panel.height - size.height,
+                      width: size.width, height: size.height)
     }
 
-    private func botHoverOut() {
-        botHoverTimer?.cancel()
-        NotificationCenter.default.post(name: .botSetTgEs, object: CGFloat(1))
+    private func drawerFrame() -> CGRect? {
+        guard model.drawerOpen, model.stage(for: state.mode) == .open, model.drawerHeight > 0 else { return nil }
+        let island = islandFrame()
+        let width = IslandConst.drawerWidth * IslandConst.openScale
+        let height = model.drawerHeight * IslandConst.openScale
+        return CGRect(x: island.maxX - width, y: island.minY - IslandConst.drawerGap - height,
+                      width: width, height: height)
     }
 
-    private func scheduleLoveTimer() {
-        botHoverTimer?.cancel()
-        let item = DispatchWorkItem { [weak self] in
-            guard let self, self.botHovering, self.state.stateOverride == nil else { return }
-            guard CACurrentMediaTime() - self.lastLoveTime > 6 else { return }
-            self.lastLoveTime = CACurrentMediaTime()
-            NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.love)
-            SoundEngine.shared.play("love")
-        }
-        botHoverTimer = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.9, execute: item)
-    }
-
-    private func scheduleHover(after delay: TimeInterval, action: @escaping () -> Void) {
-        hoverTimer?.cancel()
-        let item = DispatchWorkItem(block: action)
-        hoverTimer = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + delay, execute: item)
+    /// Where Yumi is: his 100 × 84 box at the scale of his seat.
+    private func isBotHit(_ windowPoint: CGPoint) -> Bool {
+        let stage = model.stage(for: state.mode)
+        guard stage == .open || stage == .compact else { return false }
+        let seat = model.layout.seat(stage)
+        let panel = window?.frame.size ?? CGSize(width: IslandConst.panelWidth, height: IslandConst.panelHeight)
+        let dx = windowPoint.x - (panel.width / 2 + seat.x)
+        let dy = windowPoint.y - (panel.height - seat.y)
+        return abs(dx) <= 50 * seat.scale && abs(dy) <= 42 * seat.scale
     }
 
     // MARK: - Mode transitions
 
-    private func modeLevel(_ m: IslandMode) -> Int {
-        switch m { case .hidden: return 0; case .compact: return 1; case .expanded: return 2 }
-    }
-
-    func setMode(_ mode: IslandMode) {
+    private func setMode(_ mode: IslandMode, sound: Bool = true) {
         let prev = state.mode
         guard mode != prev else { return }
-        let shrinking = modeLevel(mode) < modeLevel(prev)
-        let anim: Animation = shrinking
-            ? .timingCurve(0.45, 0, 0.2, 1, duration: 0.34)
-            : .spring(response: 0.5, dampingFraction: 0.72)
-        withAnimation(anim) { state.mode = mode }
+        state.mode = mode
+        guard sound else { return }
         if mode == .expanded { SoundEngine.shared.play("open") }
-        if prev == .expanded { SoundEngine.shared.play("close"); state.isPinned = false }
+        if prev == .expanded { SoundEngine.shared.play("close") }
     }
 
+    /// Opens the island on a view. Alerts, the menu bar item, the shortcut, a file dragged
+    /// over the notch and a window handed to Yumi all come through here.
     func expand(to view: IslandView) {
-        state.view = view
-        if state.mode == .expanded {
-            // Already expanded — just switch view
+        if fsm.state == .home {
+            IslandActions.leaveChatError(next: view)
+            state.view = view
         } else {
-            setMode(.expanded)
+            pendingView = view
+            fsm.pinned = state.isPinned
+            fsm.open()
         }
         state.lastActivity = .now
     }
 
     func collapse() {
         state.isPinned = false
-        finishedPinTimer?.cancel()
-        // Tell FSM we're going to compact (from home)
-        if fsm.state == .home { fsm.mouseLeft() }
-        setMode(.compact)
-        window?.resignKey()
+        fsm.pinned = false
+        fsm.collapse()
     }
 
-    // MARK: - Keyboard (Escape closes)
+    // MARK: - Mouse and keyboard
 
-    private func startKeyMonitor() {
-        keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            Task { @MainActor in
-                guard let self = self else { return }
-                if event.keyCode == 53 { // Escape
-                    if self.state.mode == .expanded && !self.state.isPinned {
-                        self.collapse()
-                    }
-                }
+    private func startMonitors() {
+        func keep(_ monitor: Any?) { if let monitor { monitors.append(monitor) } }
+
+        // Escape folds the island: from another application (global), or while typing in ours (local)
+        keep(NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            let keyCode = event.keyCode
+            let flags = event.modifierFlags.intersection([.command, .control, .option, .shift]).rawValue
+            MainActor.assumeIsolated { self?.keyDown(keyCode: keyCode, flags: flags) }
+        })
+        keep(NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self else { return event }
+            let handled = MainActor.assumeIsolated { () -> Bool in
+                guard event.keyCode == 53, self.fsm.state == .home, !self.state.isPinned else { return false }
+                self.collapse()
+                return true
             }
-        }
+            return handled ? nil : event
+        })
 
-        // Hook server expand requests (alerts only)
-        NotificationCenter.default.addObserver(forName: .hookExpand, object: nil, queue: .main) { [weak self] note in
-            guard let self, let view = note.object as? IslandView else { return }
-            self.expand(to: view)
-        }
-
-        // Hook server compact reveal (non-alert work events: session start, tool use, etc.)
-        NotificationCenter.default.addObserver(forName: .hookReveal, object: nil, queue: .main) { [weak self] _ in
-            guard let self else { return }
-            self.fsm.reveal()
-        }
-
-        // Collapse requests from views (OK button, etc.)
-        NotificationCenter.default.addObserver(forName: .islandCollapse, object: nil, queue: .main) { [weak self] _ in
-            self?.collapse()
-        }
-
-        // .botDizzy — posted by BotEngine.slap() on 3rd hit; show confused view + recover after 3.3s
-        NotificationCenter.default.addObserver(forName: .botDizzy, object: nil, queue: .main) { [weak self] _ in
-            self?.handleDizzy()
-        }
-
-        // Window attach drag.
+        // Window attach drag, and the click that opens the compact island.
         // Uses MainActor.assumeIsolated (synchronous) to avoid race with pollFrame().
         // Global mouseUp is the reliable fallback when cursor is outside our panel frame.
-        NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+        keep(NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
             guard let self else { return event }
             MainActor.assumeIsolated {
                 guard self.wasInIsland else { return }
                 self.pendingIslandClick = true
-                self.hoverTimer?.cancel()
-                self.botHoverTimer?.cancel()
-                self.botHovering = false
-                // Drag only starts when clicking directly on the bot head
+                // Drag only starts when clicking directly on Yumi
                 guard self.isBotHit(event.locationInWindow) else { return }
                 self.attachDragStart = NSEvent.mouseLocation
-                // Post slap only when expanded
-                guard self.state.mode == .expanded else { return }
-                NotificationCenter.default.post(name: .triggerSlap, object: nil)
             }
             return event
-        }
-        NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
+        })
+        keep(NSEvent.addLocalMonitorForEvents(matching: .leftMouseDragged) { [weak self] event in
             guard let self else { return event }
             MainActor.assumeIsolated {
                 guard let start = self.attachDragStart, !self.inAttachDrag else { return }
                 let m = NSEvent.mouseLocation
                 guard hypot(m.x - start.x, m.y - start.y) > 3 else { return }
                 self.inAttachDrag = true
-                NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.love)
                 self.showDragGhost()
             }
             return event
-        }
-
-        // mouseUp — local (cursor still in panel) + global (cursor moved outside panel frame)
-        let finishDrag: @Sendable () -> Void = { [weak self] in
-            Task { @MainActor in
-                guard let self, self.inAttachDrag else { return }
-                let mouse = NSEvent.mouseLocation
-                self.inAttachDrag = false
-                self.attachDragStart = nil
-                self.state.stateOverride = nil
-                self.hideDragGhost()
-                #if !APPSTORE
-                if let ctx = self.windowContextAtPoint(mouse) {
-                    self.state.promptContext = ctx
-                    SoundEngine.shared.play("approve")
-                    NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
-                    self.expand(to: .prompt)
-                }
-                #endif
-            }
-        }
-        NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
+        })
+        keep(NSEvent.addLocalMonitorForEvents(matching: .leftMouseUp) { [weak self] event in
             guard let self else { return event }
             MainActor.assumeIsolated {
                 let hadPendingClick = self.pendingIslandClick
-                let wasDragging     = self.inAttachDrag
                 self.pendingIslandClick = false
-                if wasDragging {
-                    finishDrag()
+                if self.inAttachDrag {
+                    self.finishDrag()
                 } else {
                     self.attachDragStart = nil
-                    if hadPendingClick && self.state.mode != .expanded {
-                        self.fsm.click()   // FSM petit→home; onTransition calls expand(to:)
-                    }
+                    if hadPendingClick { self.fsm.click() }   // petit → home, ignored elsewhere
                 }
             }
             return event
-        }
-        NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { _ in
-            finishDrag()
-        }
+        })
+        keep(NSEvent.addGlobalMonitorForEvents(matching: .leftMouseUp) { [weak self] _ in
+            MainActor.assumeIsolated { self?.finishDrag() }
+        })
+    }
 
-        // Global hotkey to show island
-        NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            Task { @MainActor in
-                guard let self, self.state.hotkeyEnabled else { return }
-                let pressed = event.modifierFlags.intersection([.command, .control, .option, .shift]).rawValue
-                guard pressed == self.state.hotkeyFlags, event.keyCode == self.state.hotkeyCode else { return }
-                if self.state.mode == .hidden || self.state.mode == .compact {
-                    self.expand(to: .overview)
-                }
-            }
+    private func keyDown(keyCode: UInt16, flags: UInt) {
+        if keyCode == 53 { // Escape
+            if fsm.state == .home && !state.isPinned { collapse() }
+            return
         }
+        // Global hotkey to show island
+        guard state.hotkeyEnabled, flags == state.hotkeyFlags, keyCode == state.hotkeyCode else { return }
+        if fsm.state != .home { expand(to: .overview) }
+    }
+
+    /// Yumi was dropped on a window: it becomes the context of the conversation.
+    private func finishDrag() {
+        guard inAttachDrag else { return }
+        let mouse = NSEvent.mouseLocation
+        inAttachDrag = false
+        attachDragStart = nil
+        hideDragGhost()
+        #if !APPSTORE
+        if let ctx = windowContextAtPoint(mouse) {
+            IslandActions.newConversation()
+            state.promptContext = ctx
+            SoundEngine.shared.play("approve")
+            expand(to: .prompt)
+        }
+        #endif
+    }
+
+    // MARK: - What the rest of the application asks of the island
+
+    private func startObservers() {
+        let center = NotificationCenter.default
+
+        // Hook server expand requests (alerts only)
+        center.publisher(for: .hookExpand)
+            .sink { [weak self] note in
+                guard let view = note.object as? IslandView else { return }
+                self?.expand(to: view)
+            }
+            .store(in: &subscriptions)
+
+        // Hook server compact reveal (non-alert work events: session start, tool use, etc.)
+        center.publisher(for: .hookReveal)
+            .sink { [weak self] _ in self?.fsm.reveal() }
+            .store(in: &subscriptions)
+
+        // Collapse requests from views (OK button, etc.)
+        center.publisher(for: .islandCollapse)
+            .sink { [weak self] _ in self?.collapse() }
+            .store(in: &subscriptions)
 
         // Track last external app for window context capture
         let ourBundle = Bundle.main.bundleIdentifier ?? ""
-        NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didActivateApplicationNotification,
-            object: nil, queue: .main
-        ) { [weak self] note in
-            guard let self else { return }
-            if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
-               app.bundleIdentifier != ourBundle {
-                self.state.lastExternalApp = app
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)
+            .sink { [weak self] note in
+                if let app = note.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication,
+                   app.bundleIdentifier != ourBundle {
+                    self?.state.lastExternalApp = app
+                }
             }
-        }
+            .store(in: &subscriptions)
+
+        // The text field of the talk view needs a key window; a nonactivating panel never
+        // becomes key by itself.
+        state.$view
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] view in
+                guard let self, self.fsm.state == .home else { return }
+                if IslandScreen.resolve(view: view, state: .idle, approvalPending: false) == .talk {
+                    self.islandPanel.makeKey()
+                } else if self.islandPanel.isKeyWindow {
+                    self.islandPanel.resignKey()
+                }
+            }
+            .store(in: &subscriptions)
+
+        // A module that starts asking for the user opens the island on itself
+        // (`ModuleSnapshot.needsAttention`: "the island may open by itself").
+        state.$modules
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] modules in self?.modulesChanged(modules) }
+            .store(in: &subscriptions)
+    }
+
+    private func modulesChanged(_ modules: [ModuleSnapshot]) {
+        let now = Set(modules.filter(\.needsAttention).map(\.id))
+        defer { attentive = now }
+        guard let fresh = modules.first(where: { $0.needsAttention && !attentive.contains($0.id) }),
+              fsm.state != .greeting, state.pendingApproval == nil else { return }
+        model.selectedModuleID = fresh.id
+        expand(to: .module)
     }
 
     // MARK: - Drag ghost window (character follows cursor during drag)
 
     private func showDragGhost() {
         guard dragGhostPanel == nil else { return }
-        // Same size as compact bot: diameter=20 → canvasSize≈33, scale 2× for grab comfort
+        // Twice the compact size, for grab comfort
         let canvasSize: CGFloat = 40 / 0.6      // ~67
         dragGhostSize = canvasSize
 
@@ -545,14 +497,17 @@ final class IslandWindowController: NSWindowController {
         guard let (appKitBounds, pid) = windowBoundsAtScreenPoint(mouse) else {
             // Fade out + close if no window under cursor
             if let old = highlightPanel {
-                let captured = old
                 highlightPanel = nil
                 highlightWindowPid = 0
-                NSAnimationContext.runAnimationGroup({ ctx in
+                NSAnimationContext.runAnimationGroup { ctx in
                     ctx.duration = 0.12
                     ctx.timingFunction = CAMediaTimingFunction(name: .easeIn)
-                    captured.animator().alphaValue = 0
-                }, completionHandler: { captured.close() })
+                    old.animator().alphaValue = 0
+                }
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(130))
+                    old.close()
+                }
             }
             return
         }
@@ -600,8 +555,10 @@ final class IslandWindowController: NSWindowController {
         }
     }
 
-    private func windowBoundsAtScreenPoint(_ screenPoint: NSPoint) -> (CGRect, pid_t)? {
+    /// The frontmost regular application window under a screen point (AppKit coordinates).
+    private func externalWindow(at screenPoint: NSPoint) -> (bounds: CGRect, app: NSRunningApplication)? {
         guard let screen = window?.screen ?? NSScreen.main else { return nil }
+        // CGWindowList uses top-left origin; NSEvent.mouseLocation uses bottom-left
         let screenMaxY = screen.frame.maxY
         let cgPoint = CGPoint(x: screenPoint.x, y: screenMaxY - screenPoint.y)
 
@@ -620,135 +577,19 @@ final class IslandWindowController: NSWindowController {
                   app.bundleIdentifier != ourBundle,
                   app.activationPolicy == .regular else { continue }
             // CG → AppKit: flip Y
-            return (CGRect(x: x, y: screenMaxY - y - h, width: w, height: h), pid)
+            return (CGRect(x: x, y: screenMaxY - y - h, width: w, height: h), app)
         }
         return nil
+    }
+
+    private func windowBoundsAtScreenPoint(_ screenPoint: NSPoint) -> (CGRect, pid_t)? {
+        externalWindow(at: screenPoint).map { ($0.bounds, $0.app.processIdentifier) }
     }
 
     // MARK: - Window context at screen point (for drag-attach)
 
     private func windowContextAtPoint(_ screenPoint: NSPoint) -> PromptContext? {
-        let screen = window?.screen ?? NSScreen.main
-        // CGWindowList uses top-left origin; NSEvent.mouseLocation uses bottom-left
-        let screenMaxY = screen?.frame.maxY ?? NSScreen.main!.frame.maxY
-        let cgPoint = CGPoint(x: screenPoint.x, y: screenMaxY - screenPoint.y)
-
-        guard let windowList = CGWindowListCopyWindowInfo(
-            [.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID
-        ) as? [[String: Any]] else { return nil }
-
-        let ourBundle = Bundle.main.bundleIdentifier ?? ""
-
-        for info in windowList {
-            guard let b = info[kCGWindowBounds as String] as? [String: Any],
-                  let x = b["X"] as? CGFloat, let y = b["Y"] as? CGFloat,
-                  let w = b["Width"] as? CGFloat, let h = b["Height"] as? CGFloat else { continue }
-            guard CGRect(x: x, y: y, width: w, height: h).contains(cgPoint) else { continue }
-
-            let pid = info[kCGWindowOwnerPID as String] as? pid_t ?? 0
-            guard let app = NSRunningApplication(processIdentifier: pid),
-                  app.bundleIdentifier != ourBundle,
-                  app.activationPolicy == .regular else { continue }
-
-            return WindowContextCapture.captureActive(from: app)
-        }
-        return nil
-    }
-
-    // MARK: - Coordinate conversion: window (AppKit, y-up) → island coords (y-down, 0,0 = island top-left)
-
-    func windowToIsland(_ loc: CGPoint) -> CGPoint {
-        let panelH = window?.frame.height ?? 320
-        let panelW = window?.frame.width  ?? 720
-        let islandLeft = (panelW - IslandConst.expandedWidth) / 2
-        // Island is glued to panel top; its bottom in AppKit = panelH - 176
-        return CGPoint(
-            x: loc.x - islandLeft,
-            y: panelH - loc.y                // AppKit y is from bottom; island y from top
-        )
-    }
-
-    // MARK: - Helpers
-
-    func defaultView() -> IslandView {
-        state.tasks.isEmpty ? .empty : .overview
-    }
-
-    func baseMode() -> IslandMode {
-        guard state.isPresent else { return .hidden }
-        return state.tasks.isEmpty ? .hidden : .compact
-    }
-
-    // MARK: - Activity reset (call on any user interaction in island)
-
-    func resetActivity() {
-        state.lastActivity = .now
-    }
-
-    // MARK: - Finished task pin (5.2s)
-
-    func pinForFinished(taskId: String) {
-        state.isPinned = true
-        finishedPinTimer?.cancel()
-        let item = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.state.removeTask(id: taskId)
-            self.state.isPinned = false
-            self.collapse()
-        }
-        finishedPinTimer = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + 5.2, execute: item)
-    }
-
-    // MARK: - Dizzy recovery (triggered by BotEngine.slap via .botDizzy)
-
-    private func handleDizzy() {
-        let prevView = state.view
-        state.stateOverride = .dizzy
-        expand(to: .confused)
-        confusedRecoveryTimer?.cancel()
-        let recovery = DispatchWorkItem { [weak self] in
-            guard let self else { return }
-            self.state.stateOverride = nil
-            if self.state.view == .confused {
-                let fallback = self.state.tasks.isEmpty ? IslandView.empty : .overview
-                self.state.view = (prevView == .confused) ? fallback : prevView
-            }
-            NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
-        }
-        confusedRecoveryTimer = recovery
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.3, execute: recovery)
-    }
-
-    // MARK: - Bot hit test (for slap trigger)
-
-    private func isBotHit(_ windowPoint: CGPoint) -> Bool {
-        let s = AppState.shared
-        let panelH = window?.frame.height ?? 320
-        let panelW = window?.frame.width  ?? 720
-        let (islandW, fixedH) = islandSize(mode: s.mode, view: s.view,
-                                            progress: s.uploadProgress, nw: notchW, nh: notchH)
-        // Chat view resizes dynamically — must match IslandContainer.chatPromptHeight
-        let islandH: CGFloat
-        if s.mode == .expanded && s.view == .prompt {
-            let base: CGFloat = 240
-            let perMsg: CGFloat = 40
-            islandH = min(300, base + CGFloat(s.chatHistory.count) * perMsg)
-        } else {
-            islandH = fixedH
-        }
-        let islandMinX = (panelW - islandW) / 2
-        let (cx, cy, diameter, _) = botPosition(mode: s.mode, view: s.view,
-                                                  islandW: islandW, islandH: islandH,
-                                                  uploadProgress: s.uploadProgress)
-        let radius = (diameter / 0.6) / 2
-        // botPosition cy is from island TOP; panel AppKit coords have y=0 at bottom
-        // island top in AppKit coords = panelH (island glued to top of panel/screen)
-        let botX = islandMinX + cx
-        let botY = panelH - cy
-        let dx = windowPoint.x - botX
-        let dy = windowPoint.y - botY
-        return dx*dx + dy*dy <= radius * radius
+        externalWindow(at: screenPoint).flatMap { WindowContextCapture.captureActive(from: $0.app) }
     }
 
     // MARK: - Notch detection (static)
@@ -758,9 +599,10 @@ final class IslandWindowController: NSWindowController {
     }
 
     static func notchWidth(for screen: NSScreen) -> CGFloat {
-        let aux = (screen.auxiliaryTopLeftArea?.width ?? 0) +
-                  (screen.auxiliaryTopRightArea?.width ?? 0)
-        let w = screen.frame.width - aux
+        guard let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea else {
+            return IslandConst.notchWidth
+        }
+        let w = screen.frame.width - left.width - right.width
         return w > 0 ? w : IslandConst.notchWidth
     }
 
@@ -768,39 +610,17 @@ final class IslandWindowController: NSWindowController {
         let h = screen.safeAreaInsets.top
         return h > 0 ? h : IslandConst.notchHeight
     }
-
-    nonisolated func cleanup() {
-        // Called explicitly before release if needed
-    }
 }
 
 // MARK: - IslandPanel
 
 final class IslandPanel: NSPanel {
-    var notchWidth:  CGFloat = IslandConst.notchWidth
-    var notchHeight: CGFloat = IslandConst.notchHeight
-
     override var canBecomeKey:  Bool { true }
     override var canBecomeMain: Bool { false }
 
     /// Allow panel to sit in the menu bar / notch area — don't let macOS push it down.
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
         return frameRect
-    }
-
-    func currentIslandFrame(nw: CGFloat, nh: CGFloat) -> CGRect {
-        let s = AppState.shared
-        let (w, fixedH) = islandSize(mode: s.mode, view: s.view,
-                                      progress: s.uploadProgress, nw: nw, nh: nh)
-        let h: CGFloat
-        if s.mode == .expanded && s.view == .prompt {
-            let base: CGFloat = 240
-            let perMsg: CGFloat = 40
-            h = min(300, base + CGFloat(s.chatHistory.count) * perMsg)
-        } else {
-            h = fixedH
-        }
-        return CGRect(x: (frame.width - w) / 2, y: frame.height - h, width: w, height: h)
     }
 }
 
@@ -825,6 +645,8 @@ struct GhostBotView: View {
 // MARK: - Notification names
 
 extension Notification.Name {
+    // The character listens to these (BotCanvasView); the island itself now only uses
+    // Contracts/CharacterCommands.swift.
     static let triggerEmote     = AppIdentity.notification("triggerEmote")
     static let triggerSlap      = AppIdentity.notification("triggerSlap")
     static let botDizzy         = AppIdentity.notification("botDizzy")
@@ -833,27 +655,8 @@ extension Notification.Name {
     static let botSetTgEs       = AppIdentity.notification("botSetTgEs")
     static let botGulp          = AppIdentity.notification("botGulp")
     static let botMorphTo       = AppIdentity.notification("botMorphTo")
-    static let islandAction     = AppIdentity.notification("islandAction")
+    // Requests to the island
     static let islandCollapse   = AppIdentity.notification("islandCollapse")
     static let openFullSettings = AppIdentity.notification("openFullSettings")
     static let hookReveal       = AppIdentity.notification("hookReveal")
-    // Greeting ↔ IslandWindowController
-    static let greetComplete    = AppIdentity.notification("greetComplete")
-    static let greetingHover    = AppIdentity.notification("greetingHover")
-    static let greetingInterrupt = AppIdentity.notification("greetingInterrupt")
-}
-
-// MARK: - islandSize (takes real notch dimensions)
-
-func islandSize(mode: IslandMode, view: IslandView,
-                progress: Double = 0,
-                nw: CGFloat = IslandConst.notchWidth,
-                nh: CGFloat = IslandConst.notchHeight) -> (CGFloat, CGFloat) {
-    switch mode {
-    case .hidden:   return (nw, nh)
-    case .compact:  return (nw + 160, nh)
-    case .expanded:
-        let layout = IslandConst.viewLayouts[view]!
-        return (IslandConst.expandedWidth, layout.height)
-    }
 }
