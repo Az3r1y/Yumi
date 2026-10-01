@@ -111,6 +111,7 @@ private struct LetterIn: ViewModifier {
 /// island, so the island's edge cuts them, as `overflow: hidden` does in the mock-up.
 struct IslandSparks: View {
     let start: Date?
+    var scale: CGFloat = 1
     /// Centre of the burst, in island coordinates: Yumi's seat in the greeting.
     let center: CGPoint
 
@@ -133,7 +134,7 @@ struct IslandSparks: View {
                     let local = t - Double(i) * 0.13
                     guard local >= 0, local <= 1 else { continue }
                     let p = Self.curve.value(at: local)
-                    let scale = 0.5 + (3.4 - 0.5) * p
+                    let scale = (0.5 + (3.4 - 0.5) * p) * self.scale
                     let radius = 32 * scale
                     let rect = CGRect(x: center.x - radius, y: center.y - radius, width: radius * 2, height: radius * 2)
                     context.stroke(Path(ellipseIn: rect.insetBy(dx: scale, dy: scale)),
@@ -147,8 +148,8 @@ struct IslandSparks: View {
                     guard local >= 0, local <= 1 else { continue }
                     let p = Self.curve.value(at: local)
                     let angle = Double(i * 30 + 8) * .pi / 180
-                    let distance = 34 + (150 - 34) * p
-                    let radius = 3 * (1 - 0.7 * p)
+                    let distance = (34 + (150 - 34) * p) * scale
+                    let radius = 3 * (1 - 0.7 * p) * scale
                     let x = center.x + cos(angle) * distance
                     let y = center.y + sin(angle) * distance
                     context.fill(Path(ellipseIn: CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)),

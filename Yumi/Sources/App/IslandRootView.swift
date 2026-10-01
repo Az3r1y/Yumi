@@ -47,11 +47,13 @@ struct IslandScene: View {
             // 1. The island: a black shape that cuts what it contains (`overflow: hidden`)
             IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage)) {
                 ZStack(alignment: .topLeading) {
-                    IslandGreetingLayer(phase: model.greeting, modules: model.pinned(state.modules), drop: layout.notchDelta)
+                    IslandGreetingLayer(phase: model.greeting, modules: model.pinned(state.modules), drop: layout.notchDelta / IslandConst.launchScale)
+                        .scaleEffect(IslandConst.launchScale, anchor: .topLeading)
                         .modifier(IslandLayer(on: launching))
 
                     IslandSparks(start: model.sparksStart,
-                                 center: CGPoint(x: IslandConst.greetWidth / 2 + layout.seat(.greet).x,
+                                 scale: IslandConst.launchScale,
+                                 center: CGPoint(x: IslandConst.greetWidth * IslandConst.launchScale / 2 + layout.seat(.greet).x,
                                                  y: layout.seat(.greet).y))
 
                     IslandCompactLayer(state: state, model: model)
