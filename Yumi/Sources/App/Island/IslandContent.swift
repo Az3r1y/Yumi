@@ -296,7 +296,7 @@ enum IslandActions {
         }
     }
 
-    /// Brings the agent's own window forward: the project in VS Code, or n8n.
+    /// Brings the agent's own window forward: the application its session runs in, or n8n.
     static func openAgent(_ task: AgentTask?) {
         if task?.source == .n8n {
             if let text = KeychainStore.shared.get("n8n-url"), let url = URL(string: text) {
@@ -304,22 +304,8 @@ enum IslandActions {
             }
             return
         }
-        let ids = ["com.microsoft.VSCode", "com.microsoft.VSCodeInsiders", "com.vscodium.codium"]
-        let appURL = ids.compactMap { NSWorkspace.shared.urlForApplication(withBundleIdentifier: $0) }.first
-        if let cwd = task?.sessionCwd, !cwd.isEmpty, let appURL {
-            NSWorkspace.shared.open([URL(fileURLWithPath: cwd)], withApplicationAt: appURL,
-                                    configuration: .init(), completionHandler: nil)
-            return
-        }
-        if let running = ids.compactMap({ id in
-            NSWorkspace.shared.runningApplications.first { $0.bundleIdentifier == id }
-        }).first {
-            running.activate()
-            return
-        }
-        if let appURL {
-            NSWorkspace.shared.openApplication(at: appURL, configuration: .init(), completionHandler: nil)
-        }
+        // Where the conversation is: the terminal, the editor or the Claude app the session runs in.
+        ClaudeTaskMirror.openSession()
     }
 
     // MARK: Talk

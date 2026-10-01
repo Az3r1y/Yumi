@@ -52,44 +52,18 @@ final class ClaudeCodeModule: YumiModule {
     }
 
     func perform(_ action: ModuleAction) {
-        guard let session = sessions.first else {
-            if action == .primary { onShow() }
-            return
-        }
         switch action {
         case .primary:
-            // A pending approval is answered in the island. Otherwise "Voir" shows the work itself:
-            // the project, in the code editor.
+            // A pending approval is answered in the island. Otherwise "Voir" goes where the
+            // conversation is: the application the session runs in, whichever it is.
             let approvalPending = sessions.contains {
                 if case .requestingPermission = $0.activity { return true }
                 return false
             }
-            if approvalPending {
-                onShow()
-            } else if !showProject(of: session), !Self.bringToFront(session.origin) {
-                onShow()
-            }
+            if approvalPending || !Self.bringToFront(sessions.first?.origin) { onShow() }
         case .secondary:
-            Self.bringToFront(session.origin)
+            Self.bringToFront(sessions.first?.origin)
         }
-    }
-
-    /// UserDefaults key of the bundle identifier of the editor the user wants projects opened in.
-    static let editorKey = "codeEditor"
-
-    /// Opens the folder of the session in a code editor. Returns false when there is no folder or no editor.
-    private func showProject(of session: Session) -> Bool {
-        let workspace = NSWorkspace.shared
-        guard let directory = session.origin?.workingDirectory, !directory.isEmpty,
-              let editor = SessionHost.editor(
-                for: session.origin,
-                preferred: UserDefaults.standard.string(forKey: Self.editorKey),
-                running: Set(workspace.runningApplications.compactMap(\.bundleIdentifier)),
-                isInstalled: { workspace.urlForApplication(withBundleIdentifier: $0) != nil }),
-              let application = workspace.urlForApplication(withBundleIdentifier: editor) else { return false }
-        workspace.open([URL(fileURLWithPath: directory)], withApplicationAt: application,
-                       configuration: NSWorkspace.OpenConfiguration(), completionHandler: nil)
-        return true
     }
 
     /// Brings the application a session runs in to the front. An editor reopens the project folder,
