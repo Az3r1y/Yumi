@@ -92,6 +92,13 @@ enum AgendaSummary {
             snapshot.subtitle += ", demain " + details.joined(separator: ", ")
         }
 
+        // The folded island announces today's events only: tomorrow is not happening now.
+        if startsToday || event.start <= now {
+            let join = ModuleControl(id: ModuleAction.primary.rawValue, symbol: "video.fill", label: "Rejoindre")
+            snapshot.live = ModuleLive(text: "\(clock) \(event.title)", priority: ModuleLivePriority.ambient,
+                                       controls: event.joinURL != nil ? [join] : [])
+        }
+
         snapshot.primaryAction = event.joinURL != nil ? "Rejoindre" : "Ouvrir"
         snapshot.secondaryAction = "Voir la journée"
         let delay = event.start.timeIntervalSince(now)

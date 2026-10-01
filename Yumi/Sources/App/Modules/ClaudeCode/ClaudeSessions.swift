@@ -56,7 +56,23 @@ enum ClaudeSessions {
             snapshot.secondaryAction = SessionHost.isEditor(featured.origin) ? "Ouvrir l'éditeur" : "Ouvrir le terminal"
         }
         snapshot.needsAttention = waiting > 0
+        snapshot.live = live(sessions)
         return snapshot
+    }
+
+    /// The folded island only hears about Claude Code when a session is waiting for the user.
+    /// `sessions` is ordered: a waiting session, if any, is the first one.
+    static func live(_ sessions: [Session]) -> ModuleLive? {
+        guard let session = sessions.first, session.status == .waitingForUser else { return nil }
+        let name = projectName(session)
+        let text: String
+        if case .requestingPermission = session.activity {
+            text = "\(name) demande ton accord"
+        } else {
+            text = "\(name) te pose une question"
+        }
+        return ModuleLive(text: text, priority: ModuleLivePriority.attention,
+                          controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])
     }
 }
 
