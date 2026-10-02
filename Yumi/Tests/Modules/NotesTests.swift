@@ -66,7 +66,7 @@ import Foundation
         let snapshot = NotesSummary.snapshot(notes: ["a", "b", "Idée : mode nuit pour Yumi"], reminders: [],
                                              remindersAccess: .denied, now: date(1, 10), calendar: calendar)
         #expect(snapshot.status == "3")
-        #expect(snapshot.title == "Dernière note")
+        #expect(snapshot.title == "Ta dernière note")
         #expect(snapshot.subtitle == "Idée : mode nuit pour Yumi")
         #expect(snapshot.secondaryAction == "Tout voir")
         #expect(!snapshot.needsAttention)
@@ -81,7 +81,7 @@ import Foundation
         let snapshot = NotesSummary.snapshot(notes: ["a"], reminders: reminders, remindersAccess: .granted, now: date(1, 10), calendar: calendar)
         #expect(snapshot.status == "4")
         #expect(snapshot.title == "Rappel : Appeler le dentiste")
-        #expect(snapshot.subtitle == "Aujourd'hui à 14:30, et 2 autres")
+        #expect(snapshot.subtitle == "C'est pour 14:30. Deux autres attendent.")
         #expect(snapshot.primaryAction == "Terminé")
         #expect(snapshot.secondaryAction == "Tout voir")
         #expect(!snapshot.needsAttention)
@@ -90,17 +90,17 @@ import Foundation
     @Test func lateRemindersAskForAttention() {
         let timed = NotesSummary.snapshot(notes: [], reminders: [ReminderItem(id: "1", title: "x", due: date(1, 9), hasTime: true)],
                                           remindersAccess: .granted, now: date(1, 10), calendar: calendar)
-        #expect(timed.subtitle == "En retard depuis 9:00")
+        #expect(timed.subtitle == "C'était pour 9:00.")
         #expect(timed.needsAttention)
 
         let yesterday = NotesSummary.snapshot(notes: [], reminders: [ReminderItem(id: "1", title: "x", due: date(0, 0), hasTime: false)],
                                               remindersAccess: .granted, now: date(1, 10), calendar: calendar)
-        #expect(yesterday.subtitle == "En retard")
+        #expect(yesterday.subtitle == "C'était prévu avant aujourd'hui.")
         #expect(yesterday.needsAttention)
 
         let today = NotesSummary.snapshot(notes: [], reminders: [ReminderItem(id: "1", title: "x", due: date(1, 0), hasTime: false)],
                                           remindersAccess: .granted, now: date(1, 10), calendar: calendar)
-        #expect(today.subtitle == "Aujourd'hui")
+        #expect(today.subtitle == "C'est pour aujourd'hui.")
         #expect(!today.needsAttention)
     }
 }

@@ -92,8 +92,8 @@ extension FocusTimer {
 
     private func plainSnapshot(now: Date) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "prêt",
-                                      title: "Prêt à te concentrer ?",
-                                      subtitle: "\(plan.rounds) sessions de \(FrenchText.minutes(plan.focus)), \(FrenchText.minutes(plan.rest)) de pause",
+                                      title: "On s'y met ?",
+                                      subtitle: "\(FrenchText.sentenceStart(FrenchText.spelledCount(plan.rounds, "session", "sessions", feminine: true))) de \(FrenchText.spokenMinutes(plan.focus)), \(FrenchText.spelled(Int(plan.rest / 60))) de pause.",
                                       primaryAction: "Démarrer", secondaryAction: nil)
         switch state {
         case .idle:
@@ -102,8 +102,8 @@ extension FocusTimer {
         case .running(.focus, let round, let endsAt):
             let left = max(0, endsAt.timeIntervalSince(now))
             snapshot.status = FrenchText.countdown(left)
-            snapshot.title = "Focus en cours"
-            snapshot.subtitle = "Session \(round) sur \(plan.rounds), reste \(FrenchText.duration(left))"
+            snapshot.title = "Tu es dedans. Je me tais."
+            snapshot.subtitle = "Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(left))."
             snapshot.primaryAction = "Pause"
             snapshot.secondaryAction = "Arrêter"
             // The first round was started by hand; the next ones start by themselves.
@@ -112,23 +112,23 @@ extension FocusTimer {
         case .running(.rest, let round, let endsAt):
             let left = max(0, endsAt.timeIntervalSince(now))
             snapshot.status = FrenchText.countdown(left)
-            snapshot.title = "Pause, souffle un peu"
-            snapshot.subtitle = "Session \(round + 1) sur \(plan.rounds) dans \(FrenchText.duration(left))"
+            snapshot.title = "Pause. Souffle un peu."
+            snapshot.subtitle = "Session \(round + 1) sur \(plan.rounds) dans \(FrenchText.duration(left))."
             snapshot.primaryAction = "Passer"
             snapshot.secondaryAction = "Arrêter"
             snapshot.needsAttention = plan.rest - left < Self.attentionSpan
 
         case .paused(let phase, let round, let remaining):
             snapshot.status = "pause"
-            snapshot.title = phase == .focus ? "Focus en pause" : "Pause suspendue"
-            snapshot.subtitle = "Session \(round) sur \(plan.rounds), reste \(FrenchText.duration(remaining))"
+            snapshot.title = phase == .focus ? "En pause. Je garde ta place." : "La pause attend aussi."
+            snapshot.subtitle = "Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(remaining))."
             snapshot.primaryAction = "Reprendre"
             snapshot.secondaryAction = "Arrêter"
 
         case .finished(let at):
             snapshot.status = "fini"
-            snapshot.title = "Bravo, \(FrenchText.count(plan.rounds, "session terminée", "sessions terminées"))"
-            snapshot.subtitle = "Tu as bien mérité une vraie pause"
+            snapshot.title = "\(FrenchText.sentenceStart(FrenchText.spelledCount(plan.rounds, "session", "sessions", feminine: true))). C'est fait."
+            snapshot.subtitle = "Va prendre l'air, je garde la maison."
             snapshot.primaryAction = "Recommencer"
             snapshot.secondaryAction = "Fermer"
             snapshot.needsAttention = now.timeIntervalSince(at) < Self.attentionSpan

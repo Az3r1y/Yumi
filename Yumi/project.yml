@@ -70,17 +70,17 @@ targets:
         LSUIElement: YES
         NSHighResolutionCapable: YES
         NSSupportsAutomaticGraphicsSwitching: YES
-        NSAppleEventsUsageDescription: "Yumi lit l'adresse de la page ouverte dans ton navigateur pour la joindre comme contexte, envoie par Mail les messages que tu confirmes, et met en pause ou passe au morceau suivant quand tu le demandes."
+        NSAppleEventsUsageDescription: "Je lis l'adresse de la page ouverte dans ton navigateur quand tu me la montres, j'envoie par Mail ce que tu confirmes, et je mets ta musique en pause ou au morceau suivant quand tu me le demandes."
         # Not a key macOS reads: Accessibility consent is given in System Settings, with no custom text.
         # Kept as a record of why the app asks for it.
-        NSAccessibilityUsageDescription: "Yumi lit le titre de la fenêtre au premier plan pour le joindre comme contexte, et écoute la touche Échap et ton raccourci global."
+        NSAccessibilityUsageDescription: "Je lis le titre de la fenêtre que tu me montres, et j'écoute la touche Échap et ton raccourci."
         # Asked the first time the user presses the matching button of a module, never at launch.
-        NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
-        NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
-        NSDownloadsFolderUsageDescription: "Yumi dépose dans Téléchargements les fichiers que tu lui demandes de créer depuis le chat."
-        NSDocumentsFolderUsageDescription: "Yumi travaille dans Documents si tu y as placé le dossier du chat."
-        NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
-        NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
+        NSCalendarsFullAccessUsageDescription: "Je lis ton calendrier pour t'annoncer ton prochain rendez-vous. Rien ne quitte ton Mac."
+        NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, et je coche ceux que tu termines."
+        NSDownloadsFolderUsageDescription: "Je dépose dans Téléchargements les fichiers que tu me demandes de créer."
+        NSDocumentsFolderUsageDescription: "Je travaille dans Documents si tu y as placé mon dossier."
+        NSLocationWhenInUseUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
+        NSLocationUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi
@@ -116,12 +116,12 @@ targets:
         LSApplicationCategoryType: public.app-category.developer-tools
         ITSAppUsesNonExemptEncryption: NO
         # Asked the first time the user presses the matching button of a module, never at launch.
-        NSCalendarsFullAccessUsageDescription: "Yumi lit ton calendrier pour t'annoncer ton prochain rendez-vous dans la notch. Rien ne quitte ton Mac."
-        NSRemindersFullAccessUsageDescription: "Yumi affiche tes rappels du jour dans la notch et coche ceux que tu termines."
-        NSDownloadsFolderUsageDescription: "Yumi dépose dans Téléchargements les fichiers que tu lui demandes de créer depuis le chat."
-        NSDocumentsFolderUsageDescription: "Yumi travaille dans Documents si tu y as placé le dossier du chat."
-        NSLocationWhenInUseUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
-        NSLocationUsageDescription: "Yumi utilise ta position, arrondie au kilomètre, pour afficher la météo de là où tu es."
+        NSCalendarsFullAccessUsageDescription: "Je lis ton calendrier pour t'annoncer ton prochain rendez-vous. Rien ne quitte ton Mac."
+        NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, et je coche ceux que tu termines."
+        NSDownloadsFolderUsageDescription: "Je dépose dans Téléchargements les fichiers que tu me demandes de créer."
+        NSDocumentsFolderUsageDescription: "Je travaille dans Documents si tu y as placé mon dossier."
+        NSLocationWhenInUseUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
+        NSLocationUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi.appstore
@@ -137,7 +137,7 @@ targets:
   # Unit tests. Not hosted by the app: the files under test are compiled into the
   # bundle, so running the tests never launches Yumi (no socket, no Keychain, no window).
   # Only add files here that have no dependency on the rest of the app.
-  # Core/ and Modules/ as a whole follow that rule: nothing in them may use a view, AppState,
+  # Core/, Modules/ and Memory/ as a whole follow that rule: nothing in them may use a view, AppState,
   # the hook server or a sound. Core/ knows nothing about Modules/ either.
   YumiTests:
     type: bundle.unit-test
@@ -152,6 +152,9 @@ targets:
         group: Tests/UnderTest
       - path: Sources/App/Contracts/ChatLive.swift
         group: Tests/UnderTest
+      - path: Sources/App/Contracts/MemoryTypes.swift
+        group: Tests/UnderTest
+      - path: Sources/App/Memory
       - path: Sources/App/AppIdentity.swift
         group: Tests/UnderTest
     settings:

@@ -263,3 +263,18 @@ Reste à faire côté île : afficher l'état `working` dans la vue du chat (ell
 | Position de la musique | Spotify l'annonce. Pour Musique, elle est demandée au lecteur si l'automatisation est déjà accordée, sinon comptée depuis le début du morceau et figée en pause : elle peut dériver si l'utilisateur déplace la tête de lecture. |
 | Départ | `applicationShouldTerminate` annule la fin, poste `yumiQuitRequested`, et termine à la réception de `yumiQuitReady`, après six secondes au plus, ou tout de suite si l'utilisateur quitte une seconde fois. Une fermeture de session, un redémarrage ou une extinction ne sont jamais retardés. |
 | Historique du chat | Tout le texte est gardé dans l'ordre : le texte écrit avant une action entre dans `chatHistory` au moment où l'action commence, puis la ligne d'action, puis la suite. `chatLive.text` repart alors de zéro pour ne pas l'afficher deux fois. |
+
+## Cœur, phase 5 : mémoire et voix
+
+| Sujet | État |
+|---|---|
+| Fichier | `memoire.md` dans le dossier de support de Yumi : Markdown lisible, un prénom puis trois rubriques (Toi, Tes projets, Le fil). Écrit par fichier temporaire, lisible par l'utilisateur seul. Modifiable à la main : il est relu au lancement. |
+| `AppState.memory`, `AppState.userName` | Tenus à jour par `Memory/MemoryStore`, qui répond à `memorySetName`, `memoryEdit`, `memoryDelete` et `memoryClear`. |
+| Limite | 120 souvenirs. Au-delà, les plus anciens du fil partent d'abord, puis les plus anciens sur les projets ; jamais ceux sur la personne. |
+| Apprentissage | C'est la conversation qui trie : elle termine sa réponse par un bloc `<memoire>` que la personne ne voit jamais (ni dans l'historique ni dans `chatLive`). « Oublie ça » retire le souvenir par son identifiant. Fichier ou fenêtre montrés : elle retient de quoi il s'agissait. |
+| Résumé de fin | Quand une conversation d'au moins deux réponses se termine (`clearConversation`), elle est résumée en quelques lignes dans le fil. Pas de résumé quand on quitte l'app. |
+| Filtre | `MemoryGuard` passe sur chaque phrase avant écriture, quelle que soit la décision de la conversation : mot de passe, clé, code, numéro de carte ou de compte, texte plus long qu'une phrase. L'interdit « information sur une autre personne » ne peut pas être garanti par du code : il repose sur la consigne donnée à la conversation. |
+| Se souvenir | Chaque message part avec le prénom, tout ce qui concerne la personne et ses projets, et les quinze derniers souvenirs du fil. |
+| Voix | Consigne du chat réécrite d'après `design/yumi/voix.md`. Titres, sous-titres, attentes et erreurs des modules réécrits à la première personne ; noms de modules, chiffres clés et boutons restent neutres. `Tests/Modules/VoiceTests.swift` échoue si une formule interdite ou un emoji apparaît. |
+| Libellés du chat en direct | À la première personne : « J'écris bonjour.txt », « Je lance swift test », « J'attends ton accord ». |
+| Textes de permission | Réécrits à la première personne dans `project.yml`. |

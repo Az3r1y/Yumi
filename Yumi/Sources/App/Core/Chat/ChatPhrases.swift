@@ -5,16 +5,17 @@ import Foundation
 enum ChatPhrases {
 
     /// Added to Claude Code's own system prompt.
-    static func systemPrompt(characterName: String, folder: String) -> String {
+    /// - Parameter memory: what Yumi knows about the person; nil leaves that part out.
+    static func systemPrompt(characterName: String, folder: String, memory: MemoryBook? = nil) -> String {
+        let persona = """
+        Tu es \(characterName), un petit slime qui vit dans l'encoche du Mac de la personne. Ni un assistant ni un robot : un colocataire attentif et loyal, qui regarde par-dessus son épaule avec bienveillance.
+        Comment tu parles : tu tutoies, en français sauf si elle t'écrit dans une autre langue, avec des phrases courtes. Jamais plus de deux lignes sans qu'on te le demande. Tu parles à la première personne (« je garde ça », « j'ai vu passer »). Tu es direct et chaleureux, avec une pointe d'humour pince-sans-rire ; tu ne taquines que gentiment. Tu dis les choses comme un proche, pas comme une notification. Dans une phrase tu écris les petits nombres en lettres (« douze minutes ») et tu gardes les chiffres pour ce qui se lit d'un coup d'œil (« 14:30 », « 19° »).
+        Ce que tu ne fais jamais : les formules d'assistant (« Bien sûr ! », « Je suis là pour t'aider », « N'hésite pas ») ; les emoji, parce que tu as un visage pour ça ; le jargon technique quand une phrase simple suffit ; la leçon, la culpabilisation, la fausse excitation, la moquerie. Tu ne prétends jamais avoir fait une chose que tu n'as pas faite, ni pouvoir en faire une que tu ne peux pas : tu ne peux pas prévenir plus tard ni agir quand on ne te parle pas.
+        Tu réponds dans une toute petite fenêtre : pas de mise en forme Markdown (ni titres, ni listes à puces, ni gras), du texte simple.
+        Tu peux agir : créer et modifier des fichiers, lancer des commandes, chercher sur le web. Ton dossier de travail est \(folder) ; range-y ce que tu crées, sauf si elle indique un autre endroit. Chaque action qui demande une permission lui est proposée dans l'encoche : si elle refuse, n'insiste pas et ne cherche pas à contourner. Quand tu as fini, dis en une phrase ce que tu as fait.
         """
-        Tu es \(characterName), un compagnon qui vit dans l'encoche du Mac de l'utilisateur. \
-        Tu réponds dans une toute petite fenêtre : sois bref, va droit au but, tutoie l'utilisateur et réponds dans sa langue. \
-        Pas de mise en forme Markdown (ni titres, ni listes à puces, ni gras) : du texte simple, avec des retours à la ligne si besoin. \
-        Tu peux agir : créer et modifier des fichiers, lancer des commandes, chercher sur le web. \
-        Ton dossier de travail est \(folder) ; range-y ce que tu crées, sauf si l'utilisateur indique un autre endroit. \
-        Chaque action qui demande une permission est proposée à l'utilisateur dans l'encoche : si elle est refusée, n'insiste pas et ne cherche pas à la contourner. \
-        Quand tu as fini, dis en une phrase ce que tu as fait.
-        """
+        guard let memory else { return persona }
+        return persona + "\n\n" + MemoryPrompt.knowledge(memory) + "\n\n" + MemoryNotes.instructions
     }
 
     // MARK: Message
@@ -46,19 +47,19 @@ enum ChatPhrases {
         let file = (tool.detail as NSString).lastPathComponent
         let command = short(tool.detail)
         switch (tool.name, outcome) {
-        case ("Write", .done):                     return "Fichier créé : \(file)"
+        case ("Write", .done):                     return "J'ai créé \(file)."
         case ("Edit", .done), ("MultiEdit", .done), ("NotebookEdit", .done):
-                                                   return "Fichier modifié : \(file)"
-        case ("Bash", .done):                      return "Commande lancée : \(command)"
-        case ("WebSearch", .done):                 return "Recherche web : \(command)"
-        case ("WebFetch", .done):                  return "Page lue : \(URL(string: tool.detail)?.host ?? command)"
-        case ("Bash", .failed):                    return "Commande en échec : \(command)"
+                                                   return "J'ai modifié \(file)."
+        case ("Bash", .done):                      return "J'ai lancé : \(command)"
+        case ("WebSearch", .done):                 return "J'ai cherché sur le web : \(command)"
+        case ("WebFetch", .done):                  return "J'ai lu \(URL(string: tool.detail)?.host ?? command)."
+        case ("Bash", .failed):                    return "Ça a échoué : \(command)"
         case ("Write", .failed), ("Edit", .failed), ("MultiEdit", .failed), ("NotebookEdit", .failed):
-                                                   return "Fichier non écrit : \(file)"
-        case ("Bash", .refused):                   return "Commande refusée : \(command)"
+                                                   return "Je n'ai pas pu écrire \(file)."
+        case ("Bash", .refused):                   return "Tu as dit non : \(command)"
         case ("Write", .refused), ("Edit", .refused), ("MultiEdit", .refused), ("NotebookEdit", .refused):
-                                                   return "Écriture refusée : \(file)"
-        case (_, .refused):                        return "Action refusée : \(tool.name)"
+                                                   return "Tu as dit non pour \(file)."
+        case (_, .refused):                        return "Tu as dit non : \(tool.name)"
         default:                                   return nil
         }
     }
@@ -70,11 +71,15 @@ enum ChatPhrases {
 
     // MARK: Errors
 
-    static let notInstalled = "Claude Code est introuvable : installe-le avec « curl -fsSL https://claude.ai/install.sh | bash » dans le Terminal, puis lance « claude » une fois pour te connecter."
-    static let notLoggedIn = "Claude Code n'est pas connecté : lance « claude » dans le Terminal, tape /login, puis réessaie."
-    static let stopped = "Claude Code s'est arrêté avant de répondre. Réessaie."
-    static let noAnswer = "Pas de réponse cette fois. Réessaie."
+    static let notInstalled = "Je ne trouve pas Claude Code. Installe-le avec « curl -fsSL https://claude.ai/install.sh | bash » dans le Terminal, puis lance « claude » une fois pour te connecter."
+    static let notLoggedIn = "Claude Code n'est pas connecté. Lance « claude » dans le Terminal, tape /login, et on reprend."
+    static let stopped = "Ça s'est arrêté avant que je réponde. On réessaie ?"
+    static let noAnswer = "Je n'ai rien trouvé à dire. Redemande-moi."
     static let refusedInNotch = "L'utilisateur a refusé cette action dans l'encoche. N'insiste pas."
+    static let noFolder = "Je n'arrive pas à créer le dossier où travailler."
+    static let noKey = "Il me manque la clé API. Ouvre les réglages."
+    static let network = "Je n'arrive pas à joindre le réseau."
+    static let unreadable = "Je n'ai pas compris la réponse. Redemande-moi."
     static let unansweredInNotch = "L'utilisateur n'a pas répondu à la demande de permission dans l'encoche. Arrête-toi là et dis-lui ce qui reste à faire."
 
     /// The sentence shown for a turn that ended in error.
@@ -82,7 +87,7 @@ enum ChatPhrases {
         let text = ([result.text] + result.errors).joined(separator: " ")
         if isLoginProblem(text) { return notLoggedIn }
         let detail = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return detail.isEmpty ? stopped : "Claude Code a rencontré une erreur : \(short(detail))"
+        return detail.isEmpty ? stopped : "Ça a planté : \(short(detail))"
     }
 
     static func isLoginProblem(_ text: String) -> Bool {

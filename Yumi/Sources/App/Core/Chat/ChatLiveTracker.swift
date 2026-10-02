@@ -14,6 +14,8 @@ struct ChatLiveTracker: Sendable {
     /// What each action was before it started waiting for a permission.
     private var beforeWaiting: [String: ChatActivity] = [:]
     private var refused: Set<String> = []
+    /// Everything written in the current message, memory block included.
+    private var written = ""
 
     mutating func apply(_ event: ChatStreamEvent) {
         switch event {
@@ -21,13 +23,17 @@ struct ChatLiveTracker: Sendable {
             break
 
         case .messageStarted:
+            written = ""
             live.text = ""
 
         case .textDelta(let words):
-            live.text += words
+            written += words
+            // The memory block at the end of an answer is not for the person.
+            live.text = MemoryNotes.visible(whileWriting: written)
 
         case .text(let text):
-            live.text = text
+            written = text
+            live.text = MemoryNotes.visible(whileWriting: text)
 
         case .toolAnnounced(let id, let name):
             guard !running.contains(where: { $0.id == id }) else { break }
@@ -45,7 +51,7 @@ struct ChatLiveTracker: Sendable {
             guard let index = running.firstIndex(where: { $0.id == request.toolUseID }) else { break }
             beforeWaiting[request.toolUseID] = running[index]
             running[index].kind = .waiting
-            running[index].label = "Attend ton accord"
+            running[index].label = "J'attends ton accord"
             running[index].detail = Self.preview(request.summary, last: false)
 
         case .toolFinished(let id, let failed, let output):
@@ -71,6 +77,7 @@ struct ChatLiveTracker: Sendable {
     /// The text written so far has gone to the history: the live text starts again from nothing,
     /// so the island does not show it twice.
     mutating func textCommitted() {
+        written = ""
         live.text = ""
     }
 
@@ -98,31 +105,31 @@ struct ChatLiveTracker: Sendable {
         switch tool.name {
         case "Read", "NotebookRead":
             kind = .reading
-            text = label("Lit", file, alone: "Lit un fichier")
+            text = label("Je lis", file, alone: "Je lis un fichier")
         case "Write":
             kind = .writing
-            text = label("Écrit", file, alone: "Écrit un fichier")
+            text = label("J'écris", file, alone: "J'écris un fichier")
             detail = preview(tool.content, last: false)
         case "Edit", "MultiEdit", "NotebookEdit":
             kind = .editing
-            text = label("Modifie", file, alone: "Modifie un fichier")
+            text = label("Je modifie", file, alone: "Je modifie un fichier")
             detail = preview(tool.content, last: false)
         case "Bash":
-            text = label("Lance", short, alone: "Lance une commande")
+            text = label("Je lance", short, alone: "Je lance une commande")
         case "Grep", "Glob", "LS", "ToolSearch":
             kind = .searching
-            text = label("Cherche", short, alone: "Cherche dans le dossier")
+            text = label("Je cherche", short, alone: "Je cherche dans le dossier")
         case "WebSearch":
             kind = .searching
-            text = label("Cherche sur le web :", short, alone: "Cherche sur le web")
+            text = label("Je cherche sur le web :", short, alone: "Je cherche sur le web")
         case "WebFetch":
             kind = .reading
-            text = label("Lit", URL(string: tool.detail)?.host ?? short, alone: "Lit une page")
+            text = label("Je lis", URL(string: tool.detail)?.host ?? short, alone: "Je lis une page")
         case "Task", "Agent", "TodoWrite":
             kind = .thinking
-            text = tool.name == "TodoWrite" ? "Organise ses tâches" : label("Délègue :", short, alone: "Délègue une tâche")
+            text = tool.name == "TodoWrite" ? "Je m'organise" : label("Je délègue :", short, alone: "Je délègue une tâche")
         default:
-            text = "Utilise \(tool.name)"
+            text = "J'utilise \(tool.name)"
         }
         return ChatActivity(id: tool.id, kind: kind, label: text, detail: detail)
     }
@@ -146,7 +153,7 @@ struct ChatLiveTracker: Sendable {
     /// What the folded island says about the answer in progress.
     static func headline(_ live: ChatLive) -> String {
         if let activity = live.activity { return activity.label }
-        return live.text.isEmpty ? "Yumi réfléchit" : "Yumi répond"
+        return live.text.isEmpty ? "Je réfléchis" : "Je réponds"
     }
 }
 

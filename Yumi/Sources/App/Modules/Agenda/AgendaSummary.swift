@@ -49,19 +49,19 @@ enum AgendaSummary {
     private static func plainSnapshot(events: [AgendaEvent], access: PermissionState, now: Date,
                                       calendar: Calendar) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "libre",
-                                      title: "Rien de prévu", subtitle: "Ta journée est libre",
+                                      title: "Rien de prévu.", subtitle: "Ta journée est à toi.",
                                       primaryAction: "Voir la journée", secondaryAction: nil)
         switch access {
         case .notDetermined:
             snapshot.status = "à brancher"
-            snapshot.title = "Agenda pas encore branché"
-            snapshot.subtitle = "Autorise Yumi à lire ton calendrier"
+            snapshot.title = "Je ne vois pas ton agenda."
+            snapshot.subtitle = "Tu me l'ouvres ?"
             snapshot.primaryAction = "Autoriser"
             return snapshot
         case .denied:
             snapshot.status = "bloqué"
-            snapshot.title = "Agenda bloqué"
-            snapshot.subtitle = "L'accès au calendrier est refusé dans Réglages Système"
+            snapshot.title = "Ton agenda m'est fermé."
+            snapshot.subtitle = "Ça se rouvre dans Réglages Système."
             snapshot.primaryAction = "Ouvrir les réglages"
             return snapshot
         case .granted:
@@ -74,16 +74,16 @@ enum AgendaSummary {
         let clock = FrenchText.clock(event.start, calendar: calendar)
         if event.start <= now {
             snapshot.status = "en cours"
-            snapshot.title = "\(event.title) en cours"
+            snapshot.title = "\(event.title) a commencé."
         } else if !startsToday {
-            snapshot.title = "Demain : \(event.title)"
+            snapshot.title = "Demain, \(event.title)."
             snapshot.subtitle = "Plus rien aujourd'hui"
         } else if event.start.timeIntervalSince(now) < 3600 {
             snapshot.status = clock
-            snapshot.title = "\(event.title) dans \(FrenchText.minutes(event.start.timeIntervalSince(now)))"
+            snapshot.title = "\(event.title) dans \(FrenchText.spokenMinutes(event.start.timeIntervalSince(now)))."
         } else {
             snapshot.status = clock
-            snapshot.title = "\(event.title) à \(clock)"
+            snapshot.title = "\(event.title) à \(clock)."
         }
 
         var details = ["\(clock) à \(FrenchText.clock(event.end, calendar: calendar))"]
@@ -92,9 +92,9 @@ enum AgendaSummary {
             details.append(event.location.split(whereSeparator: \.isNewline).first.map(String.init) ?? event.location)
         }
         if startsToday || event.start <= now {
-            snapshot.subtitle = details.joined(separator: ", ")
+            snapshot.subtitle = FrenchText.sentenceStart(details.joined(separator: ", ")) + "."
         } else {
-            snapshot.subtitle += ", demain " + details.joined(separator: ", ")
+            snapshot.subtitle += ", demain " + details.joined(separator: ", ") + "."
         }
 
         // The folded island announces today's events only: tomorrow is not happening now.
@@ -104,7 +104,7 @@ enum AgendaSummary {
                 .min { $0.start < $1.start }
             let announced = upcoming ?? event
             let join = ModuleControl(id: ModuleAction.primary.rawValue, symbol: "video.fill", label: "Rejoindre")
-            let text = announced.start <= now ? "En cours : \(announced.title)"
+            let text = announced.start <= now ? "\(announced.title), en cours"
                                               : "\(FrenchText.clock(announced.start, calendar: calendar)) \(announced.title)"
             snapshot.live = ModuleLive(text: text, priority: ModuleLivePriority.ambient,
                                        controls: announced == event && event.joinURL != nil ? [join] : [])

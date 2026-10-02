@@ -57,7 +57,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationWillTerminate(_ notification: Notification) {
         // A chat answer still being written would leave its Claude Code process behind.
-        ClaudeService.shared.clearConversation()
+        ClaudeService.shared.clearConversation(remember: false)
     }
 
     // MARK: - Menu bar
@@ -194,6 +194,13 @@ extension AppDelegate {
                 if let note = state.noteMessage { print("[chat] erreur : \(note)") }
                 print("[chat] après la réponse, chatLive : \(state.chatLive == nil ? "nil" : "encore renseigné")")
             }
+            if ProcessInfo.processInfo.environment["YUMI_CHAT_END"] != nil {
+                // Ends the conversation the way the island does, and waits for its summary.
+                let before = state.memory
+                ClaudeService.shared.clearConversation()
+                for _ in 0..<80 where state.memory == before { try? await Task.sleep(for: .milliseconds(500)) }
+            }
+            for entry in state.memory { print("[mémoire] \(entry.kind.rawValue) : \(entry.text)") }
             print("[chat] fin")
             fflush(stdout)
         }
@@ -218,6 +225,8 @@ final class YumiCore {
     let modules: ModuleRegistry
 
     private var chatObserver: AnyCancellable?
+    /// What Yumi remembers. The store owns the file; AppState shows it to the island.
+    let memory: MemoryStore
     private var lastSeen: [SessionID: Date] = [:]
     private var consumer: Task<Void, Never>?
 
@@ -225,6 +234,10 @@ final class YumiCore {
         ingress = EventIngress(engine: engine)
         let mirror = ClaudeTaskMirror(state: state)
         self.mirror = mirror
+        memory = MemoryStore { book in
+            if state.memory != book.entries { state.memory = book.entries }
+            if state.userName != book.name { state.userName = book.name }
+        }
         let claudeCode = ClaudeCodeModule(onShow: { mirror.show() })
         // The chat answers through Claude Code: its module tells the folded island what it is doing.
         // The text of the answer changes many times a second, the announcement only with the action.
@@ -262,6 +275,8 @@ final class YumiCore {
     }
 
     func start() {
+        memory.start()
+        ClaudeService.shared.memory = memory
         modules.start()
         consumer = Task { [engine, store, ingress, weak self] in
             // Subscribe before the socket opens: the engine does not keep events for later.

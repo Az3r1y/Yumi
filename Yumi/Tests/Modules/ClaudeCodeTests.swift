@@ -74,8 +74,8 @@ import Foundation
 
     @Test func failuresAndSubagents() {
         #expect(ClaudeHookTranslator.events(for: payload("StopFailure", ["message": "boom"])).last == .sessionErrored(id, YumiError(message: "boom")))
-        #expect(ClaudeHookTranslator.events(for: payload("SubagentStart")).last == .activityNoted(id, "+ subagent"))
-        #expect(ClaudeHookTranslator.events(for: payload("PostToolUseFailure", ["tool_name": "Bash"])).last == .activityNoted(id, "⚠ failed"))
+        #expect(ClaudeHookTranslator.events(for: payload("SubagentStart")).last == .activityNoted(id, "Un sous-agent démarre"))
+        #expect(ClaudeHookTranslator.events(for: payload("PostToolUseFailure", ["tool_name": "Bash"])).last == .activityNoted(id, "Échec"))
     }
 
     @Test func unknownHooksAndMissingFields() {
@@ -137,8 +137,8 @@ import Foundation
 
         let snapshot = ClaudeSessions.snapshot(ordered)
         #expect(snapshot.status == "2 sessions")
-        #expect(snapshot.title == "yumi : écrit Tests.swift")
-        #expect(snapshot.subtitle == "2 sessions ouvertes")
+        #expect(snapshot.title == "Claude écrit Tests.swift sur yumi.")
+        #expect(snapshot.subtitle == "Deux sessions ouvertes.")
         #expect(snapshot.secondaryAction == "Ouvrir le terminal")
         #expect(!snapshot.needsAttention)
     }
@@ -149,8 +149,8 @@ import Foundation
             hook("PreToolUse", "b", cwd: "/dev/site", ["tool_name": "Read", "tool_input": ["file_path": "/dev/site/index.html"]]),
         ])
         let snapshot = ClaudeSessions.snapshot(ClaudeSessions.ordered(sessions))
-        #expect(snapshot.title == "yumi : demande ton accord")
-        #expect(snapshot.subtitle == "2 sessions ouvertes, 1 attend ta réponse")
+        #expect(snapshot.title == "Claude veut ton accord sur yumi. Je laisse passer ?")
+        #expect(snapshot.subtitle == "Deux sessions ouvertes, une t'attend.")
         #expect(snapshot.needsAttention)
     }
 
@@ -162,8 +162,8 @@ import Foundation
         ])
         let snapshot = ClaudeSessions.snapshot(ClaudeSessions.ordered(sessions))
         #expect(snapshot.status == "1 session")
-        #expect(snapshot.title == "site : attend ton message")
-        #expect(snapshot.subtitle == "1 session ouverte")
+        #expect(snapshot.title == "Claude attend ton message sur site.")
+        #expect(snapshot.subtitle == "Une session ouverte.")
     }
 
     @Test func theProjectNameFollowsTheWorkingDirectory() {
