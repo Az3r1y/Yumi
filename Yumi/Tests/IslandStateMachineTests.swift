@@ -759,3 +759,40 @@ import Foundation
         #expect(Voice.goodbye(name: "Esteban") == "À tout à l'heure, Esteban")
     }
 }
+
+// MARK: – When Yumi speaks first
+
+@Suite struct SpeakTests {
+    @Test func aShortSentenceFitsOnOneLine() {
+        let size = Speak.size(text: 200, action: 0, minimum: 100)
+        #expect(size.lines == 1)
+        #expect(size.band == Speak.oneLine)
+        #expect(size.textWidth == 200)
+        #expect(size.width == Speak.lead + 200 + Speak.cross + Speak.trail)
+    }
+
+    @Test func aLongSentenceTakesTwoLinesAndStaysNarrow() {
+        let size = Speak.size(text: 600, action: 0, minimum: 100)
+        #expect(size.lines == 2)
+        #expect(size.band == Speak.twoLines)
+        #expect(size.textWidth <= Speak.textMax)
+        #expect(size.textWidth * 2 >= 600)
+    }
+
+    @Test func anActionMakesRoomForItsButton() {
+        let without = Speak.size(text: 200, action: 0, minimum: 100)
+        let with = Speak.size(text: 200, action: 50, minimum: 100)
+        #expect(with.width == without.width + 60)
+    }
+
+    @Test func theIslandIsNeverNarrowerThanFolded() {
+        #expect(Speak.size(text: 20, action: 0, minimum: 345).width == 345)
+    }
+
+    @Test func theIslandNeverGrowsPastItsLimit() {
+        for text in stride(from: 0.0, through: 5000, by: 113) {
+            let size = Speak.size(text: text, action: 80, minimum: 100)
+            #expect(size.width <= Speak.lead + Speak.textMax + 90 + Speak.cross + Speak.trail)
+        }
+    }
+}

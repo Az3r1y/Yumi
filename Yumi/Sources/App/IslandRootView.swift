@@ -32,9 +32,16 @@ struct IslandScene: View {
         let folded = FoldedContent(module: FoldedIsland.live(in: state.modules, shown: model.liveModuleID),
                                    hover: model.foldedHover && stage == .compact)
         let ear = folded.ear(notchWidth: model.layout.notchWidth)
+        // What Yumi says on his own, and the room the folded island makes for it
+        let remark = model.launchStage == nil ? model.remark(in: state) : nil
+        let speak = remark.map { RemarkLine.size(for: $0, minimum: model.layout.notchWidth + IslandConst.compactExtra) }
         let layout: IslandLayout = {
             var layout = model.layout
             layout.compactEar = ear
+            if let speak {
+                layout.speakWidth = CGFloat(speak.width)
+                layout.speakBand = CGFloat(speak.band)
+            }
             return layout
         }()
         let size = layout.size(stage, openHeight: model.openHeight)
@@ -53,7 +60,8 @@ struct IslandScene: View {
             smokes: smokes,
             music: folded.musicPlaying,
             chatActs: state.chatLive?.activity != nil,
-            busy: busy)
+            busy: busy,
+            remarkMood: remark?.mood)
         let middle = IslandConst.panelWidth / 2
         let launching = model.launchStage != nil
 
@@ -82,6 +90,11 @@ struct IslandScene: View {
                                  scale: IslandConst.launchScale,
                                  center: CGPoint(x: IslandConst.greetWidth * IslandConst.launchScale / 2 + layout.seat(.greet).x,
                                                  y: layout.seat(.greet).y))
+
+                    IslandSpeakLayer(remark: stage == .speak ? remark : nil,
+                                     size: speak ?? Speak.Size(width: Double(layout.speakWidth), band: Double(layout.speakBand), textWidth: 0, lines: 1),
+                                     notchHeight: layout.notchHeight, model: model)
+                        .modifier(IslandLayer(on: stage == .speak))
 
                     IslandOpenLayer(state: state, model: model, screen: screen)
                         .id(openings)
@@ -115,6 +128,15 @@ struct IslandScene: View {
         .onChange(of: ear, initial: true) { _, ear in model.layout.compactEar = ear }
         .onChange(of: folded.controls.count, initial: true) { _, count in model.foldedControls = count }
         .onChange(of: situation) { old, new in model.direct(from: old, to: new) }
+        .onChange(of: remark?.id, initial: true) { _, _ in
+            model.speaking = remark != nil
+            model.remarkAppeared(remark)
+        }
+        .onChange(of: speak) { _, speak in
+            guard let speak else { return }
+            model.layout.speakWidth = CGFloat(speak.width)
+            model.layout.speakBand = CGFloat(speak.band)
+        }
         .onChange(of: state.effectiveState) { old, new in model.track(state: old, new) }
         .onChange(of: state.memory.count) { old, new in
             // He learnt something while talking: a wink, no words
