@@ -43,6 +43,10 @@ struct SettingsActivity: View {
                 IslandToggle(isOn: $smokes, label: "Cigarette")
             }
             .riseIn(2)
+            row("Ce que je sais de toi") {
+                TextButton(label: state.memory.isEmpty ? "Voir" : "Voir (\(state.memory.count))") { IslandActions.go(.memory) }
+            }
+            .riseIn(3)
         }
         .padding(.top, 2)
         .frame(maxWidth: .infinity)

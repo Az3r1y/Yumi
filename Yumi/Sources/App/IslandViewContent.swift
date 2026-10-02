@@ -48,7 +48,7 @@ struct IslandOpenLayer: View {
     }
 
     /// `.act.wide`: the overview and the settings use the whole width.
-    private var wide: Bool { screen == .home || screen == .settings }
+    private var wide: Bool { screen == .home || screen == .settings || screen == .memory }
 
     /// A new activity plays `rise` again; what changes inside one does not.
     private var activityID: String {
@@ -64,6 +64,8 @@ struct IslandOpenLayer: View {
         case .error:    ErrorActivity(state: state)
         case .talk:     IslandTalkView(state: state)
         case .settings: SettingsActivity(state: state)
+        case .welcome:  WelcomeActivity()
+        case .memory:   MemoryActivity(state: state)
         case .drop:     DropActivity(state: state)
         case .module:
             if let module {

@@ -687,3 +687,38 @@ import Foundation
         #expect(FoldedIsland.second(in: [module("agenda", live: ModuleLivePriority.ambient)], after: nil) == nil)
     }
 }
+
+// MARK: – Asking the first name
+
+@Suite struct FirstNameTests {
+    let now = Date(timeIntervalSince1970: 1_800_000_000)
+
+    @Test func heAsksWhenHeDoesNotKnowIt() {
+        #expect(FirstName.shouldAsk(name: nil, lastAsked: nil, now: now))
+        #expect(FirstName.shouldAsk(name: "", lastAsked: nil, now: now))
+        #expect(FirstName.shouldAsk(name: "   ", lastAsked: nil, now: now))
+    }
+
+    @Test func heDoesNotAskWhenHeKnowsIt() {
+        #expect(!FirstName.shouldAsk(name: "Esteban", lastAsked: nil, now: now))
+        #expect(!FirstName.shouldAsk(name: "Esteban", lastAsked: now.addingTimeInterval(-90 * 24 * 3600), now: now))
+    }
+
+    @Test func passedOverHeDoesNotInsist() {
+        #expect(!FirstName.shouldAsk(name: nil, lastAsked: now.addingTimeInterval(-60), now: now))
+        #expect(!FirstName.shouldAsk(name: nil, lastAsked: now.addingTimeInterval(-2 * 24 * 3600), now: now))
+    }
+
+    @Test func heAsksAgainLater() {
+        #expect(FirstName.shouldAsk(name: nil, lastAsked: now.addingTimeInterval(-FirstName.patience), now: now))
+        #expect(FirstName.shouldAsk(name: nil, lastAsked: now.addingTimeInterval(-10 * 24 * 3600), now: now))
+    }
+
+    @Test func whatIsTypedBecomesAFirstName() {
+        #expect(FirstName.clean("  Esteban ") == "Esteban")
+        #expect(FirstName.clean("Marie-Lou\nautre chose") == "Marie-Lou")
+        #expect(FirstName.clean("") == nil)
+        #expect(FirstName.clean("  \n ") == nil)
+        #expect(FirstName.clean(String(repeating: "a", count: 200))?.count == 40)
+    }
+}

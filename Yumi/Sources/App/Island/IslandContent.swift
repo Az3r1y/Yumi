@@ -143,6 +143,41 @@ enum IslandActions {
         if !talking { go(.prompt) }
     }
 
+    // MARK: First name
+
+    /// The person gave their first name: the core keeps it (Contracts/MemoryTypes.swift).
+    static func giveName(_ name: String) {
+        UserDefaults.standard.set(Date.now, forKey: IslandPrefs.nameAskedKey)
+        NotificationCenter.default.post(name: .memorySetName, object: nil, userInfo: ["name": name])
+        SoundEngine.shared.play("approve")
+        IslandModel.shared.pose(.wave)
+        go(.overview)
+    }
+
+    /// Passed over: he asks again in a few days, not before.
+    static func skipName() {
+        UserDefaults.standard.set(Date.now, forKey: IslandPrefs.nameAskedKey)
+        fold()
+    }
+
+    // MARK: Memory (Contracts/MemoryTypes.swift)
+
+    static func correct(_ id: String, _ text: String) {
+        NotificationCenter.default.post(name: .memoryEdit, object: nil, userInfo: ["id": id, "text": text])
+        tap()
+    }
+
+    static func forget(_ id: String) {
+        NotificationCenter.default.post(name: .memoryDelete, object: nil, userInfo: ["id": id])
+        tap()
+    }
+
+    static func forgetEverything() {
+        NotificationCenter.default.post(name: .memoryClear, object: nil)
+        SoundEngine.shared.play("close")
+        IslandModel.shared.pose(.dip)
+    }
+
     static func manageModules() {
         NotificationCenter.default.post(name: .openFullSettings, object: nil)
         tap()

@@ -271,7 +271,8 @@ final class IslandModel: ObservableObject {
         case .module where isMusic(moduleID): return nil   // his headphones bring their own face
         case .module where moduleID == "focus": return (.focused, .think)
         case .module where moduleID == "agenda": return (.neutral, .calm)
-        case .settings: return (.curious, .calm)
+        case .settings, .memory: return (.curious, .calm)
+        case .welcome: return (.happy, .joy)
         case .home:     return nil   // the state of the agent decides (neutral and calm at rest)
         case .working:  return (.focused, .work)
         case .alert:    return (.surprised, .warn)
@@ -289,7 +290,8 @@ final class IslandModel: ObservableObject {
         case .finished: return .celebrate
         case .error:    return .squash
         case .drop:     return .stretch
-        case .home, .working, .module, .talk, .settings: return .pop
+        case .welcome: return .wave
+        case .home, .working, .module, .talk, .settings, .memory: return .pop
         }
     }
 
@@ -313,4 +315,6 @@ final class IslandModel: ObservableObject {
 enum IslandPrefs {
     /// "La cigarette doit pouvoir être désactivée" (YUMI.md).
     static let smokeKey = "habitSmoke"
+    /// When Yumi last asked the first name.
+    static let nameAskedKey = "firstNameAskedAt"
 }

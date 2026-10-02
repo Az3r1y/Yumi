@@ -265,3 +265,25 @@ enum LiveChat {
         done.contains { changes.contains($0.kind) && $0.succeeded }
     }
 }
+
+// MARK: - Asking the first name
+
+/// Yumi asks the person's first name once, after the launch, and does not insist
+/// (design/yumi/voix.md): passed over, he asks again some days later.
+enum FirstName {
+    /// How long he waits before asking again.
+    static let patience: TimeInterval = 3 * 24 * 3600
+
+    static func shouldAsk(name: String?, lastAsked: Date?, now: Date) -> Bool {
+        guard clean(name ?? "") == nil else { return false }
+        guard let lastAsked else { return true }
+        return now.timeIntervalSince(lastAsked) >= patience
+    }
+
+    /// What was typed, as a first name: trimmed, one line, not endless. nil when empty.
+    static func clean(_ typed: String) -> String? {
+        let line = typed.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
+        let name = line.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? nil : String(name.prefix(40))
+    }
+}
