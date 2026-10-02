@@ -146,6 +146,14 @@ Contrat `Contracts/RemarkTypes.swift` et `AppState.remark` : le cœur décide qu
 
 Reste ensuite le lien entre les modules, et un défaut connu de la mémoire : le résumé de fin de conversation répète parfois un souvenir déjà noté.
 
+## Phase 7 : GitHub en scènes, et le processeur en usage réel
+
+L'initiative et la baisse du processeur au repos sont fusionnées. Deux sujets.
+
+**GitHub.** Un vrai module GitHub, et une petite scène de Yumi pour chaque événement : étoile, fork, pull request ouverte, fusion, push, commit, issue, release, nouvel abonné. Contrat `Contracts/EventAnimations.swift` : un module poste `yumiScene`, le personnage joue la scène une fois. Le cœur détecte les événements et fait dire à Yumi une phrase quand ça compte ; l'île dessine l'activité GitHub.
+
+**Le processeur en usage réel.** Mesuré le 2 octobre en Release : au repos complet, 6,7 % île repliée et 0,6 % île masquée. Mais avec de la musique en lecture et des sessions Claude actives, donc en usage normal, l'app reste entre 12 et 23 %, parce que les habitudes animées (casque, cigarette) tournent à pleine cadence. C'est le prochain objectif : une habitude qui dure ne doit pas coûter plus de 5 %.
+
 ## Phase 2 : porter la maquette, répartition des fichiers
 
 Trois sessions en parallèle. Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Chaque session peut créer de nouveaux fichiers dans son propre sous-dossier.
