@@ -92,6 +92,8 @@ struct RoundButton: View {
     var small = false
     /// The tick draws itself instead of appearing (`.rbtn .draw`).
     var drawsCheck = false
+    /// Shown pressed without a click (the filming mode plays the clicks itself).
+    var pressed = false
     let action: @MainActor () -> Void
 
     @State private var hover = false
@@ -112,9 +114,10 @@ struct RoundButton: View {
             .foregroundStyle(foreground)
             .frame(width: style == .bare ? 30 : diameter, height: diameter)
             .contentShape(Circle())
-            .brightness(hover ? 0.08 : 0)
-            .scaleEffect(hover ? 1.08 : 1)
+            .brightness(hover || pressed ? 0.08 : 0)
+            .scaleEffect(pressed ? 0.9 : (hover ? 1.08 : 1))
             .animation(.islandSpring(0.18), value: hover)
+            .animation(.islandEase(0.12), value: pressed)
         }
         .buttonStyle(RoundPress())
         .onHover { hover = $0 }
@@ -446,6 +449,7 @@ struct WorkingActivity: View {
 /// A permission, like an incoming call: red to refuse, green to allow.
 struct AlertActivity: View {
     @ObservedObject var state: AppState
+    @ObservedObject var model: IslandModel
 
     var body: some View {
         if let approval = state.pendingApproval {
@@ -458,7 +462,7 @@ struct AlertActivity: View {
                 RoundButton(style: .fill, symbol: "xmark", label: "Refuser", color: IslandTheme.red) {
                     HookServer.shared.sendApprovalDecision("deny")
                 }
-                RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true) {
+                RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
                     HookServer.shared.sendApprovalDecision("allow")
                 }
             }

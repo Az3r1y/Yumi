@@ -12,6 +12,9 @@ struct IslandRootView: View {
     var body: some View {
         IslandScene(state: state, model: model)
             .frame(width: IslandConst.panelWidth, height: IslandConst.panelHeight, alignment: .top)
+            // Filming mode: the whole island larger, drawn at that size and not stretched
+            .transformEnvironment(\.displayScale) { $0 *= IslandStudio.scale }
+            .scaleEffect(IslandStudio.scale, anchor: .top)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .ignoresSafeArea()
     }
@@ -57,7 +60,7 @@ struct IslandScene: View {
             stage: stage,
             screen: stage == .open ? screen : IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: approval),
             moduleID: stage == .open && screen == .module ? model.selectedModule(in: state.modules)?.id : nil,
-            smokes: smokes,
+            smokes: smokes && !IslandStudio.isOn,   // no cigarette on film: coffee
             music: folded.musicPlaying,
             chatActs: state.chatLive?.activity != nil,
             busy: busy,

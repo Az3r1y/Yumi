@@ -80,6 +80,9 @@ final class IslandModel: ObservableObject {
                                         userInfo: ["id": remark.id, "ignored": ignored])
     }
 
+    /// Filming mode: the green button of the alert looks pressed, without a pointer.
+    @Published var studioPress = false
+
     // MARK: Open island
 
     @Published var selectedModuleID: String?

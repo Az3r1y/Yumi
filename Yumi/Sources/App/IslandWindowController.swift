@@ -44,8 +44,8 @@ final class IslandWindowController: NSWindowController {
         let notch = Self.notchScreen()
         let screen = notch ?? NSScreen.main ?? NSScreen.screens[0]
 
-        let panelW = IslandConst.panelWidth
-        let panelH = IslandConst.panelHeight
+        let panelW = IslandConst.panelWidth * IslandStudio.scale
+        let panelH = IslandConst.panelHeight * IslandStudio.scale
         let sf = screen.frame
         let panel = IslandPanel(
             contentRect: NSRect(x: sf.midX - panelW/2, y: sf.maxY - panelH,
@@ -117,6 +117,7 @@ final class IslandWindowController: NSWindowController {
         #if DEBUG
         IslandDemo.startIfRequested(controller: self)
         #endif
+        IslandStudio.startIfRequested(controller: self)
     }
 
     // MARK: - FSM wiring
@@ -225,6 +226,11 @@ final class IslandWindowController: NSWindowController {
 
     private func pollFrame() {
         guard let panel = window as? IslandPanel else { return }
+        // Filming: the pointer does nothing to the island, and clicks go through it
+        if IslandStudio.isOn {
+            panel.ignoresMouseEvents = true
+            return
+        }
 
         let mouse = NSEvent.mouseLocation
 
@@ -272,7 +278,9 @@ final class IslandWindowController: NSWindowController {
     // MARK: - Geometry (panel coordinates, origin bottom-left)
 
     private func islandFrame() -> CGRect {
-        let size = model.islandSize(for: state.mode)
+        let scale = IslandStudio.scale
+        let size = CGSize(width: model.islandSize(for: state.mode).width * scale,
+                          height: model.islandSize(for: state.mode).height * scale)
         let panel = window?.frame.size ?? CGSize(width: IslandConst.panelWidth, height: IslandConst.panelHeight)
         return CGRect(x: (panel.width - size.width) / 2, y: panel.height - size.height,
                       width: size.width, height: size.height)
@@ -428,6 +436,59 @@ final class IslandWindowController: NSWindowController {
         #endif
     }
 
+    // MARK: - Filming (IslandStudio)
+
+    /// Back to the folded island at rest, whatever was playing.
+    func studioRest() {
+        leaving = false
+        launch.cancel()
+        model.leaving = false
+        model.launchStage = nil
+        model.greeting = .init()
+        model.sparksStart = nil
+        model.setLit(true)
+        model.setGaze(nil)
+        model.forgetCommands()
+        NotificationCenter.default.post(name: .yumiMood, object: nil)
+        NotificationCenter.default.post(name: .yumiRim, object: nil)
+        switch fsm.state {
+        case .greeting: fsm.greetComplete()
+        case .home:     collapse()
+        case .hidden:   fsm.reveal()
+        case .petit:    break
+        }
+        fsm.cancelTimers()
+    }
+
+    /// The launch, from the notch, as at the start of the app.
+    func studioLaunch() {
+        if fsm.state == .greeting { launch.start() } else { fsm.launch() }
+    }
+
+    /// The goodbye, without ending the app.
+    func studioGoodbye() {
+        leaving = true
+        if fsm.state == .greeting { startGoodbye(report: false) } else { fsm.leave() }
+    }
+
+    /// Yumi alone in his light, as in the greeting of the launch.
+    func studioPortrait() {
+        if fsm.state != .greeting {
+            leaving = true      // the transition must not start the launch
+            fsm.leave()
+            leaving = false
+        }
+        launch.cancel()
+        model.leaving = false
+        model.greeting = .init()
+        model.launchStage = .greet
+        model.greeting.lit = true
+        model.setLit(true)
+        model.setHabit(nil)
+        model.setMood(.happy, force: true)
+        model.setRim(.joy)
+    }
+
     // MARK: - Measuring
 
     /// `YUMI_ISLAND_HOLD=hidden|compact|open` keeps the island in one state after the launch,
@@ -471,9 +532,10 @@ final class IslandWindowController: NSWindowController {
         if fsm.state == .greeting { startGoodbye() } else { fsm.leave() }
     }
 
-    private func startGoodbye() {
+    private func startGoodbye(report: Bool = true) {
         launch.leave {
-            NotificationCenter.default.post(name: .yumiQuitReady, object: nil)
+            // Filming plays the goodbye without quitting
+            if report && !IslandStudio.isOn { NotificationCenter.default.post(name: .yumiQuitReady, object: nil) }
         }
     }
 
@@ -485,14 +547,14 @@ final class IslandWindowController: NSWindowController {
         // Hook server expand requests (alerts only)
         center.publisher(for: .hookExpand)
             .sink { [weak self] note in
-                guard let view = note.object as? IslandView else { return }
+                guard let view = note.object as? IslandView, !IslandStudio.isOn else { return }
                 self?.expand(to: view)
             }
             .store(in: &subscriptions)
 
         // Hook server compact reveal (non-alert work events: session start, tool use, etc.)
         center.publisher(for: .hookReveal)
-            .sink { [weak self] _ in if self?.frozen == false { self?.fsm.reveal() } }
+            .sink { [weak self] _ in if self?.frozen == false, !IslandStudio.isOn { self?.fsm.reveal() } }
             .store(in: &subscriptions)
 
         center.publisher(for: .yumiQuitRequested)
