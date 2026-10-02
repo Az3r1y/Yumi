@@ -212,6 +212,7 @@ extension CGColor {
 ///
 /// - `YUMI_DEMO=gallery` opens a window laid out like the character sheet of the mock-up
 ///   (habits, poses, expressions, rim colours).
+/// - `YUMI_DEMO=open` opens the island on its home view after the launch and leaves it there.
 /// - `YUMI_DEMO=1` plays the launch sequence, then every pose and habit, in the island,
 ///   through the notifications of Contracts/CharacterCommands.swift.
 ///
@@ -224,7 +225,11 @@ enum BotDemo {
     static func startIfRequested() {
         guard !started, let mode = ProcessInfo.processInfo.environment["YUMI_DEMO"] else { return }
         started = true
-        if mode == "gallery" { openGallery() } else { playInIsland() }
+        switch mode {
+        case "gallery": openGallery()
+        case "open":    holdOpen()
+        default:        playInIsland()
+        }
     }
 
     private static func pause(_ seconds: Double) async {
@@ -233,6 +238,17 @@ enum BotDemo {
 
     private static func send(_ name: Notification.Name, _ object: Any?) {
         NotificationCenter.default.post(name: name, object: object)
+    }
+
+    /// Opens the island on its home view and keeps it open, to measure Yumi at rest.
+    private static func holdOpen() {
+        Task { @MainActor in
+            await pause(8)
+            guard let controller = NSApp.windows.compactMap({ $0.windowController as? IslandWindowController }).first else { return }
+            controller.holdsOpen = true
+            controller.fsm.homeToPetitDelay = 3600
+            controller.expand(to: .overview)
+        }
     }
 
     private static func openGallery() {
