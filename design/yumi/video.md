@@ -44,6 +44,47 @@ Variante d'accroche pour TikTok, plus directe : commencer par le plan le plus su
 - **Le téléphone sur trépied** pour les plans filmés, écran du Mac à luminosité maximale, pièce sombre.
 - **Une musique libre de droits** ou un son tendance de la plateforme. Les sons de l'app sont provisoires : on ne s'appuie pas dessus.
 
+## Tourner
+
+Le mode tournage rejoue chaque plan sur une touche, avec des données d'exemple (prénom « Alex », projet « Atelier », aucun vrai rendez-vous, morceau ou message). Il coupe les sons, le repli automatique et les réactions à la souris, et remplace la cigarette par le café.
+
+**Lancer**
+
+```
+cd Yumi && xcodegen && xcodebuild -scheme Yumi -configuration Debug build
+YUMI_STUDIO=1 YUMI_STUDIO_SCALE=2 /chemin/vers/Yumi.app/Contents/MacOS/Yumi
+```
+
+`YUMI_STUDIO_SCALE` agrandit l'île (1,5 ou 2) pour qu'elle reste nette une fois recadrée ; sans lui, elle garde sa taille normale. Le mode marche aussi avec un build Release. `YUMI_STUDIO_SHOTS=/un/dossier` joue tous les plans à la suite et enregistre une image deux fois par seconde, pour vérifier sans filmer.
+
+**Les touches**
+
+| Touche | Plan |
+|---|---|
+| 1 | Le lancement complet |
+| 2 | La permission, le clic sur le vert, la célébration |
+| 3 | La musique et le casque |
+| 4 | Le chat qui s'écrit, puis le fichier créé |
+| 5 | « Deux heures d'affilée. Une pause ? », île repliée |
+| 6 | Les humeurs : café, nuage, lunettes, dodo |
+| 7 | Yumi seul dans sa lumière, clin d'œil |
+| 8 | Les scènes GitHub : étoile, fork, fusion |
+| 9 | Le départ |
+| Espace | Rejoue le dernier plan |
+| Échap | Remet Yumi au repos, île repliée |
+| R | Replie l'île |
+
+Les clics des plans sont joués par le mode : le curseur n'a pas à apparaître. Les touches répondent même quand une autre application est au premier plan, à condition que Yumi ait l'autorisation Accessibilité (Réglages Système, Confidentialité et sécurité) ; sinon, clique une fois sur l'île pour lui donner le clavier.
+
+**Enregistrer en recadrant sur la notch**
+
+1. Fond d'écran sombre, Dock masqué, barre de menus masquée automatiquement.
+2. Cmd + Maj + 5, « Enregistrer la partie sélectionnée », et trace un cadre vertical 9:16 centré sur la notch, le haut du cadre collé au bord de l'écran. Dans les options, décoche « Afficher les clics de souris ».
+3. Lance l'enregistrement, pose le curseur hors du cadre, joue les plans au clavier.
+4. Au montage, place cette bande dans le tiers haut de l'image verticale. À l'échelle 2, l'île ouverte fait environ 1 320 points de large : un cadre de 1 400 points de large la contient avec un peu d'air.
+
+Sur un écran à encoche, l'encoche physique n'apparaît pas dans une capture d'écran : l'île y est entière. Pour le plan filmé au téléphone, garde l'échelle normale, sinon l'île dépasse de l'encoche réelle.
+
 ## À ne pas montrer
 
 - **Ce qui n'existe pas encore** : Notion, n8n, Make, ChatGPT, le catalogue de quarante modules.
