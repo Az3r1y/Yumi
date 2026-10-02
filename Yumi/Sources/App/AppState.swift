@@ -180,6 +180,11 @@ final class AppState: ObservableObject {
     // nil when the chat is idle.
     @Published var chatLive: ChatLive? = nil
 
+    // What Yumi remembers (see Contracts/MemoryTypes.swift). Filled by the core's memory store.
+    @Published var memory: [MemoryEntry] = []
+    // The person's first name, nil until they give it at first launch.
+    @Published var userName: String? = nil
+
     // Pending approval request from Claude Code hook
     @Published var pendingApproval: ApprovalInfo? = nil
 

@@ -128,6 +128,16 @@ Contrats ajoutés sur `main` pour cette phase :
 
 Deux sessions : Cœur renseigne les nouveaux champs et retarde la fin de l'app ; Île porte la maquette.
 
+## Phase 5 : un compagnon, pas un tableau de bord
+
+La phase 4 est terminée et fusionnée (interface par activités). Yumi a un corps de compagnon et un cerveau d'indicateur d'état. Priorité : qu'il connaisse la personne, se souvienne, et parle avec sa propre voix. La référence est `design/yumi/voix.md`.
+
+- **La voix** : tout ce que Yumi dit est réécrit selon la fiche. Les libellés très courts restent neutres.
+- **La mémoire** : il retient de lui-même, dans un fichier local lisible. Contrat `Contracts/MemoryTypes.swift`, `AppState.memory` et `AppState.userName`. Le cœur tient la mémoire, l'île la montre et permet de la corriger ou de l'effacer.
+- **Le prénom** est demandé au premier lancement, jamais écrit en dur.
+
+Viendront ensuite, dans cet ordre : l'initiative (il parle le premier, rarement et à propos, avec un réglage de discrétion), puis le lien entre les modules (une phrase qui résume la situation).
+
 ## Phase 2 : porter la maquette, répartition des fichiers
 
 Trois sessions en parallèle. Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Chaque session peut créer de nouveaux fichiers dans son propre sous-dossier.
