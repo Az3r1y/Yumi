@@ -269,6 +269,7 @@ final class YumiCore {
 
     func start() {
         memory.start()
+        ClaudeService.shared.memory = memory
         modules.start()
         consumer = Task { [engine, store, ingress, weak self] in
             // Subscribe before the socket opens: the engine does not keep events for later.

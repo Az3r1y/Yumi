@@ -116,6 +116,10 @@ final class ClaudeService {
 
     var apiKey: String? { KeychainStore.shared.get("anthropic-api-key") }
 
+    /// What Yumi remembers. Every conversation is told the first name and the memories, and
+    /// what it learns goes back there. Set once by the core.
+    var memory: MemoryStore?
+
     // Multi-turn conversation messages (for API)
     private var conversationMessages: [[String: Any]] = []
 
@@ -223,7 +227,8 @@ final class ClaudeService {
             binary: binary,
             arguments: ClaudeCLI.arguments(
                 session: target,
-                systemPrompt: ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: folder),
+                systemPrompt: ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: folder,
+                                                       memory: memory?.book),
                 readableFolders: readableFolders, extra: extra),
             environment: ClaudeCLI.environment(from: ProcessInfo.processInfo.environment, binary: binary),
             folder: folder)
@@ -406,7 +411,7 @@ final class ClaudeService {
             "model": model,
             "max_tokens": 4096,
             "tools": webSearchTools,
-            "system": systemPrompt,
+            "system": systemPrompt + (memory.map { "\n\n" + MemoryPrompt.knowledge($0.book) } ?? ""),
             "messages": conversationMessages,
         ]
 

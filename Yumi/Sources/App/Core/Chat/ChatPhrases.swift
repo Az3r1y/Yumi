@@ -5,8 +5,9 @@ import Foundation
 enum ChatPhrases {
 
     /// Added to Claude Code's own system prompt.
-    static func systemPrompt(characterName: String, folder: String) -> String {
-        """
+    /// - Parameter memory: what Yumi knows about the person; nil leaves that part out.
+    static func systemPrompt(characterName: String, folder: String, memory: MemoryBook? = nil) -> String {
+        let persona = """
         Tu es \(characterName), un compagnon qui vit dans l'encoche du Mac de l'utilisateur. \
         Tu réponds dans une toute petite fenêtre : sois bref, va droit au but, tutoie l'utilisateur et réponds dans sa langue. \
         Pas de mise en forme Markdown (ni titres, ni listes à puces, ni gras) : du texte simple, avec des retours à la ligne si besoin. \
@@ -15,6 +16,8 @@ enum ChatPhrases {
         Chaque action qui demande une permission est proposée à l'utilisateur dans l'encoche : si elle est refusée, n'insiste pas et ne cherche pas à la contourner. \
         Quand tu as fini, dis en une phrase ce que tu as fait.
         """
+        guard let memory else { return persona }
+        return persona + "\n\n" + MemoryPrompt.knowledge(memory)
     }
 
     // MARK: Message
