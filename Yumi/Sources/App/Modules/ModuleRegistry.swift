@@ -5,6 +5,7 @@ import Foundation
 @MainActor
 final class ModuleRegistry {
     private static let selectionKey = "selectedModules"
+    private static let knownKey = "knownModules"
 
     private let defaults: UserDefaults
     private let modules: [any YumiModule]
@@ -21,8 +22,13 @@ final class ModuleRegistry {
         self.modules = modules
         self.defaults = defaults
         self.onPublish = onPublish
-        selection = ModuleSelection(stored: defaults.stringArray(forKey: Self.selectionKey),
-                                    available: modules.map(\.id))
+        let stored = defaults.stringArray(forKey: Self.selectionKey)
+        selection = ModuleSelection(stored: stored, available: modules.map(\.id))
+        // A module added by an update joins a selection saved before it existed, once.
+        let known = selection.welcome(available: modules.map(\.id),
+                                      known: stored == nil ? nil : defaults.stringArray(forKey: Self.knownKey) ?? ModuleSelection.firstModules)
+        defaults.set(known, forKey: Self.knownKey)
+        if stored != nil, selection.ids != stored { defaults.set(selection.ids, forKey: Self.selectionKey) }
     }
 
     /// Identifiers of every module of this build, in catalogue order.

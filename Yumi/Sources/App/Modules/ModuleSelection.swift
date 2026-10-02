@@ -4,7 +4,10 @@ import Foundation
 /// Order matters: the first `ModuleCatalog.pinnedLimit` go in the island, the rest in the second square.
 struct ModuleSelection: Equatable, Sendable {
     /// Selected on first launch: the modules that work on the Mac without any account.
-    static let defaultIDs = ["claude-code", "agenda", "notes", "focus", "music", "weather"]
+    static let defaultIDs = ["claude-code", "agenda", "notes", "focus", "music", "weather", "github"]
+
+    /// The modules of the first version: a selection saved without a record of what was known knew these.
+    static let firstModules = ["claude-code", "agenda", "notes", "focus", "music", "weather"]
 
     private(set) var ids: [String]
 
@@ -16,6 +19,14 @@ struct ModuleSelection: Equatable, Sendable {
         ids = (stored ?? Self.defaultIDs)
             .filter { available.contains($0) && seen.insert($0).inserted }
         ids = Array(ids.prefix(ModuleCatalog.selectionLimit))
+    }
+
+    /// Adds the modules that did not exist when the selection was saved, once each, while there is room.
+    /// - Parameter known: the modules the person has already been offered. Returns it completed.
+    mutating func welcome(available: [String], known: [String]?) -> [String] {
+        guard let known else { return available }
+        for id in Self.defaultIDs where available.contains(id) && !known.contains(id) { select(id, available: available) }
+        return Array(Set(known).union(available)).sorted()
     }
 
     func contains(_ id: String) -> Bool { ids.contains(id) }

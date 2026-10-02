@@ -5,6 +5,8 @@ import Foundation
 enum ModuleSymbols {
     private static let buttons: [String: String] = [
         "Voir": "eye.fill",
+        "Relire": "eye.fill",
+        "Brancher": "link",
         "Ouvrir le terminal": "terminal.fill",
         "Ouvrir l'éditeur": "curlybraces",
         "Ouvrir la session": "arrow.up.forward.app.fill",
