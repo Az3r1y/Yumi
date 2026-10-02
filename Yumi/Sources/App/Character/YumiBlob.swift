@@ -73,6 +73,16 @@ final class YumiBlob {
 
     var isPosing: Bool { !steps.isEmpty }
 
+    /// True when the springs have come to rest, the head has finished turning and nothing is
+    /// in the air: all that still moves is the breathing.
+    var isSettled: Bool {
+        let target: CGFloat = sleep ? 0.56 : th
+        return steps.isEmpty && !air && drops.isEmpty && puffs.isEmpty
+            && abs(vh) < 0.02 && abs(h - target) < 0.002
+            && abs(vl) < 0.05 && abs(lean - leanTarget - gaze) < 0.02 && abs(eye - lean) < 0.02
+            && abs(yaw - lookX * 0.5) < 0.003 && abs(pitch - lookY * 0.32) < 0.003
+    }
+
     func soft() { k = 170; c = 9; kl = 150; cl = 8 }
     func hard() { k = 420; c = 34 }
 

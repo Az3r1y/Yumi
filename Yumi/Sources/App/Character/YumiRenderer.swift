@@ -35,6 +35,8 @@ struct YumiFrame {
     var emberRadius: CGFloat = 1.9
     var emberHot = false
     var sip: CGFloat = 0
+    /// The bubble and the z of the sleep: they fade when the sleep goes deep.
+    var sleepFx: CGFloat = 1
 
     // Pose extras: seconds since the arms or the sparks started, nil when they are not out
     var armTime: CGFloat?
@@ -43,6 +45,52 @@ struct YumiFrame {
     var drops: [YumiBlob.Drop] = []
     var puffs: [YumiBlob.Puff] = []
     var time: CGFloat = 0
+
+    /// The blurred light, already drawn for a shape close to this one (see YumiLight).
+    /// nil: it is drawn again for this picture.
+    var storedLight: YumiLight?
+}
+
+/// The blurred part of the light (floor, halo, light inside the outline), drawn once for a
+/// body at rest and reused while the shape only breathes: blurring is what costs the most,
+/// and a breath moves the outline by less than a unit.
+struct YumiLight {
+    /// Floor and halo, behind the body.
+    let behind: Image
+    /// Light spilling inside the outline; the body clips it.
+    let inner: Image
+    /// The shape they were drawn for.
+    let h: CGFloat
+    let w: CGFloat
+    let lean: CGFloat
+
+    /// The part of the mock-up's box the pictures cover: the widest body at rest, its halo and its blur.
+    static let bounds = CGRect(x: -50, y: -32, width: 200, height: 136)
+
+    /// Draws both pictures with the same code as the live path, so they are identical to it.
+    /// `unit` is the size of one unit in points, `scale` the pixels per point of the screen.
+    @MainActor
+    static func render(h: CGFloat, w: CGFloat, lean: CGFloat, rim: [YumiRGB], rimWidth: CGFloat,
+                       unit: CGFloat, scale: CGFloat) -> YumiLight? {
+        var f = YumiFrame()
+        f.h = h; f.w = w; f.lean = lean; f.rim = rim; f.rimWidth = rimWidth
+        let body = YumiRenderer.bodyPath(h: h, w: w, lean: lean)
+        func picture(_ draw: @escaping (GraphicsContext) -> Void) -> Image? {
+            let canvas = Canvas { context, _ in
+                var c = context
+                c.scaleBy(x: unit, y: unit)
+                c.translateBy(x: -bounds.minX, y: -bounds.minY)
+                draw(c)
+            }
+            .frame(width: bounds.width * unit, height: bounds.height * unit)
+            let renderer = ImageRenderer(content: canvas)
+            renderer.scale = scale
+            return renderer.cgImage.map { Image(decorative: $0, scale: scale) }
+        }
+        guard let behind = picture({ YumiRenderer.drawBehind(f, body: body, in: $0) }),
+              let inner = picture({ YumiRenderer.drawInner(f, body: body, in: $0) }) else { return nil }
+        return YumiLight(behind: behind, inner: inner, h: h, w: w, lean: lean)
+    }
 }
 
 /// Draws Yumi as design/yumi/maquette/reference.html does, element for element, in the
@@ -121,30 +169,30 @@ enum YumiRenderer {
             tilted.translateBy(x: -50, y: -76)
         }
 
-        // Light pooled on the floor
-        if f.light > 0.01 {
-            let rx = 34 * f.w * (f.air ? 0.7 : 1)
-            let floor = CGRect(x: 50 - rx, y: 74, width: rx * 2, height: 8)
-            tilted.drawLayer { l in
-                l.opacity = 0.35 * f.light
-                l.addFilter(.blur(radius: blur))
-                l.fill(Path(ellipseIn: floor), with: across(floor, f.rim))
-            }
+        // The pictures of the light were drawn for a shape a breath away: stretch them onto this one
+        var stored = tilted
+        if let light = f.storedLight {
+            stored.opacity = f.light
+            stored.translateBy(x: 50, y: 76)
+            stored.scaleBy(x: f.w / light.w, y: f.h / light.h)
+            stored.translateBy(x: -50, y: -76)
         }
 
         // .pose: the body follows the lean a little, and jumps
         var pose = tilted
         pose.translateBy(x: -f.lean * 0.12, y: f.y)
 
-        drawArms(f, in: pose)
-
+        // Light pooled on the floor, then the halo. The arms come out between the two.
         if f.light > 0.01 {
-            pose.drawLayer { l in
-                l.opacity = f.glow * f.light
-                l.clipToLayer { fadeTop(&$0) }
-                l.addFilter(.blur(radius: blur))
-                l.stroke(body, with: rimShade, lineWidth: f.rimWidth * 2.2)
+            if let light = f.storedLight {
+                stored.draw(light.behind, in: YumiLight.bounds)
+            } else {
+                drawFloor(f, in: tilted)
+                drawArms(f, in: pose)
+                drawHalo(f, body: body, in: pose)
             }
+        } else {
+            drawArms(f, in: pose)
         }
 
         // The body is pure black, the colour of the island
@@ -155,11 +203,17 @@ enum YumiRenderer {
         drawFace(f, in: inside)
         if f.light > 0.01 {
             // Light spilling inside the outline
-            inside.drawLayer { l in
-                l.opacity = 0.5 * f.light
-                l.clipToLayer { lowerHalf(&$0) }
-                l.addFilter(.blur(radius: blur))
-                l.stroke(body, with: rimShade, lineWidth: 11)
+            if let light = f.storedLight {
+                // `inside` is clipped to the body; go back to the space the picture was drawn in
+                var spill = inside
+                spill.opacity = f.light
+                spill.translateBy(x: f.lean * 0.12, y: -f.y)
+                spill.translateBy(x: 50, y: 76)
+                spill.scaleBy(x: f.w / light.w, y: f.h / light.h)
+                spill.translateBy(x: -50, y: -76)
+                spill.draw(light.inner, in: YumiLight.bounds)
+            } else {
+                drawSpill(f, body: body, in: inside)
             }
             // Soft reflection and its small glint: they slide when the head turns
             let top = 76 - 68 * f.h
@@ -208,6 +262,51 @@ enum YumiRenderer {
         drawNotes(f, in: context)
         drawSparks(f, in: context)
         drawZz(f, in: context)
+    }
+
+    // MARK: Light
+
+    private static func drawFloor(_ f: YumiFrame, in context: GraphicsContext) {
+        let rx = 34 * f.w * (f.air ? 0.7 : 1)
+        let floor = CGRect(x: 50 - rx, y: 74, width: rx * 2, height: 8)
+        context.drawLayer { l in
+            l.opacity = 0.35 * f.light
+            l.addFilter(.blur(radius: blur))
+            l.fill(Path(ellipseIn: floor), with: across(floor, f.rim))
+        }
+    }
+
+    private static func drawHalo(_ f: YumiFrame, body: Path, in context: GraphicsContext) {
+        context.drawLayer { l in
+            l.opacity = f.glow * f.light
+            l.clipToLayer { fadeTop(&$0) }
+            l.addFilter(.blur(radius: blur))
+            l.stroke(body, with: across(body.boundingRect, f.rim), lineWidth: f.rimWidth * 2.2)
+        }
+    }
+
+    private static func drawSpill(_ f: YumiFrame, body: Path, in context: GraphicsContext) {
+        context.drawLayer { l in
+            l.opacity = 0.5 * f.light
+            l.clipToLayer { lowerHalf(&$0) }
+            l.addFilter(.blur(radius: blur))
+            l.stroke(body, with: across(body.boundingRect, f.rim), lineWidth: 11)
+        }
+    }
+
+    /// Floor and halo of a body standing still, for YumiLight.
+    static func drawBehind(_ f: YumiFrame, body: Path, in context: GraphicsContext) {
+        drawFloor(f, in: context)
+        var pose = context
+        pose.translateBy(x: -f.lean * 0.12, y: 0)
+        drawHalo(f, body: body, in: pose)
+    }
+
+    /// Light inside the outline of a body standing still, not yet clipped to it, for YumiLight.
+    static func drawInner(_ f: YumiFrame, body: Path, in context: GraphicsContext) {
+        var pose = context
+        pose.translateBy(x: -f.lean * 0.12, y: 0)
+        drawSpill(f, body: body, in: pose)
     }
 
     // MARK: Face
@@ -431,7 +530,7 @@ enum YumiRenderer {
             c.stroke(circle(52, 61, 2.7), with: .color(.white), lineWidth: 1.7)
         }
 
-        if let o = f.props[.sleep], o > 0.01 {
+        if let o = f.props[.sleep].map({ $0 * f.sleepFx }), o > 0.01 {
             // A bubble swells at his nose and bursts, every 3.2 s
             let p = (f.habitTime / 3.2).truncatingRemainder(dividingBy: 1)
             let scale = yumiKeyframes(p, [(0, 0.15), (0.7, 1), (0.8, 1.25), (0.84, 1.5), (1, 1.5)], .easeInOut)
@@ -484,7 +583,7 @@ enum YumiRenderer {
     }
 
     private static func drawZz(_ f: YumiFrame, in context: GraphicsContext) {
-        guard let o = f.props[.sleep], o > 0.01 else { return }
+        guard let o = f.props[.sleep].map({ $0 * f.sleepFx }), o > 0.01 else { return }
         let blue = Color(.sRGB, red: 0.608, green: 0.722, blue: 1)
         let shade: (CGRect) -> GraphicsContext.Shading = { _ in .color(blue) }
         drift(context, "z", size: 9, at: CGPoint(x: 78, y: 26), shading: shade, time: f.habitTime, period: 2.6, opacity: o)

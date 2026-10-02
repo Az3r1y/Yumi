@@ -100,21 +100,27 @@ private extension View {
 /// TimelineView + Canvas for one engine. The canvas is larger than the frame it is given
 /// (BotEngine.canvasRect) and centred on it, so the layout is unchanged and nothing is cut.
 struct YumiStage: View {
-    let engine: BotEngine
+    /// Observed for its cadence only: the engine publishes nothing else.
+    @ObservedObject var engine: BotEngine
     var particleOverhang: CGFloat = 0
     var paused = false
     /// false for a character that must not react to the pointer (galleries).
     var followsPointer = true
 
     @State private var probe = YumiScreenProbe()
+    @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         GeometryReader { geo in
             let frame = CGRect(origin: .zero, size: geo.size)
             let room = BotEngine.canvasRect(for: frame, overhang: particleOverhang)
-            TimelineView(.animation(paused: paused)) { timeline in
+            // Every frame while he moves, fifteen a second while he only breathes, none while
+            // nothing changes or he is not shown
+            TimelineView(.animation(minimumInterval: engine.cadence == .low ? 1.0 / 15 : nil,
+                                    paused: paused || engine.cadence == .still)) { timeline in
                 Canvas { context, _ in
                     engine.particleOverhang = particleOverhang
+                    engine.displayScale = displayScale
                     if followsPointer, let look = probe.look() { engine.pointer = look }
                     engine.advance(to: timeline.date)
                     var ctx = context
@@ -172,11 +178,25 @@ struct MiniBotCanvasView: View {
         }())
     }
 
+    /// A blink now and then is all the life it has: it is only redrawn while it blinks.
+    @State private var blinking = false
+
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(paused: !blinking)) { timeline in
             Canvas { context, size in
                 engine.advance(to: timeline.date)
                 engine.draw(context: context, frame: CGRect(origin: .zero, size: size))
+            }
+        }
+        .task {
+            // Each one starts at its own moment, then blinks every 5.4 s like the main character
+            try? await Task.sleep(nanoseconds: UInt64.random(in: 0...5_000_000_000))
+            while !Task.isCancelled {
+                engine.blink()
+                blinking = true
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                blinking = false
+                try? await Task.sleep(nanoseconds: 5_100_000_000)
             }
         }
         .onChange(of: task.state) { _, newState in
@@ -212,6 +232,7 @@ extension CGColor {
 ///
 /// - `YUMI_DEMO=gallery` opens a window laid out like the character sheet of the mock-up
 ///   (habits, poses, expressions, rim colours).
+/// - `YUMI_DEMO=open` opens the island on its home view after the launch and leaves it there.
 /// - `YUMI_DEMO=1` plays the launch sequence, then every pose and habit, in the island,
 ///   through the notifications of Contracts/CharacterCommands.swift.
 ///
@@ -224,7 +245,11 @@ enum BotDemo {
     static func startIfRequested() {
         guard !started, let mode = ProcessInfo.processInfo.environment["YUMI_DEMO"] else { return }
         started = true
-        if mode == "gallery" { openGallery() } else { playInIsland() }
+        switch mode {
+        case "gallery": openGallery()
+        case "open":    holdOpen()
+        default:        playInIsland()
+        }
     }
 
     private static func pause(_ seconds: Double) async {
@@ -233,6 +258,17 @@ enum BotDemo {
 
     private static func send(_ name: Notification.Name, _ object: Any?) {
         NotificationCenter.default.post(name: name, object: object)
+    }
+
+    /// Opens the island on its home view and keeps it open, to measure Yumi at rest.
+    private static func holdOpen() {
+        Task { @MainActor in
+            await pause(8)
+            guard let controller = NSApp.windows.compactMap({ $0.windowController as? IslandWindowController }).first else { return }
+            controller.holdsOpen = true
+            controller.fsm.homeToPetitDelay = 3600
+            controller.expand(to: .overview)
+        }
     }
 
     private static func openGallery() {

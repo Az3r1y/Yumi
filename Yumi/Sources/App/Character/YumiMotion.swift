@@ -63,6 +63,9 @@ struct YumiTransition {
         self.curve = curve
     }
 
+    /// True while the value is still on its way to the target.
+    func isActive(at now: Double) -> Bool { duration > 0 && now < start + duration }
+
     /// Changes the value at once (`transition: none`).
     mutating func jump(_ value: CGFloat) { from = value; to = value; duration = 0 }
 
