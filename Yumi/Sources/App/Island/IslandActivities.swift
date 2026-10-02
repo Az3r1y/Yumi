@@ -392,6 +392,11 @@ struct ModuleActivity: View {
             if waiting {
                 RoundButton(style: .fill, symbol: module.primarySymbol ?? "eye.fill", label: module.primaryAction,
                             color: IslandTheme.amber, action: primary)
+            } else if module.primarySymbol == "link" {
+                // Not connected yet: the token field is in the island's own settings
+                RoundButton(style: .tint, symbol: "link", label: module.primaryAction, color: module.color) {
+                    IslandActions.go(.settings)
+                }
             } else {
                 RoundButton(symbol: module.primarySymbol ?? "arrow.up.forward", label: module.primaryAction, action: primary)
             }
