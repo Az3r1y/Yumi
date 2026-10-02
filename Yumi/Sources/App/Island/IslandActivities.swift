@@ -179,9 +179,10 @@ struct DrawnCheck: View {
 struct WaveBars: View {
     let color: Color
     private static let delays: [Double] = [0, 0.2, 0.45, 0.1]
+    @Environment(\.islandLayerShown) private var shown
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !shown)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             HStack(spacing: 2) {
                 ForEach(0..<4, id: \.self) { i in
@@ -229,9 +230,10 @@ struct ActProgress: View {
 /// `.shim`: a light that runs along a line while something is being done.
 struct ActShimmer: View {
     let color: Color
+    @Environment(\.islandLayerShown) private var shown
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !shown)) { timeline in
             // `background-position` from -80 % to 180 % in 1.3 s, on a band 45 % wide
             let p = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 1.3) / 1.3
             GeometryReader { geo in

@@ -50,6 +50,21 @@ extension Animation {
     }
 }
 
+// MARK: - Nothing moves off screen
+
+private struct IslandLayerShownKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
+extension EnvironmentValues {
+    /// false inside a layer of the island that is not the one on screen: its continuous
+    /// animations (wave, shimmer, spinner) stop instead of turning for nobody.
+    var islandLayerShown: Bool {
+        get { self[IslandLayerShownKey.self] }
+        set { self[IslandLayerShownKey.self] = newValue }
+    }
+}
+
 // MARK: - Color helper
 
 extension Color {

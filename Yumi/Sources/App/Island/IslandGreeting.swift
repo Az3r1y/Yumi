@@ -69,6 +69,7 @@ struct IslandSparks: View {
     private static let length = 1.3
 
     var body: some View {
+        // Running only for the 1.3 s of the burst: `start` goes back to nil afterwards
         TimelineView(.animation(paused: start == nil)) { timeline in
             Canvas { context, _ in
                 guard let start else { return }

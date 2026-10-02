@@ -81,6 +81,7 @@ final class IslandLaunch {
             m.setRim(.joy)
             m.pose(.boing)
             m.sparksStart = .now
+            self?.after(1400) { m.sparksStart = nil }
             self?.sound("greet")
         }
         // 5. he waves
@@ -161,6 +162,7 @@ final class IslandLaunch {
         cancelTimers()
         running = false
         model.snap = false
+        model.sparksStart = nil
         model.setLit(true)
         model.setGaze(nil)
         model.forgetCommands()
