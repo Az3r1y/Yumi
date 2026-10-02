@@ -140,7 +140,7 @@ final class ClaudeService {
     func clearConversation(remember: Bool = true) {
         conversationMessages = []
         #if !APPSTORE
-        if remember, answeredTurns >= 2, turn == nil, let session, let binary = ClaudeCLI.locate() {
+        if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.locate() {
             summarize(session: session.id, folder: session.folder, binary: binary)
         }
         answeredTurns = 0
@@ -220,7 +220,9 @@ final class ClaudeService {
     /// thread. It runs on its own after the conversation was cleared; the plain non-interactive
     /// mode refuses every tool that needs a permission, so nothing can be done behind the person's back.
     private func summarize(session: String, folder: String, binary: String) {
-        var arguments = ["-p", MemoryNotes.summaryRequest, "--resume", session, "--output-format", "json", "--permission-mode", "default"]
+        // The system prompt is not kept with a session: without it the summary would lose the voice and the rules.
+        var arguments = ["-p", MemoryNotes.summaryRequest, "--resume", session, "--output-format", "json", "--permission-mode", "default",
+                         "--append-system-prompt", ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: folder, memory: memory?.book)]
         #if DEBUG
         arguments += (ProcessInfo.processInfo.environment["YUMI_CHAT_ARGS"] ?? "").split(separator: " ").map(String.init)
         #endif
@@ -244,7 +246,7 @@ final class ClaudeService {
             limit.cancel()
             guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   object["is_error"] as? Bool != true, let text = object["result"] as? String else { return }
-            let changes = MemoryNotes.extract(from: text).changes
+            let changes = MemoryNotes.extract(from: text, unknownKindAs: .thread).changes
             guard !changes.isEmpty else { return }
             await MainActor.run {
                 self?.memory?.change { MemoryNotes.apply(changes, to: &$0, only: .thread) }
