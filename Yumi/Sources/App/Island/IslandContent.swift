@@ -15,39 +15,42 @@ enum IslandAgent {
         return task.name.isEmpty || task.name == "VS Code" || task.name == source ? source : "\(source) · \(task.name)"
     }
 
-    /// "Écrit les tests": the current step as a sentence without its subject.
+    /// "Claude modifie IslandRootView.swift": the current step, said the way Yumi says it.
     static func doing(_ state: AppState) -> String {
         switch state.effectiveState {
-        case .thinking:  return "Réfléchit"
-        case .searching: return "Cherche"
+        case .thinking:  return "Claude réfléchit"
+        case .searching: return "Claude cherche"
         default:
             if state.focusTask?.source == .n8n { return state.focusTask?.steps.first ?? "Un workflow tourne" }
-            return state.focusTask?.steps.last.flatMap(sentence(forStep:)) ?? "Travaille"
+            return state.focusTask?.steps.last.flatMap(sentence(forStep:)) ?? "Claude travaille"
         }
     }
 
-    /// "Modifie · IslandRootView.swift" → "Modifie IslandRootView.swift".
+    /// "Modifie · IslandRootView.swift" → "Claude modifie IslandRootView.swift".
     /// The labels are the ones of HookServer.frenchStep.
     private static func sentence(forStep step: String) -> String? {
         let verbs: [String: String] = [
-            "Exécute": "Exécute", "Lit": "Lit", "Écrit": "Écrit", "Modifie": "Modifie",
-            "Cherche": "Cherche", "Recherche": "Cherche", "Recherche web": "Cherche sur le web",
-            "Récupère": "Récupère", "Liste": "Liste", "Tâches": "Met à jour ses tâches",
-            "Agent": "Lance un agent", "Notebook": "Modifie un notebook",
+            "Exécute": "lance", "Lit": "lit", "Écrit": "écrit", "Modifie": "modifie",
+            "Cherche": "cherche", "Recherche": "cherche", "Recherche web": "cherche sur le web",
+            "Récupère": "récupère", "Liste": "regarde", "Tâches": "met à jour ses tâches",
+            "Agent": "lance un agent", "Notebook": "modifie un notebook",
         ]
         let parts = step.components(separatedBy: " · ")
         guard let verb = verbs[parts[0]] else { return nil }
         let detail = parts.dropFirst().joined(separator: " · ")
-        return detail.isEmpty ? verb : "\(verb) \(detail)"
+        return detail.isEmpty ? "Claude \(verb)" : "Claude \(verb) \(detail)"
     }
 
-    static func files(_ model: IslandModel) -> String? {
-        let count = model.filesTouched.count
-        if count == 0 { return nil }
-        return count == 1 ? "1 fichier modifié" : "\(count) fichiers modifiés"
+    /// "Depuis douze minutes, trois fichiers touchés. Je surveille."
+    static func watching(_ model: IslandModel) -> String {
+        var parts: [String] = []
+        if let start = model.workStart { parts.append("depuis \(Voice.duration(Date.now.timeIntervalSince(start)))") }
+        if let files = Voice.files(model.filesTouched.count) { parts.append(files) }
+        if parts.isEmpty { return "Il vient de s'y mettre. Je surveille." }
+        return Voice.sentence(parts.joined(separator: ", ")) + ". Je surveille."
     }
 
-    /// "12 min": how long he has been at it.
+    /// "12 min": the key figure, read at a glance.
     static func elapsed(_ model: IslandModel, until end: Date = .now) -> String? {
         guard let start = model.workStart else { return nil }
         let minutes = Int(end.timeIntervalSince(start) / 60)
@@ -56,11 +59,12 @@ enum IslandAgent {
         return "\(minutes / 60) h \(String(format: "%02d", minutes % 60))"
     }
 
+    /// "Trois fichiers touchés en douze minutes." He only says what he saw.
     static func finishedLine(_ state: AppState, _ model: IslandModel) -> String {
-        if let files = files(model), let time = elapsed(model, until: model.workEnd ?? .now) {
-            return "\(files) en \(time)"
+        if let files = Voice.files(model.filesTouched.count), let start = model.workStart {
+            return Voice.sentence("\(files) en \(Voice.duration((model.workEnd ?? .now).timeIntervalSince(start))).")
         }
-        return state.focusTask?.steps.last ?? "La session est terminée"
+        return state.focusTask?.steps.last ?? "La session est terminée."
     }
 }
 
@@ -141,6 +145,41 @@ enum IslandActions {
         SoundEngine.shared.play("pop")
         IslandModel.shared.pose(.boing)
         if !talking { go(.prompt) }
+    }
+
+    // MARK: First name
+
+    /// The person gave their first name: the core keeps it (Contracts/MemoryTypes.swift).
+    static func giveName(_ name: String) {
+        UserDefaults.standard.set(Date.now, forKey: IslandPrefs.nameAskedKey)
+        NotificationCenter.default.post(name: .memorySetName, object: nil, userInfo: ["name": name])
+        SoundEngine.shared.play("approve")
+        IslandModel.shared.pose(.wave)
+        go(.overview)
+    }
+
+    /// Passed over: he asks again in a few days, not before.
+    static func skipName() {
+        UserDefaults.standard.set(Date.now, forKey: IslandPrefs.nameAskedKey)
+        fold()
+    }
+
+    // MARK: Memory (Contracts/MemoryTypes.swift)
+
+    static func correct(_ id: String, _ text: String) {
+        NotificationCenter.default.post(name: .memoryEdit, object: nil, userInfo: ["id": id, "text": text])
+        tap()
+    }
+
+    static func forget(_ id: String) {
+        NotificationCenter.default.post(name: .memoryDelete, object: nil, userInfo: ["id": id])
+        tap()
+    }
+
+    static func forgetEverything() {
+        NotificationCenter.default.post(name: .memoryClear, object: nil)
+        SoundEngine.shared.play("close")
+        IslandModel.shared.pose(.dip)
     }
 
     static func manageModules() {

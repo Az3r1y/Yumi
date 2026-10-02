@@ -119,8 +119,8 @@ struct OverviewActivity: View {
         let modules = Array(state.modules.prefix(ModuleCatalog.selectionLimit))
         if modules.isEmpty {
             VStack(alignment: .leading, spacing: 3) {
-                ActTitle(text: "Aucun module")
-                ActSub(text: "Choisis ce que Yumi surveille dans les réglages de l'app")
+                ActTitle(text: "Je ne surveille rien pour l'instant.")
+                ActSub(text: "Choisis mes modules dans les réglages de l'app.")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {

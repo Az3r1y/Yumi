@@ -395,7 +395,7 @@ struct WorkingActivity: View {
             ActMeta(color: IslandTheme.blue, text: IslandAgent.name(state.focusTask)).riseIn(0)
             ActTitle(text: IslandAgent.doing(state)).riseIn(1)
             ActShimmer(color: IslandTheme.blue).riseIn(2)
-            ActSub(text: IslandAgent.files(model) ?? "Il vient de s'y mettre").riseIn(3)
+            ActSub(text: IslandAgent.watching(model)).riseIn(3)
         } trail: {
             // The minutes move on by themselves
             TimelineView(.periodic(from: .now, by: 20)) { _ in
@@ -414,7 +414,7 @@ struct AlertActivity: View {
         if let approval = state.pendingApproval {
             ActRow {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
-                ActTitle(text: approval.tool == "Bash" ? "Lancer cette commande ?" : "Autoriser \(approval.tool) ?").riseIn(1)
+                ActTitle(text: approval.tool == "Bash" ? "Claude veut lancer ça. Je laisse passer ?" : "Claude veut utiliser \(approval.tool). Je laisse passer ?").riseIn(1)
                 ActMono(prompt: approval.tool == "Bash" ? "$" : nil, text: approval.command, color: IslandTheme.amber).riseIn(2)
                 TextButton(label: "Toujours autoriser") { HookServer.shared.sendApprovalDecision("always") }.riseIn(3)
             } trail: {
@@ -429,8 +429,8 @@ struct AlertActivity: View {
             // A question asked in the session: it can only be answered there
             ActRow {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
-                ActTitle(text: state.focusTask?.steps.last ?? "Claude attend ta réponse", lines: 2).riseIn(1)
-                ActSub(text: "Réponds-lui dans la session").riseIn(2)
+                ActTitle(text: state.focusTask?.steps.last ?? "Claude a une question pour toi.", lines: 2).riseIn(1)
+                ActSub(text: "Il t'attend dans la session.").riseIn(2)
             } trail: {
                 RoundButton(style: .tint, symbol: "arrow.up.forward", label: "Voir", color: IslandTheme.amber) {
                     IslandActions.openAgent(state.focusTask)
@@ -448,7 +448,7 @@ struct FinishedActivity: View {
     var body: some View {
         ActRow {
             ActMeta(color: IslandTheme.green, text: IslandAgent.name(state.focusTask)).riseIn(0)
-            ActTitle(text: "C'est fini").riseIn(1)
+            ActTitle(text: "C'est passé.").riseIn(1)
             ActSub(text: IslandAgent.finishedLine(state, model)).riseIn(2)
         } trail: {
             RoundButton(style: .fill, symbol: "checkmark", label: "OK", color: IslandTheme.green, drawsCheck: true) {
@@ -465,11 +465,11 @@ struct ErrorActivity: View {
     var body: some View {
         ActRow {
             ActMeta(color: IslandTheme.red, text: IslandAgent.name(state.focusTask)).riseIn(0)
-            ActTitle(text: "Ça s'est arrêté sur une erreur").riseIn(1)
+            ActTitle(text: "Ça a planté. Tu veux voir où ?").riseIn(1)
             if let last = state.focusTask?.steps.last {
                 ActMono(text: last).riseIn(2)
             } else {
-                ActSub(text: "Ouvre la session pour voir ce qui bloque").riseIn(2)
+                ActSub(text: "Je n'ai pas le détail. Il est dans la session.").riseIn(2)
             }
         } trail: {
             RoundButton(style: .tint, symbol: "arrow.up.forward", label: "Voir", color: IslandTheme.red) {
@@ -488,9 +488,9 @@ struct DropActivity: View {
     var body: some View {
         if let file {
             ActRow(trailGap: 8) {
-                ActMeta(color: IslandTheme.blue, text: "Fichier reçu").riseIn(0)
+                ActMeta(color: IslandTheme.blue, text: "Bien reçu").riseIn(0)
                 ActTitle(text: file.name).riseIn(1)
-                ActSub(text: "Je le résume, je l'envoie ou je le range").riseIn(2)
+                ActSub(text: "J'en fais quoi ? Je résume, j'envoie ou je range.").riseIn(2)
             } trail: {
                 RoundButton(style: .tint, symbol: "text.alignleft", label: "Résumer", color: IslandTheme.blue) { IslandActions.summarize() }
                 RoundButton(symbol: "paperplane.fill", label: "Envoyer") { IslandActions.sendByMail() }
@@ -498,8 +498,8 @@ struct DropActivity: View {
             }
         } else {
             VStack(alignment: .leading, spacing: 3) {
-                ActTitle(text: "Dépose un fichier")
-                ActSub(text: "Je le résume, je l'envoie ou je le range")
+                ActTitle(text: "Donne, je m'en occupe.")
+                ActSub(text: "Je résume, j'envoie ou je range. Tu choisis.")
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 16)

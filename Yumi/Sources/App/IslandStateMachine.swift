@@ -265,3 +265,74 @@ enum LiveChat {
         done.contains { changes.contains($0.kind) && $0.succeeded }
     }
 }
+
+// MARK: - Asking the first name
+
+/// Yumi asks the person's first name once, after the launch, and does not insist
+/// (design/yumi/voix.md): passed over, he asks again some days later.
+enum FirstName {
+    /// How long he waits before asking again.
+    static let patience: TimeInterval = 3 * 24 * 3600
+
+    static func shouldAsk(name: String?, lastAsked: Date?, now: Date) -> Bool {
+        guard clean(name ?? "") == nil else { return false }
+        guard let lastAsked else { return true }
+        return now.timeIntervalSince(lastAsked) >= patience
+    }
+
+    /// What was typed, as a first name: trimmed, one line, not endless. nil when empty.
+    static func clean(_ typed: String) -> String? {
+        let line = typed.split(whereSeparator: \.isNewline).first.map(String.init) ?? ""
+        let name = line.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? nil : String(name.prefix(40))
+    }
+}
+
+// MARK: - Yumi's voice
+
+/// How Yumi writes numbers and durations (design/yumi/voix.md): small numbers in letters
+/// inside a sentence, figures only for values read at a glance.
+enum Voice {
+    /// "douze" up to ninety-nine, figures beyond.
+    static func number(_ n: Int) -> String {
+        guard (0...99).contains(n) else { return String(n) }
+        let formatter = NumberFormatter()
+        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.numberStyle = .spellOut
+        return formatter.string(from: NSNumber(value: n)) ?? String(n)
+    }
+
+    /// "une" before a feminine noun: "une minute", "vingt-et-une minutes".
+    private static func feminine(_ n: Int) -> String {
+        let text = number(n)
+        return text == "un" || text.hasSuffix(" un") || text.hasSuffix("-un") ? text + "e" : text
+    }
+
+    /// "moins d'une minute", "une minute", "douze minutes", "une heure", "deux heures dix".
+    static func duration(_ seconds: TimeInterval) -> String {
+        let minutes = Int(max(0, seconds) / 60)
+        if minutes < 1 { return "moins d'une minute" }
+        if minutes < 60 { return "\(feminine(minutes)) \(minutes == 1 ? "minute" : "minutes")" }
+        let hours = minutes / 60, rest = minutes % 60
+        let head = "\(feminine(hours)) \(hours == 1 ? "heure" : "heures")"
+        return rest == 0 ? head : "\(head) \(number(rest))"
+    }
+
+    /// "un fichier touché", "trois fichiers touchés"; nil for none.
+    static func files(_ count: Int) -> String? {
+        guard count > 0 else { return nil }
+        return count == 1 ? "un fichier touché" : "\(number(count)) fichiers touchés"
+    }
+
+    /// A sentence starts with a capital.
+    static func sentence(_ text: String) -> String {
+        guard let first = text.first else { return text }
+        return first.uppercased() + text.dropFirst()
+    }
+
+    /// The first name, when it is worth saying: he uses it rarely.
+    static func goodbye(name: String?) -> String {
+        guard let name = FirstName.clean(name ?? "") else { return "À tout à l'heure" }
+        return "À tout à l'heure, \(name)"
+    }
+}

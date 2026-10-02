@@ -119,7 +119,11 @@ final class IslandWindowController: NSWindowController {
     // MARK: - FSM wiring
 
     private func wireFSM() {
-        launch.onComplete = { [weak self] in self?.fsm.greetComplete() }
+        launch.onComplete = { [weak self] in
+            guard let self else { return }
+            self.fsm.greetComplete()
+            self.askFirstNameIfNeeded()
+        }
 
         fsm.onTransition = { [weak self] from, to in
             guard let self else { return }
@@ -375,6 +379,20 @@ final class IslandWindowController: NSWindowController {
         #endif
     }
 
+    // MARK: - First launch
+
+    /// Once the launch is over, Yumi asks the first name if he does not know it, unless he
+    /// asked not long ago. The core may still be loading its memory: he waits a moment.
+    private func askFirstNameIfNeeded() {
+        guard !holdsOpen else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+            guard let self, !self.leaving, self.fsm.state != .home, self.state.pendingApproval == nil else { return }
+            let asked = UserDefaults.standard.object(forKey: IslandPrefs.nameAskedKey) as? Date
+            guard FirstName.shouldAsk(name: self.state.userName, lastAsked: asked, now: .now) else { return }
+            self.expand(to: .welcome)
+        }
+    }
+
     // MARK: - Leaving (Contracts/AppLifecycle.swift)
 
     /// The core holds the end of the app while Yumi says goodbye.
@@ -435,7 +453,8 @@ final class IslandWindowController: NSWindowController {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] view in
                 guard let self, self.fsm.state == .home else { return }
-                if IslandScreen.resolve(view: view, state: .idle, approvalPending: false) == .talk {
+                let screen = IslandScreen.resolve(view: view, state: .idle, approvalPending: false)
+                if screen == .talk || screen == .welcome || screen == .memory {
                     self.islandPanel.makeKey()
                 } else if self.islandPanel.isKeyWindow {
                     self.islandPanel.resignKey()
