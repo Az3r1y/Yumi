@@ -497,6 +497,18 @@ enum YumiSkin {
 }
 // <<< YumiSkin
 
+// MARK: - Cadence
+
+/// How often Yumi needs a new picture. He only costs something when he moves.
+enum YumiCadence: Comparable {
+    /// Nothing changes (deep sleep): no picture at all.
+    case still
+    /// Only the breathing: about fifteen pictures a second.
+    case low
+    /// A pose, a face changing, a look moving, an animated habit: every frame.
+    case full
+}
+
 // MARK: - Bot engine
 
 /// The character as the rest of the app drives it. The soft body, the faces, the poses and the
@@ -516,7 +528,29 @@ final class BotEngine: ObservableObject {
     /// Direction of the pointer seen from Yumi, -1…1 on both axes, y down. Set by the view.
     var pointer = CGPoint.zero
     /// Eye scale target (1.08 while the pointer is on him).
-    var tgEs: CGFloat = 1
+    var tgEs: CGFloat = 1 { didSet { if tgEs != oldValue { wake() } } }
+
+    /// The rate the view should redraw at. Published only when it changes.
+    @Published private(set) var cadence: YumiCadence = .full {
+        didSet {
+            #if DEBUG
+            // `YUMI_TRACE_CADENCE=1` prints every change of cadence of the main character
+            if cadence != oldValue, !isMini, ProcessInfo.processInfo.environment["YUMI_TRACE_CADENCE"] != nil {
+                fputs(String(format: "YUMI cadence %.2f s: \(cadence)\n", clock), stderr)
+            }
+            #endif
+        }
+    }
+    private var calmSince: Double?
+    #if DEBUG
+    private var traceSecond = -1
+    #endif
+    private var cadenceChangeQueued = false
+    /// Simulated time of the last command: he was just told something, he is not at rest.
+    private var lastStir: Double = 0
+    /// Seconds asleep before the sleep goes deep: the bubble and the z fade, and he stops.
+    private static let deepSleepAfter: Double = 30
+    private var sleepFx = YumiTransition(1)
 
     private(set) var state: BotState = .idle
     private let blob = YumiBlob()
@@ -573,12 +607,17 @@ final class BotEngine: ObservableObject {
 
     func play(_ newPose: YumiPose) {
         guard !isMini else { return }
+        wake()
         blob.play(newPose, now: clock * 1000)
         pose = newPose
         poseStart = clock
     }
 
-    func setHabit(_ habit: YumiHabit?) { habitCommand = habit }
+    func setHabit(_ habit: YumiHabit?) {
+        guard habit != habitCommand else { return }
+        habitCommand = habit
+        wake()
+    }
 
     /// A new mood replaces whatever face a pose had put on, and frees the gaze, as `setMood`
     /// does in the mock-up. Send the gaze after the mood.
@@ -587,15 +626,21 @@ final class BotEngine: ObservableObject {
         gazeCommand = nil
         blob.tempFace = nil
         emote = nil
+        wake()
     }
 
-    func setRim(_ tone: YumiRimTone?) { rimCommand = tone }
+    func setRim(_ tone: YumiRimTone?) {
+        guard tone != rimCommand else { return }
+        rimCommand = tone
+        wake()
+    }
 
     /// Unlit, the body is black on the black island: only the eyes show. When the light
     /// comes back the rim draws itself round him and the glow blooms.
     func setLit(_ on: Bool) {
         guard on != lit else { return }
         lit = on
+        wake()
         if on {
             drawn.set(1, at: clock, over: 0.8, .draw)
             light.set(1, at: clock, over: 0.7, .ease)
@@ -605,7 +650,11 @@ final class BotEngine: ObservableObject {
         }
     }
 
-    func setGaze(_ point: CGPoint?) { gazeCommand = point }
+    func setGaze(_ point: CGPoint?) {
+        guard point != gazeCommand else { return }
+        gazeCommand = point
+        wake()
+    }
 
     // MARK: - Island state and legacy notifications
 
@@ -613,6 +662,7 @@ final class BotEngine: ObservableObject {
         guard state != newState || force else { return }
         let changed = state != newState
         state = newState
+        wake()
         emote = nil
         blob.tempFace = nil
         guard changed, !isMini, habitCommand != .sleep else { return }
@@ -629,14 +679,16 @@ final class BotEngine: ObservableObject {
     func setReceiving(_ on: Bool) {
         guard on != receiving else { return }
         receiving = on
+        wake()
         if on { play(.stretch) }
     }
 
-    func blink() { blinkAt = clock }
+    func blink() { blinkAt = clock; wake() }
 
     func gulp() {
         play(.boing)
         emote = (.happy, clock + 0.8)
+        wake()
     }
 
     func greet() {
@@ -660,6 +712,7 @@ final class BotEngine: ObservableObject {
     }
 
     func triggerEmote(_ kind: BotEmote, duration: Double = 1.8) {
+        wake()
         switch kind {
         case .love:
             emote = (.happy, clock + duration)
@@ -702,11 +755,22 @@ final class BotEngine: ObservableObject {
     // MARK: - Frame (called from the view's TimelineView)
 
     func advance(to date: Date) {
-        // The mock-up caps a frame at 33 ms, so a hitch never throws the springs
-        let dt = lastDate.map { min(0.033, max(0, date.timeIntervalSince($0))) } ?? 0
+        let elapsed = lastDate.map { max(0, date.timeIntervalSince($0)) } ?? 0
         lastDate = date
+        // After a pause he picks up where he was. Otherwise he keeps real time, in steps of
+        // 33 ms at most (the cap of the mock-up), so the springs behave the same at any cadence.
+        var left = elapsed > 0.5 ? 0.033 : elapsed
+        if isMini { clock += left; return }
+        while left > 0 {
+            let dt = min(0.033, left)
+            left -= dt
+            step(dt)
+        }
+        updateCadence()
+    }
+
+    private func step(_ dt: Double) {
         clock += dt
-        guard !isMini else { return }
 
         // A sleeping island state falls asleep by itself
         let habit = habitCommand ?? (state == .sleeping ? .sleep : nil)
@@ -769,6 +833,89 @@ final class BotEngine: ObservableObject {
         }
         ember.set(blob.drag ? 3 : 1.9, at: now, over: 0.3, .ease)
         sip.set(blob.sip ? 1 : 0, at: now, over: 0.35, .spring)
+        sleepFx.set(isDeepAsleep ? 0 : 1, at: now, over: 0.7, .ease)
+    }
+
+    // MARK: - Cadence
+
+    /// Asleep for a while, and nobody stirred him: the sleep is deep.
+    private var isDeepAsleep: Bool {
+        blob.habit == .sleep && pose == nil && clock - max(habitStart, lastStir) > BotEngine.deepSleepAfter
+    }
+
+    /// A command arrived: full cadence at once. Called outside of any drawing.
+    private func wake(_ why: String = #function) {
+        #if DEBUG
+        if !isMini, ProcessInfo.processInfo.environment["YUMI_TRACE_CADENCE"] == "2" {
+            fputs(String(format: "YUMI wake %.2f s: \(why)\n", clock), stderr)
+        }
+        #endif
+        lastStir = clock
+        calmSince = nil
+        if cadence != .full { cadence = .full }
+    }
+
+    /// What this moment needs.
+    private var wantedCadence: YumiCadence {
+        let now = clock
+        #if DEBUG
+        // `YUMI_FREEZE=1` stops the character after 20 s: what the app still costs is not him
+        if now > 20, ProcessInfo.processInfo.environment["YUMI_FREEZE"] != nil { return .still }
+        #endif
+        if pose != nil || !blob.isSettled || state == .approval { return .full }
+
+        var easing = [esl, esr, ps, tl, tr, al, ar, bl, br, cl, cr, tilt, lx, ly, eyes,
+                      rimWidth, drawn, light, ember, sip, sleepFx]
+        easing += rimStops.joined()
+        easing += props.values
+        if easing.contains(where: { $0.isActive(at: now) }) { return .full }
+
+        // A blink lasts a quarter of a second: full cadence a little before it starts
+        let phase = (now + blinkPhase).truncatingRemainder(dividingBy: 5.4)
+        if phase > 5.4 * 0.955 - 0.1 { return .full }
+        if let b = blinkAt, now - b < 0.3 { return .full }
+
+        switch blob.habit {
+        case .smoke, .coffee, .headphones, .whistle, .cloud:
+            return .full
+        case .sunglasses:
+            // They drop onto his nose in 0.55 s, then nothing moves but his breathing
+            return now - habitStart < 0.6 ? .full : .low
+        case .sleep:
+            // The bubble and the z, until the sleep is deep
+            return isDeepAsleep ? .still : .full
+        case .exhausted, nil:
+            return .low
+        }
+    }
+
+    /// Speeds up at once, slows down only after a short calm, so the cadence does not flap.
+    /// Runs while the canvas draws: the change is published right after, not during.
+    private func updateCadence() {
+        let wanted = wantedCadence
+        #if DEBUG
+        if !isMini, ProcessInfo.processInfo.environment["YUMI_TRACE_CADENCE"] == "2", Int(clock) != traceSecond {
+            traceSecond = Int(clock)
+            fputs(String(format: "YUMI wants %.2f s: \(wanted) pose=\(String(describing: pose)) settled=\(blob.isSettled) habit=\(String(describing: blob.habit))\n", clock), stderr)
+        }
+        #endif
+        if wanted == cadence { calmSince = nil; return }
+        if wanted < cadence {
+            let since = calmSince ?? clock
+            calmSince = since
+            if clock - since < 0.35 { return }
+        }
+        guard !cadenceChangeQueued else { return }
+        cadenceChangeQueued = true
+        let stir = lastStir
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.cadenceChangeQueued = false
+            // A command that arrived in between wins
+            if wanted < .full, self.lastStir != stir { return }
+            self.calmSince = nil
+            if self.cadence != wanted { self.cadence = wanted }
+        }
     }
 
     // MARK: - Draw
@@ -852,6 +999,7 @@ final class BotEngine: ObservableObject {
         f.emberRadius = ember.value(at: now)
         f.emberHot = blob.drag
         f.sip = sip.value(at: now)
+        f.sleepFx = sleepFx.value(at: now)
         if let p = pose {
             if p.showsArms { f.armTime = CGFloat(now - poseStart) }
             if p.showsSparks { f.sparkTime = CGFloat(now - poseStart) }

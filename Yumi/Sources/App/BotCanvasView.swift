@@ -100,7 +100,8 @@ private extension View {
 /// TimelineView + Canvas for one engine. The canvas is larger than the frame it is given
 /// (BotEngine.canvasRect) and centred on it, so the layout is unchanged and nothing is cut.
 struct YumiStage: View {
-    let engine: BotEngine
+    /// Observed for its cadence only: the engine publishes nothing else.
+    @ObservedObject var engine: BotEngine
     var particleOverhang: CGFloat = 0
     var paused = false
     /// false for a character that must not react to the pointer (galleries).
@@ -112,7 +113,10 @@ struct YumiStage: View {
         GeometryReader { geo in
             let frame = CGRect(origin: .zero, size: geo.size)
             let room = BotEngine.canvasRect(for: frame, overhang: particleOverhang)
-            TimelineView(.animation(paused: paused)) { timeline in
+            // Every frame while he moves, fifteen a second while he only breathes, none while
+            // nothing changes or he is not shown
+            TimelineView(.animation(minimumInterval: engine.cadence == .low ? 1.0 / 15 : nil,
+                                    paused: paused || engine.cadence == .still)) { timeline in
                 Canvas { context, _ in
                     engine.particleOverhang = particleOverhang
                     if followsPointer, let look = probe.look() { engine.pointer = look }

@@ -35,6 +35,8 @@ struct YumiFrame {
     var emberRadius: CGFloat = 1.9
     var emberHot = false
     var sip: CGFloat = 0
+    /// The bubble and the z of the sleep: they fade when the sleep goes deep.
+    var sleepFx: CGFloat = 1
 
     // Pose extras: seconds since the arms or the sparks started, nil when they are not out
     var armTime: CGFloat?
@@ -431,7 +433,7 @@ enum YumiRenderer {
             c.stroke(circle(52, 61, 2.7), with: .color(.white), lineWidth: 1.7)
         }
 
-        if let o = f.props[.sleep], o > 0.01 {
+        if let o = f.props[.sleep].map({ $0 * f.sleepFx }), o > 0.01 {
             // A bubble swells at his nose and bursts, every 3.2 s
             let p = (f.habitTime / 3.2).truncatingRemainder(dividingBy: 1)
             let scale = yumiKeyframes(p, [(0, 0.15), (0.7, 1), (0.8, 1.25), (0.84, 1.5), (1, 1.5)], .easeInOut)
@@ -484,7 +486,7 @@ enum YumiRenderer {
     }
 
     private static func drawZz(_ f: YumiFrame, in context: GraphicsContext) {
-        guard let o = f.props[.sleep], o > 0.01 else { return }
+        guard let o = f.props[.sleep].map({ $0 * f.sleepFx }), o > 0.01 else { return }
         let blue = Color(.sRGB, red: 0.608, green: 0.722, blue: 1)
         let shade: (CGRect) -> GraphicsContext.Shading = { _ in .color(blue) }
         drift(context, "z", size: 9, at: CGPoint(x: 78, y: 26), shading: shade, time: f.habitTime, period: 2.6, opacity: o)
