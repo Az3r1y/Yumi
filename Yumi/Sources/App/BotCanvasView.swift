@@ -47,6 +47,11 @@ private extension View {
             .onReceive(NotificationCenter.default.publisher(for: .yumiPose)) { notif in
                 if let pose = notif.object as? YumiPose { engine.play(pose) }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .yumiScene)) { notif in
+                if let scene = notif.object as? YumiScene {
+                    engine.playScene(scene, count: notif.userInfo?["count"] as? Int ?? 1)
+                }
+            }
             .onReceive(NotificationCenter.default.publisher(for: .yumiHabit)) { notif in
                 engine.setHabit(notif.object as? YumiHabit)
             }
@@ -274,7 +279,7 @@ enum BotDemo {
     private static func openGallery() {
         let model = YumiGalleryModel()
         let host = NSHostingView(rootView: YumiGalleryView(model: model))
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 880, height: 640),
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 850),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = "Yumi : planche du personnage"
         window.contentView = host
@@ -286,6 +291,7 @@ enum BotDemo {
             // Habits have a routine of up to six seconds; poses replay every 1.9 s like the mock-up
             for i in 0..<16 {
                 if i % 4 == 0 { model.playPoses() }
+                if i % 5 == 0 { model.playScenes() }
                 for j in 0..<4 {
                     await pause(0.475)
                     shot(host, String(format: "gallery-%02d-%d", i, j))

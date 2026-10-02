@@ -18,6 +18,9 @@ final class YumiGalleryModel {
     let poses: [Cell]
     let moods: [Cell]
     let rims: [Cell]
+    /// The scenes of Contracts/EventAnimations.swift
+    let scenes: [(cell: Cell, scene: YumiScene)]
+    private var rounds = 0
 
     init() {
         func cell(_ label: String, pose: YumiPose? = nil, _ setup: (BotEngine) -> Void) -> Cell {
@@ -42,6 +45,17 @@ final class YumiGalleryModel {
             (.warn, "Attend ta réponse", .surprised), (.error, "Erreur", .worried), (.done, "Terminé", .happy), (.joy, "Content", .wink),
         ]
         rims = tones.map { tone, label, mood in cell(label) { $0.setMood(mood); $0.setRim(tone) } }
+        let names: [(YumiScene, String)] = [
+            (.star, "Étoile"), (.fork, "Fork"), (.pullRequest, "Pull request"), (.merge, "Fusion"), (.push, "Push"),
+            (.commit, "Commit"), (.issue, "Issue"), (.release, "Release"), (.follower, "Abonné"),
+        ]
+        scenes = names.map { scene, label in (cell(label) { _ in }, scene) }
+    }
+
+    /// Plays the nine scenes; every other time as if three events had come at once.
+    func playScenes() {
+        rounds += 1
+        for item in scenes { item.cell.engine.playScene(item.scene, count: rounds % 2 == 0 ? 3 : 1) }
     }
 
     func playPoses() {
@@ -58,9 +72,10 @@ struct YumiGalleryView: View {
             row("Poses de la planche", model.poses, top: 30)
             row("Expressions", model.moods, top: 14)
             row("La lumière de contour porte l'état", model.rims, top: 14)
+            row("Scènes (un événement, puis trois d'un coup)", model.scenes.map(\.cell), top: 34)
         }
         .padding(18)
-        .frame(width: 880, height: 640, alignment: .topLeading)
+        .frame(width: 980, height: 850, alignment: .topLeading)
         .background(Color(white: 0.06))
     }
 
