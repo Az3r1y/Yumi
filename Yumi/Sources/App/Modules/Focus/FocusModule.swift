@@ -24,6 +24,20 @@ final class FocusModule: YumiModule {
         syncTicking()
     }
 
+    /// True while a focus phase runs (not a break): Yumi does not speak then.
+    var isFocusing: Bool {
+        if case .running(.focus, _, _) = timer.state { return true }
+        return false
+    }
+
+    /// Starts a five-minute break on its own, unless a session is already under way.
+    func takeBreak() {
+        guard case .idle = timer.state else { return }
+        timer.startBreak(now: Date())
+        syncTicking()
+        onChange?()
+    }
+
     func perform(_ action: ModuleAction) {
         timer.perform(action, now: Date())
         syncTicking()

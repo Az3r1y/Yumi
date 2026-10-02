@@ -16,6 +16,15 @@ final class AgendaModule: YumiModule {
         AgendaSummary.snapshot(events: events, access: access, now: Date())
     }
 
+    /// Today's appointments still to come (not the all-day ones), for whoever needs more than the snapshot.
+    /// nil when the calendar cannot be read.
+    var upcomingToday: [AgendaEvent]? {
+        guard access == .granted else { return nil }
+        let now = Date()
+        return events.filter { !$0.isAllDay && $0.start > now && Calendar.current.isDate($0.start, inSameDayAs: now) }
+            .sorted { $0.start < $1.start }
+    }
+
     private var access: PermissionState {
         switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess:    return .granted

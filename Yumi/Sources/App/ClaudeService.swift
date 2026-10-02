@@ -133,6 +133,8 @@ final class ClaudeService {
     private var turn: ClaudeCodeTurn?
     /// Messages answered in the current conversation.
     private var answeredTurns = 0
+    /// Memories written during the current conversation.
+    private var notedThisConversation: Set<String> = []
     #endif
 
     /// Ends the conversation. Unless `remember` is false (the app is closing), a conversation of
@@ -141,9 +143,10 @@ final class ClaudeService {
         conversationMessages = []
         #if !APPSTORE
         if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.locate() {
-            summarize(session: session.id, folder: session.folder, binary: binary)
+            summarize(session: session.id, folder: session.folder, binary: binary, noted: notedThisConversation)
         }
         answeredTurns = 0
+        notedThisConversation = []
         turn?.cancel()
         turn = nil
         session = nil
@@ -219,7 +222,7 @@ final class ClaudeService {
     /// Asks the conversation that just ended for a few lines about itself, and keeps them in the
     /// thread. It runs on its own after the conversation was cleared; the plain non-interactive
     /// mode refuses every tool that needs a permission, so nothing can be done behind the person's back.
-    private func summarize(session: String, folder: String, binary: String) {
+    private func summarize(session: String, folder: String, binary: String, noted: Set<String>) {
         // The system prompt is not kept with a session: without it the summary would lose the voice and the rules.
         var arguments = ["-p", MemoryNotes.summaryRequest, "--resume", session, "--output-format", "json", "--permission-mode", "default",
                          "--append-system-prompt", ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: folder, memory: memory?.book)]
@@ -249,7 +252,7 @@ final class ClaudeService {
             let changes = MemoryNotes.extract(from: text, unknownKindAs: .thread).changes
             guard !changes.isEmpty else { return }
             await MainActor.run {
-                self?.memory?.change { MemoryNotes.apply(changes, to: &$0, only: .thread) }
+                self?.memory?.change { MemoryNotes.applySummary(changes, to: &$0, noted: noted) }
             }
         }
     }
@@ -415,7 +418,12 @@ final class ClaudeService {
             await showError(ChatPhrases.failure(result), state: state)
             return .failed
         }
-        if !learnt.isEmpty { memory?.change { MemoryNotes.apply(learnt, to: &$0) } }
+        if !learnt.isEmpty, let memory {
+            let before = Set(memory.book.entries.map(\.id))
+            memory.change { MemoryNotes.apply(learnt, to: &$0) }
+            // What this conversation noted: its closing summary must not say it again.
+            notedThisConversation.formUnion(Set(memory.book.entries.map(\.id)).subtracting(before))
+        }
         answeredTurns += 1
         let last = transcript.finish(result)
         state.chatHistory.append(contentsOf: last.map { ChatMessage(role: .assistant, content: $0) })

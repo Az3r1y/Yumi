@@ -155,3 +155,43 @@ import Foundation
         #expect(!tracker.live.text.contains("—"))
     }
 }
+
+@Suite struct MemorySummaryTests {
+    @Test func theSummaryDoesNotRepeatWhatTheConversationNoted() {
+        // The real case: one line noted during the conversation, then the summary says it again with more.
+        var book = MemoryBook()
+        book.remember("Tu bois du thé", kind: .person, id: "p")
+        book.remember("Tu dois rendre une maquette de site à un client lundi", kind: .thread, id: "t1")
+        let summary: [MemoryChange] = [.remember(.thread, "Tu dois rendre une maquette de site à un client lundi, et tu as reçu le conseil de la faire valider avant")]
+        MemoryNotes.applySummary(summary, to: &book, noted: ["t1"])
+        #expect(book.entries(of: .thread).count == 1)
+        #expect(book.entries(of: .thread).first?.id == "t1")
+        #expect(book.entries(of: .thread).first?.text.contains("faire valider") == true)
+    }
+
+    @Test func aSummaryThatSaysLessIsDropped() {
+        var book = MemoryBook()
+        book.remember("Tu prépares un devis pour un site vitrine, budget de 2000 euros, à envoyer vendredi", kind: .thread, id: "t1")
+        MemoryNotes.applySummary([.remember(.thread, "Tu prépares un devis pour un site vitrine")], to: &book, noted: ["t1"])
+        #expect(book.entries.map(\.text) == ["Tu prépares un devis pour un site vitrine, budget de 2000 euros, à envoyer vendredi"])
+    }
+
+    @Test func somethingNewIsAddedAndOlderMemoriesAreLeftAlone() {
+        var book = MemoryBook()
+        book.remember("Tu dois rendre une maquette de site à un client lundi", kind: .thread, id: "old")
+        // "old" was not noted during this conversation: it is not touched, even if the summary resembles it.
+        MemoryNotes.applySummary([.remember(.thread, "Tu dois rendre une maquette de site à un client lundi, validée avant"),
+                                  .remember(.thread, "Tu voulais aussi revoir la météo"),
+                                  .remember(.thread, "Ton mot de passe est hunter2"), .forget("old"), .name("Léa")],
+                                 to: &book, noted: [])
+        #expect(book.entries.count == 3)
+        #expect(book.entries.first?.text == "Tu dois rendre une maquette de site à un client lundi")
+        #expect(book.name == nil)
+    }
+
+    @Test func overlapMeasuresSharedWords() {
+        #expect(MemoryNotes.overlap("Tu bois du thé vert", "Tu bois du thé") == 1)
+        #expect(MemoryNotes.overlap("Tu bois du thé", "Tu travailles sur Yumi") == 0)
+        #expect(MemoryNotes.overlap("", "x") == 0)
+    }
+}
