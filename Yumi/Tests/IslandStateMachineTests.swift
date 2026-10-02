@@ -725,7 +725,7 @@ import Foundation
 
 // MARK: – Yumi's voice
 
-@Suite struct VoiceTests {
+@Suite struct IslandVoiceTests {
     @Test func smallNumbersAreWrittenInLetters() {
         #expect(Voice.number(2) == "deux")
         #expect(Voice.number(12) == "douze")
