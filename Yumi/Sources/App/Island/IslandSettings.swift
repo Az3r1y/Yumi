@@ -6,6 +6,8 @@ import SwiftUI
 struct SettingsActivity: View {
     @ObservedObject var state: AppState
     @AppStorage(IslandPrefs.smokeKey) private var smokes = true
+    @State private var githubToken = ""
+    @State private var githubConnected = IslandActions.githubConnected
     /// How much he speaks first (Contracts/RemarkTypes.swift).
     @AppStorage(YumiTalk.defaultsKey) private var talk = YumiTalk.discreet.rawValue
     private static let talks: [(value: YumiTalk, label: String)] =
@@ -60,6 +62,31 @@ struct SettingsActivity: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(3)
+            row("GitHub") {
+                if githubConnected {
+                    Text("Branché")
+                        .font(IslandTheme.text(11.5, .medium))
+                        .foregroundStyle(IslandTheme.green)
+                    TextButton(label: "Retirer") {
+                        IslandActions.connectGitHub(nil)
+                        githubConnected = false
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        SecureField("", text: $githubToken, prompt: Text("Colle ton jeton d'accès").foregroundStyle(IslandTheme.faint))
+                            .textFieldStyle(.plain)
+                            .font(IslandTheme.text(12, .regular))
+                            .foregroundStyle(IslandTheme.fg)
+                            .frame(width: 170)
+                            .onSubmit(connectGitHub)
+                        RoundButton(style: .white, symbol: "checkmark", label: "Brancher", small: true, action: connectGitHub)
+                            .scaleEffect(0.8)
+                    }
+                    .padding(.leading, 10)
+                    .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.1)))
+                }
+            }
+            .riseIn(4)
             row("Ce que je sais de toi") {
                 TextButton(label: state.memory.isEmpty ? "Voir" : "Voir (\(state.memory.count))") { IslandActions.go(.memory) }
             }
@@ -67,6 +94,13 @@ struct SettingsActivity: View {
         }
         .padding(.top, 2)
         .frame(maxWidth: .infinity)
+    }
+
+    private func connectGitHub() {
+        guard let token = GitHubFigures.cleanToken(githubToken) else { return }
+        IslandActions.connectGitHub(token)
+        githubToken = ""
+        githubConnected = true
     }
 
     /// The choice that matches the stored delay; an older value falls on the nearest one.
