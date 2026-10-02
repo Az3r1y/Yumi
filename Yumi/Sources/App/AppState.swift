@@ -185,6 +185,9 @@ final class AppState: ObservableObject {
     // The person's first name, nil until they give it at first launch.
     @Published var userName: String? = nil
 
+    // What Yumi says on his own right now (see Contracts/RemarkTypes.swift). nil when he is quiet.
+    @Published var remark: YumiRemark? = nil
+
     // Pending approval request from Claude Code hook
     @Published var pendingApproval: ApprovalInfo? = nil
 

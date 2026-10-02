@@ -138,6 +138,14 @@ La phase 4 est terminée et fusionnée (interface par activités). Yumi a un cor
 
 Viendront ensuite, dans cet ordre : l'initiative (il parle le premier, rarement et à propos, avec un réglage de discrétion), puis le lien entre les modules (une phrase qui résume la situation).
 
+## Phase 6 : l'initiative
+
+La mémoire et la voix sont en place et fusionnées. Yumi doit maintenant parler le premier, rarement et à propos. La référence est la section « Quand il parle le premier » de `design/yumi/voix.md`.
+
+Contrat `Contracts/RemarkTypes.swift` et `AppState.remark` : le cœur décide quand et quoi dire, l'île l'affiche près de Yumi, replié comme ouvert, et rapporte si la personne a répondu ou ignoré. Le réglage de discrétion (silencieux, discret, bavard) se trouve dans les réglages de l'île.
+
+Reste ensuite le lien entre les modules, et un défaut connu de la mémoire : le résumé de fin de conversation répète parfois un souvenir déjà noté.
+
 ## Phase 2 : porter la maquette, répartition des fichiers
 
 Trois sessions en parallèle. Un fichier n'appartient qu'à une seule session. Les fichiers Swift sont dans `Yumi/Sources/App/`. Chaque session peut créer de nouveaux fichiers dans son propre sous-dossier.
