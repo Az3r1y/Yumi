@@ -7,8 +7,9 @@ import Foundation
 
 /// One of the eight moments Yumi may speak first.
 enum Occasion: Equatable, Sendable {
-    /// First time the Mac wakes today. `events` is the number of appointments left today.
-    case firstWake(events: Int, firstAt: Date?)
+    /// First time the Mac wakes today. `events` is the number of appointments left today,
+    /// or nil when Yumi cannot see the calendar.
+    case firstWake(events: Int?, firstAt: Date?)
     /// The person is back after a long absence.
     case back(agentFinished: Bool, agentWaiting: Bool)
     /// Two hours of work or more without a break.
@@ -38,7 +39,7 @@ enum Occasion: Equatable, Sendable {
     /// True when it matters enough for the discreet setting. Greetings and encouragements do not.
     var matters: Bool {
         switch self {
-        case .firstWake(let events, _): return events > 0
+        case .firstWake(let events, _): return (events ?? 0) > 0
         case .back(let finished, let waiting): return finished || waiting
         case .weekEnd: return false
         case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery: return true
@@ -206,7 +207,7 @@ enum InitiativePhrases {
 
         switch occasion {
         case .firstWake(let events, let firstAt):
-            if events > 0 {
+            if let events, events > 0 {
                 let count = FrenchText.spelledCount(events, "rendez-vous", "rendez-vous")
                 let first = firstAt.map { FrenchText.spokenHour($0, calendar: around.calendar) }
                 let when = first.map { events == 1 ? ", à \($0)" : ", le premier à \($0)" } ?? ""
@@ -216,7 +217,12 @@ enum InitiativePhrases {
                     Variant(key: "wake.events.3", text: "Te voilà\(comma). \(cap(count)) au programme\(when).", mood: .curious),
                 ]
             }
-            var quiet = [
+            // Without a view on the calendar he does not claim the day is free.
+            var quiet = events == nil ? [
+                Variant(key: "wake.plain.1", text: "\(hello) J'ai bien dormi. Toi aussi, j'espère.", mood: .wink),
+                Variant(key: "wake.plain.2", text: "Bonjour\(comma). Je suis réveillé, tu peux y aller.", mood: .happy),
+                Variant(key: "wake.plain.3", text: "Te voilà\(comma). Je prends mon poste.", mood: .happy),
+            ] : [
                 Variant(key: "wake.free.1", text: "\(hello) Rien de prévu aujourd'hui. Je garde la maison.", mood: .happy),
                 Variant(key: "wake.free.2", text: "Bonjour\(comma). Journée libre, à ce que je vois.", mood: .happy),
                 Variant(key: "wake.free.3", text: "\(hello) J'ai bien dormi. Toi aussi, j'espère.", mood: .wink),

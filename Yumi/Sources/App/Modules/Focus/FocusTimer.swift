@@ -30,6 +30,11 @@ struct FocusTimer: Equatable, Sendable {
         state = .running(.focus, round: 1, endsAt: now.addingTimeInterval(plan.focus))
     }
 
+    /// A break on its own, outside a session: when it ends the timer goes back to rest.
+    mutating func startBreak(now: Date) {
+        state = .running(.rest, round: 0, endsAt: now.addingTimeInterval(plan.rest))
+    }
+
     mutating func pause(now: Date) {
         guard case .running(let phase, let round, let endsAt) = state else { return }
         state = .paused(phase, round: round, remaining: max(0, endsAt.timeIntervalSince(now)))
@@ -76,6 +81,8 @@ struct FocusTimer: Equatable, Sendable {
             return .finished(at: start)
         case .focus:
             return .running(.rest, round: round, endsAt: start.addingTimeInterval(plan.rest))
+        case .rest where round == 0:
+            return .idle
         case .rest:
             return .running(.focus, round: round + 1, endsAt: start.addingTimeInterval(plan.focus))
         }
@@ -113,7 +120,7 @@ extension FocusTimer {
             let left = max(0, endsAt.timeIntervalSince(now))
             snapshot.status = FrenchText.countdown(left)
             snapshot.title = "Pause. Souffle un peu."
-            snapshot.subtitle = "Session \(round + 1) sur \(plan.rounds) dans \(FrenchText.duration(left))."
+            snapshot.subtitle = round == 0 ? "Je te rappelle dans \(FrenchText.duration(left))." : "Session \(round + 1) sur \(plan.rounds) dans \(FrenchText.duration(left))."
             snapshot.primaryAction = "Passer"
             snapshot.secondaryAction = "Arrêter"
             snapshot.needsAttention = plan.rest - left < Self.attentionSpan

@@ -227,6 +227,8 @@ final class YumiCore {
     private var chatObserver: AnyCancellable?
     /// What Yumi remembers. The store owns the file; AppState shows it to the island.
     let memory: MemoryStore
+    /// Decides when Yumi speaks first (Contracts/RemarkTypes.swift).
+    private let initiative: InitiativeDriver
     private var lastSeen: [SessionID: Date] = [:]
     private var consumer: Task<Void, Never>?
 
@@ -239,6 +241,40 @@ final class YumiCore {
             if state.userName != book.name { state.userName = book.name }
         }
         let claudeCode = ClaudeCodeModule(onShow: { mirror.show() })
+        let agenda = AgendaModule()
+        let focus = FocusModule()
+        let memory = memory
+        var initiativeDefaults = UserDefaults.standard
+        #if DEBUG
+        // A development build run next to the installed app keeps its own record of what it said.
+        if ProcessInfo.processInfo.environment["YUMI_SUPPORT_DIR"] != nil,
+           let separate = UserDefaults(suiteName: "\(AppIdentity.keychainService).dev") {
+            if let talk = UserDefaults.standard.string(forKey: YumiTalk.defaultsKey) { separate.set(talk, forKey: YumiTalk.defaultsKey) }
+            initiativeDefaults = separate
+        }
+        #endif
+        initiative = InitiativeDriver(links: InitiativeLinks(
+            show: { remark in
+                state.remark = remark
+                #if DEBUG
+                if ProcessInfo.processInfo.environment["YUMI_TRACE_INITIATIVE"] != nil {
+                    print(remark.map { "[remarque] \($0.text)\($0.action.map { " [\($0)]" } ?? "") (\($0.mood.rawValue), \(Int($0.duration)) s)" } ?? "[remarque] retirée")
+                    fflush(stdout)
+                }
+                #endif
+            },
+            memory: { memory.book },
+            focusRunning: { focus.isFocusing },
+            agenda: {
+                guard let events = agenda.upcomingToday else { return (nil, nil) }
+                return (events.count, events.first.map { ($0.title, $0.start) })
+            },
+            perform: { action in
+                switch action {
+                case .takeBreak:   focus.takeBreak()
+                case .openSession: ClaudeTaskMirror.openSession()
+                }
+            }), defaults: initiativeDefaults)
         // The chat answers through Claude Code: its module tells the folded island what it is doing.
         // The text of the answer changes many times a second, the announcement only with the action.
         chatObserver = state.$chatLive
@@ -248,9 +284,9 @@ final class YumiCore {
         modules = ModuleRegistry(
             modules: [
                 claudeCode,
-                AgendaModule(),
+                agenda,
                 NotesModule(),
-                FocusModule(),
+                focus,
                 MusicModule(),
                 WeatherModule(),
             ],
@@ -278,6 +314,17 @@ final class YumiCore {
         memory.start()
         ClaudeService.shared.memory = memory
         modules.start()
+        initiative.start()
+        #if DEBUG
+        if let seconds = ProcessInfo.processInfo.environment["YUMI_TRACE_INITIATIVE"].flatMap(Double.init) {
+            // Development: after that many seconds, says how often the initiative was woken.
+            Task { [initiative] in
+                try? await Task.sleep(for: .seconds(seconds))
+                print("[initiative] réveils en \(Int(seconds)) s : \(initiative.wakeUps)")
+                fflush(stdout)
+            }
+        }
+        #endif
         consumer = Task { [engine, store, ingress, weak self] in
             // Subscribe before the socket opens: the engine does not keep events for later.
             let events = await engine.subscribe()
@@ -287,6 +334,7 @@ final class YumiCore {
                 guard let self else { return }
                 self.mirror.receive(event, sessions: sessions)
                 self.modules.receive(event, sessions: sessions)
+                self.initiative.session(event, sessions: sessions)
                 self.endSilentSessions(after: event, in: sessions)
             }
         }

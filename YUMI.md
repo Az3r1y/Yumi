@@ -286,3 +286,16 @@ Reste à faire côté île : afficher l'état `working` dans la vue du chat (ell
 | Voix | Consigne du chat réécrite d'après `design/yumi/voix.md`. Titres, sous-titres, attentes et erreurs des modules réécrits à la première personne ; noms de modules, chiffres clés et boutons restent neutres. `Tests/Modules/VoiceTests.swift` échoue si une formule interdite ou un emoji apparaît. |
 | Libellés du chat en direct | À la première personne : « J'écris bonjour.txt », « Je lance swift test », « J'attends ton accord ». |
 | Textes de permission | Réécrits à la première personne dans `project.yml`. |
+
+## Cœur, phase 6 : l'initiative
+
+| Sujet | État |
+|---|---|
+| Moteur | `Initiative/InitiativeEngine` (pur) : une occasion et son contexte entrent, une `YumiRemark` sort, ou rien. `InitiativeWatch` (pur) reconnaît les occasions, `InitiativeDriver` écoute le Mac et pose `AppState.remark`. |
+| Occasions | Premier réveil du jour, retour après trente minutes d'absence, deux heures sans pause (puis toutes les deux heures), tâche d'agent de dix minutes ou plus qui se termine, rendez-vous à dix minutes ou moins pendant qu'un agent attend, 23 h 30, batterie à 15 % ou moins sans chargeur, vendredi 18 h. Trois formulations au moins par occasion, écrites à l'avance. |
+| Garde-fous | Jamais pendant un focus, un partage d'écran, une présentation, Ne pas déranger. Vingt minutes entre deux remarques, sauf si quelqu'un attend. Un sujet ignoré trois fois de suite est abandonné trois jours. Jamais la même phrase deux jours de suite. |
+| Réglage | `YumiTalk` lu à chaque remarque : silencieux rien ; discret ce qui compte, quatre par jour au plus ; bavard ajoute bonjours et encouragements, dix par jour au plus. |
+| Remarque | Posée dans `AppState.remark`, retirée à la fin de sa durée (comptée comme ignorée), à `remarkAccepted` ou à `remarkDismissed`. Une seule à la fois. |
+| Actions | « Pause » lance une pause de cinq minutes dans le module Focus. « Voir » amène devant l'application de la session de l'agent. |
+| Coût au repos | Aucun minuteur répétitif : le pilote réagit aux notifications du système (réveil, verrouillage, batterie) et aux événements de session, et dort jusqu'au prochain moment exact (deux heures, 23 h 30, vendredi 18 h, dix minutes avant un rendez-vous). |
+| Limites | Ne pas déranger : lu dans un fichier du système, illisible dans le bac à sable (réponse « non »). Partage d'écran : appel du serveur de fenêtres absent des en-têtes publics, non utilisé dans le build App Store. Présentation : écran recopié, ou diaporama Keynote ou PowerPoint. Sans accès au calendrier, le bonjour ne parle pas de la journée. |

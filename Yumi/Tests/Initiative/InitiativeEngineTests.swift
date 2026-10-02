@@ -27,7 +27,11 @@ private func around(_ now: Date, talk: YumiTalk = .chatty, name: String? = "Este
         #expect(remark?.action == nil)
         let one = say(.firstWake(events: 1, firstAt: at(14, 30)), around(at(8), name: nil))
         #expect(one?.text == "Salut. Un rendez-vous aujourd'hui, à 14 h 30.")
-        #expect(say(.firstWake(events: 0, firstAt: nil), around(at(8)))?.text.hasPrefix("Salut Esteban.") == true)
+        #expect(say(.firstWake(events: 0, firstAt: nil), around(at(8)))?.text == "Salut Esteban. Rien de prévu aujourd'hui. Je garde la maison.")
+        // Without a view on the calendar he does not claim the day is free.
+        for variant in InitiativePhrases.variants(for: .firstWake(events: nil, firstAt: nil), around(at(8))) {
+            #expect(!variant.text.contains("prévu") && !variant.text.contains("libre"))
+        }
     }
 
     @Test func backAfterALongAbsence() {
@@ -84,8 +88,8 @@ private func around(_ now: Date, talk: YumiTalk = .chatty, name: String? = "Este
     }
 
     private var everyOccasion: [Occasion] {
-        [.firstWake(events: 2, firstAt: at(10)), .firstWake(events: 0, firstAt: nil), .back(agentFinished: true, agentWaiting: false),
-         .back(agentFinished: false, agentWaiting: true), .back(agentFinished: false, agentWaiting: false), .longStretch(hours: 3),
+        [.firstWake(events: 2, firstAt: at(10)), .firstWake(events: 0, firstAt: nil), .firstWake(events: nil, firstAt: nil),
+         .back(agentFinished: true, agentWaiting: false), .back(agentFinished: false, agentWaiting: true), .back(agentFinished: false, agentWaiting: false), .longStretch(hours: 3),
          .agentDone(project: "yumi", minutes: 42), .meetingWhileAgentWaits(title: "Point produit", minutes: 5), .late,
          .lowBattery(percent: 9), .weekEnd]
     }
