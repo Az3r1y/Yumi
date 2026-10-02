@@ -552,6 +552,14 @@ final class BotEngine: ObservableObject {
     private static let deepSleepAfter: Double = 30
     private var sleepFx = YumiTransition(1)
 
+    /// Pixels per point of the screen he is drawn on. Set by the view.
+    var displayScale: CGFloat = 2
+    // The blurred light, kept from one picture to the next while the shape only breathes
+    private var light_: YumiLight?
+    private var lightKey: [CGFloat] = []
+    private var lightQueued = false
+    private var lightBuiltAt: Double = -1
+
     private(set) var state: BotState = .idle
     private let blob = YumiBlob()
 
@@ -836,6 +844,39 @@ final class BotEngine: ObservableObject {
         sleepFx.set(isDeepAsleep ? 0 : 1, at: now, over: 0.7, .ease)
     }
 
+    // MARK: - Stored light
+
+    /// The blurred light drawn earlier, if it fits this picture: same colours, same size, a
+    /// shape within a breath of the one it was drawn for, nothing in the way. Otherwise nil,
+    /// and once the body has come to rest a new one is prepared for the next pictures.
+    private func storedLight(for f: YumiFrame, unit: CGFloat) -> YumiLight? {
+        guard f.y == 0, !f.air, f.armTime == nil, f.glow == 0.85, f.drawn >= 0.999 else { return nil }
+        let key = f.rim.flatMap { [$0.r, $0.g, $0.b] } + [f.rimWidth, unit, displayScale]
+        if let l = light_, key == lightKey, abs(f.h - l.h) <= 0.035, abs(f.lean - l.lean) <= 0.2 { return l }
+
+        let steady = abs(blob.vh) < 0.05 && abs(blob.vl) < 0.3
+            && !rimStops.joined().contains { $0.isActive(at: clock) } && !rimWidth.isActive(at: clock)
+        if steady, !lightQueued, clock - lightBuiltAt > 0.25 {
+            lightQueued = true
+            let h = blob.h, lean = blob.lean, rim = f.rim, width = f.rimWidth, scale = displayScale
+            let w = max(0.68, min(1.55, 1 / pow(h, 0.62)))
+            // Not while the canvas draws: right after
+            DispatchQueue.main.async { [weak self] in
+                guard let self else { return }
+                self.lightQueued = false
+                self.lightBuiltAt = self.clock
+                self.light_ = YumiLight.render(h: h, w: w, lean: lean, rim: rim, rimWidth: width, unit: unit, scale: scale)
+                self.lightKey = key
+                #if DEBUG
+                if ProcessInfo.processInfo.environment["YUMI_TRACE_CADENCE"] != nil {
+                    fputs(String(format: "YUMI light %.2f s: h %.3f lean %.2f unit %.3f\n", self.clock, h, lean, unit), stderr)
+                }
+                #endif
+            }
+        }
+        return nil
+    }
+
     // MARK: - Cadence
 
     /// Asleep for a while, and nobody stirred him: the sleep is deep.
@@ -942,7 +983,8 @@ final class BotEngine: ObservableObject {
     /// The 0.243 s blink of the mock-up, every 5.4 s, or when asked.
     private var blinkValue: CGFloat {
         let p = CGFloat((clock + blinkPhase).truncatingRemainder(dividingBy: 5.4) / 5.4)
-        var v = yumiKeyframes(p, [(0, 1), (0.955, 1), (0.975, 0.08), (1, 1)], .ease)
+        // A mini character only blinks when its view asks (it is not redrawn in between)
+        var v = isMini ? 1 : yumiKeyframes(p, [(0, 1), (0.955, 1), (0.975, 0.08), (1, 1)], .ease)
         if let b = blinkAt {
             let q = CGFloat((clock - b) / 0.243)
             if q < 1 { v = min(v, yumiKeyframes(q, [(0, 1), (0.444, 0.08), (1, 1)], .ease)) }
@@ -1007,6 +1049,7 @@ final class BotEngine: ObservableObject {
         f.drops = blob.drops
         f.puffs = blob.puffs
         f.time = CGFloat(now)
+        f.storedLight = storedLight(for: f, unit: unit)
         YumiRenderer.draw(f, in: ctx)
     }
 }

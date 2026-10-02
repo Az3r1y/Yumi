@@ -108,6 +108,7 @@ struct YumiStage: View {
     var followsPointer = true
 
     @State private var probe = YumiScreenProbe()
+    @Environment(\.displayScale) private var displayScale
 
     var body: some View {
         GeometryReader { geo in
@@ -119,6 +120,7 @@ struct YumiStage: View {
                                     paused: paused || engine.cadence == .still)) { timeline in
                 Canvas { context, _ in
                     engine.particleOverhang = particleOverhang
+                    engine.displayScale = displayScale
                     if followsPointer, let look = probe.look() { engine.pointer = look }
                     engine.advance(to: timeline.date)
                     var ctx = context
@@ -176,11 +178,25 @@ struct MiniBotCanvasView: View {
         }())
     }
 
+    /// A blink now and then is all the life it has: it is only redrawn while it blinks.
+    @State private var blinking = false
+
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(paused: !blinking)) { timeline in
             Canvas { context, size in
                 engine.advance(to: timeline.date)
                 engine.draw(context: context, frame: CGRect(origin: .zero, size: size))
+            }
+        }
+        .task {
+            // Each one starts at its own moment, then blinks every 5.4 s like the main character
+            try? await Task.sleep(nanoseconds: UInt64.random(in: 0...5_000_000_000))
+            while !Task.isCancelled {
+                engine.blink()
+                blinking = true
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                blinking = false
+                try? await Task.sleep(nanoseconds: 5_100_000_000)
             }
         }
         .onChange(of: task.state) { _, newState in
