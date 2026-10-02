@@ -112,6 +112,14 @@ final class YumiBlob {
         t0 = now
     }
 
+    /// Plays the beats of a scene the same way.
+    func run(_ beats: [Step], now: Double) {
+        soft()
+        leanTarget = 0; th = 1
+        steps = beats
+        t0 = now
+    }
+
     /// Droplets on both sides of the base, when he lands or slams flat.
     func splat(_ n: Int, _ pow: CGFloat) {
         for s: CGFloat in [-1, 1] {

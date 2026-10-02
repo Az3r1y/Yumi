@@ -584,6 +584,8 @@ final class BotEngine: ObservableObject {
     private var pose: YumiPose?
     private var poseStart: Double = 0
     private var habitStart: Double = 0
+    // Scene in progress (an outside event)
+    private var scene: (kind: YumiScene, start: Double, amount: Int)?
 
     // Idle life: now and then he glances somewhere on his own
     private var glance: CGPoint?
@@ -619,6 +621,18 @@ final class BotEngine: ObservableObject {
         blob.play(newPose, now: clock * 1000)
         pose = newPose
         poseStart = clock
+    }
+
+    /// Contracts/EventAnimations.swift: plays the scene once. He then goes back to what he
+    /// was doing: the habit keeps its prop during the scene and takes over again after it.
+    /// `count` events at once play one scene, a little larger.
+    func playScene(_ kind: YumiScene, count: Int = 1) {
+        guard !isMini else { return }
+        wake()
+        let amount = max(1, min(4, count))
+        blob.run(YumiBlob.steps(for: kind, amount: amount), now: clock * 1000)
+        pose = nil
+        scene = (kind, clock, amount)
     }
 
     func setHabit(_ habit: YumiHabit?) {
@@ -794,6 +808,7 @@ final class BotEngine: ObservableObject {
 
         if let e = emote, clock >= e.until { emote = nil }
         if let p = pose, clock - poseStart >= p.duration { pose = nil }
+        if let s = scene, clock - s.start >= s.kind.duration { scene = nil }
         let face = blob.tempFace ?? emote?.face ?? mood
 
         if clock >= nextGlance {
@@ -850,7 +865,7 @@ final class BotEngine: ObservableObject {
     /// shape within a breath of the one it was drawn for, nothing in the way. Otherwise nil,
     /// and once the body has come to rest a new one is prepared for the next pictures.
     private func storedLight(for f: YumiFrame, unit: CGFloat) -> YumiLight? {
-        guard f.y == 0, !f.air, f.armTime == nil, f.glow == 0.85, f.drawn >= 0.999 else { return nil }
+        guard f.y == 0, !f.air, f.armTime == nil, f.scene == nil, f.glow == 0.85, f.drawn >= 0.999 else { return nil }
         let key = f.rim.flatMap { [$0.r, $0.g, $0.b] } + [f.rimWidth, unit, displayScale]
         if let l = light_, key == lightKey, abs(f.h - l.h) <= 0.035, abs(f.lean - l.lean) <= 0.2 { return l }
 
@@ -903,7 +918,7 @@ final class BotEngine: ObservableObject {
         // `YUMI_FREEZE=1` stops the character after 20 s: what the app still costs is not him
         if now > 20, ProcessInfo.processInfo.environment["YUMI_FREEZE"] != nil { return .still }
         #endif
-        if pose != nil || !blob.isSettled || state == .approval { return .full }
+        if pose != nil || scene != nil || !blob.isSettled || state == .approval { return .full }
 
         var easing = [esl, esr, ps, tl, tr, al, ar, bl, br, cl, cr, tilt, lx, ly, eyes,
                       rimWidth, drawn, light, ember, sip, sleepFx]
@@ -1049,6 +1064,7 @@ final class BotEngine: ObservableObject {
         f.drops = blob.drops
         f.puffs = blob.puffs
         f.time = CGFloat(now)
+        if let s = scene { f.scene = YumiSceneMoment(scene: s.kind, t: CGFloat(now - s.start), amount: s.amount) }
         f.storedLight = storedLight(for: f, unit: unit)
         YumiRenderer.draw(f, in: ctx)
     }

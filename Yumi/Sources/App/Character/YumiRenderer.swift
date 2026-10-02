@@ -46,6 +46,9 @@ struct YumiFrame {
     var puffs: [YumiBlob.Puff] = []
     var time: CGFloat = 0
 
+    /// The scene being played for an outside event, if any (Character/YumiScenes.swift).
+    var scene: YumiSceneMoment?
+
     /// The blurred light, already drawn for a shape close to this one (see YumiLight).
     /// nil: it is drawn again for this picture.
     var storedLight: YumiLight?
@@ -158,7 +161,14 @@ enum YumiRenderer {
     // MARK: Whole character
 
     static func draw(_ f: YumiFrame, in context: GraphicsContext) {
-        let body = bodyPath(h: f.h, w: f.w, lean: f.lean)
+        var body = bodyPath(h: f.h, w: f.w, lean: f.lean)
+        // A slime that is still part of him (a fork starting, a merge ending) shares his outline:
+        // one body, with one rim, that divides or closes up
+        let twins = f.scene.map(YumiScenes.twins) ?? []
+        for twin in twins where twin.attached {
+            body = body.union(twin.path)
+            if let strand = twin.strandPath { body = body.union(strand) }
+        }
         let rimShade = across(body.boundingRect, f.rim)
 
         // .tiltg: the head tilt turns everything around the base
@@ -244,6 +254,14 @@ enum YumiRenderer {
 
         drawTops(f, in: pose)
         drawProps(f, in: pose)
+
+        if let moment = f.scene {
+            for twin in twins {
+                YumiScenes.draw(twin, rim: across(twin.path.boundingRect, f.rim), rimWidth: f.rimWidth, in: pose)
+            }
+            YumiScenes.drawExtras(moment, rim: f.rim, top: 76 - 68 * f.h + f.y,
+                                  faceShift: CGPoint(x: f.faceShift.x - f.lean * 0.12, y: f.faceShift.y + f.y), in: tilted)
+        }
 
         // Droplets and smoke live in the tilted space, outside the pose
         for d in f.drops.prefix(12) {
@@ -390,6 +408,15 @@ enum YumiRenderer {
     // MARK: Arms
 
     private static func drawArms(_ f: YumiFrame, in context: GraphicsContext) {
+        // The arm that holds something up during a scene
+        if let moment = f.scene, case let raised = YumiScenes.raisedArm(moment), raised > 0.01 {
+            var arm = context
+            arm.translateBy(x: f.lean * 0.35, y: (1 - f.h) * 24)
+            arm.opacity = raised
+            let path = line(CGPoint(x: 83, y: 52), CGPoint(x: 100, y: 38))
+            arm.stroke(path, with: across(path.boundingRect, f.rim), style: round(12))
+            arm.stroke(path, with: .color(ink), style: round(8.4))
+        }
         guard let t = f.armTime, let arm = YumiPoseExtras.arm(at: t), arm.opacity > 0.01 else { return }
         var arms = context
         arms.translateBy(x: f.lean * 0.35, y: (1 - f.h) * 24)
