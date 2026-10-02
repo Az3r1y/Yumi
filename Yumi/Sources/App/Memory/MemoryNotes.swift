@@ -111,6 +111,36 @@ enum MemoryNotes {
     }
 }
 
+extension MemoryNotes {
+    /// How much two sentences say the same thing: the share of the shorter one's words found in the other.
+    static func overlap(_ a: String, _ b: String) -> Double {
+        func words(_ text: String) -> Set<String> {
+            Set(text.lowercased().folding(options: .diacriticInsensitive, locale: nil)
+                .split { !$0.isLetter && !$0.isNumber }.map(String.init).filter { $0.count > 2 })
+        }
+        let first = words(a), second = words(b)
+        guard !first.isEmpty, !second.isEmpty else { return 0 }
+        return Double(first.intersection(second).count) / Double(min(first.count, second.count))
+    }
+
+    /// Adds the closing summary to the thread without saying twice what the conversation already
+    /// noted along the way: a line that repeats one of those memories replaces it when it says
+    /// more, and is dropped when it says less.
+    /// - Parameter noted: identifiers of the memories written during the conversation.
+    static func applySummary(_ changes: [MemoryChange], to book: inout MemoryBook, noted: Set<String>, now: Date = Date()) {
+        for case .remember(_, let text) in changes {
+            guard let line = MemoryGuard.cleaned(text) else { continue }
+            let twin = book.entries.filter { noted.contains($0.id) }
+                .map { ($0, overlap($0.text, line)) }.filter { $0.1 >= 0.6 }.max { $0.1 < $1.1 }?.0
+            if let twin {
+                if line.count > twin.text.count { book.edit(id: twin.id, text: line, now: now) }
+            } else {
+                book.remember(line, kind: .thread, now: now)
+            }
+        }
+    }
+}
+
 /// Rules of the voice sheet that the app enforces by itself, whatever the conversation writes.
 enum VoiceRules {
     /// Yumi never writes a long dash: one used as a pause becomes a comma, any other a hyphen.
