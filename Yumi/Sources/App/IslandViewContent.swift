@@ -72,7 +72,7 @@ struct IslandOpenLayer: View {
         switch screen {
         case .home:     OverviewActivity(state: state)
         case .working:  WorkingActivity(state: state, model: model)
-        case .alert:    AlertActivity(state: state)
+        case .alert:    AlertActivity(state: state, model: model)
         case .finished: FinishedActivity(state: state, model: model)
         case .error:    ErrorActivity(state: state)
         case .talk:     IslandTalkView(state: state)
