@@ -15,12 +15,13 @@ final class IslandWindowController: NSWindowController {
 
     private var wasInIsland = false
     /// Debug walk-through: the island does not fold by itself.
-    var holdsOpen = false
+    var holdsOpen = false { didSet { syncFoldSetting() } }
     /// Debug walk-through: as if the pointer were on the folded island.
-    var demoHover = false
+    var demoHover = false { didSet { recheckPointer() } }
     /// The user quit: the goodbye is playing, nothing else happens.
     private var leaving = false
-    private var frameTimer: Timer?
+    /// Held for a measure (`YUMI_ISLAND_HOLD`): nothing from outside changes the island's state.
+    private var frozen = false
     private var monitors: [Any] = []
     private var subscriptions: Set<AnyCancellable> = []
 
@@ -69,6 +70,8 @@ final class IslandWindowController: NSWindowController {
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) + 3)
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         panel.ignoresMouseEvents = true
+        // The local monitor only hears the pointer move if the window asks for it
+        panel.acceptsMouseMovedEvents = true
 
         // Propagate real notch dimensions to AppState
         state.notchWidth  = model.layout.notchWidth
@@ -122,6 +125,7 @@ final class IslandWindowController: NSWindowController {
         launch.onComplete = { [weak self] in
             guard let self else { return }
             self.fsm.greetComplete()
+            if self.holdForMeasure() { return }
             self.askFirstNameIfNeeded()
         }
 
@@ -162,14 +166,61 @@ final class IslandWindowController: NSWindowController {
         window?.resignKey()
     }
 
-    // MARK: - 60 Hz polling loop
+    // MARK: - Following the pointer, only when it moves
 
+    /// The island used to read the pointer sixty times a second, all the time. It now hears
+    /// about it from the system: a global monitor while the pointer is over other
+    /// applications (the panel lets clicks through there), a local one while it is on the
+    /// island. Nothing runs while the pointer is still.
     private func startPolling() {
-        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+        let moves: NSEvent.EventTypeMask = [.mouseMoved, .leftMouseDragged, .rightMouseDragged, .otherMouseDragged]
+        if let monitor = NSEvent.addGlobalMonitorForEvents(matching: moves, handler: { [weak self] _ in
             MainActor.assumeIsolated { self?.pollFrame() }
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        frameTimer = timer
+        }) { monitors.append(monitor) }
+        if let monitor = NSEvent.addLocalMonitorForEvents(matching: moves, handler: { [weak self] event in
+            MainActor.assumeIsolated { self?.pollFrame() }
+            return event
+        }) { monitors.append(monitor) }
+
+        // The island changes size under a pointer that does not move: look again when it
+        // does, and once more when the change has settled.
+        state.$mode.map { _ in () }
+            .merge(with: model.$openHeight.map { _ in () }, model.$layout.map { _ in () }, model.$speaking.map { _ in () })
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.recheckPointer() }
+            .store(in: &subscriptions)
+
+        // What the loop used to copy at every frame
+        state.$autoCloseInterval
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.syncFoldSetting() }
+            .store(in: &subscriptions)
+        state.$pendingApproval
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                // An alert that waits for an answer keeps the island open
+                self.fsm.pinned = self.state.isPinned
+            }
+            .store(in: &subscriptions)
+        syncFoldSetting()
+        pollFrame()
+    }
+
+    private var settleCheck: DispatchWorkItem?
+
+    private func recheckPointer() {
+        pollFrame()
+        settleCheck?.cancel()
+        let item = DispatchWorkItem { [weak self] in self?.pollFrame() }
+        settleCheck = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: item)
+    }
+
+    /// The delay before the island folds is the user's; 0 is "never".
+    func syncFoldSetting() {
+        fsm.foldsByItself = !holdsOpen && state.autoCloseInterval > 0
+        if state.autoCloseInterval > 0 { fsm.homeToPetitDelay = max(3, state.autoCloseInterval) }
     }
 
     private func pollFrame() {
@@ -193,11 +244,8 @@ final class IslandWindowController: NSWindowController {
             }
         }
 
-        // An alert that waits for an answer keeps the island open; the delay is the user's
+        // An alert that waits for an answer keeps the island open
         fsm.pinned = state.isPinned
-        // 0 is "never"
-        fsm.foldsByItself = !holdsOpen && state.autoCloseInterval > 0
-        if state.autoCloseInterval > 0 { fsm.homeToPetitDelay = max(3, state.autoCloseInterval) }
 
         // Feed FSM hover enter/leave
         if inIsland && !wasInIsland {
@@ -267,7 +315,7 @@ final class IslandWindowController: NSWindowController {
     /// Opens the island on a view. Alerts, the menu bar item, the shortcut, a file dragged
     /// over the notch and a window handed to Yumi all come through here.
     func expand(to view: IslandView) {
-        guard !leaving else { return }
+        guard !leaving, !frozen else { return }
         if fsm.state == .home {
             IslandActions.leaveChatError(next: view)
             state.view = view
@@ -380,6 +428,25 @@ final class IslandWindowController: NSWindowController {
         #endif
     }
 
+    // MARK: - Measuring
+
+    /// `YUMI_ISLAND_HOLD=hidden|compact|open` keeps the island in one state after the launch,
+    /// whatever the pointer does, so that its processor use at rest can be measured
+    /// (also in Release builds, where IslandDemo does not exist).
+    private func holdForMeasure() -> Bool {
+        guard let hold = ProcessInfo.processInfo.environment["YUMI_ISLAND_HOLD"] else { return false }
+        holdsOpen = true
+        fsm.cancelTimers()
+        fsm.petitToHiddenDelay = hold == "hidden" ? 0.5 : 86_400
+        switch hold {
+        case "open":   expand(to: .overview)
+        case "hidden": fsm.mouseEntered(); fsm.mouseLeft()
+        default:       fsm.mouseEntered()
+        }
+        frozen = true
+        return true
+    }
+
     // MARK: - First launch
 
     /// Once the launch is over, Yumi asks the first name if he does not know it, unless he
@@ -425,7 +492,7 @@ final class IslandWindowController: NSWindowController {
 
         // Hook server compact reveal (non-alert work events: session start, tool use, etc.)
         center.publisher(for: .hookReveal)
-            .sink { [weak self] _ in self?.fsm.reveal() }
+            .sink { [weak self] _ in if self?.frozen == false { self?.fsm.reveal() } }
             .store(in: &subscriptions)
 
         center.publisher(for: .yumiQuitRequested)
@@ -436,7 +503,7 @@ final class IslandWindowController: NSWindowController {
         state.$remark
             .receive(on: DispatchQueue.main)
             .sink { [weak self] remark in
-                guard let self, remark != nil, !self.leaving else { return }
+                guard let self, remark != nil, !self.leaving, !self.frozen else { return }
                 self.fsm.reveal()
             }
             .store(in: &subscriptions)
