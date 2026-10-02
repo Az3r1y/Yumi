@@ -79,7 +79,8 @@ enum IslandDemo {
         }
         await pause(0.6)
         shot(controller, "1-compact")
-        for name in ["home", "module", "working", "alert", "finished", "error", "music", "focus", "weather", "talk", "settings", "welcome", "memory", "memory-empty", "drop", "file"] {
+        for name in ["home", "module", "working", "alert", "finished", "error", "music", "focus", "weather", "talk", "settings", "welcome", "memory", "memory-empty", "drop", "file",
+                     "remark-short", "remark-long", "remark-action", "remark-open", "remark-none"] {
             show(name, controller)
             await pause(0.45); shot(controller, "2-\(name)-a")
             await pause(2.2);  shot(controller, "2-\(name)-b")
@@ -259,6 +260,18 @@ enum IslandDemo {
             controller.expand(to: .settings)
         case "welcome":
             controller.expand(to: .welcome)
+        case "remark-short":
+            state.remark = YumiRemark(id: "d1", text: "Deux heures d'affilée. Une pause ?", mood: .worried, duration: 30)
+            controller.collapse()
+        case "remark-long":
+            state.remark = YumiRemark(id: "d2", text: "Point produit dans dix minutes, et Claude attend ta réponse depuis un moment déjà.", mood: .surprised, duration: 30)
+        case "remark-action":
+            state.remark = YumiRemark(id: "d3", text: "C'est passé, après dix-huit minutes. Bien joué.", mood: .happy, action: "Voir", duration: 30)
+        case "remark-open":
+            state.remark = YumiRemark(id: "d4", text: "Il est tard. Je reste là, mais toi tu devrais dormir.", mood: .asleep, action: "Bonne nuit", duration: 30)
+            controller.expand(to: .overview)
+        case "remark-none":
+            state.remark = nil
         case "memory":
             state.userName = "Esteban"
             state.memory = memories

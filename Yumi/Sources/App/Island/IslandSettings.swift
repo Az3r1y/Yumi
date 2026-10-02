@@ -6,6 +6,10 @@ import SwiftUI
 struct SettingsActivity: View {
     @ObservedObject var state: AppState
     @AppStorage(IslandPrefs.smokeKey) private var smokes = true
+    /// How much he speaks first (Contracts/RemarkTypes.swift).
+    @AppStorage(YumiTalk.defaultsKey) private var talk = YumiTalk.discreet.rawValue
+    private static let talks: [(value: YumiTalk, label: String)] =
+        [(.silent, "Silencieux"), (.discreet, "Discret"), (.chatty, "Bavard")]
 
     /// `foldDelay`: seconds, 0 for never.
     private static let delays: [(seconds: TimeInterval, label: String)] =
@@ -43,6 +47,19 @@ struct SettingsActivity: View {
                 IslandToggle(isOn: $smokes, label: "Cigarette")
             }
             .riseIn(2)
+            row("Yumi parle") {
+                HStack(spacing: 0) {
+                    ForEach(Self.talks, id: \.value) { choice in
+                        SegmentButton(label: choice.label, on: talk == choice.value.rawValue) {
+                            talk = choice.value.rawValue
+                            IslandActions.tap()
+                        }
+                    }
+                }
+                .padding(2)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
+            }
+            .riseIn(3)
             row("Ce que je sais de toi") {
                 TextButton(label: state.memory.isEmpty ? "Voir" : "Voir (\(state.memory.count))") { IslandActions.go(.memory) }
             }

@@ -37,6 +37,49 @@ final class IslandModel: ObservableObject {
     /// How many of those buttons there are, for the window controller's hit test.
     var foldedControls = 0
 
+    // MARK: When Yumi speaks first (Contracts/RemarkTypes.swift)
+
+    /// A remark is on screen in the folded island: it takes the `speak` shape.
+    @Published var speaking = false
+    /// The remark the person answered or closed: it leaves at once, before the core clears it.
+    @Published var closedRemarkID: String?
+    private var remarkTimer: DispatchWorkItem?
+
+    /// The remark to show, if any.
+    func remark(in state: AppState) -> YumiRemark? {
+        guard let remark = state.remark, remark.id != closedRemarkID else { return nil }
+        return remark
+    }
+
+    /// A remark appears: it stays `duration` seconds, then leaves as ignored.
+    func remarkAppeared(_ remark: YumiRemark?) {
+        remarkTimer?.cancel()
+        remarkTimer = nil
+        guard let remark else { return }
+        pose(.pop)
+        let item = DispatchWorkItem { [weak self] in self?.close(remark, ignored: true) }
+        remarkTimer = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + max(2, remark.duration), execute: item)
+    }
+
+    /// The action of the remark was pressed.
+    func accept(_ remark: YumiRemark) {
+        guard closedRemarkID != remark.id else { return }
+        remarkTimer?.cancel()
+        closedRemarkID = remark.id
+        NotificationCenter.default.post(name: .remarkAccepted, object: nil, userInfo: ["id": remark.id])
+        SoundEngine.shared.play("blip")
+    }
+
+    /// Closed by the person (`ignored` false) or left untouched until its time ran out (true).
+    func close(_ remark: YumiRemark, ignored: Bool) {
+        guard closedRemarkID != remark.id else { return }
+        remarkTimer?.cancel()
+        closedRemarkID = remark.id
+        NotificationCenter.default.post(name: .remarkDismissed, object: nil,
+                                        userInfo: ["id": remark.id, "ignored": ignored])
+    }
+
     // MARK: Open island
 
     @Published var selectedModuleID: String?
@@ -70,7 +113,7 @@ final class IslandModel: ObservableObject {
         if let launchStage { return launchStage }
         switch mode {
         case .hidden:   return .hidden
-        case .compact:  return .compact
+        case .compact:  return speaking ? .speak : .compact
         case .expanded: return .open
         }
     }
@@ -205,13 +248,15 @@ final class IslandModel: ObservableObject {
         var chatActs = false
         /// An agent is at work.
         var busy = false
+        /// The face of what Yumi is saying on his own.
+        var remarkMood: YumiMood?
     }
 
     /// `STATES` of the mock-up: the face, the rim colour, the habit and the pose of each view.
     /// The character already follows `AppState.effectiveState` by itself; the island adds
     /// what only it knows.
     func direct(from old: Situation?, to new: Situation) {
-        guard launchStage == nil, new.stage == .open || new.stage == .compact || new.stage == .hidden else { return }
+        guard launchStage == nil, new.stage == .open || new.stage == .compact || new.stage == .speak || new.stage == .hidden else { return }
 
         if new.stage == .hidden {
             cancelLateHabit()
@@ -229,7 +274,8 @@ final class IslandModel: ObservableObject {
         var look = open ? Self.look(for: new.screen, moduleID: new.moduleID) : nil
         // Talking: he thinks while there is only text, and works during an action
         if open, new.screen == .talk, new.chatActs { look = (.focused, .work) }
-        setMood(look?.mood)
+        // While he says something on his own, he makes the face that goes with it
+        setMood(new.remarkMood ?? look?.mood)
         setRim(look?.rim)
 
         // Habit. Music playing puts his headphones on wherever nothing else is going on:
@@ -257,6 +303,12 @@ final class IslandModel: ObservableObject {
         default:
             cancelLateHabit()
             setHabit(listening ? .headphones : nil)
+        }
+
+        // A habit brings its own face: it steps aside while he says something on his own
+        if new.remarkMood != nil, habit != nil {
+            cancelLateHabit()
+            setHabit(nil)
         }
 
         // Pose: `playPose(Y, s.pose || 'pop')` on every view

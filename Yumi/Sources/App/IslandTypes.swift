@@ -58,6 +58,8 @@ enum IslandScreen: String, CaseIterable {
 /// `bye` during the goodbye.
 enum IslandStage: String, CaseIterable {
     case hidden, compact, open, drip, greet, bye
+    /// Folded, and a little larger: Yumi is saying something.
+    case speak
 }
 
 /// Where Yumi sits (`SEATS` in the mock-up): the centre of his 100 × 84 box, as an offset
@@ -82,6 +84,9 @@ struct IslandLayout: Equatable {
     /// How far the folded island sticks out on each side of the notch. It grows with what is
     /// live on the right (see `FoldedIsland.ear`).
     var compactEar: CGFloat = IslandConst.compactExtra / 2
+    /// Width of the island while Yumi speaks, and its height under the notch.
+    var speakWidth: CGFloat = 0
+    var speakBand: CGFloat = 0
 
     /// The mock-up has a 32 pt notch. A taller one pushes the launch shapes down by the difference.
     var notchDelta: CGFloat { max(0, notchHeight - IslandConst.mockNotchHeight) }
@@ -95,6 +100,7 @@ struct IslandLayout: Equatable {
         switch stage {
         case .hidden:  return CGSize(width: notchWidth, height: notchHeight)
         case .compact: return CGSize(width: notchWidth + compactEar * 2, height: notchHeight)
+        case .speak:   return CGSize(width: speakWidth, height: notchHeight + speakBand)
         case .open:    return CGSize(width: IslandConst.expandedWidth * IslandConst.openScale, height: openHeight)
         case .drip:    return CGSize(width: (notchWidth + IslandConst.dripExtra) * l, height: IslandConst.dripHeight * l + notchDelta)
         case .greet:   return CGSize(width: IslandConst.greetWidth * l, height: IslandConst.greetHeight * l + notchDelta)
@@ -105,6 +111,7 @@ struct IslandLayout: Equatable {
     func cornerRadius(_ stage: IslandStage) -> CGFloat {
         switch stage {
         case .hidden, .compact: return IslandConst.roundedCorner
+        case .speak:            return 20
         case .open:             return IslandConst.expandedCorner * IslandConst.openScale
         case .greet, .bye:      return IslandConst.expandedCorner * IslandConst.launchScale
         case .drip:             return IslandConst.dripCorner * IslandConst.launchScale
@@ -118,6 +125,8 @@ struct IslandLayout: Equatable {
         switch stage {
         case .hidden:
             return IslandSeat(x: 0, y: notchHeight / 2 - 2, scale: 0.05, opacity: 0)
+        case .speak:
+            return IslandSeat(x: 32 - speakWidth / 2, y: notchHeight + speakBand / 2 - 2, scale: 0.36, opacity: 1)
         case .compact:
             return IslandSeat(x: 28 - (notchWidth + compactEar * 2) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
         case .open:

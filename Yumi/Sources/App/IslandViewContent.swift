@@ -41,8 +41,21 @@ struct IslandOpenLayer: View {
             .padding(.trailing, wide ? 14 : IslandConst.openPaddingTrailing)
             .padding(.bottom, IslandConst.openPaddingBottom)
 
+            // What Yumi says on his own: beside the activity, never in its place
+            if let remark = model.remark(in: state) {
+                RemarkLine(remark: remark, model: model)
+                    .padding(.vertical, 7)
+                    .padding(.leading, 14)
+                    .padding(.trailing, 10)
+                    .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.08)))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 6)
+                    .transition(.opacity.combined(with: .offset(y: 6)))
+            }
+
             IslandRail(state: state, model: model, screen: screen, moduleID: module?.id)
         }
+        .animation(.islandSpring(0.42), value: model.remark(in: state)?.id)
         .frame(width: IslandConst.expandedWidth)
         .foregroundStyle(IslandTheme.fg)
     }

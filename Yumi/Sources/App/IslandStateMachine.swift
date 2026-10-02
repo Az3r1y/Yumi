@@ -336,3 +336,39 @@ enum Voice {
         return "À tout à l'heure, \(name)"
     }
 }
+
+// MARK: - When Yumi speaks first
+
+/// The size the folded island takes to hold one remark next to Yumi (Contracts/RemarkTypes.swift):
+/// just wide enough for the sentence, on one line when it fits and on two when it does not.
+enum Speak {
+    /// Yumi's place on the left, then the text.
+    static let lead: Double = 62
+    static let trail: Double = 12
+    /// The cross, and the gap before it.
+    static let cross: Double = 28
+    static let textMax: Double = 340
+    static let oneLine: Double = 34
+    static let twoLines: Double = 50
+
+    struct Size: Equatable {
+        var width: Double
+        /// Height under the notch.
+        var band: Double
+        var textWidth: Double
+        var lines: Int
+    }
+
+    /// - Parameters:
+    ///   - text: width of the sentence on a single line.
+    ///   - action: width of the action button, 0 without one.
+    ///   - minimum: the island is never narrower than this (its folded width).
+    static func size(text: Double, action: Double, minimum: Double) -> Size {
+        let lines = text > textMax ? 2 : 1
+        // On two lines the text is about half as wide, with room for an uneven break
+        let textWidth = lines == 1 ? text : min(textMax, max(textMax * 0.6, text / 2 + 40))
+        let width = lead + textWidth + (action > 0 ? 10 + action : 0) + cross + trail
+        return Size(width: max(minimum, width.rounded(.up)), band: lines == 1 ? oneLine : twoLines,
+                    textWidth: textWidth.rounded(.up), lines: lines)
+    }
+}

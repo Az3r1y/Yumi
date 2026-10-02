@@ -245,7 +245,7 @@ final class IslandWindowController: NSWindowController {
     /// Where Yumi is: his 100 × 84 box at the scale of his seat.
     private func isBotHit(_ windowPoint: CGPoint) -> Bool {
         let stage = model.stage(for: state.mode)
-        guard stage == .open || stage == .compact else { return false }
+        guard stage == .open || stage == .compact || stage == .speak else { return false }
         let seat = model.layout.seat(stage)
         let panel = window?.frame.size ?? CGSize(width: IslandConst.panelWidth, height: IslandConst.panelHeight)
         let dx = windowPoint.x - (panel.width / 2 + seat.x)
@@ -342,7 +342,8 @@ final class IslandWindowController: NSWindowController {
                     self.finishDrag()
                 } else {
                     self.attachDragStart = nil
-                    if hadPendingClick { self.fsm.click() }   // petit → home, ignored elsewhere
+                    // A click on what Yumi says answers it; it does not open the island
+                    if hadPendingClick, self.model.stage(for: self.state.mode) != .speak { self.fsm.click() }   // petit → home, ignored elsewhere
                 }
             }
             return event
@@ -429,6 +430,15 @@ final class IslandWindowController: NSWindowController {
 
         center.publisher(for: .yumiQuitRequested)
             .sink { [weak self] _ in self?.quitRequested() }
+            .store(in: &subscriptions)
+
+        // Yumi has something to say while the island is hidden: it comes out, folded
+        state.$remark
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] remark in
+                guard let self, remark != nil, !self.leaving else { return }
+                self.fsm.reveal()
+            }
             .store(in: &subscriptions)
 
         // Collapse requests from views (OK button, etc.)
