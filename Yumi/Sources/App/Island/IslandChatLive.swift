@@ -145,8 +145,10 @@ private struct ChatActivityRow: View {
 
 /// A small arc that turns.
 private struct ChatSpinner: View {
+    @Environment(\.islandLayerShown) private var shown
+
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !shown)) { timeline in
             let turn = timeline.date.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: 0.9) / 0.9
             Circle()
                 .trim(from: 0, to: 0.7)

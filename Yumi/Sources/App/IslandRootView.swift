@@ -72,6 +72,7 @@ struct IslandScene: View {
             FoldedBubble(module: stage == .compact ? FoldedIsland.second(in: state.modules, after: folded.module?.id) : nil,
                          island: layout.size(.compact, openHeight: 0), middle: middle)
                 .opacity(stage == .compact ? 1 : 0)
+                .environment(\.islandLayerShown, stage == .compact)
 
             // 1. The island: a black shape that cuts what it contains (`overflow: hidden`)
             IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage)) {
@@ -105,12 +106,14 @@ struct IslandScene: View {
                         }
                         .scaleEffect(IslandConst.openScale, anchor: .topLeading)
                         .modifier(IslandLayer(on: stage == .open))
+                        .environment(\.islandLayerShown, stage == .open)
                 }
             } edge: {
                 // Laid out in the island's width of the instant, so that it stays against
                 // its right edge while the island widens or narrows
                 IslandCompactLayer(content: folded, ear: ear, height: layout.notchHeight)
                     .modifier(IslandLayer(on: stage == .compact))
+                    .environment(\.islandLayerShown, stage == .compact)
             }
             .animation(model.snap ? nil : .islandSpring(), value: size)
 
