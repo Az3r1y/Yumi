@@ -238,6 +238,29 @@ final class IslandModel: ObservableObject {
         NotificationCenter.default.post(name: .yumiGaze, object: point)
     }
 
+    // MARK: - Context (Context/ContextSnapshot.swift)
+
+    /// What the Context Engine says about Yumi: idle, observing, or the front application just changed.
+    @Published private(set) var contextPresence = ContextPresence.idle
+    private var glanceBack: DispatchWorkItem?
+    private var glanceSide: CGFloat = 1
+
+    /// The front application changed: folded and with nothing else going on, he glances down
+    /// at it, then his eyes follow the pointer again. He only looks; he does nothing about it.
+    func contextPresenceChanged(_ presence: ContextPresence, stage: IslandStage) {
+        contextPresence = presence
+        guard presence == .contextChanged, launchStage == nil, stage == .compact, habit == nil else { return }
+        glanceSide = -glanceSide
+        setGaze(CGPoint(x: 0.5 * glanceSide, y: 0.6))
+        glanceBack?.cancel()
+        let item = DispatchWorkItem { [weak self] in
+            guard self?.launchStage == nil else { return }
+            self?.setGaze(nil)
+        }
+        glanceBack = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: item)
+    }
+
     /// What the island is doing, as far as Yumi is concerned.
     struct Situation: Equatable {
         var stage: IslandStage

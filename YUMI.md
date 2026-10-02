@@ -325,3 +325,22 @@ Reste à faire côté île : afficher l'état `working` dans la vue du chat (ell
 `YUMI_STUDIO=1` au lancement, dans tous les builds (Release compris). Rien de réel ne démarre : ni serveur de hooks, ni modules, ni mémoire, ni initiative, ni chat, ni pollers. Le trousseau n'est ni lu ni écrit, le dossier de Yumi non plus, et aucune permission ne peut être demandée par le cœur. `AppState` reste entièrement à la main de l'île, qui sait qu'on tourne par `AppState.isStudio` (ou `StudioMode.isOn`). `ClaudeService.chat` ne fait rien dans ce mode : à l'île de mettre en scène `chatHistory` et `chatLive`.
 
 Reste côté île : le dépôt d'un fichier copie encore dans le dossier `inbox` de Yumi (`FileDropView`).
+
+## Cœur : le Context Engine (branche `yumi/contexte`)
+
+Première fondation de l'intelligence : Yumi sait ce que la personne fait sur son Mac, sans pouvoir agir dessus. `Context/` suit la règle de `Core/` : ni vue, ni `AppState`, ni son, compilé tel quel dans les tests.
+
+| Sujet | État |
+|---|---|
+| Ce qu'il sait | Application au premier plan et depuis quand, application précédente, applications récentes, fenêtre au premier plan (titre, fichier montré), durée de la session, événements récents, part du temps récent par catégorie d'application (`LSApplicationCategoryType` lu dans chaque application, rien d'écrit en dur). |
+| Événements | `ContextMessage.event` : `sessionStarted`, `sessionEnded`, `applicationChanged`, `windowChanged`, lancement et fermeture d'application, veille, réveil, verrouillage, changement d'utilisateur, permission. Puis `contextUpdated` avec le nouveau `ContextSnapshot`. Abonnement par `ContextEngine.messages()` (`AsyncStream`), moteur `@Observable`. |
+| Session | Commence au démarrage du moteur, au réveil ou au déverrouillage ; finit à la veille, au verrouillage, à l'extinction des écrans. Un réveil sur écran verrouillé ne compte pas. Le temps d'absence n'est pas compté comme temps passé dans l'application. |
+| Déduplication | La même application ou la même fenêtre signalée deux fois ne produit rien ; un signal système répété non plus ; une fenêtre d'une application qui n'est plus devant est ignorée. |
+| Historique | En mémoire seulement : 300 événements et 4 heures au plus. Couper le moteur efface tout. |
+| Coût | Aucune boucle : notifications de `NSWorkspace`, notifications distribuées du système, et notifications d'accessibilité de l'application au premier plan. Un seul minuteur ponctuel ramène Yumi de `contextChanged` à `observing`. |
+| Permissions | Aucune n'est demandée. Le titre des fenêtres n'est lu que si l'Accessibilité est déjà accordée (`AXIsProcessTrusted`, sans invite) ; le changement de permission est suivi. Pas d'enregistrement d'écran. Build App Store : pas de fenêtre. |
+| Désactivation | Réglages, section Context : interrupteur persisté sous `contextEngineEnabled`. Mode tournage : le moteur ne démarre pas (`LaunchPlan.context`). |
+| Personnage | `ContextPresence` : `idle`, `observing`, `contextChanged`. Quand l'application change, île repliée et rien d'autre en cours, Yumi jette un coup d'œil vers le bas puis reprend le pointeur. Rien de plus : pas d'action, pas de remarque. |
+| Confidentialité | Pas de capture d'écran, pas de frappes, rien envoyé à un modèle ni ailleurs. `ClaudeService` ne lit pas le contexte. |
+
+Prochaines étapes possibles : providers de facettes (`ContextFacet` : écran, presse-papiers, fichiers, navigateur, calendrier, git, projet), puis un lien vers l'initiative et le chat, chacun derrière son propre réglage.

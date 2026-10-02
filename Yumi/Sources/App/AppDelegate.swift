@@ -111,7 +111,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Filming mode starts nothing real: no hooks, modules, memory, initiative or chat.
         // AppState is then left entirely to the island.
         let plan = LaunchPlan.current
-        if plan.hookServer || plan.modules || plan.memory || plan.initiative {
+        if plan.hookServer || plan.modules || plan.memory || plan.initiative || plan.context {
             let core = YumiCore(state: .shared)
             core.start()
             self.core = core
@@ -237,6 +237,10 @@ final class YumiCore {
     private let initiative: InitiativeDriver
     private var lastSeen: [SessionID: Date] = [:]
     private var consumer: Task<Void, Never>?
+    /// What the person is doing on the Mac (Context/). It only looks: nothing acts on it yet.
+    let context = ContextEngine(providers: [WorkspaceContextProvider(), WindowContextProvider()])
+    private var contextConsumer: Task<Void, Never>?
+    private var contextSwitch: AnyCancellable?
 
     init(state: AppState) {
         ingress = EventIngress(engine: engine)
@@ -322,6 +326,7 @@ final class YumiCore {
     }
 
     func start() {
+        startContext(state: .shared)
         memory.start()
         ClaudeService.shared.memory = memory
         modules.start()
@@ -349,6 +354,40 @@ final class YumiCore {
                 self.endSilentSessions(after: event, in: sessions)
             }
         }
+    }
+
+    /// The engine feeds `AppState.context`, and follows the switch of the settings.
+    private func startContext(state: AppState) {
+        guard LaunchPlan.current.context else { return }
+        let messages = context.messages()
+        contextConsumer = Task { [weak state] in
+            for await message in messages {
+                switch message {
+                case .event(let event):
+                    Self.trace(event)
+                case .contextUpdated(let snapshot):
+                    guard let state else { return }
+                    state.context = snapshot
+                }
+            }
+        }
+        contextSwitch = state.$contextEnabled
+            .removeDuplicates()
+            .sink { [context] enabled in context.setEnabled(enabled) }
+    }
+
+    /// Debug builds only: with `YUMI_TRACE_CONTEXT` set, prints each context event as JSON.
+    private static func trace(_ event: ContextEvent) {
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["YUMI_TRACE_CONTEXT"] != nil else { return }
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        encoder.outputFormatting = [.sortedKeys]
+        if let data = try? encoder.encode(event), let line = String(data: data, encoding: .utf8) {
+            print("[contexte] \(line)")
+            fflush(stdout)
+        }
+        #endif
     }
 
     /// Sessions normally end with a hook. One that has said nothing for hours is dropped,
