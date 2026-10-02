@@ -13,6 +13,8 @@ enum WindowContextCapture {
         // App Store: no Accessibility API, no screen capture
         return nil
         #else
+        // While filming nothing is read from other applications, so no permission is ever asked.
+        guard !StudioMode.isOn else { return nil }
         guard let app, let appName = app.localizedName else { return nil }
 
         let pid = app.processIdentifier

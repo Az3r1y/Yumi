@@ -73,6 +73,8 @@ final class KeychainStore: @unchecked Sendable {
 
     private init() {
         // Called once, on main thread (AppDelegate triggers shared at launch).
+        // While filming, nothing is read: every secret is simply absent.
+        guard LaunchPlan.current.keychain else { return }
         for key in Self.allKeys {
             if let v = Keychain.load(key: key) { cache[key] = v }
         }
@@ -86,6 +88,8 @@ final class KeychainStore: @unchecked Sendable {
     /// Updates cache + persists to Keychain.
     func set(_ key: String, value: String) {
         lock.withLock { cache[key] = value }
+        // While filming the value only lives for the run: the Keychain is not touched.
+        guard LaunchPlan.current.keychain else { return }
         Keychain.save(key: key, value: value)
     }
 
@@ -96,7 +100,7 @@ final class KeychainStore: @unchecked Sendable {
             cache[key] = nil
             return exists
         }
-        if had { Keychain.delete(key: key) }
+        if had, LaunchPlan.current.keychain { Keychain.delete(key: key) }
     }
 }
 
@@ -140,6 +144,7 @@ final class ClaudeService {
     /// Ends the conversation. Unless `remember` is false (the app is closing), a conversation of
     /// some length leaves a short summary in the thread of the memory.
     func clearConversation(remember: Bool = true) {
+        guard LaunchPlan.current.chat else { return }
         conversationMessages = []
         #if !APPSTORE
         if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.locate() {
@@ -167,6 +172,8 @@ final class ClaudeService {
     // MARK: - Chat (multi-turn)
 
     func chat(query: String, context: PromptContext?, state: AppState) async {
+        // While filming the chat is the island's to stage: nothing is launched, nothing is sent.
+        guard LaunchPlan.current.chat else { return }
         #if APPSTORE
         await chatWithAPI(query: query, context: context, state: state)
         #else
@@ -495,6 +502,7 @@ final class ClaudeService {
     // MARK: - Structured search (M8 — window attach + web search)
 
     func search(query: String, context: PromptContext?, state: AppState) async {
+        guard LaunchPlan.current.chat else { return }
         guard let key = apiKey, !key.isEmpty else {
             await showError(ChatPhrases.noKey, state: state)
             return
