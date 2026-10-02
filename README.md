@@ -111,9 +111,10 @@ design/yumi/             character concept sheet
 - [ARCHITECTURE.md](ARCHITECTURE.md): analysis of the original code base, system by system.
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to build, test and propose a change.
 - [ATTRIBUTION.md](ATTRIBUTION.md): what comes from Coucou and what does not.
+- [motion/](motion/README.md): the presentation film, made with Remotion.
 
 ## Credits and license
 
 Yumi is built on the source code of [Coucou](https://github.com/Louis-CFM/coucou) by Louis Raillé, used under the MIT License. Yumi is an independent project, not affiliated with or endorsed by the author of Coucou. See [ATTRIBUTION.md](ATTRIBUTION.md).
 
-Code: [MIT](LICENSE). The Yumi name, character, icons and sounds are not covered by the MIT license.
+Code: [MIT](LICENSE). The Yumi name, character, icons, sounds and the presentation film in `motion/` are not covered by the MIT license: see [LICENSE-ASSETS.md](LICENSE-ASSETS.md) and [motion/LICENSE.md](motion/LICENSE.md).
