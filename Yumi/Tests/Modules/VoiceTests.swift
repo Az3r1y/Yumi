@@ -18,7 +18,7 @@ import Foundation
         "bien sûr", "je suis là pour", "n'hésite pas", "n'hésitez pas", "avec plaisir", "pas de problème", "pas de souci",
         "je serais ravi", "ravi de", "comment puis-je", "puis-je t'aider", "en tant qu'", "assistant", "désolé", "veuillez",
         "merci de", "s'il vous plaît", "votre ", " vous ", "félicitations", "génial", "super !", "bravo", "oups", "attention :",
-        "tu devrais", "il faut que tu", "tu aurais dû", "encore en retard", "erreur :", "error", "failed", "!!",
+        "—", "–", "tu devrais", "il faut que tu", "tu aurais dû", "encore en retard", "erreur :", "error", "failed", "!!",
     ]
 
     static func emoji(in text: String) -> [Unicode.Scalar] {
@@ -159,7 +159,7 @@ import Foundation
     @Test func thePromptCarriesTheVoiceSheet() {
         let prompt = ChatPhrases.systemPrompt(characterName: "Yumi", folder: "/d")
         for rule in ["tu tutoies", "première personne", "deux lignes", "pince-sans-rire", "emoji", "jargon", "douze minutes",
-                     "Tu ne prétends jamais"] {
+                     "Tu ne prétends jamais", "tiret long"] {
             #expect(prompt.contains(rule), "\(rule)")
         }
         #expect(Self.emoji(in: prompt).isEmpty)

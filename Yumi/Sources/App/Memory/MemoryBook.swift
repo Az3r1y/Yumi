@@ -146,7 +146,7 @@ struct MemoryBook: Equatable, Sendable {
 enum MemoryGuard {
     /// The sentence ready to be kept (one line, trimmed), or nil when it must not be remembered.
     static func cleaned(_ text: String) -> String? {
-        let oneLine = text.split(whereSeparator: \.isWhitespace).joined(separator: " ")
+        let oneLine = VoiceRules.withoutLongDashes(text.split(whereSeparator: \.isWhitespace).joined(separator: " "))
         guard !oneLine.isEmpty, oneLine.count <= MemoryBook.maxLength, !looksSecret(oneLine) else { return nil }
         return oneLine
     }

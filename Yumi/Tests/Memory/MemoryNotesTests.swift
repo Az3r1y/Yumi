@@ -107,3 +107,51 @@ import Foundation
         #expect(MemoryNotes.summaryRequest.contains("+ fil |"))
     }
 }
+
+@Suite struct MemoryCorrectionsTests {
+    @Test func aFirstNameGivenInTheChatGoesToTheName() {
+        var book = MemoryBook()
+        let changes = MemoryNotes.extract(from: "Enchanté.\n<memoire>\nprénom | Esteban\n+ toi | Tu bois du thé\n</memoire>").changes
+        #expect(changes == [.name("Esteban"), .remember(.person, "Tu bois du thé")])
+        MemoryNotes.apply(changes, to: &book)
+        #expect(book.name == "Esteban")
+        #expect(book.entries.map(\.text) == ["Tu bois du thé"])
+        // With or without the plus sign, and it can be corrected.
+        MemoryNotes.apply(MemoryNotes.extract(from: "<memoire>\n+ Prénom | Estéban\n</memoire>").changes, to: &book)
+        #expect(book.name == "Estéban")
+        #expect(MemoryNotes.instructions.contains("prénom |"))
+    }
+
+    @Test func aNameThatIsNotANameIsRefused() {
+        var book = MemoryBook()
+        MemoryNotes.apply([.name("mot de passe : hunter2"), .name(String(repeating: "a", count: 60))], to: &book)
+        #expect(book.name == nil)
+        // The closing summary never renames anyone.
+        MemoryNotes.apply([.name("Léa")], to: &book, only: .thread)
+        #expect(book.name == nil)
+    }
+
+    @Test func theClosingSummaryReachesTheThreadEvenWithALooseLabel() {
+        // A real answer of the conversation to the closing request: the label is not "fil".
+        let answer = "<memoire>\n+ devis site vitrine | Tu prépares un devis pour un site vitrine, budget de 2000 euros\n+ fil | Il reste à l'envoyer vendredi\n</memoire>"
+        #expect(MemoryNotes.extract(from: answer).changes == [.remember(.thread, "Il reste à l'envoyer vendredi")])
+        var book = MemoryBook()
+        MemoryNotes.apply(MemoryNotes.extract(from: answer, unknownKindAs: .thread).changes, to: &book, only: .thread)
+        #expect(book.entries(of: .thread).map(\.text) == ["Tu prépares un devis pour un site vitrine, budget de 2000 euros", "Il reste à l'envoyer vendredi"])
+        #expect(MemoryNotes.extract(from: "rien", unknownKindAs: .thread).changes.isEmpty)
+        #expect(MemoryNotes.summaryRequest.contains("+ fil |") && MemoryNotes.summaryRequest.contains("au moins une ligne"))
+    }
+
+    @Test func noLongDashInAnswersNorInMemories() {
+        #expect(VoiceRules.withoutLongDashes("Devis à envoyer vendredi — structure définie") == "Devis à envoyer vendredi, structure définie")
+        #expect(VoiceRules.withoutLongDashes("2019–2024") == "2019-2024")
+        #expect(MemoryNotes.extract(from: "C'est fait — tout est là.").visible == "C'est fait, tout est là.")
+        #expect(MemoryNotes.visible(whileWriting: "Je regarde — un instant") == "Je regarde, un instant")
+        var book = MemoryBook()
+        book.remember("Tu veux finir vendredi — sans faute", kind: .thread)
+        #expect(book.entries.first?.text == "Tu veux finir vendredi, sans faute")
+        var tracker = ChatLiveTracker()
+        tracker.apply(.textDelta("Voilà — c'est prêt"))
+        #expect(!tracker.live.text.contains("—"))
+    }
+}
