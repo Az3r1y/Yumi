@@ -796,3 +796,27 @@ import Foundation
         }
     }
 }
+
+// MARK: – GitHub
+
+@Suite struct GitHubFiguresTests {
+    @Test func threeFiguresAreRead() {
+        #expect(GitHubFigures.parse("128 · 12 · 3") == .init(stars: "128", forks: "12", pulls: "3"))
+        #expect(GitHubFigures.parse("0·0·0") == .init(stars: "0", forks: "0", pulls: "0"))
+        #expect(GitHubFigures.parse("1,2 k · 40 · 7") == .init(stars: "1,2 k", forks: "40", pulls: "7"))
+    }
+
+    @Test func anythingElseIsLeftAsItIs() {
+        #expect(GitHubFigures.parse("") == nil)
+        #expect(GitHubFigures.parse("2 PR") == nil)
+        #expect(GitHubFigures.parse("128 · 12") == nil)
+        #expect(GitHubFigures.parse("à brancher · · ") == nil)
+        #expect(GitHubFigures.parse("un · deux · trois") == nil)
+    }
+
+    @Test func aPastedTokenLosesWhatSurroundsIt() {
+        #expect(GitHubFigures.cleanToken("  ghp_abc123\n") == "ghp_abc123")
+        #expect(GitHubFigures.cleanToken("") == nil)
+        #expect(GitHubFigures.cleanToken(" \n ") == nil)
+    }
+}

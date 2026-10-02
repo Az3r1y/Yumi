@@ -372,3 +372,28 @@ enum Speak {
                     textWidth: textWidth.rounded(.up), lines: lines)
     }
 }
+
+// MARK: - GitHub
+
+/// The three figures of the GitHub activity, read from the module's `status`:
+/// stars, forks and open pull requests, in that order, separated by " · ".
+enum GitHubFigures {
+    struct Figures: Equatable {
+        var stars: String
+        var forks: String
+        var pulls: String
+    }
+
+    /// nil when the status is not three figures: the island then shows it as it is.
+    static func parse(_ status: String) -> Figures? {
+        let parts = status.split(separator: "·").map { $0.trimmingCharacters(in: .whitespaces) }
+        guard parts.count == 3, parts.allSatisfy({ !$0.isEmpty && $0.first!.isNumber }) else { return nil }
+        return Figures(stars: parts[0], forks: parts[1], pulls: parts[2])
+    }
+
+    /// A token as it is pasted: without the spaces and line breaks around it. nil when empty.
+    static func cleanToken(_ typed: String) -> String? {
+        let token = typed.trimmingCharacters(in: .whitespacesAndNewlines)
+        return token.isEmpty ? nil : token
+    }
+}
