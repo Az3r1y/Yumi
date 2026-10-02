@@ -82,6 +82,7 @@ extension ModuleSnapshot {
         case "focus":             return "timer"
         case "music", "musique":  return "music.note"
         case "weather", "meteo":  return "sun.max"
+        case "github":            return "chevron.left.forwardslash.chevron.right"
         default:                  return symbol
         }
     }
@@ -180,6 +181,26 @@ enum IslandActions {
         NotificationCenter.default.post(name: .memoryClear, object: nil)
         SoundEngine.shared.play("close")
         IslandModel.shared.pose(.dip)
+    }
+
+    // MARK: GitHub
+
+    /// The key the core reads the token from (KeychainStore, never on disk).
+    static let githubTokenKey = "github-token"
+
+    static var githubConnected: Bool { KeychainStore.shared.get(githubTokenKey)?.isEmpty == false }
+
+    /// Hands the token to the core's Keychain store, and tells the module to read it again.
+    static func connectGitHub(_ token: String?) {
+        if let token {
+            KeychainStore.shared.set(githubTokenKey, value: token)
+            SoundEngine.shared.play("approve")
+        } else {
+            KeychainStore.shared.remove(githubTokenKey)
+            tap()
+        }
+        NotificationCenter.default.post(name: .moduleAction, object: nil,
+                                        userInfo: ["module": "github", "action": "secondary"])
     }
 
     static func manageModules() {

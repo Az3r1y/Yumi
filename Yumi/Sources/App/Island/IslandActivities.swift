@@ -304,6 +304,7 @@ struct ModuleActivity: View {
         case "agenda":            agenda
         case "music", "musique":  music
         case "focus":             focus
+        case "github":            github
         default:                  common
         }
     }
@@ -364,6 +365,35 @@ struct ModuleActivity: View {
                         color: module.color, action: primary)
             if let second = module.secondaryAction {
                 RoundButton(symbol: module.secondarySymbol ?? "stop.fill", label: second, action: secondary)
+            }
+        }
+    }
+
+    /// GitHub: the repository, the last event in one sentence, three figures, one button.
+    /// A pull request that waits goes first, with a button to review it.
+    private var github: some View {
+        let waiting = module.needsAttention
+        return ActRow {
+            ActMeta(color: waiting ? IslandTheme.amber : module.color,
+                    text: module.subtitle.isEmpty ? module.name : "\(module.name) · \(module.subtitle)").riseIn(0)
+            ActTitle(text: module.title, lines: waiting ? 2 : 1).riseIn(1)
+            if let figures = GitHubFigures.parse(module.status) {
+                HStack(spacing: 12) {
+                    GitHubFigure(symbol: "star.fill", value: figures.stars, label: "étoiles")
+                    GitHubFigure(symbol: "arrow.triangle.branch", value: figures.forks, label: "forks")
+                    GitHubFigure(symbol: "arrow.triangle.pull", value: figures.pulls, label: "pull requests ouvertes")
+                }
+                .padding(.top, 2)
+                .riseIn(2)
+            } else if !module.status.isEmpty {
+                ActSub(text: module.status).riseIn(2)
+            }
+        } trail: {
+            if waiting {
+                RoundButton(style: .fill, symbol: module.primarySymbol ?? "eye.fill", label: module.primaryAction,
+                            color: IslandTheme.amber, action: primary)
+            } else {
+                RoundButton(symbol: module.primarySymbol ?? "arrow.up.forward", label: module.primaryAction, action: primary)
             }
         }
     }
@@ -513,5 +543,27 @@ struct DropActivity: View {
             )
             .riseIn(0)
         }
+    }
+}
+
+/// One figure of the GitHub activity: a small symbol, then the number in the rounded face.
+private struct GitHubFigure: View {
+    let symbol: String
+    let value: String
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 4) {
+            Image(systemName: symbol)
+                .font(.system(size: 9.5, weight: .semibold))
+                .foregroundStyle(IslandTheme.muted)
+            Text(value)
+                .font(IslandTheme.round(12.5, .semibold))
+                .monospacedDigit()
+                .foregroundStyle(IslandTheme.fg)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(value) \(label)")
+        .help(label)
     }
 }

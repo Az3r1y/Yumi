@@ -80,7 +80,8 @@ enum IslandDemo {
         await pause(0.6)
         shot(controller, "1-compact")
         for name in ["home", "module", "working", "alert", "finished", "error", "music", "focus", "weather", "talk", "settings", "welcome", "memory", "memory-empty", "drop", "file",
-                     "remark-short", "remark-long", "remark-action", "remark-open", "remark-none"] {
+                     "remark-short", "remark-long", "remark-action", "remark-open", "remark-none",
+                     "github", "github-pr"] {
             show(name, controller)
             await pause(0.45); shot(controller, "2-\(name)-a")
             await pause(2.2);  shot(controller, "2-\(name)-b")
@@ -185,8 +186,16 @@ enum IslandDemo {
 
     /// The examples of the contract, with another text for the music, and the fields of the
     /// activity interface filled in as the core will.
-    private static func examples(music: String?, agenda: Bool = true) -> [ModuleSnapshot] {
-        ModuleCatalog.placeholders.map { module in
+    private static func examples(music: String?, agenda: Bool = true, pullRequest: Bool = false) -> [ModuleSnapshot] {
+        var github = ModuleSnapshot(id: "github", name: "GitHub", colorHex: "#C9CCDA", status: "128 · 12 · 3",
+                                    title: "Une étoile de plus, de la part de louis.", subtitle: "estebanbaigts/Yumi",
+                                    primaryAction: "Ouvrir", secondaryAction: nil)
+        if pullRequest {
+            github.needsAttention = true
+            github.title = "Une pull request t'attend : le repli de l'île."
+            github.primaryAction = "Relire"
+        }
+        return ModuleCatalog.placeholders.map { module in
             var module = module
             switch module.id {
             case "agenda": module.primarySymbol = "video.fill"
@@ -203,7 +212,7 @@ enum IslandDemo {
             }
             if module.id == "agenda", !agenda { module.live = nil }
             return module
-        }
+        } + [github]
     }
 
     private static func show(_ name: String, _ controller: IslandWindowController) {
@@ -253,8 +262,12 @@ enum IslandDemo {
         case "file":
             state.droppedFile = DroppedFile(url: URL(fileURLWithPath: "/tmp/Contrat-v3.pdf"), name: "Contrat-v3.pdf")
             controller.expand(to: .choose)
-        case "focus", "weather":
+        case "focus", "weather", "github":
             model.selectedModuleID = name
+            controller.expand(to: .module)
+        case "github-pr":
+            state.modules = examples(music: "Lueur · Halo Nord", pullRequest: true)
+            model.selectedModuleID = "github"
             controller.expand(to: .module)
         case "settings":
             controller.expand(to: .settings)
