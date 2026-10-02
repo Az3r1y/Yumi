@@ -128,6 +128,11 @@ final class InitiativeDriver {
         if saved.watch.agentWaiting != wasWaiting { clock() }
     }
 
+    /// Something a module thinks is worth a word. The engine decides, with all its rules.
+    func notice(_ occasion: Occasion) {
+        offer(occasion)
+    }
+
     private func batteryChanged() {
         wakeUps += 1
         guard let battery = MacSurroundings.battery() else { return }

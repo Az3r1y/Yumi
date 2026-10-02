@@ -153,7 +153,7 @@ final class AppState: ObservableObject {
     @Published var resendEmails: [ResendEmail] = []
     @Published var resendTotal: Int? = nil
 
-    // GitHub stats (populated by GithubPoller)
+    // GitHub stats (populated by the GitHub module, for the old integration card)
     @Published var githubStats: GitHubStats? = nil
 
     // Stripe (populated by StripePoller)
@@ -321,7 +321,6 @@ enum IntegrationPollers {
         ("integration_n8n",    { N8nPoller.shared.start() },    { N8nPoller.shared.stop() }),
         ("integration_vercel", { VercelPoller.shared.start() }, { VercelPoller.shared.stop() }),
         ("integration_resend", { ResendPoller.shared.start() }, { ResendPoller.shared.stop() }),
-        ("integration_github", { GithubPoller.shared.start() }, { GithubPoller.shared.stop() }),
         ("integration_stripe", { StripePoller.shared.start() }, { StripePoller.shared.stop() }),
         ("integration_calcom", { CalcomPoller.shared.start() }, { CalcomPoller.shared.stop() }),
         ("integration_notion", { NotionPoller.shared.start() }, { NotionPoller.shared.stop() }),

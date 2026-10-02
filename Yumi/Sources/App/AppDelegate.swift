@@ -289,6 +289,11 @@ final class YumiCore {
                 focus,
                 MusicModule(),
                 WeatherModule(),
+                GitHubModule(
+                    token: { KeychainStore.shared.get("github-token") },
+                    onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
+                    onNews: { [initiative] event, count in initiative.notice(.repository(event, count: count)) },
+                    onTotals: { repos, stars in state.githubStats = GitHubStats(totalRepos: repos, totalStars: stars) }),
             ],
             onPublish: { snapshots in
                 state.modules = snapshots

@@ -307,3 +307,15 @@ Reste à faire côté île : afficher l'état `working` dans la vue du chat (ell
 | Actions | « Pause » lance une pause de cinq minutes dans le module Focus. « Voir » amène devant l'application de la session de l'agent. |
 | Coût au repos | Aucun minuteur répétitif : le pilote réagit aux notifications du système (réveil, verrouillage, batterie) et aux événements de session, et dort jusqu'au prochain moment exact (deux heures, 23 h 30, vendredi 18 h, dix minutes avant un rendez-vous). |
 | Limites | Ne pas déranger : lu dans un fichier du système, illisible dans le bac à sable (réponse « non »). Partage d'écran : appel du serveur de fenêtres absent des en-têtes publics, non utilisé dans le build App Store. Présentation : écran recopié, ou diaporama Keynote ou PowerPoint. Sans accès au calendrier, le bonjour ne parle pas de la journée. |
+
+## Cœur, phase 7 : le module GitHub
+
+| Sujet | État |
+|---|---|
+| Module | `Modules/GitHub`, identifiant `github`. Il remplace `GithubPoller` (supprimé) et rejoint une fois la sélection des installations existantes. |
+| Jeton | Jeton personnel lu dans le trousseau sous la clé `github-token`. Sans jeton : « Je ne vois pas ton GitHub. », bouton « Brancher » qui ouvre les réglages. L'action `secondary` de `moduleAction` fait relire le jeton tout de suite. |
+| Ce qu'il suit | Étoile, fork, pull request ouverte, fusion, push, issue, release (flux `events` et `received_events` de la personne, limités à ses dépôts pour ce que font les autres) ; nouvel abonné (compteur de `/user`). Le commit local vient des sessions Claude Code (une commande `git commit` qui se termine), sans surveiller le disque. |
+| Quota | Chaque requête porte l'`ETag` de la réponse précédente : un flux inchangé ne coûte rien. Les flux sont relus toutes les 60 s au plus tôt, ou moins souvent si `X-Poll-Interval` le demande ; dépôts, abonnés et relectures une fois sur cinq. Quota épuisé : attente jusqu'à l'heure donnée par GitHub. |
+| Scènes | `yumiScene` à chaque événement nouveau, une par type, avec `count` quand plusieurs arrivent ensemble. Le premier regard sert de référence : l'historique n'est jamais rejoué. Ce qui a été vu est gardé entre deux lancements. |
+| Snapshot | `status` : « étoiles · forks · pull requests ouvertes » du dépôt le plus actif. `subtitle` : le dépôt. `title` : le dernier événement en une phrase. « Ouvrir » ouvre le dépôt. Une pull request qui attend une relecture passe devant : `needsAttention`, bouton « Relire », `live` en priorité attention. |
+| Parole | Étoile, fork, fusion et release passent par le moteur d'initiative (`Occasion.repository`), avec tous ses garde-fous. Un mot au plus par lot d'événements. |

@@ -21,6 +21,8 @@ enum Occasion: Equatable, Sendable {
     case late
     case lowBattery(percent: Int)
     case weekEnd
+    /// Something that counts happened on one of the person's repositories.
+    case repository(GitHubEvent, count: Int)
 
     /// The subject, for the rule about being ignored: one per kind of occasion.
     var topic: String {
@@ -33,6 +35,7 @@ enum Occasion: Equatable, Sendable {
         case .late: return "late"
         case .lowBattery: return "lowBattery"
         case .weekEnd: return "weekEnd"
+        case .repository(let event, _): return "github.\(event.kind.rawValue)"
         }
     }
 
@@ -42,7 +45,7 @@ enum Occasion: Equatable, Sendable {
         case .firstWake(let events, _): return (events ?? 0) > 0
         case .back(let finished, let waiting): return finished || waiting
         case .weekEnd: return false
-        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery: return true
+        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery, .repository: return true
         }
     }
 
@@ -294,6 +297,44 @@ enum InitiativePhrases {
                 Variant(key: "battery.2", text: "Plus que \(n(percent)) pour cent de batterie. Le chargeur n'est pas loin ?", mood: .worried),
                 Variant(key: "battery.3", text: "\(cap(n(percent))) pour cent et pas de chargeur. Je m'inquiète un peu.", mood: .worried),
             ]
+
+        case .repository(let event, let count):
+            let repo = event.repoName
+            switch event.kind {
+            case .star where count > 1:
+                let stars = "\(n(count, feminine: true)) étoiles"
+                return [
+                    Variant(key: "gh.stars.1", text: "\(cap(stars)) d'un coup sur \(repo). Ça brille.", mood: .happy),
+                    Variant(key: "gh.stars.2", text: "\(repo) vient de prendre \(stars).", mood: .happy),
+                    Variant(key: "gh.stars.3", text: "\(cap(stars)) de plus pour \(repo). Je les ai comptées.", mood: .wink),
+                ]
+            case .star:
+                return [
+                    Variant(key: "gh.star.1", text: "Une étoile de plus sur \(repo), de la part de \(event.actor).", mood: .happy),
+                    Variant(key: "gh.star.2", text: "\(event.actor) vient d'étoiler \(repo). Je l'ai attrapée au vol.", mood: .wink),
+                    Variant(key: "gh.star.3", text: "\(repo) plaît à \(event.actor). Une étoile de plus.", mood: .happy),
+                ]
+            case .fork:
+                return [
+                    Variant(key: "gh.fork.1", text: "\(event.actor) a forké \(repo). Ton code voyage.", mood: .curious),
+                    Variant(key: "gh.fork.2", text: "\(repo) a un double chez \(event.actor).", mood: .curious),
+                    Variant(key: "gh.fork.3", text: "Un fork de \(repo), par \(event.actor). Quelqu'un s'y met.", mood: .happy),
+                ]
+            case .release:
+                let name = event.detail.isEmpty ? "Une version de \(repo)" : event.detail
+                return [
+                    Variant(key: "gh.release.1", text: "\(name) est sortie. C'est dehors.", mood: .happy),
+                    Variant(key: "gh.release.2", text: "\(name) est en ligne\(comma).", mood: .happy),
+                    Variant(key: "gh.release.3", text: "\(name) est partie. Je m'incline.", mood: .wink),
+                ]
+            default:
+                let what = event.detail.isEmpty ? "sur \(repo)" : ": \(event.detail)"
+                return [
+                    Variant(key: "gh.merge.1", text: "C'est fusionné \(what).", mood: .happy),
+                    Variant(key: "gh.merge.2", text: "Une pull request de moins sur \(repo). C'est dans la branche.", mood: .happy),
+                    Variant(key: "gh.merge.3", text: "Fusion faite sur \(repo). Deux gouttes, une seule.", mood: .wink),
+                ]
+            }
 
         case .weekEnd:
             var end = [
