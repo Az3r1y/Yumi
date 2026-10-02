@@ -56,6 +56,7 @@ final class IslandModel: ObservableObject {
     private var sentMood: YumiMood?
     private var sentRim: YumiRimTone?
     private var lateHabit: DispatchWorkItem?
+    private var winkBack: DispatchWorkItem?
 
     /// The character view is in the window and listens to the commands.
     private(set) var actorReady = false
@@ -162,6 +163,19 @@ final class IslandModel: ObservableObject {
         guard force || mood != sentMood else { return }
         sentMood = mood
         NotificationCenter.default.post(name: .yumiMood, object: mood)
+    }
+
+    /// A small sign that he learnt something: a wink, then the face he had.
+    func wink() {
+        let before = sentMood
+        winkBack?.cancel()
+        NotificationCenter.default.post(name: .yumiMood, object: YumiMood.wink)
+        let item = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            NotificationCenter.default.post(name: .yumiMood, object: self.sentMood ?? before)
+        }
+        winkBack = item
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9, execute: item)
     }
 
     func setRim(_ tone: YumiRimTone?) {

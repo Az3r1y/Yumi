@@ -13,7 +13,7 @@ struct SettingsActivity: View {
 
     var body: some View {
         VStack(spacing: 9) {
-            row("Sons") {
+            row("Mes sons") {
                 Slider(value: $state.soundVolume, in: 0...0.2) { editing in
                     if !editing { SoundEngine.shared.play("pop") }
                 }
@@ -26,7 +26,7 @@ struct SettingsActivity: View {
                 IslandToggle(isOn: $state.soundEnabled, label: "Sons")
             }
             .riseIn(0)
-            row("Repli de l'île après") {
+            row("Je me replie après") {
                 HStack(spacing: 0) {
                     ForEach(Self.delays, id: \.seconds) { delay in
                         SegmentButton(label: delay.label, on: selected == delay.seconds) {
@@ -39,7 +39,7 @@ struct SettingsActivity: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(1)
-            row("Cigarette quand un agent travaille") {
+            row("Je fume quand un agent bosse") {
                 IslandToggle(isOn: $smokes, label: "Cigarette")
             }
             .riseIn(2)

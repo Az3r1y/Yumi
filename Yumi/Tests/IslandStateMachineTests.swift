@@ -722,3 +722,40 @@ import Foundation
         #expect(FirstName.clean(String(repeating: "a", count: 200))?.count == 40)
     }
 }
+
+// MARK: – Yumi's voice
+
+@Suite struct VoiceTests {
+    @Test func smallNumbersAreWrittenInLetters() {
+        #expect(Voice.number(2) == "deux")
+        #expect(Voice.number(12) == "douze")
+        #expect(Voice.number(26) == "vingt-six")
+        #expect(Voice.number(250) == "250")
+    }
+
+    @Test func durationsReadLikeASentence() {
+        #expect(Voice.duration(20) == "moins d'une minute")
+        #expect(Voice.duration(60) == "une minute")
+        #expect(Voice.duration(12 * 60 + 40) == "douze minutes")
+        #expect(Voice.duration(21 * 60) == "vingt-et-une minutes")
+        #expect(Voice.duration(3600) == "une heure")
+        #expect(Voice.duration(2 * 3600 + 10 * 60) == "deux heures dix")
+    }
+
+    @Test func filesAreCountedInLetters() {
+        #expect(Voice.files(0) == nil)
+        #expect(Voice.files(1) == "un fichier touché")
+        #expect(Voice.files(3) == "trois fichiers touchés")
+    }
+
+    @Test func aSentenceStartsWithACapital() {
+        #expect(Voice.sentence("depuis douze minutes") == "Depuis douze minutes")
+        #expect(Voice.sentence("") == "")
+    }
+
+    @Test func theFirstNameIsUsedOnlyWhenKnown() {
+        #expect(Voice.goodbye(name: nil) == "À tout à l'heure")
+        #expect(Voice.goodbye(name: "  ") == "À tout à l'heure")
+        #expect(Voice.goodbye(name: "Esteban") == "À tout à l'heure, Esteban")
+    }
+}

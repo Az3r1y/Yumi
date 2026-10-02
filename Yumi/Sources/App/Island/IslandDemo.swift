@@ -79,7 +79,7 @@ enum IslandDemo {
         }
         await pause(0.6)
         shot(controller, "1-compact")
-        for name in ["home", "module", "working", "alert", "finished", "error", "music", "focus", "weather", "talk", "settings", "drop", "file"] {
+        for name in ["home", "module", "working", "alert", "finished", "error", "music", "focus", "weather", "talk", "settings", "welcome", "memory", "memory-empty", "drop", "file"] {
             show(name, controller)
             await pause(0.45); shot(controller, "2-\(name)-a")
             await pause(2.2);  shot(controller, "2-\(name)-b")
@@ -166,6 +166,22 @@ enum IslandDemo {
         await pause(1.2);  snap("8-settled")
     }
 
+    /// What Yumi could remember, of each kind.
+    private static var memories: [MemoryEntry] {
+        let now = Date.now
+        func entry(_ id: String, _ kind: MemoryEntry.Kind, _ text: String, hours: Double) -> MemoryEntry {
+            MemoryEntry(id: id, kind: kind, text: text, date: now.addingTimeInterval(-hours * 3600))
+        }
+        return [
+            entry("p1", .person, "Tu préfères les réponses courtes, sans listes.", hours: 30),
+            entry("p2", .person, "Tu travailles surtout le soir.", hours: 2),
+            entry("j1", .project, "Yumi : un compagnon dans la notch du Mac, en Swift.", hours: 5),
+            entry("j2", .project, "Audioscope : mis de côté pour l'instant.", hours: 50),
+            entry("t1", .thread, "Tu m'as demandé un script qui dit bonjour ; il est dans Téléchargements.", hours: 1),
+            entry("t2", .thread, "Le bouton Précédent de la musique attend une décision.", hours: 3),
+        ]
+    }
+
     /// The examples of the contract, with another text for the music, and the fields of the
     /// activity interface filled in as the core will.
     private static func examples(music: String?, agenda: Bool = true) -> [ModuleSnapshot] {
@@ -241,6 +257,16 @@ enum IslandDemo {
             controller.expand(to: .module)
         case "settings":
             controller.expand(to: .settings)
+        case "welcome":
+            controller.expand(to: .welcome)
+        case "memory":
+            state.userName = "Esteban"
+            state.memory = memories
+            controller.expand(to: .memory)
+        case "memory-empty":
+            state.userName = nil
+            state.memory = []
+            controller.expand(to: .memory)
         case "folded-music":
             controller.demoHover = false
             state.modules = examples(music: "Lueur · Halo Nord")

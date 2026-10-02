@@ -171,7 +171,7 @@ struct IslandTalkView: View {
 
             // `.ask`
             HStack(spacing: 6) {
-                TextField("", text: $text, prompt: Text("Demande quelque chose").foregroundStyle(IslandTheme.faint))
+                TextField("", text: $text, prompt: Text("Demande-moi quelque chose").foregroundStyle(IslandTheme.faint))
                     .textFieldStyle(.plain)
                     .font(IslandTheme.text(13, .regular))
                     .foregroundStyle(IslandTheme.fg)

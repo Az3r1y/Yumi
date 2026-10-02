@@ -74,7 +74,7 @@ struct IslandScene: View {
                                         size: model.leaving
                                             ? CGSize(width: IslandConst.byeWidth, height: IslandConst.byeHeight + drop)
                                             : CGSize(width: IslandConst.greetWidth, height: IslandConst.greetHeight + drop),
-                                        words: model.leaving ? "À tout à l'heure" : nil)
+                                        words: model.leaving ? Voice.goodbye(name: state.userName) : nil)
                         .scaleEffect(IslandConst.launchScale, anchor: .topLeading)
                         .modifier(IslandLayer(on: launching))
 
@@ -116,6 +116,10 @@ struct IslandScene: View {
         .onChange(of: folded.controls.count, initial: true) { _, count in model.foldedControls = count }
         .onChange(of: situation) { old, new in model.direct(from: old, to: new) }
         .onChange(of: state.effectiveState) { old, new in model.track(state: old, new) }
+        .onChange(of: state.memory.count) { old, new in
+            // He learnt something while talking: a wink, no words
+            if new > old, stage == .open, screen == .talk { model.wink() }
+        }
         .onChange(of: state.chatLive) { old, new in
             // The end of an answer that created or modified something
             if new == nil, let done = old?.done,
