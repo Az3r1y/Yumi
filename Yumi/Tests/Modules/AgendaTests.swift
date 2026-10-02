@@ -29,7 +29,7 @@ import Foundation
     @Test func aFreeDay() {
         let free = snapshot([event("Anniversaire", date(1, 0), minutes: 1440, allDay: true)], now: date(1, 10))
         #expect(free.status == "libre")
-        #expect(free.title == "Rien de prévu")
+        #expect(free.title == "Rien de prévu.")
         #expect(free.primaryAction == "Voir la journée")
     }
 
@@ -38,8 +38,8 @@ import Foundation
                                event("Point produit", date(1, 14, 30), join: "https://meet.google.com/abc-defg-hij")],
                               now: date(1, 14, 18))
         #expect(result.status == "14:30")
-        #expect(result.title == "Point produit dans 12 min")
-        #expect(result.subtitle == "14:30 à 15:00, en visio")
+        #expect(result.title == "Point produit dans douze minutes.")
+        #expect(result.subtitle == "14:30 à 15:00, en visio.")
         #expect(result.primaryAction == "Rejoindre")
         #expect(result.secondaryAction == "Voir la journée")
         #expect(!result.needsAttention)
@@ -47,8 +47,8 @@ import Foundation
 
     @Test func aLaterEventShowsItsTimeAndPlace() {
         let result = snapshot([event("Dentiste", date(1, 17), minutes: 45, location: "12 rue des Lilas\nParis")], now: date(1, 9))
-        #expect(result.title == "Dentiste à 17:00")
-        #expect(result.subtitle == "17:00 à 17:45, 12 rue des Lilas")
+        #expect(result.title == "Dentiste à 17:00.")
+        #expect(result.subtitle == "17:00 à 17:45, 12 rue des Lilas.")
         #expect(result.primaryAction == "Ouvrir")
     }
 
@@ -62,8 +62,8 @@ import Foundation
     @Test func anEventInProgress() {
         let result = snapshot([event("Atelier", date(1, 10), minutes: 120)], now: date(1, 11))
         #expect(result.status == "en cours")
-        #expect(result.title == "Atelier en cours")
-        #expect(result.subtitle == "10:00 à 12:00")
+        #expect(result.title == "Atelier a commencé.")
+        #expect(result.subtitle == "10:00 à 12:00.")
     }
 
     @Test func theNextEventWinsOverTheEndingOneWhenItIsClose() {
@@ -76,8 +76,8 @@ import Foundation
     @Test func tomorrowIsAnnouncedWhenTodayIsOver() {
         let result = snapshot([event("Stand-up", date(2, 9, 30), minutes: 15)], now: date(1, 19))
         #expect(result.status == "libre")
-        #expect(result.title == "Demain : Stand-up")
-        #expect(result.subtitle == "Plus rien aujourd'hui, demain 9:30 à 9:45")
+        #expect(result.title == "Demain, Stand-up.")
+        #expect(result.subtitle == "Plus rien aujourd'hui, demain 9:30 à 9:45.")
         #expect(!result.needsAttention)
     }
 

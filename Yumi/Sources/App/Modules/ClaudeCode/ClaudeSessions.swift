@@ -21,20 +21,22 @@ enum ClaudeSessions {
         return ClaudeHookTranslator.projectName(forDirectory: directory)
     }
 
-    /// What the session is doing, as the end of "projet : …".
+    /// What the session is doing, said by Yumi, who watches over the shoulder.
     static func phrase(_ session: Session) -> String {
+        let project = projectName(session)
         switch session.activity {
-        case .requestingPermission: return "demande ton accord"
-        case .asking:               return "te pose une question"
-        case .working(let tool):    return ClaudeToolPhrase.sentence(tool)
-        case .thinking:             return "réfléchit"
+        case .requestingPermission: return "Claude veut ton accord sur \(project). Je laisse passer ?"
+        case .asking:               return "Claude a une question pour toi sur \(project)."
+        case .working(let tool):    return "Claude \(ClaudeToolPhrase.sentence(tool)) sur \(project)."
+        case .thinking:             return "Claude réfléchit sur \(project)."
         case .idle:
             switch session.status {
-            case .rateLimited:    return "limite d'usage atteinte"
-            case .errored:        return "s'est arrêté sur une erreur"
-            case .completed:      return "a terminé"
-            case .waitingForUser: return "attend ta réponse"
-            case .running:        return session.isTurnActive ? "travaille" : "attend ton message"
+            case .rateLimited:    return "Claude a atteint sa limite sur \(project). On attend."
+            case .errored:        return "Ça a planté sur \(project). Tu veux voir où ?"
+            case .completed:      return "C'est passé sur \(project)."
+            case .waitingForUser: return "Claude t'attend sur \(project)."
+            case .running:        return session.isTurnActive ? "Claude avance sur \(project). Je surveille."
+                                                              : "Claude attend ton message sur \(project)."
             }
         }
     }
@@ -45,17 +47,18 @@ enum ClaudeSessions {
 
     private static func plainSnapshot(_ sessions: [Session]) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "claude-code", name: "Claude Code", colorHex: "#FFB547",
-                                      status: "au repos", title: "Aucune session ouverte",
-                                      subtitle: "Lance Claude Code dans un terminal",
+                                      status: "au repos", title: "Personne ne code en ce moment.",
+                                      subtitle: "Lance Claude Code, je regarderai.",
                                       primaryAction: "Voir", secondaryAction: nil)
         guard let featured = sessions.first else { return snapshot }
 
         let waiting = sessions.filter { $0.status == .waitingForUser }.count
         snapshot.status = FrenchText.count(sessions.count, "session", "sessions")
-        snapshot.title = "\(projectName(featured)) : \(phrase(featured))"
-        snapshot.subtitle = FrenchText.count(sessions.count, "session ouverte", "sessions ouvertes")
-        if waiting == 1 { snapshot.subtitle += ", 1 attend ta réponse" }
-        if waiting > 1 { snapshot.subtitle += ", \(waiting) attendent ta réponse" }
+        snapshot.title = phrase(featured)
+        snapshot.subtitle = FrenchText.sentenceStart(FrenchText.spelledCount(sessions.count, "session ouverte", "sessions ouvertes", feminine: true))
+        if waiting == 1 { snapshot.subtitle += ", une t'attend" }
+        if waiting > 1 { snapshot.subtitle += ", \(FrenchText.spelled(waiting)) t'attendent" }
+        snapshot.subtitle += "."
         switch SessionHost.kind(of: featured.origin) {
         case .editor:   snapshot.secondaryAction = "Ouvrir l'éditeur"
         case .terminal: snapshot.secondaryAction = "Ouvrir le terminal"
@@ -74,9 +77,9 @@ enum ClaudeSessions {
         let name = projectName(session)
         let text: String
         if case .requestingPermission = session.activity {
-            text = "\(name) demande ton accord"
+            text = "Claude veut ton accord sur \(name)"
         } else {
-            text = "\(name) te pose une question"
+            text = "Claude t'attend sur \(name)"
         }
         return ModuleLive(text: text, priority: ModuleLivePriority.attention,
                           controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])

@@ -34,14 +34,14 @@ import Foundation
                                + [.permissionRequested(a, PermissionRequest(tool: "Bash", command: "swift test")),
                                   .toolStarted(b, ToolInfo(name: "Read"))])
         let live = ClaudeSessions.snapshot(waiting).live
-        #expect(live?.text == "yumi demande ton accord")
+        #expect(live?.text == "Claude veut ton accord sur yumi")
         #expect(live?.priority == ModuleLivePriority.attention)
         #expect(live?.controls == [ModuleControl(id: "primary", symbol: "eye.fill", label: "Voir")])
     }
 
     @Test func claudeAsksForAttentionWhenAQuestionIsPending() {
         let asking = sessions(started(a, "yumi") + [.questionRequested(a, Question(text: "Which file?"))])
-        #expect(ClaudeSessions.snapshot(asking).live?.text == "yumi te pose une question")
+        #expect(ClaudeSessions.snapshot(asking).live?.text == "Claude t'attend sur yumi")
         #expect(ClaudeSessions.snapshot(asking).live?.priority == ModuleLivePriority.attention)
 
         // Answered: nothing to say any more.
@@ -148,7 +148,7 @@ import Foundation
     @Test func agendaOffersToJoinWhenThereIsALink() {
         let live = AgendaSummary.snapshot(events: [event("Point produit", date(1, 14, 30), join: "https://meet.google.com/abc")],
                                           access: .granted, now: date(1, 14, 40), calendar: calendar).live
-        #expect(live?.text == "En cours : Point produit")
+        #expect(live?.text == "Point produit, en cours")
         #expect(live?.controls == [ModuleControl(id: "primary", symbol: "video.fill", label: "Rejoindre")])
     }
 
@@ -198,7 +198,7 @@ import Foundation
         module.start { changes += 1 }
         return (module, { changes })
     }
-    private let writing = ChatActivity(id: "w", kind: .writing, label: "Écrit bonjour.txt")
+    private let writing = ChatActivity(id: "w", kind: .writing, label: "J'écris bonjour.txt")
 
     @Test func nothingWhileTheChatIsIdle() {
         let (module, _) = module()
@@ -209,7 +209,7 @@ import Foundation
     @Test func theActionUnderWayIsAnnouncedAsAnActivity() {
         let (module, changes) = module()
         module.announceChat(ChatAnnouncement(ChatLive(text: "", activity: writing)))
-        #expect(module.snapshot.live == ModuleLive(text: "Écrit bonjour.txt", priority: ModuleLivePriority.activity))
+        #expect(module.snapshot.live == ModuleLive(text: "J'écris bonjour.txt", priority: ModuleLivePriority.activity))
         #expect(changes() == 1)
 
         // The text growing does not change the announcement: nothing is republished.
@@ -218,7 +218,7 @@ import Foundation
         #expect(changes() == 1)
 
         module.announceChat(ChatAnnouncement(ChatLive(text: "C'est fait", activity: nil, done: [writing])))
-        #expect(module.snapshot.live?.text == "Yumi répond")
+        #expect(module.snapshot.live?.text == "Je réponds")
         module.announceChat(nil)
         #expect(module.snapshot.live == nil)
         #expect(changes() == 3)
@@ -226,9 +226,9 @@ import Foundation
 
     @Test func waitingForAPermissionAsksForAttention() {
         let (module, _) = module()
-        let waiting = ChatActivity(id: "b", kind: .waiting, label: "Attend ton accord", detail: "swift test")
+        let waiting = ChatActivity(id: "b", kind: .waiting, label: "J'attends ton accord", detail: "swift test")
         module.announceChat(ChatAnnouncement(ChatLive(activity: waiting)))
-        #expect(module.snapshot.live == ModuleLive(text: "Attend ton accord", priority: ModuleLivePriority.attention))
+        #expect(module.snapshot.live == ModuleLive(text: "J'attends ton accord", priority: ModuleLivePriority.attention))
     }
 
     @Test func aSessionWaitingForTheUserStaysAhead() {
@@ -238,6 +238,6 @@ import Foundation
         sessions = SessionReducer.apply(.permissionRequested(id, PermissionRequest(tool: "Bash", command: "ls")), to: sessions)
         module.receive(.permissionRequested(id, PermissionRequest(tool: "Bash", command: "ls")), sessions: sessions)
         module.announceChat(ChatAnnouncement(ChatLive(activity: writing)))
-        #expect(module.snapshot.live?.text == "yumi demande ton accord")
+        #expect(module.snapshot.live?.text == "Claude veut ton accord sur yumi")
     }
 }

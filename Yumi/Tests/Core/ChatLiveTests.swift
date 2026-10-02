@@ -40,14 +40,14 @@ import Foundation
 
     @Test func nothingYet() {
         #expect(ChatLiveTracker().live == ChatLive())
-        #expect(ChatLiveTracker.headline(ChatLive()) == "Yumi réfléchit")
+        #expect(ChatLiveTracker.headline(ChatLive()) == "Je réfléchis")
     }
 
     @Test func theTextGrowsWordByWord() {
         let live = tracker([.started(sessionID: "s"), .messageStarted, .textDelta("Bon"), .textDelta("jour"), .textDelta(" toi")]).live
         #expect(live.text == "Bonjour toi")
         #expect(live.activity == nil)
-        #expect(ChatLiveTracker.headline(live) == "Yumi répond")
+        #expect(ChatLiveTracker.headline(live) == "Je réponds")
     }
 
     @Test func aNewMessageReplacesTheTextAndTheFullBlockIsAuthoritative() {
@@ -61,24 +61,24 @@ import Foundation
 
     @Test func anActionShowsAsSoonAsItIsNamedThenWithItsDetails() {
         var tracker = tracker([.toolAnnounced(id: "w", name: "Write")])
-        #expect(tracker.live.activity == ChatActivity(id: "w", kind: .writing, label: "Écrit un fichier", detail: nil))
+        #expect(tracker.live.activity == ChatActivity(id: "w", kind: .writing, label: "J'écris un fichier", detail: nil))
 
         tracker.apply(.toolStarted(write))
-        #expect(tracker.live.activity == ChatActivity(id: "w", kind: .writing, label: "Écrit bonjour.txt", detail: "salut\ntoi"))
+        #expect(tracker.live.activity == ChatActivity(id: "w", kind: .writing, label: "J'écris bonjour.txt", detail: "salut\ntoi"))
         #expect(tracker.live.done.isEmpty)
-        #expect(ChatLiveTracker.headline(tracker.live) == "Écrit bonjour.txt")
+        #expect(ChatLiveTracker.headline(tracker.live) == "J'écris bonjour.txt")
     }
 
     @Test func aFinishedActionMovesToDone() {
         let live = tracker([.toolStarted(write), .toolFinished(id: "w", failed: false, output: "File created successfully")]).live
         #expect(live.activity == nil)
-        #expect(live.done == [ChatActivity(id: "w", kind: .writing, label: "Écrit bonjour.txt", detail: "salut\ntoi", succeeded: true)])
+        #expect(live.done == [ChatActivity(id: "w", kind: .writing, label: "J'écris bonjour.txt", detail: "salut\ntoi", succeeded: true)])
     }
 
     @Test func aCommandKeepsItsLastLines() {
         let output = (1...9).map { "ligne \($0)" }.joined(separator: "\n") + "\n\n"
         let live = tracker([.toolStarted(bash), .toolFinished(id: "b", failed: false, output: output)]).live
-        #expect(live.done.first?.label == "Lance swift test")
+        #expect(live.done.first?.label == "Je lance swift test")
         #expect(live.done.first?.kind == .running)
         #expect(live.done.first?.detail == "ligne 6\nligne 7\nligne 8\nligne 9")
         #expect(live.done.first?.succeeded == true)
@@ -92,14 +92,14 @@ import Foundation
 
     @Test func waitingForAPermissionThenAllowed() {
         var tracker = tracker([.toolStarted(bash), .permissionRequested(request(for: bash))])
-        #expect(tracker.live.activity == ChatActivity(id: "b", kind: .waiting, label: "Attend ton accord", detail: "swift test"))
+        #expect(tracker.live.activity == ChatActivity(id: "b", kind: .waiting, label: "J'attends ton accord", detail: "swift test"))
 
         tracker.permissionAnswered(toolUseID: "b", allowed: true)
         #expect(tracker.live.activity?.kind == .running)
-        #expect(tracker.live.activity?.label == "Lance swift test")
+        #expect(tracker.live.activity?.label == "Je lance swift test")
 
         tracker.apply(.toolFinished(id: "b", failed: false, output: "ok"))
-        #expect(tracker.live.done == [ChatActivity(id: "b", kind: .running, label: "Lance swift test", detail: "ok", succeeded: true)])
+        #expect(tracker.live.done == [ChatActivity(id: "b", kind: .running, label: "Je lance swift test", detail: "ok", succeeded: true)])
     }
 
     @Test func aRefusedActionEndsAsNotSucceeded() {
@@ -108,7 +108,7 @@ import Foundation
         #expect(tracker.live.activity?.kind == .waiting)
         tracker.apply(.toolFinished(id: "w", failed: true, output: "L'utilisateur a refusé"))
         #expect(tracker.live.activity == nil)
-        #expect(tracker.live.done == [ChatActivity(id: "w", kind: .writing, label: "Écrit bonjour.txt", detail: "salut\ntoi", succeeded: false)])
+        #expect(tracker.live.done == [ChatActivity(id: "w", kind: .writing, label: "J'écris bonjour.txt", detail: "salut\ntoi", succeeded: false)])
     }
 
     @Test func aRefusedCommandShowsNoOutput() {
@@ -121,14 +121,14 @@ import Foundation
 
     @Test func severalActionsAtOnceShowTheOldestAndFinishInAnyOrder() {
         var tracker = tracker([.toolStarted(ChatToolUse(id: "1", name: "Read", detail: "/a/Budget.pdf")), .toolStarted(bash)])
-        #expect(tracker.live.activity?.label == "Lit Budget.pdf")
+        #expect(tracker.live.activity?.label == "Je lis Budget.pdf")
         // The one that waits for the user is shown first, whatever its place.
         tracker.apply(.permissionRequested(request(for: bash)))
         #expect(tracker.live.activity?.kind == .waiting)
         tracker.permissionAnswered(toolUseID: "b", allowed: true)
-        #expect(tracker.live.activity?.label == "Lit Budget.pdf")
+        #expect(tracker.live.activity?.label == "Je lis Budget.pdf")
         tracker.apply(.toolFinished(id: "b", failed: false, output: ""))
-        #expect(tracker.live.activity?.label == "Lit Budget.pdf")
+        #expect(tracker.live.activity?.label == "Je lis Budget.pdf")
         tracker.apply(.toolFinished(id: "1", failed: false, output: "contenu"))
         #expect(tracker.live.activity == nil)
         #expect(tracker.live.done.map(\.id) == ["b", "1"])
@@ -145,19 +145,19 @@ import Foundation
         func activity(_ name: String, _ detail: String) -> ChatActivity {
             ChatLiveTracker.activity(for: ChatToolUse(id: "t", name: name, detail: detail))
         }
-        #expect(activity("Read", "/a/Budget.pdf").label == "Lit Budget.pdf")
+        #expect(activity("Read", "/a/Budget.pdf").label == "Je lis Budget.pdf")
         #expect(activity("Read", "/a/Budget.pdf").kind == .reading)
-        #expect(activity("Edit", "/a/main.swift").label == "Modifie main.swift")
+        #expect(activity("Edit", "/a/main.swift").label == "Je modifie main.swift")
         #expect(activity("Edit", "/a/main.swift").kind == .editing)
-        #expect(activity("Grep", "TODO").label == "Cherche TODO")
+        #expect(activity("Grep", "TODO").label == "Je cherche TODO")
         #expect(activity("Grep", "TODO").kind == .searching)
-        #expect(activity("WebSearch", "météo Paris").label == "Cherche sur le web : météo Paris")
-        #expect(activity("WebFetch", "https://open-meteo.com/en/docs").label == "Lit open-meteo.com")
+        #expect(activity("WebSearch", "météo Paris").label == "Je cherche sur le web : météo Paris")
+        #expect(activity("WebFetch", "https://open-meteo.com/en/docs").label == "Je lis open-meteo.com")
         #expect(activity("TodoWrite", "").kind == .thinking)
-        #expect(activity("mcp__mail__send", "").label == "Utilise mcp__mail__send")
-        #expect(activity("Bash", "").label == "Lance une commande")
+        #expect(activity("mcp__mail__send", "").label == "J'utilise mcp__mail__send")
+        #expect(activity("Bash", "").label == "Je lance une commande")
         let long = activity("Bash", String(repeating: "x", count: 100) + "\nsecond")
-        #expect(long.label.count == "Lance ".count + 40)
+        #expect(long.label.count == "Je lance ".count + 40)
         #expect(!long.label.contains("\n"))
     }
 

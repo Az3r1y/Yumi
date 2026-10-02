@@ -152,7 +152,7 @@ enum MusicSummary {
 
     private static func plainSnapshot(_ playing: NowPlaying?, canControl: Bool, pausedFor: TimeInterval?) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "music", name: "Musique", colorHex: "#F58AD9", status: "silence",
-                                      title: "Rien en lecture", subtitle: "Lance Musique ou Spotify",
+                                      title: "Pas de musique.", subtitle: "Lance un morceau, j'écoute avec toi.",
                                       primaryAction: "Ouvrir Musique", secondaryAction: nil)
         guard let playing else { return snapshot }
 

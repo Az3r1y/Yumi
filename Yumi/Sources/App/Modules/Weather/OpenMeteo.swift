@@ -126,13 +126,13 @@ enum WeatherSummary {
 
     /// One piece of advice for the rest of the day.
     static func advice(_ report: WeatherReport, now: Date, calendar: Calendar = .current) -> String {
-        if isRain(report.code) { return "Il pleut, prends un parapluie" }
-        if isSnow(report.code) { return "Il neige, couvre-toi bien" }
+        if isRain(report.code) { return "Il pleut. Prends un parapluie." }
+        if isSnow(report.code) { return "Il neige. Couvre-toi." }
         let later = report.hours.first {
             $0.time > now && calendar.isDate($0.time, inSameDayAs: now) && $0.rainChance >= likely
         }
-        guard let later else { return "Pas de pluie prévue aujourd'hui" }
-        return "Pluie vers \(FrenchText.spokenHour(later.time, calendar: calendar)), prends une veste"
+        guard let later else { return "Pas de pluie en vue aujourd'hui." }
+        return "Pluie vers \(FrenchText.spokenHour(later.time, calendar: calendar)). Prends une veste."
     }
 
     static func snapshot(_ state: WeatherState, now: Date, calendar: Calendar = .current) -> ModuleSnapshot {
@@ -141,30 +141,30 @@ enum WeatherSummary {
 
     private static func plainSnapshot(_ state: WeatherState, now: Date, calendar: Calendar) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "weather", name: "Météo", colorHex: "#7FD0FF", status: "…",
-                                      title: "Je regarde le ciel", subtitle: "Un instant",
+                                      title: "Je regarde le ciel.", subtitle: "Un instant.",
                                       primaryAction: "Détail", secondaryAction: nil)
         switch state {
         case .loading:
             break
         case .needsLocation(let permission):
             snapshot.status = "où ?"
-            snapshot.title = "Météo sans adresse"
+            snapshot.title = "Je ne sais pas où tu es."
             if permission == .denied {
-                snapshot.subtitle = "La position est refusée dans Réglages Système"
+                snapshot.subtitle = "Ta position m'est fermée. Ça se rouvre dans Réglages Système."
                 snapshot.primaryAction = "Ouvrir les réglages"
             } else {
-                snapshot.subtitle = "Autorise la position pour la météo d'ici"
+                snapshot.subtitle = "Dis-le-moi, je te donne le ciel d'ici."
                 snapshot.primaryAction = "Autoriser"
             }
         case .unavailable:
             snapshot.status = "hors ligne"
-            snapshot.title = "Météo indisponible"
-            snapshot.subtitle = "Je réessaie dans un moment"
+            snapshot.title = "Je n'arrive pas à voir le ciel."
+            snapshot.subtitle = "Je réessaie dans un moment."
             snapshot.primaryAction = "Réessayer"
         case .ready(let report):
             let degrees = "\(Int(report.temperature.rounded()))°"
             snapshot.status = degrees
-            snapshot.title = "\(degrees) et \(sky(report.code))"
+            snapshot.title = "\(degrees) et \(sky(report.code))."
             snapshot.subtitle = advice(report, now: now, calendar: calendar)
         }
         return snapshot

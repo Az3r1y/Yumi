@@ -277,16 +277,16 @@ import Foundation
         func line(_ name: String, _ detail: String, _ outcome: ChatToolOutcome = .done) -> String? {
             ChatPhrases.action(ChatToolUse(id: "t", name: name, detail: detail), outcome: outcome)
         }
-        #expect(line("Write", "/Users/moi/Documents/Yumi/notes.txt") == "Fichier créé : notes.txt")
-        #expect(line("Edit", "/a/b/main.swift") == "Fichier modifié : main.swift")
-        #expect(line("Bash", "swift build") == "Commande lancée : swift build")
-        #expect(line("WebSearch", "météo Paris") == "Recherche web : météo Paris")
-        #expect(line("WebFetch", "https://open-meteo.com/en/docs") == "Page lue : open-meteo.com")
-        #expect(line("Bash", "swift build", .failed) == "Commande en échec : swift build")
-        #expect(line("Bash", "rm -rf build", .refused) == "Commande refusée : rm -rf build")
-        #expect(line("Write", "/a/notes.txt", .refused) == "Écriture refusée : notes.txt")
-        #expect(line("Write", "/a/notes.txt", .failed) == "Fichier non écrit : notes.txt")
-        #expect(line("mcp__x__send", "", .refused) == "Action refusée : mcp__x__send")
+        #expect(line("Write", "/Users/moi/Documents/Yumi/notes.txt") == "J'ai créé notes.txt.")
+        #expect(line("Edit", "/a/b/main.swift") == "J'ai modifié main.swift.")
+        #expect(line("Bash", "swift build") == "J'ai lancé : swift build")
+        #expect(line("WebSearch", "météo Paris") == "J'ai cherché sur le web : météo Paris")
+        #expect(line("WebFetch", "https://open-meteo.com/en/docs") == "J'ai lu open-meteo.com.")
+        #expect(line("Bash", "swift build", .failed) == "Ça a échoué : swift build")
+        #expect(line("Bash", "rm -rf build", .refused) == "Tu as dit non : rm -rf build")
+        #expect(line("Write", "/a/notes.txt", .refused) == "Tu as dit non pour notes.txt.")
+        #expect(line("Write", "/a/notes.txt", .failed) == "Je n'ai pas pu écrire notes.txt.")
+        #expect(line("mcp__x__send", "", .refused) == "Tu as dit non : mcp__x__send")
     }
 
     @Test func lookingIsNotAnAction() {
@@ -301,7 +301,7 @@ import Foundation
         let line = ChatPhrases.action(ChatToolUse(id: "t", name: "Bash", detail: long), outcome: .done)!
         #expect(!line.contains("\n"))
         #expect(line.hasSuffix("…"))
-        #expect(line.count == "Commande lancée : ".count + 60)
+        #expect(line.count == "J'ai lancé : ".count + 60)
     }
 
     @Test func failures() {
@@ -309,7 +309,7 @@ import Foundation
         #expect(ChatPhrases.failure(ChatTurnResult(text: "Invalid API key · Please run /login", isError: true, sessionID: nil, errors: []))
                 == ChatPhrases.notLoggedIn)
         #expect(ChatPhrases.failure(ChatTurnResult(text: "API Error: 529 overloaded", isError: true, sessionID: nil, errors: []))
-                == "Claude Code a rencontré une erreur : API Error: 529 overloaded")
+                == "Ça a planté : API Error: 529 overloaded")
         #expect(ChatPhrases.notInstalled.contains("claude.ai/install.sh"))
         #expect(!ChatPhrases.notInstalled.contains("\n"))
     }

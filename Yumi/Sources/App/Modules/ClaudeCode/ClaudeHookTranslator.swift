@@ -28,7 +28,7 @@ enum ClaudeHookTranslator {
             specific = [.toolFinished(id, tool(from: payload))]
 
         case "PostToolUseFailure":
-            specific = [.toolFinished(id, tool(from: payload)), .activityNoted(id, "⚠ failed")]
+            specific = [.toolFinished(id, tool(from: payload)), .activityNoted(id, "Échec")]
 
         case "PermissionRequest":
             let tool = payload["tool_name"] as? String ?? "Tool"
@@ -55,10 +55,10 @@ enum ClaudeHookTranslator {
             specific = [.sessionErrored(id, YumiError(message: payload["message"] as? String ?? ""))]
 
         case "SubagentStart":
-            specific = [.activityNoted(id, "+ subagent")]
+            specific = [.activityNoted(id, "Un sous-agent démarre")]
 
         case "SubagentStop":
-            specific = [.activityNoted(id, "• subagent done")]
+            specific = [.activityNoted(id, "Un sous-agent a fini")]
 
         default:
             return []

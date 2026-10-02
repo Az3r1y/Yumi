@@ -152,12 +152,10 @@ final class ClaudeService {
         #endif
     }
 
-    private let systemPrompt = """
-    You are \(AppIdentity.characterName), a personal AI assistant living in the notch of the user's Mac. \
-    You have web search access and can help with absolutely anything: research, coding, finding places, recommendations, tasks, questions. \
-    Respond in the user's language. Be thorough and complete: use as much detail as the task requires. \
-    No markdown formatting (no **, no ##, no bullet dashes). Use plain text with line breaks.
-    """
+    /// The API path speaks with the same voice, without a folder to work in.
+    private var systemPrompt: String {
+        ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: "aucun (tu ne peux pas agir sur le Mac ici, seulement chercher sur le web)")
+    }
 
     private let webSearchTools: [[String: Any]] = [
         ["type": "web_search_20250305", "name": "web_search", "max_uses": 5]
@@ -190,7 +188,7 @@ final class ClaudeService {
         do {
             try FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
         } catch {
-            await showError("Je n'arrive pas à créer le dossier \(folder).", state: state)
+            await showError(ChatPhrases.noFolder, state: state)
             return
         }
         // A session belongs to the folder it was started in: another folder is another conversation.
@@ -442,7 +440,7 @@ final class ClaudeService {
 
     private func chatWithAPI(query: String, context: PromptContext?, state: AppState) async {
         guard let key = apiKey, !key.isEmpty else {
-            await showError("API key missing. Open settings.", state: state)
+            await showError(ChatPhrases.noKey, state: state)
             return
         }
 
@@ -480,7 +478,7 @@ final class ClaudeService {
             await handleChatResult(data, state: state)
         } catch {
             conversationMessages.removeLast()
-            await showError("Network error: \(error.localizedDescription)", state: state)
+            await showError(ChatPhrases.network, state: state)
         }
     }
 
@@ -488,7 +486,7 @@ final class ClaudeService {
 
     func search(query: String, context: PromptContext?, state: AppState) async {
         guard let key = apiKey, !key.isEmpty else {
-            await showError("Anthropic API key missing. Open settings to configure it.", state: state)
+            await showError(ChatPhrases.noKey, state: state)
             return
         }
 
@@ -531,7 +529,7 @@ final class ClaudeService {
             let result = try await callAPI(body: body, key: key, beta: "web-search-2025-03-05")
             await handleResult(result, state: state)
         } catch {
-            await showError("Network error: \(error.localizedDescription)", state: state)
+            await showError(ChatPhrases.network, state: state)
         }
     }
 
@@ -561,7 +559,7 @@ final class ClaudeService {
     private func handleChatResult(_ data: Data, state: AppState) async {
         guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let content = json["content"] as? [[String: Any]] else {
-            await showError("Unexpected API response.", state: state)
+            await showError(ChatPhrases.unreadable, state: state)
             return
         }
 
@@ -570,7 +568,7 @@ final class ClaudeService {
 
         guard let textBlock = content.first(where: { $0["type"] as? String == "text" }),
               let text = textBlock["text"] as? String, !text.isEmpty else {
-            await showError("No response text.", state: state)
+            await showError(ChatPhrases.noAnswer, state: state)
             return
         }
 
@@ -578,7 +576,7 @@ final class ClaudeService {
         let (visible, learnt) = MemoryNotes.extract(from: text)
         if !learnt.isEmpty { memory?.change { MemoryNotes.apply(learnt, to: &$0) } }
         guard !visible.isEmpty else {
-            await showError("No response text.", state: state)
+            await showError(ChatPhrases.noAnswer, state: state)
             return
         }
 
@@ -598,7 +596,7 @@ final class ClaudeService {
               let content = json["content"] as? [[String: Any]],
               let textBlock = content.first(where: { $0["type"] as? String == "text" }),
               let text = textBlock["text"] as? String else {
-            await showError("Unexpected API response.", state: state)
+            await showError(ChatPhrases.unreadable, state: state)
             return
         }
 

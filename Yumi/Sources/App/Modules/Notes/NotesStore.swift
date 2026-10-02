@@ -92,16 +92,16 @@ enum NotesSummary {
         let total = notes.count + due.count
         var snapshot = ModuleSnapshot(id: "notes", name: "Notes", colorHex: "#F2C744",
                                       status: total == 0 ? "vide" : "\(total)",
-                                      title: "Rien à retenir",
-                                      subtitle: "Copie un texte, puis clique sur Nouvelle note",
+                                      title: "Rien à garder pour l'instant.",
+                                      subtitle: "Copie un texte, je le garde en note.",
                                       primaryAction: "Nouvelle note",
                                       secondaryAction: remindersAccess == .notDetermined ? "Activer les rappels" : "Tout voir")
 
         if let reminder = due.first {
             snapshot.title = "Rappel : \(reminder.title)"
             snapshot.subtitle = when(reminder, now: now, calendar: calendar)
-            if due.count == 2 { snapshot.subtitle += ", et 1 autre" }
-            if due.count > 2 { snapshot.subtitle += ", et \(due.count - 1) autres" }
+            if due.count == 2 { snapshot.subtitle += " Un autre attend." }
+            if due.count > 2 { snapshot.subtitle += " \(FrenchText.sentenceStart(FrenchText.spelled(due.count - 1))) autres attendent." }
             snapshot.primaryAction = "Terminé"
             snapshot.secondaryAction = "Tout voir"
             snapshot.needsAttention = isLate(reminder, now: now, calendar: calendar)
@@ -111,7 +111,7 @@ enum NotesSummary {
                                            controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "checkmark", label: "Terminé")])
             }
         } else if let note = notes.last {
-            snapshot.title = "Dernière note"
+            snapshot.title = "Ta dernière note"
             snapshot.subtitle = note
         }
         return snapshot
@@ -123,10 +123,10 @@ enum NotesSummary {
     }
 
     private static func when(_ reminder: ReminderItem, now: Date, calendar: Calendar) -> String {
-        guard let due = reminder.due else { return "Sans date" }
-        if due < calendar.startOfDay(for: now) { return "En retard" }
-        guard reminder.hasTime else { return "Aujourd'hui" }
-        return due <= now ? "En retard depuis \(FrenchText.clock(due, calendar: calendar))"
-                          : "Aujourd'hui à \(FrenchText.clock(due, calendar: calendar))"
+        guard let due = reminder.due else { return "Sans date." }
+        if due < calendar.startOfDay(for: now) { return "C'était prévu avant aujourd'hui." }
+        guard reminder.hasTime else { return "C'est pour aujourd'hui." }
+        return due <= now ? "C'était pour \(FrenchText.clock(due, calendar: calendar))."
+                          : "C'est pour \(FrenchText.clock(due, calendar: calendar))."
     }
 }

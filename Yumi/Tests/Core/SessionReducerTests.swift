@@ -180,7 +180,7 @@ import Foundation
 
     @Test func aNoteChangesNoState() {
         let before = started()
-        var after = SessionReducer.apply(.activityNoted(id, "+ subagent"), to: before)
+        var after = SessionReducer.apply(.activityNoted(id, "Un sous-agent démarre"), to: before)
         after[id]?.recency = before[id]?.recency ?? 0
         #expect(after == before)
     }

@@ -25,7 +25,7 @@ import Foundation
             .toolStarted(write), .toolFinished(id: "w", failed: false, output: "ok"),
             .text("C'est fait."),
         ], result: "C'est fait.")
-        #expect(lines == ["Je crée le fichier.", "Fichier créé : bonjour.txt", "C'est fait."])
+        #expect(lines == ["Je crée le fichier.", "J'ai créé bonjour.txt.", "C'est fait."])
     }
 
     @Test func severalStepsKeepEverythingInOrder() {
@@ -36,15 +36,15 @@ import Foundation
             .toolStarted(bash), .toolFinished(id: "b", failed: true, output: "Exit code 1"),
             .text("Les tests échouent."),
         ], result: "Les tests échouent.")
-        #expect(lines == ["D'abord le fichier.", "Fichier créé : bonjour.txt", "Maintenant les tests.",
-                          "Commande en échec : swift test", "Les tests échouent."])
+        #expect(lines == ["D'abord le fichier.", "J'ai créé bonjour.txt.", "Maintenant les tests.",
+                          "Ça a échoué : swift test", "Les tests échouent."])
     }
 
     @Test func theTextGoesInAsSoonAsTheActionStarts() {
         var transcript = ChatTranscript()
         #expect(transcript.apply(.text("Je crée le fichier.")).isEmpty)
         #expect(transcript.apply(.toolStarted(write)) == ["Je crée le fichier."])
-        #expect(transcript.apply(.toolFinished(id: "w", failed: false, output: "")) == ["Fichier créé : bonjour.txt"])
+        #expect(transcript.apply(.toolFinished(id: "w", failed: false, output: "")) == ["J'ai créé bonjour.txt."])
     }
 
     @Test func twoBlocksOfTextInARowAreBothKept() {
@@ -55,18 +55,18 @@ import Foundation
         // The result repeats the last message, sometimes with what came just before it.
         #expect(history([.text("Voilà.")], result: "Voilà.") == ["Voilà."])
         #expect(history([.toolStarted(bash), .toolFinished(id: "b", failed: false, output: "")], result: "")
-                == ["Commande lancée : swift test"])
+                == ["J'ai lancé : swift test"])
     }
 
     @Test func aResultThatSaysMoreIsAdded() {
         #expect(history([.toolStarted(write), .toolFinished(id: "w", failed: false, output: "")], result: "Fichier prêt.")
-                == ["Fichier créé : bonjour.txt", "Fichier prêt."])
+                == ["J'ai créé bonjour.txt.", "Fichier prêt."])
     }
 
     @Test func aRefusedActionSaysSo() {
         let lines = history([.text("Je lance les tests."), .toolStarted(bash), .toolFinished(id: "b", failed: true, output: "refusé"),
                              .text("D'accord, j'arrête.")], refused: ["b"], result: "D'accord, j'arrête.")
-        #expect(lines == ["Je lance les tests.", "Commande refusée : swift test", "D'accord, j'arrête."])
+        #expect(lines == ["Je lance les tests.", "Tu as dit non : swift test", "D'accord, j'arrête."])
     }
 
     @Test func lookingLeavesNoLineButKeepsTheTextAround() {

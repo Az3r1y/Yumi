@@ -63,21 +63,21 @@ import Foundation
         let snapshot = WeatherSummary.snapshot(state, now: date(1, 14), calendar: calendar)
         #expect(snapshot.id == "weather")
         #expect(snapshot.status == "19°")
-        #expect(snapshot.title == "19° et des éclaircies")
-        #expect(snapshot.subtitle == "Pluie vers 18 h, prends une veste")
+        #expect(snapshot.title == "19° et des éclaircies.")
+        #expect(snapshot.subtitle == "Pluie vers 18 h. Prends une veste.")
         #expect(snapshot.primaryAction == "Détail")
         #expect(snapshot.secondaryAction == nil)
     }
 
     @Test func tomorrowsRainIsNotTodaysProblem() {
         let advice = WeatherSummary.advice(report(12, 3, rain: [(1, 20, 10), (2, 8, 95)]), now: date(1, 14), calendar: calendar)
-        #expect(advice == "Pas de pluie prévue aujourd'hui")
+        #expect(advice == "Pas de pluie en vue aujourd'hui.")
     }
 
     @Test func rainAndSnowRightNow() {
-        #expect(WeatherSummary.advice(report(11, 63), now: date(1, 14), calendar: calendar) == "Il pleut, prends un parapluie")
-        #expect(WeatherSummary.advice(report(-1, 73), now: date(1, 14), calendar: calendar) == "Il neige, couvre-toi bien")
-        #expect(WeatherSummary.snapshot(.ready(report(-0.4, 73)), now: date(1, 14), calendar: calendar).title == "0° et de la neige")
+        #expect(WeatherSummary.advice(report(11, 63), now: date(1, 14), calendar: calendar) == "Il pleut. Prends un parapluie.")
+        #expect(WeatherSummary.advice(report(-1, 73), now: date(1, 14), calendar: calendar) == "Il neige. Couvre-toi.")
+        #expect(WeatherSummary.snapshot(.ready(report(-0.4, 73)), now: date(1, 14), calendar: calendar).title == "0° et de la neige.")
     }
 
     @Test func everyCodeHasWords() {
