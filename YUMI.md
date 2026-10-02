@@ -319,3 +319,9 @@ Reste à faire côté île : afficher l'état `working` dans la vue du chat (ell
 | Scènes | `yumiScene` à chaque événement nouveau, une par type, avec `count` quand plusieurs arrivent ensemble. Le premier regard sert de référence : l'historique n'est jamais rejoué. Ce qui a été vu est gardé entre deux lancements. |
 | Snapshot | `status` : « étoiles · forks · pull requests ouvertes » du dépôt le plus actif. `subtitle` : le dépôt. `title` : le dernier événement en une phrase. « Ouvrir » ouvre le dépôt. Une pull request qui attend une relecture passe devant : `needsAttention`, bouton « Relire », `live` en priorité attention. |
 | Parole | Étoile, fork, fusion et release passent par le moteur d'initiative (`Occasion.repository`), avec tous ses garde-fous. Un mot au plus par lot d'événements. |
+
+## Cœur : mode tournage
+
+`YUMI_STUDIO=1` au lancement, dans tous les builds (Release compris). Rien de réel ne démarre : ni serveur de hooks, ni modules, ni mémoire, ni initiative, ni chat, ni pollers. Le trousseau n'est ni lu ni écrit, le dossier de Yumi non plus, et aucune permission ne peut être demandée par le cœur. `AppState` reste entièrement à la main de l'île, qui sait qu'on tourne par `AppState.isStudio` (ou `StudioMode.isOn`). `ClaudeService.chat` ne fait rien dans ce mode : à l'île de mettre en scène `chatHistory` et `chatLive`.
+
+Reste côté île : le dépôt d'un fichier copie encore dans le dossier `inbox` de Yumi (`FileDropView`).

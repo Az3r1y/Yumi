@@ -28,6 +28,9 @@ extension AgentTask {
 final class AppState: ObservableObject {
     static let shared = AppState()
 
+    /// True while filming (`YUMI_STUDIO=1`): nothing real runs and the island owns everything here.
+    static let isStudio = StudioMode.isOn
+
     // Island state
     @Published var mode: IslandMode = .hidden
     @Published var view: IslandView = .overview
@@ -329,6 +332,8 @@ enum IntegrationPollers {
     /// Starts the pollers of the selected integrations and stops the others.
     /// Starting a running poller, or stopping a stopped one, does nothing.
     static func sync(active: Set<String>) {
+        // Nothing real is asked while filming.
+        guard LaunchPlan.current.integrationPollers else { return }
         for poller in all {
             if active.contains(poller.id) { poller.start() } else { poller.stop() }
         }

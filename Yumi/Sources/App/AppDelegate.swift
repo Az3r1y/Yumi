@@ -11,7 +11,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Ignore SIGPIPE — prevents crash when the hook script closes socket before we write response
         signal(SIGPIPE, SIG_IGN)
-        // Warm up Keychain cache on main thread BEFORE any poller or view touches it
+        // Warm up Keychain cache on main thread BEFORE any poller or view touches it.
+        // While filming (YUMI_STUDIO) the store stays empty and never touches the Keychain.
         _ = KeychainStore.shared
         NSApp.setActivationPolicy(.accessory)
         setupMenuBarItem()
@@ -107,12 +108,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         islandController = IslandWindowController()
         islandController?.showWindow(nil)
         islandController?.fsm.launch()
-        let core = YumiCore(state: .shared)
-        core.start()
-        self.core = core
+        // Filming mode starts nothing real: no hooks, modules, memory, initiative or chat.
+        // AppState is then left entirely to the island.
+        let plan = LaunchPlan.current
+        if plan.hookServer || plan.modules || plan.memory || plan.initiative {
+            let core = YumiCore(state: .shared)
+            core.start()
+            self.core = core
+        }
         IntegrationPollers.sync(active: AppState.shared.activeIntegrations)
         #if DEBUG
-        sendDevelopmentChatPrompts()
+        if plan.chat { sendDevelopmentChatPrompts() }
         #endif
         NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
                                                name: .openFullSettings, object: nil)
