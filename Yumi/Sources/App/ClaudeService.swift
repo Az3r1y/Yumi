@@ -131,11 +131,19 @@ final class ClaudeService {
     /// Folders outside the chat folder that Claude Code may read: where attached files are.
     private var readableFolders: [String] = []
     private var turn: ClaudeCodeTurn?
+    /// Messages answered in the current conversation.
+    private var answeredTurns = 0
     #endif
 
-    func clearConversation() {
+    /// Ends the conversation. Unless `remember` is false (the app is closing), a conversation of
+    /// some length leaves a short summary in the thread of the memory.
+    func clearConversation(remember: Bool = true) {
         conversationMessages = []
         #if !APPSTORE
+        if remember, answeredTurns >= 2, turn == nil, let session, let binary = ClaudeCLI.locate() {
+            summarize(session: session.id, folder: session.folder, binary: binary)
+        }
+        answeredTurns = 0
         turn?.cancel()
         turn = nil
         session = nil
@@ -210,6 +218,42 @@ final class ClaudeService {
         if outcome == .answered { sentContext = attached }
     }
 
+    /// Asks the conversation that just ended for a few lines about itself, and keeps them in the
+    /// thread. It runs on its own after the conversation was cleared; the plain non-interactive
+    /// mode refuses every tool that needs a permission, so nothing can be done behind the person's back.
+    private func summarize(session: String, folder: String, binary: String) {
+        var arguments = ["-p", MemoryNotes.summaryRequest, "--resume", session, "--output-format", "json", "--permission-mode", "default"]
+        #if DEBUG
+        arguments += (ProcessInfo.processInfo.environment["YUMI_CHAT_ARGS"] ?? "").split(separator: " ").map(String.init)
+        #endif
+        let environment = ClaudeCLI.environment(from: ProcessInfo.processInfo.environment, binary: binary)
+        Task.detached(priority: .utility) { [weak self] in
+            let process = Process()
+            let output = Pipe()
+            process.executableURL = URL(fileURLWithPath: binary)
+            process.arguments = arguments
+            process.environment = environment
+            process.currentDirectoryURL = URL(fileURLWithPath: folder)
+            process.standardInput = FileHandle.nullDevice
+            process.standardOutput = output
+            process.standardError = FileHandle.nullDevice
+            guard (try? process.run()) != nil else { return }
+            // A summary that takes too long is not worth waiting for.
+            let limit = DispatchWorkItem { if process.isRunning { process.terminate() } }
+            DispatchQueue.global().asyncAfter(deadline: .now() + 60, execute: limit)
+            let data = output.fileHandleForReading.readDataToEndOfFile()
+            process.waitUntilExit()
+            limit.cancel()
+            guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                  object["is_error"] as? Bool != true, let text = object["result"] as? String else { return }
+            let changes = MemoryNotes.extract(from: text).changes
+            guard !changes.isEmpty else { return }
+            await MainActor.run {
+                self?.memory?.change { MemoryNotes.apply(changes, to: &$0, only: .thread) }
+            }
+        }
+    }
+
     private enum TurnOutcome { case answered, failed, cancelled, unknownSession }
 
     /// Sends one message to Claude Code and follows the answer until the turn ends.
@@ -272,10 +316,24 @@ final class ClaudeService {
             if self.turn === turn || self.turn == nil { state.chatLive = nil }
         }
 
+        var learnt: [MemoryChange] = []
         reading: for await line in lines {
             // A cancelled turn only waits for its process to end: what it still says changes nothing.
             if turn.isCancelled { continue }
-            for event in ClaudeStream.events(fromLine: line) {
+            for rawEvent in ClaudeStream.events(fromLine: line) {
+                // What the conversation decided to remember is taken out of what the person reads.
+                var event = rawEvent
+                if case .text(let text) = rawEvent {
+                    let (visible, changes) = MemoryNotes.extract(from: text)
+                    learnt += changes
+                    if visible.isEmpty { continue }
+                    event = .text(visible)
+                } else if case .finished(var turnResult) = rawEvent {
+                    let (visible, changes) = MemoryNotes.extract(from: turnResult.text)
+                    learnt += changes
+                    turnResult.text = visible
+                    event = .finished(turnResult)
+                }
                 tracker.apply(event)
                 // Text followed by an action goes to the history before the line of that action,
                 // so nothing written along the way is lost when the answer is complete.
@@ -357,6 +415,8 @@ final class ClaudeService {
             await showError(ChatPhrases.failure(result), state: state)
             return .failed
         }
+        if !learnt.isEmpty { memory?.change { MemoryNotes.apply(learnt, to: &$0) } }
+        answeredTurns += 1
         let last = transcript.finish(result)
         state.chatHistory.append(contentsOf: last.map { ChatMessage(role: .assistant, content: $0) })
         guard transcript.hasText || !last.isEmpty else {
@@ -411,7 +471,7 @@ final class ClaudeService {
             "model": model,
             "max_tokens": 4096,
             "tools": webSearchTools,
-            "system": systemPrompt + (memory.map { "\n\n" + MemoryPrompt.knowledge($0.book) } ?? ""),
+            "system": systemPrompt + (memory.map { "\n\n" + MemoryPrompt.knowledge($0.book) + "\n\n" + MemoryNotes.instructions } ?? ""),
             "messages": conversationMessages,
         ]
 
@@ -514,8 +574,16 @@ final class ClaudeService {
             return
         }
 
+        // What the conversation decided to remember is taken out of what the person reads.
+        let (visible, learnt) = MemoryNotes.extract(from: text)
+        if !learnt.isEmpty { memory?.change { MemoryNotes.apply(learnt, to: &$0) } }
+        guard !visible.isEmpty else {
+            await showError("No response text.", state: state)
+            return
+        }
+
         // Add to display history
-        state.chatHistory.append(ChatMessage(role: .assistant, content: text.trimmingCharacters(in: .whitespacesAndNewlines)))
+        state.chatHistory.append(ChatMessage(role: .assistant, content: visible))
 
         state.stateOverride = nil
         state.view = .prompt

@@ -17,7 +17,7 @@ enum ChatPhrases {
         Quand tu as fini, dis en une phrase ce que tu as fait.
         """
         guard let memory else { return persona }
-        return persona + "\n\n" + MemoryPrompt.knowledge(memory)
+        return persona + "\n\n" + MemoryPrompt.knowledge(memory) + "\n\n" + MemoryNotes.instructions
     }
 
     // MARK: Message

@@ -14,6 +14,8 @@ struct ChatLiveTracker: Sendable {
     /// What each action was before it started waiting for a permission.
     private var beforeWaiting: [String: ChatActivity] = [:]
     private var refused: Set<String> = []
+    /// Everything written in the current message, memory block included.
+    private var written = ""
 
     mutating func apply(_ event: ChatStreamEvent) {
         switch event {
@@ -21,13 +23,17 @@ struct ChatLiveTracker: Sendable {
             break
 
         case .messageStarted:
+            written = ""
             live.text = ""
 
         case .textDelta(let words):
-            live.text += words
+            written += words
+            // The memory block at the end of an answer is not for the person.
+            live.text = MemoryNotes.visible(whileWriting: written)
 
         case .text(let text):
-            live.text = text
+            written = text
+            live.text = MemoryNotes.visible(whileWriting: text)
 
         case .toolAnnounced(let id, let name):
             guard !running.contains(where: { $0.id == id }) else { break }
@@ -71,6 +77,7 @@ struct ChatLiveTracker: Sendable {
     /// The text written so far has gone to the history: the live text starts again from nothing,
     /// so the island does not show it twice.
     mutating func textCommitted() {
+        written = ""
         live.text = ""
     }
 
