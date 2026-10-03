@@ -99,7 +99,8 @@ final class CallLog: @unchecked Sendable {
     var calls: [String] { lock.withLock { entries } }
 }
 
-/// Answers permission requests as the test wrote, and remembers them.
+/// Answers permission requests as the test wrote, and remembers them. Steps that need no
+/// consent are allowed without using the script, like the real manager does for safe ones.
 final class ScriptedPermissionManager: PermissionManager, @unchecked Sendable {
     enum Answer {
         case decision(PermissionDecision)
@@ -109,23 +110,33 @@ final class ScriptedPermissionManager: PermissionManager, @unchecked Sendable {
     private let lock = NSLock()
     private var answers: [Answer]
     private var received: [AgentPermissionRequest] = []
+    private var finished: [UUID] = []
 
     init(_ answers: [Answer]) { self.answers = answers }
 
     var requests: [AgentPermissionRequest] { lock.withLock { received } }
+    var finishedRuns: [UUID] { lock.withLock { finished } }
 
-    func authorize(_ request: AgentPermissionRequest) async -> PermissionDecision {
-        let answer: Answer = lock.withLock {
-            received.append(request)
-            return answers.isEmpty ? .decision(.denied(reason: "unscripted")) : answers.removeFirst()
-        }
+    func evaluate(_ request: AgentPermissionRequest, upcoming: [AgentPermissionRequest]) async -> PermissionEvaluation {
+        guard request.requiresApproval else { return .allow }
+        lock.withLock { received.append(request) }
+        return .ask(ApprovalRequest(agentRunID: request.runID, toolID: request.toolID, toolName: request.toolName,
+                                    action: request.action?.kind, goal: request.goal, reason: request.reason,
+                                    riskLevel: RiskLevel(request.risk), resources: [], container: nil, reversible: true,
+                                    items: [], createdAt: Date(), expiresAt: Date().addingTimeInterval(60)))
+    }
+
+    func decision(on approval: ApprovalRequest) async -> PermissionDecision {
+        let answer: Answer = lock.withLock { answers.isEmpty ? .decision(.denied(reason: "unscripted")) : answers.removeFirst() }
         switch answer {
         case .decision(let decision): return decision
         case .hang:
             try? await Task.sleep(for: .seconds(600))
-            return .denied(reason: "cancelled")
+            return .cancelled
         }
     }
+
+    func finishRun(_ runID: UUID) async { lock.withLock { finished.append(runID) } }
 }
 
 /// A plan as a model would write it.

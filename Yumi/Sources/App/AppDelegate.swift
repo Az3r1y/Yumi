@@ -241,14 +241,21 @@ final class YumiCore {
     let context = ContextEngine(providers: [WorkspaceContextProvider(), WindowContextProvider()])
     private var contextConsumer: Task<Void, Never>?
     private var contextSwitch: AnyCancellable?
+    /// Decides, for every step of the agent, allow, ask or deny (Permissions/). Asks in the
+    /// island's approval queue; remembers in Yumi's folder; keeps its history there too.
+    let permissions = LocalPermissionManager(
+        store: FilePermissionStore(url: AppIdentity.supportDirectory.appendingPathComponent("permissions.json")),
+        audit: PermissionAuditLog(sink: FileAuditSink(url: AppIdentity.supportDirectory.appendingPathComponent("permissions-audit.jsonl"))))
+    private let approvalPresenter = IslandApprovalPresenter()
+    private var permissionConsumer: Task<Void, Never>?
     /// Turns a request into checked, observable work (AgentRuntime/). Does nothing until asked.
-    /// No model is connected yet, and nothing that needs approval runs until the Permission
-    /// System exists (`DenyingPermissionManager`).
-    let agent = RuntimeAgent(planner: LLMAgentPlanner(provider: UnavailableLLMProvider()))
+    /// No model is connected yet; every step goes through `permissions`.
+    let agent: RuntimeAgent
     private var agentConsumer: Task<Void, Never>?
 
     init(state: AppState) {
         ingress = EventIngress(engine: engine)
+        agent = RuntimeAgent(planner: LLMAgentPlanner(provider: UnavailableLLMProvider()), permissions: permissions)
         let mirror = ClaudeTaskMirror(state: state)
         self.mirror = mirror
         memory = MemoryStore { book in
@@ -386,6 +393,15 @@ final class YumiCore {
     /// listens yet: whether Yumi reacts to a run is for the island to decide later.
     private func startAgent(state: AppState) {
         state.agent = agent
+        state.permissions = permissions
+        permissions.presenter = approvalPresenter
+        let permissionEvents = permissions.events()
+        permissionConsumer = Task { [weak state] in
+            for await event in permissionEvents {
+                guard let state else { return }
+                ApprovalReaction.apply(event, to: state)
+            }
+        }
         #if DEBUG
         guard ProcessInfo.processInfo.environment["YUMI_TRACE_AGENT"] != nil else { return }
         let events = agent.events()

@@ -452,7 +452,9 @@ struct AlertActivity: View {
     @ObservedObject var model: IslandModel
 
     var body: some View {
-        if let approval = state.pendingApproval {
+        if let request = state.pendingApproval?.agentRequest {
+            AgentApprovalCard(request: request, model: model)
+        } else if let approval = state.pendingApproval {
             ActRow {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
                 ActTitle(text: approval.tool == "Bash" ? "Claude veut lancer ça. Je laisse passer ?" : "Claude veut utiliser \(approval.tool). Je laisse passer ?").riseIn(1)
@@ -476,6 +478,45 @@ struct AlertActivity: View {
                 RoundButton(style: .tint, symbol: "arrow.up.forward", label: "Voir", color: IslandTheme.amber) {
                     IslandActions.openAgent(state.focusTask)
                 }
+            }
+        }
+    }
+}
+
+/// Yumi itself asks, in one sentence: what will change and where. The planner's goal sits
+/// above it; the tool, the files, the scope, the risk, the reason and the consequences wait
+/// behind "Voir les détails". Red to refuse, green to allow once, "Pour cette session" in small
+/// text when the risk allows it.
+private struct AgentApprovalCard: View {
+    let request: ApprovalRequest
+    @ObservedObject var model: IslandModel
+    @State private var showsDetails = false
+
+    private var color: Color { request.riskLevel >= .high ? IslandTheme.red : IslandTheme.amber }
+
+    var body: some View {
+        ActRow {
+            ActMeta(color: color, text: request.intro ?? "Yumi").riseIn(0)
+            ActTitle(text: request.headline, lines: 2).riseIn(1)
+            if showsDetails {
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(request.details, id: \.self) { ActMono(text: $0) }
+                }
+            } else if let subject = request.subject {
+                ActMono(prompt: "$", text: subject, color: color).riseIn(2)
+            }
+            HStack(spacing: 14) {
+                TextButton(label: showsDetails ? "Masquer les détails" : "Voir les détails") { showsDetails.toggle() }
+                if request.offersSession {
+                    TextButton(label: "Pour cette session") { HookServer.shared.sendApprovalDecision("always") }
+                }
+            }.riseIn(3)
+        } trail: {
+            RoundButton(style: .fill, symbol: "xmark", label: "Refuser", color: IslandTheme.red) {
+                HookServer.shared.sendApprovalDecision("deny")
+            }
+            RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
+                HookServer.shared.sendApprovalDecision("allow")
             }
         }
     }

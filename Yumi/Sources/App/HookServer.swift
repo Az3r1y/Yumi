@@ -35,8 +35,10 @@ final class HookServer: @unchecked Sendable {
         let info: ApprovalInfo
         /// Set for a request of the chat: the decision goes to this closure instead of a hook socket.
         var respond: (@MainActor (String) -> Void)?
+        /// A request of Yumi's own agent runtime (Permissions/): its expiry belongs to the permission system.
+        var isAgent = false
 
-        var isChat: Bool { respond != nil }
+        var isChat: Bool { respond != nil && !isAgent }
     }
 
     private init() {}
@@ -184,6 +186,32 @@ final class HookServer: @unchecked Sendable {
         if approvals.count == 1 { showApproval(approvals[0]) }
     }
 
+    /// Queues an approval of Yumi's own agent runtime. It is shown like the others; the answer
+    /// ("allow", "always" for this session, "deny") goes to `respond`, and only from a click.
+    /// The permission system expires it and withdraws it itself (`withdrawAgentApproval`).
+    @MainActor
+    func presentAgentApproval(_ approval: ApprovalRequest, respond: @escaping @MainActor (String) -> Void) {
+        nbLog("Approval (agent) \(approval.toolID), \(approval.items.count) action(s), risk \(approval.riskLevel.rawValue)")
+        approvals.append(PendingApproval(
+            requestID: approval.id.uuidString, sessionID: SessionID("yumi-agent"),
+            info: ApprovalInfo(sessionId: "yumi-agent", tool: approval.toolName, command: approval.headline, agentRequest: approval),
+            respond: respond, isAgent: true))
+        if approvals.count == 1 { showApproval(approvals[0]) }
+    }
+
+    /// Takes an agent approval off screen without answering it (expired, cancelled).
+    @MainActor
+    func withdrawAgentApproval(id: UUID) {
+        guard let index = approvals.firstIndex(where: { $0.requestID == id.uuidString && $0.isAgent }) else { return }
+        let approval = approvals.remove(at: index)
+        guard index == 0 else { return }
+        if let next = approvals.first {
+            showApproval(next)
+        } else {
+            closeApprovalView(after: approval)
+        }
+    }
+
     /// Withdraws a chat request that no longer needs an answer (decided elsewhere, or its process ended).
     /// - Parameter backToChat: false when the conversation itself was dropped: the view is left as it is.
     @MainActor
@@ -202,7 +230,10 @@ final class HookServer: @unchecked Sendable {
     @MainActor
     private func showApproval(_ approval: PendingApproval) {
         let state = AppState.shared
-        if approval.isChat {
+        if approval.isAgent {
+            // Yumi itself asks: the character shows it. The time limit is the permission system's.
+            state.stateOverride = .approval
+        } else if approval.isChat {
             // The chat is not one of the sessions of the pill: the character itself shows the request.
             state.stateOverride = .approval
             // Claude Code waits for the chat without limit. The time to answer is counted from the
@@ -267,6 +298,12 @@ final class HookServer: @unchecked Sendable {
         let state = AppState.shared
         state.pendingApproval = nil
         state.isPinned = false
+        if approval?.isAgent == true {
+            // The agent's own events tell the character what comes next (AppDelegate).
+            if state.stateOverride == .approval { state.stateOverride = nil }
+            state.view = state.tasks.isEmpty ? .empty : .overview
+            return
+        }
         if approval?.isChat == true {
             // Back to the conversation the request interrupted. The chat sets the character's state.
             if state.stateOverride == .approval { state.stateOverride = backToChat ? .thinking : nil }

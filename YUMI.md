@@ -368,3 +368,23 @@ Le cerveau de Yumi, pas encore ses mains : une intention entre, un plan vérifi�
 | Nommage | `RuntimeAgent` et `RuntimeTask`, parce que `Agent` (Core/) désigne déjà un produit externe et `AgentTask` une carte de l'île. `AgentPermissionRequest` pour la même raison (`PermissionRequest` est la demande d'un hook Claude Code). |
 
 Reste à faire : brancher un vrai `LLMProvider` (et décider ce qui peut être envoyé à un modèle, le Context Engine promettant aujourd'hui que rien n'y part), le Permission System derrière `PermissionManager` (dans la file d'approbations de l'île), relier `AgentActivity` et les événements au personnage et à l'île, puis les outils qui écrivent, une fois le Permission System en place.
+
+## Cœur : le Permission System (branche `yumi/permissions`)
+
+La frontière entre le cerveau de Yumi et ses actions. `Permissions/` suit la règle de `Core/` (ni vue, ni `AppState`), compilé tel quel dans les tests.
+
+| Sujet | État |
+|---|---|
+| Porte unique | `AgentExecutor` passe **chaque** étape à `PermissionManager.evaluate` (allow, ask, deny), quel que soit son risque ; une étape sûre revient autorisée sans rien montrer. `finishRun` ferme toujours la course : demandes en attente annulées, accords « une fois » effacés. |
+| Action réelle | `Tool.action(for:)` décrit ce que fait un appel (lire, modifier, supprimer, envoyer…) et ce qu'il touche. Le risque vient de là, jamais du planificateur. |
+| Risques | `RiskLevel` safe, low, medium, high, critical. `RiskTable` configurable au-dessus de planchers fixes. Plusieurs fichiers modifiés d'un coup : high. Irréversible : high. Secrets et système (`~/.ssh`, `.env`, `/etc`…, sans casse), paiement, plus de 25 ressources : critical. Commandes : medium si connue et locale, high si chaînée ou inconnue, critical avec `sudo`, `security`, `mkfs`… |
+| Ordre de décision | règle qui refuse, critical (refus, ou question si une règle le dit), accord de cette course, high (toujours une question), règle ask/allow (allow plafonné à medium), permission donnée avant, puis défauts : safe passe, low passe pour un fichier choisi par la personne ou dans un projet déjà autorisé, sinon question. |
+| Portées | `oneTime`, `session` (projet ou ressources, jusqu'à la fin), `project` et `resource` (retenues), `tool` (projet ou compte, session). Jamais au-dessus de medium, jamais tout le Mac. Préfixes de chemins comparés par dossier entier, chemins résolus (`..`, liens). |
+| Regroupement | Les étapes suivantes de la même course avec même outil, action, risque et projet sont demandées ensemble : « Je dois modifier 5 fichiers dans le projet Yumi. » Chaque action reste dans l'historique. |
+| Approbation | `ApprovalRequest` (pending, approved, denied, expired, cancelled), expire après 60 s, ne se résout qu'une fois : une réponse tardive ou rejouée ne change rien. Montrée dans la file de l'île (`HookServer.presentAgentApproval`) : une phrase, « Voir les détails » (outil, fichiers, portée, risque, raison de l'agent étiquetée comme telle, conséquence), Refuser, Autoriser, « Pour cette session » si le risque le permet. |
+| Injection | Les permissions ne viennent que d'un clic (closure donnée au présentateur) ou des réglages. `AgentPermissionRequest` ne contient pas le contexte. Une règle trop large est refusée, et ignorée si écrite à la main dans le fichier. |
+| Stockage | `permissions.json` (règles et accords retenus) et `permissions-audit.jsonl` dans le dossier de Yumi, 0600. Aucun secret : ils restent dans le trousseau. Historique nettoyé : ni arguments, ni contenu, ni texte de l'agent, jetons masqués (`AuditRedactor`). |
+| Personnage | `PermissionEvent` décrit ; `ApprovalReaction` (app) fait regarder Yumi, puis `pop` et `working` à l'accord. |
+| Réglages | Section « Autorisations de Yumi » : accords à retirer, règles, historique effaçable. Distinct des autorisations macOS (`Modules/Permission.swift`). |
+
+Reste à faire : appeler `personChose(file:)` au dépôt d'un fichier dans l'île, une interface pour écrire des règles, les premiers outils qui écrivent (le plafond `AgentPolicy.maximumRisk` reste `read` d'ici là).

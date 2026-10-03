@@ -23,6 +23,8 @@ enum AgentError: Error, Equatable, Codable, Sendable {
     /// The tool answered, but not with what it promised (`ToolDescriptor.outputKeys`).
     case outputRejected(tool: String, reason: String)
     case permissionDenied(tool: String, reason: String?)
+    /// Nobody answered the approval in time: nothing ran.
+    case approvalExpired(tool: String)
     case verificationFailed(String)
     case cancelled
 
@@ -42,6 +44,7 @@ enum AgentError: Error, Equatable, Codable, Sendable {
         case .toolTimedOut(let tool): "\(tool) took too long."
         case .outputRejected(let tool, let reason): "\(tool) gave an unusable answer: \(reason)"
         case .permissionDenied(let tool, let reason): "Not allowed to use \(tool)" + (reason.map { ": \($0)" } ?? ".")
+        case .approvalExpired(let tool): "Nobody approved \(tool) in time."
         case .verificationFailed(let reason): "Verification failed: \(reason)"
         case .cancelled: "Cancelled."
         }

@@ -20,6 +20,7 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
         case approvalRequired(AgentPermissionRequest)
         case approvalGranted(stepID: String)
         case approvalDenied(stepID: String, reason: String?)
+        case approvalExpired(stepID: String)
         case verificationStarted
         case agentCompleted(summary: String)
         case agentFailed(AgentError)
@@ -38,6 +39,7 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
         case .approvalRequired: "approvalRequired"
         case .approvalGranted: "approvalGranted"
         case .approvalDenied: "approvalDenied"
+        case .approvalExpired: "approvalExpired"
         case .verificationStarted: "verificationStarted"
         case .agentCompleted: "agentCompleted"
         case .agentFailed: "agentFailed"
@@ -57,6 +59,7 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
         case .approvalRequired(let request): "Approval required: \(request.toolName)"
         case .approvalGranted(let id): "\(id) approved"
         case .approvalDenied(let id, _): "\(id) refused"
+        case .approvalExpired(let id): "\(id) not answered in time"
         case .verificationStarted: "Verification started"
         case .agentCompleted: "Agent completed"
         case .agentFailed(let error): "Agent failed: \(error.message)"
@@ -73,7 +76,7 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
             .silent
         case .stepFailed(_, _, let recovery):
             recovery == .retry || recovery == .skip ? .silent : .ambient
-        case .approvalDenied, .agentCompleted, .agentCancelled:
+        case .approvalDenied, .approvalExpired, .agentCompleted, .agentCancelled:
             .ambient
         case .agentFailed:
             .attention

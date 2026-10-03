@@ -206,6 +206,8 @@ final class AppState: ObservableObject {
     // The agent runtime (see AgentRuntime/), set by the core at launch. nil while filming.
     // Read by the settings' debug section only: no part of the island reacts to it yet.
     @Published var agent: RuntimeAgent? = nil
+    // The permission system (see Permissions/), set by the core at launch. nil while filming.
+    @Published var permissions: LocalPermissionManager? = nil
 
     // Modules shown in the island, pinned ones first (see Contracts/ModuleTypes.swift).
     // Kept up to date by the ModuleRegistry: one snapshot per selected module, in selection order.

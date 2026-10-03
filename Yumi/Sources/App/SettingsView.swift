@@ -332,6 +332,13 @@ struct SettingsView: View {
                         .padding(6)
                 }
 
+                // MARK: Permissions
+                GroupBox("Autorisations de Yumi") {
+                    PermissionsPanel(state: state)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(6)
+                }
+
                 // MARK: Hotkey
                 GroupBox("Hotkey") {
                     VStack(alignment: .leading, spacing: 10) {

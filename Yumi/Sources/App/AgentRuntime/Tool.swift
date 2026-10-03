@@ -8,9 +8,14 @@ import Foundation
 protocol Tool: Sendable {
     var descriptor: ToolDescriptor { get }
     func execute(_ arguments: ToolArguments, in context: ToolContext) async throws -> ToolOutput
+    /// What a call with these arguments would do, for the permission system. nil when the tool
+    /// cannot say: its risk then decides alone, and nothing remembered can cover it.
+    func action(for arguments: ToolArguments) -> ToolAction?
 }
 
 extension Tool {
+    func action(for arguments: ToolArguments) -> ToolAction? { nil }
+
     var id: String { descriptor.id }
     var name: String { descriptor.name }
     var description: String { descriptor.description }
