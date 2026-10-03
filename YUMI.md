@@ -171,6 +171,8 @@ Deux fichiers dans `Contracts/` sont déjà sur `main` et servent d'interface. *
 - `Contracts/CharacterCommands.swift` : l'île commande le personnage par notifications (`yumiPose`, `yumiHabit`, `yumiMood`, `yumiRim`, `yumiLit`, `yumiGaze`). La session Personnage les écoute, la session Île les émet. L'île ne touche jamais au moteur du personnage, et le place où elle veut à la taille qu'elle veut avec `BotCanvasView`.
 - `Contracts/ModuleTypes.swift` : le cœur remplit `AppState.modules` avec des `ModuleSnapshot`, l'île les dessine. Les cinq premiers vont dans l'île, les suivants dans le second carré. L'île signale un clic par la notification `moduleAction`. `AppState.modules` contient des données d'exemple tant que le cœur ne les remplace pas.
 
+- `ModuleSnapshot.rows` (ajouté le 3 octobre 2026, décision de la coordination) : une liste facultative de `ModuleRow` (id, titre, détail, état, libellé, date, section, action), vide par défaut pour les modules qui n'en ont pas. Le module la donne déjà triée ; l'île la dessine sous l'activité. Un clic sur une ligne qui a une `action` poste `moduleRowAction` avec `["module": id, "row": action]`, et le module l'écoute lui-même. Les états (`neutral`, `busy`, `waiting`, `success`, `failure`) laissent la couleur à l'île.
+
 ### Premiers modules réels
 
 Claude Code, Agenda, Notes et rappels, Focus, Musique, Météo. Ils se branchent sur le Mac sans compte externe. Notion, n8n, Make et ChatGPT viennent ensuite.
@@ -409,3 +411,13 @@ Trois outils sur le modèle de `create_file` : `check` avant `PermissionManager`
 | Modules | `ModuleBridge` (Modules/AgentBridges.swift) lit Focus, Agenda, Notes et Météo sur le fil principal, à la demande. `FocusTimer.start(now:minutes:)` ; le bouton Démarrer remet les quatre manches de 25 minutes. |
 
 Hors périmètre, non commencés : agenda (création d'événements), modification de fichier, suppression, terminal, mails, mémoire. Aucun outil ne supprime, ne modifie un existant, n'invite ni n'envoie.
+
+## Île : sessions Claude Code et GitHub en lignes (branche `yumi/ile`)
+
+Fait par la session Île sur décision de la coordination, qui l'a autorisée à toucher `Contracts/ModuleTypes.swift` (le champ `rows` seulement), `Modules/ClaudeCode` et `Modules/GitHub`.
+
+- Claude Code : `SessionBoard` (dans `ClaudeSessions.swift`) liste toutes les sessions, celles qui attendent un accord puis une réponse en premier, puis celles qui travaillent, en erreur, ouvertes, terminées. Chaque ligne dit le projet, ce que fait la session, son état et depuis quand. Une session terminée ou fermée reste 90 secondes avec son résultat puis part. Un clic ramène son terminal ou son éditeur quand l'hôte est connu, sinon la ligne n'est pas un bouton.
+- Île repliée : avec plusieurs sessions, « 3 sessions » (priorité ambiante), et « 3 sessions · accord sur api » quand une attend (priorité attention, elle reste devant).
+- GitHub : les trois dépôts du compte poussés le plus récemment (hors forks et archives) sont suivis. À chaque regard lent (toutes les cinq minutes, comme les dépôts), leurs pull requests ouvertes (quatre au plus par dépôt) et les checks de leur dernier commit, toujours en requêtes conditionnelles avec ETag. Lignes : ta review, CI rouge, CI en cours, CI verte, puis les quatre derniers événements avec l'heure.
+- Une CI qui passe au rouge (vue d'abord en cours ou verte) met GitHub devant dans l'île repliée jusqu'à ce qu'on ouvre la PR ou qu'elle repasse au vert. Une nouvelle demande de review joue la scène `pullRequest`. Aucune scène n'existe pour une CI rouge.
+- Vues : `Island/IslandRows.swift`. Démo : `YUMI_ISLAND_VIEW=claude-code` et `YUMI_ISLAND_VIEW=github`.

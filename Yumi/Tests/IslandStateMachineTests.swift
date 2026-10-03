@@ -820,3 +820,25 @@ import Foundation
         #expect(GitHubFigures.cleanToken(" \n ") == nil)
     }
 }
+
+@Suite struct RowTimeTests {
+    private let calendar: Calendar = {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "Europe/Paris")!
+        return calendar
+    }()
+
+    @Test func sessionsSaySinceWhen() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        #expect(RowTime.elapsed(since: now.addingTimeInterval(-20), now: now) == "à l'instant")
+        #expect(RowTime.elapsed(since: now.addingTimeInterval(-12 * 60), now: now) == "12 min")
+        #expect(RowTime.elapsed(since: now.addingTimeInterval(-65 * 60), now: now) == "1 h 05")
+    }
+
+    @Test func eventsSayWhen() {
+        let now = try! Date("2026-10-03T14:00:00+02:00", strategy: .iso8601)
+        #expect(RowTime.clock(try! Date("2026-10-03T09:05:00+02:00", strategy: .iso8601), now: now, calendar: calendar) == "09:05")
+        #expect(RowTime.clock(try! Date("2026-10-02T22:00:00+02:00", strategy: .iso8601), now: now, calendar: calendar) == "hier")
+        #expect(RowTime.clock(try! Date("2026-09-28T10:00:00+02:00", strategy: .iso8601), now: now, calendar: calendar) == "28 sept.")
+    }
+}

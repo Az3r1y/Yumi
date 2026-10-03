@@ -308,6 +308,7 @@ struct ModuleActivity: View {
         case "music", "musique":  music
         case "focus":             focus
         case "github":            github
+        case "claude-code" where !module.rows.isEmpty: sessions
         default:                  common
         }
     }
@@ -372,9 +373,38 @@ struct ModuleActivity: View {
         }
     }
 
+    /// Claude Code with sessions open: what the first one does, then one line per session,
+    /// the ones waiting for something first. A line brings its terminal or editor forward.
+    private var sessions: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            ActRow {
+                ActMeta(color: module.needsAttention ? IslandTheme.amber : module.color,
+                        text: "\(module.name) · \(module.status)").riseIn(0)
+                ActTitle(text: module.title).riseIn(1)
+            } trail: {
+                RoundButton(style: module.needsAttention ? .fill : .plain, symbol: module.primarySymbol ?? "eye.fill",
+                            label: module.primaryAction, color: IslandTheme.amber, action: primary)
+            }
+            ModuleRowsList(module: module, elapsed: true)
+                .padding(.leading, -7)
+                .riseIn(2)
+        }
+    }
+
     /// GitHub: the repository, the last event in one sentence, three figures, one button.
     /// A pull request that waits goes first, with a button to review it.
     private var github: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            githubHead
+            if !module.rows.isEmpty {
+                ModuleRowsList(module: module)
+                    .padding(.leading, -7)
+                    .riseIn(3)
+            }
+        }
+    }
+
+    private var githubHead: some View {
         let waiting = module.needsAttention
         return ActRow {
             ActMeta(color: waiting ? IslandTheme.amber : module.color,
