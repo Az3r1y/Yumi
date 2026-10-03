@@ -119,9 +119,9 @@ struct YumiStage: View {
         GeometryReader { geo in
             let frame = CGRect(origin: .zero, size: geo.size)
             let room = BotEngine.canvasRect(for: frame, overhang: particleOverhang)
-            // Every frame while he moves, fifteen a second while he only breathes, none while
-            // nothing changes or he is not shown
-            TimelineView(.animation(minimumInterval: engine.cadence == .low ? 1.0 / 15 : nil,
+            // Every frame while he moves, thirty a second during a habit that lasts, fifteen while
+            // he only breathes, none while nothing changes or he is not shown
+            TimelineView(.animation(minimumInterval: engine.cadence.interval,
                                     paused: paused || engine.cadence == .still)) { timeline in
                 Canvas { context, _ in
                     engine.particleOverhang = particleOverhang

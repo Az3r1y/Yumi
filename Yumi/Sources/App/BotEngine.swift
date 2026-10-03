@@ -505,8 +505,22 @@ enum YumiCadence: Comparable {
     case still
     /// Only the breathing: about fifteen pictures a second.
     case low
+    /// A habit that lasts (smoke, notes, steam, the cloud, the z): thirty pictures a second.
+    /// It moves slowly and evenly, so the eye sees no difference with every frame.
+    case habit
     /// A pose, a face changing, a look moving, an animated habit: every frame.
     case full
+}
+
+extension YumiCadence {
+    /// Shortest time between two pictures, nil for every frame of the screen.
+    var interval: Double? {
+        switch self {
+        case .full: return nil
+        case .habit: return 1.0 / 30
+        case .low, .still: return 1.0 / 15
+        }
+    }
 }
 
 // MARK: - Bot engine
@@ -918,7 +932,15 @@ final class BotEngine: ObservableObject {
         // `YUMI_FREEZE=1` stops the character after 20 s: what the app still costs is not him
         if now > 20, ProcessInfo.processInfo.environment["YUMI_FREEZE"] != nil { return .still }
         #endif
-        if pose != nil || scene != nil || !blob.isSettled || state == .approval { return .full }
+        if pose != nil || scene != nil || state == .approval { return .full }
+        // A habit that lasts keeps the body moving, so it is never settled: thirty a second is
+        // enough for it, whatever eases meanwhile
+        switch blob.habit {
+        case .smoke, .coffee, .headphones, .whistle, .cloud: return .habit
+        case .sleep where !isDeepAsleep: return .habit
+        default: break
+        }
+        if !blob.isSettled { return .full }
 
         var easing = [esl, esr, ps, tl, tr, al, ar, bl, br, cl, cr, tilt, lx, ly, eyes,
                       rimWidth, drawn, light, ember, sip, sleepFx]
@@ -933,13 +955,13 @@ final class BotEngine: ObservableObject {
 
         switch blob.habit {
         case .smoke, .coffee, .headphones, .whistle, .cloud:
-            return .full
+            return .habit
         case .sunglasses:
             // They drop onto his nose in 0.55 s, then nothing moves but his breathing
             return now - habitStart < 0.6 ? .full : .low
         case .sleep:
             // The bubble and the z, until the sleep is deep
-            return isDeepAsleep ? .still : .full
+            return isDeepAsleep ? .still : .habit
         case .exhausted, nil:
             return .low
         }

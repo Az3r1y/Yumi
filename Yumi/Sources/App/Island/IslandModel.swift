@@ -199,6 +199,14 @@ final class IslandModel: ObservableObject {
     }
 
     func setHabit(_ newHabit: YumiHabit?) {
+        var newHabit = newHabit
+        #if DEBUG
+        // `YUMI_HABIT=headphones` (or smoke, coffee, cloud, whistle, sleep…) keeps that habit on,
+        // to measure what a habit that lasts costs
+        if let forced = ProcessInfo.processInfo.environment["YUMI_HABIT"] {
+            newHabit = YumiHabit(rawValue: forced)
+        }
+        #endif
         habit = newHabit
         NotificationCenter.default.post(name: .yumiHabit, object: newHabit)
     }
