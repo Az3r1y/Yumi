@@ -12,6 +12,8 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
 
     enum Kind: Equatable, Codable, Sendable {
         case agentStarted(intent: String)
+        /// The person chose to give the planner what is in front of them: these fields went out.
+        case contextShared(fields: [String], with: String)
         case planCreated(goal: String, steps: Int, risk: ToolRisk)
         case stepStarted(stepID: String, attempt: Int)
         case stepCompleted(stepID: String, summary: String)
@@ -31,6 +33,7 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
     var name: String {
         switch kind {
         case .agentStarted: "agentStarted"
+        case .contextShared: "contextShared"
         case .planCreated: "planCreated"
         case .stepStarted: "stepStarted"
         case .stepCompleted: "stepCompleted"
@@ -51,6 +54,7 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
     var summary: String {
         switch kind {
         case .agentStarted(let intent): "Agent started: \(intent)"
+        case .contextShared(let fields, let planner): "Context shared with \(planner): \(fields.joined(separator: ", "))"
         case .planCreated(let goal, let steps, _): "Plan created: \(goal) (\(steps) step\(steps == 1 ? "" : "s"))"
         case .stepStarted(let id, let attempt): attempt > 1 ? "\(id) started, try \(attempt)" : "\(id) started"
         case .stepCompleted(let id, let summary): "\(id) completed: \(summary)"
@@ -71,7 +75,7 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
     /// which stays free to show nothing.
     var suggestedPriority: InteractionPriority {
         switch kind {
-        case .agentStarted, .planCreated, .stepStarted, .stepCompleted, .stepSkipped,
+        case .agentStarted, .contextShared, .planCreated, .stepStarted, .stepCompleted, .stepSkipped,
              .approvalGranted, .verificationStarted:
             .silent
         case .stepFailed(_, _, let recovery):

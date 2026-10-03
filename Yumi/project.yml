@@ -163,6 +163,8 @@ targets:
         group: Tests/UnderTest
       - path: Sources/App/Contracts/CharacterCommands.swift
         group: Tests/UnderTest
+      - path: Sources/App/Contracts/AgentLook.swift
+        group: Tests/UnderTest
       - path: Sources/App/Contracts/EventAnimations.swift
         group: Tests/UnderTest
       - path: Sources/App/AppIdentity.swift

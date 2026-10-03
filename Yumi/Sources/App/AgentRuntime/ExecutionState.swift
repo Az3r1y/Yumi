@@ -21,7 +21,7 @@ enum ExecutionState: String, Equatable, Codable, Sendable {
         case .planning: .planning
         case .executing: .working
         case .awaitingApproval: .waiting
-        case .verifying: .thinking
+        case .verifying: .checking
         case .completed: .success
         case .failed: .error
         }
@@ -31,4 +31,6 @@ enum ExecutionState: String, Equatable, Codable, Sendable {
 /// The runtime's state as the character could show it.
 enum AgentActivity: String, Equatable, Codable, Sendable, CaseIterable {
     case idle, thinking, planning, working, waiting, success, error
+    /// Looking at what was done before saying it is done.
+    case checking
 }

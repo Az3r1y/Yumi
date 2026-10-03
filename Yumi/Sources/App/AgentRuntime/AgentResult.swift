@@ -2,7 +2,16 @@ import Foundation
 
 /// How a run ended. Every run ends with one, whatever happened.
 struct AgentResult: Equatable, Codable, Sendable {
-    enum Status: String, Equatable, Codable, Sendable { case completed, failed, cancelled }
+    enum Status: String, Equatable, Codable, Sendable {
+        /// Every step ran and was verified.
+        case completed
+        /// Every required step ran and was verified; at least one optional step was left out.
+        case partial
+        case failed, cancelled
+
+        /// Something real was done and checked.
+        var succeeded: Bool { self == .completed || self == .partial }
+    }
 
     var runID: UUID
     var status: Status
@@ -18,6 +27,6 @@ struct AgentResult: Equatable, Codable, Sendable {
         steps.compactMap { $0.status == .completed ? $0.output?.summary : nil }.joined(separator: "\n")
     }
 
-    /// The person has something to look at or decide: the work did not get done.
+    /// The person has something to look at or decide: the work did not all get done.
     var needsUser: Bool { status != .completed }
 }

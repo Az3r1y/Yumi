@@ -249,13 +249,14 @@ final class YumiCore {
     private let approvalPresenter = IslandApprovalPresenter()
     private var permissionConsumer: Task<Void, Never>?
     /// Turns a request into checked, observable work (AgentRuntime/). Does nothing until asked.
-    /// No model is connected yet; every step goes through `permissions`.
+    /// Plans with the Anthropic key of the settings; every step goes through `permissions`.
     let agent: RuntimeAgent
     private var agentConsumer: Task<Void, Never>?
+    private var agentReaction: AgentReaction?
 
     init(state: AppState) {
         ingress = EventIngress(engine: engine)
-        agent = RuntimeAgent(planner: LLMAgentPlanner(provider: UnavailableLLMProvider()), permissions: permissions)
+        agent = Self.makeAgent(permissions: permissions)
         let mirror = ClaudeTaskMirror(state: state)
         self.mirror = mirror
         memory = MemoryStore { book in
@@ -389,8 +390,28 @@ final class YumiCore {
             .sink { [context] enabled in context.setEnabled(enabled) }
     }
 
-    /// The settings' debug section reaches the runtime through `AppState.agent`. Nothing else
-    /// listens yet: whether Yumi reacts to a run is for the island to decide later.
+    /// The runtime Yumi works with. It plans with the Claude Code installed on the Mac, used as a
+    /// model without any tool, through the person's own Claude Code login; without it, with the
+    /// settings' Anthropic key; with neither, it says how to set one up. Writing is allowed up to
+    /// creating a file, which always asks first. The App Store build may not launch programs nor
+    /// write outside its container: it plans with the key only, and only reads.
+    private static func makeAgent(permissions: LocalPermissionManager) -> RuntimeAgent {
+        let api = AnthropicLLMProvider(model: "claude-sonnet-4-6", apiKey: { KeychainStore.shared.get("anthropic-api-key") })
+        #if APPSTORE
+        return RuntimeAgent(planner: LLMAgentPlanner(provider: api), permissions: permissions)
+        #else
+        let claudeCode = ClaudeCodeLLMProvider(
+            binary: { ClaudeCLI.locate() },
+            folder: AppIdentity.supportDirectory.appendingPathComponent("planner").path)
+        let provider = FallbackLLMProvider(providers: [claudeCode, api])
+        var tools = ToolRegistry.standard
+        try? tools.register(CreateFileTool())
+        return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), tools: tools, permissions: permissions,
+                            policy: AgentPolicy(maximumRisk: .write))
+        #endif
+    }
+
+    /// The settings reach the runtime through `AppState.agent`; Yumi reacts to every run.
     private func startAgent(state: AppState) {
         state.agent = agent
         state.permissions = permissions
@@ -402,21 +423,26 @@ final class YumiCore {
                 ApprovalReaction.apply(event, to: state)
             }
         }
-        #if DEBUG
-        guard ProcessInfo.processInfo.environment["YUMI_TRACE_AGENT"] != nil else { return }
+        let reaction = AgentReaction(state: state)
+        agentReaction = reaction
         let events = agent.events()
-        agentConsumer = Task {
+        #if DEBUG
+        let traces = ProcessInfo.processInfo.environment["YUMI_TRACE_AGENT"] != nil
+        #else
+        let traces = false
+        #endif
+        agentConsumer = Task { [agent] in
             let encoder = JSONEncoder()
             encoder.dateEncodingStrategy = .iso8601
             encoder.outputFormatting = [.sortedKeys]
             for await event in events {
-                if let data = try? encoder.encode(event), let line = String(data: data, encoding: .utf8) {
+                reaction.apply(event, agent: agent)
+                if traces, let data = try? encoder.encode(event), let line = String(data: data, encoding: .utf8) {
                     print("[agent] \(line)")
                     fflush(stdout)
                 }
             }
         }
-        #endif
     }
 
     /// Debug builds only: with `YUMI_TRACE_CONTEXT` set, prints each context event as JSON.

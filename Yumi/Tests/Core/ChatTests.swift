@@ -35,7 +35,10 @@ import Foundation
                               "--include-partial-messages",
                               "--permission-prompt-tool", "stdio", "--permission-mode", "default",
                               "--session-id", "11111111-2222-4333-8444-555555555555",
-                              "--append-system-prompt", "Tu es Yumi."])
+                              "--append-system-prompt", "Tu es Yumi.",
+                              "--tools", "Read,Glob,Grep,WebSearch,WebFetch",
+                              "--disallowedTools", "Bash,Edit,Write,NotebookEdit,Task",
+                              "--strict-mcp-config"])
     }
 
     @Test func laterMessagesResumeTheSession() {

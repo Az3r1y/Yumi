@@ -142,6 +142,10 @@ final class RuntimeAgent {
 
     private func makePlan(for request: AgentRequest) async throws(AgentError) -> AgentPlan {
         guard request.trimmedIntent.nonEmptyTrimmed != nil else { throw .emptyIntent }
+        // What leaves for the planner is recorded before it leaves: the names of the fields, never their values.
+        if let shared = request.contextForPlanner, let task = current?.task, task.request.id == request.id {
+            publish(task, .contextShared(fields: shared.fields.map(\.0), with: planner.name))
+        }
         let proposal = try await planner.propose(for: request, tools: availableTools)
         if Task.isCancelled { throw .cancelled }
         return try PlanValidator.validate(proposal, registry: tools, policy: policy, plannedBy: planner.name)
@@ -152,7 +156,7 @@ final class RuntimeAgent {
         let result = task.result ?? AgentResult(runID: task.id, status: .failed, goal: task.plan?.goal,
                                                 steps: task.plan?.steps ?? [], error: nil, finishedAt: clock())
         let event: AgentEvent.Kind = switch result.status {
-        case .completed: .agentCompleted(summary: result.summary)
+        case .completed, .partial: .agentCompleted(summary: result.summary)
         case .failed: .agentFailed(result.error ?? .verificationFailed("unknown"))
         case .cancelled: .agentCancelled(reason: result.error ?? .cancelled)
         }

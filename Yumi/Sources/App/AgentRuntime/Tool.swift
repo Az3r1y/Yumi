@@ -11,10 +11,15 @@ protocol Tool: Sendable {
     /// What a call with these arguments would do, for the permission system. nil when the tool
     /// cannot say: its risk then decides alone, and nothing remembered can cover it.
     func action(for arguments: ToolArguments) -> ToolAction?
+    /// Checks, after a successful call, that the effect is really there (the file exists and
+    /// holds what was asked). nil when it is, otherwise why not. Reads only: it never repairs.
+    func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String?
 }
 
 extension Tool {
     func action(for arguments: ToolArguments) -> ToolAction? { nil }
+    /// A tool that changes nothing has nothing to check beyond its output.
+    func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String? { nil }
 
     var id: String { descriptor.id }
     var name: String { descriptor.name }

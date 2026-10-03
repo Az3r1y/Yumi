@@ -88,7 +88,7 @@ extension RuntimeTask {
         currentStepIndex = nil
         finishedAt = date
         state = switch status {
-        case .completed: .completed
+        case .completed, .partial: .completed
         case .failed: .failed
         case .cancelled: .cancelled
         }

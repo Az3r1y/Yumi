@@ -14,6 +14,9 @@ enum AgentError: Error, Equatable, Codable, Sendable {
     case invalidPlan(String)
     /// The planner says the request cannot be done with the tools there are.
     case cannotPlan(String)
+    /// The person asked to change something on the Mac that no tool can do: nothing runs, and
+    /// the request is not passed on to anything else that could act.
+    case unsupportedAction(String)
     case unknownTool(String)
     case invalidArguments(tool: String, reason: String)
     /// The tool is above what the policy lets the runtime do.
@@ -37,6 +40,7 @@ enum AgentError: Error, Equatable, Codable, Sendable {
         case .providerFailed(let reason): "The model did not answer: \(reason)"
         case .invalidPlan(let reason): "The plan was refused: \(reason)"
         case .cannotPlan(let reason): "Cannot be done yet: \(reason)"
+        case .unsupportedAction(let reason): "This action is not available yet: \(reason)"
         case .unknownTool(let tool): "Unknown tool \(tool)."
         case .invalidArguments(let tool, let reason): "Wrong arguments for \(tool): \(reason)"
         case .toolNotAllowed(let tool, let risk): "\(tool) is not allowed (\(risk.rawValue))."

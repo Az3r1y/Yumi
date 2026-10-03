@@ -46,3 +46,78 @@ enum ApprovalReaction {
         }
     }
 }
+
+/// How Yumi reacts to the agent runtime: each activity gets the island state, mood and pose of
+/// `AgentLook`, and the end of a run what he says about it. The runtime only describes.
+@MainActor
+final class AgentReaction {
+    private weak var state: AppState?
+    private var lastActivity: AgentActivity = .idle
+    private var clearing: Task<Void, Never>?
+    private var dismissal: NSObjectProtocol?
+
+    init(state: AppState) {
+        self.state = state
+        // The island closes a remark itself: one of ours is then gone.
+        dismissal = NotificationCenter.default.addObserver(forName: .remarkDismissed, object: nil, queue: .main) { [weak self] note in
+            let id = note.userInfo?["id"] as? String
+            MainActor.assumeIsolated {
+                guard let id, id.hasPrefix("agent-"), self?.state?.remark?.id == id else { return }
+                self?.state?.remark = nil
+            }
+        }
+    }
+
+    func apply(_ event: AgentEvent, agent: RuntimeAgent) {
+        guard let state else { return }
+        let activity = agent.activity
+        if activity != lastActivity {
+            lastActivity = activity
+            show(activity, in: state)
+        }
+        switch event.kind {
+        case .agentCompleted, .agentFailed, .agentCancelled:
+            // Asked from the chat, the answer is written there (ClaudeService.runAsAgent).
+            guard state.view != .prompt, let result = agent.current?.result, let remark = AgentLook.remark(for: result) else { return }
+            say(remark, in: state)
+        default:
+            break
+        }
+    }
+
+    private func show(_ activity: AgentActivity, in state: AppState) {
+        let look = AgentLook.of(activity)
+        clearing?.cancel()
+        let center = NotificationCenter.default
+        center.post(name: .yumiMood, object: activity == .idle ? nil : look.mood)
+        if let pose = look.pose { center.post(name: .yumiPose, object: pose) }
+        let agentStates: Set<BotState> = [.thinking, .working, .searching, .approval, .finished, .error]
+        switch activity {
+        case .planning, .thinking: state.stateOverride = .thinking
+        case .waiting: break // The approval view sets it (HookServer.showApproval).
+        case .working: state.stateOverride = .working
+        case .checking: state.stateOverride = .searching
+        case .success, .error:
+            state.stateOverride = activity == .success ? .finished : .error
+            // The verdict stays a moment, then Yumi goes back to what he was doing.
+            let shown = state.stateOverride
+            clearing = Task { [weak state] in
+                try? await Task.sleep(for: .seconds(4))
+                guard !Task.isCancelled, let state, state.stateOverride == shown else { return }
+                state.stateOverride = nil
+                NotificationCenter.default.post(name: .yumiMood, object: nil)
+            }
+        case .idle:
+            if let current = state.stateOverride, agentStates.contains(current) { state.stateOverride = nil }
+        }
+    }
+
+    private func say(_ remark: YumiRemark, in state: AppState) {
+        state.remark = remark
+        Task { [weak state] in
+            try? await Task.sleep(for: .seconds(remark.duration))
+            guard let state, state.remark?.id == remark.id else { return }
+            state.remark = nil
+        }
+    }
+}
