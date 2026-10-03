@@ -1,8 +1,8 @@
 import Foundation
 
 /// Runs an accepted plan, one step after the other. For each step it checks the tool against
-/// the registry and the policy again, asks the `PermissionManager` when the step or the tool's
-/// risk requires it, runs the tool with a time limit, checks its output, and applies the
+/// the registry and the policy again, asks the `PermissionManager` (every step, silently when it
+/// is safe), runs the tool with a time limit, checks its output, and applies the
 /// `RecoveryPolicy` when something goes wrong. Then it verifies the whole.
 ///
 /// It never throws and never stops the app: whatever happens, it returns the task in a
@@ -22,6 +22,13 @@ struct AgentExecutor {
     typealias Publish = @MainActor (RuntimeTask, AgentEvent.Kind?) -> Void
 
     func execute(_ task: RuntimeTask, publish: @escaping Publish) async -> RuntimeTask {
+        let ended = await perform(task, publish: publish)
+        // However the run ended, nothing it was allowed for itself alone can be used again.
+        await permissions.finishRun(task.id)
+        return ended
+    }
+
+    private func perform(_ task: RuntimeTask, publish: @escaping Publish) async -> RuntimeTask {
         let run = Run(task: task, publish: publish)
         guard let plan = task.plan, !plan.steps.isEmpty else {
             return run.end(.failed, error: .invalidPlan("there is no plan"), at: clock())
@@ -45,37 +52,70 @@ struct AgentExecutor {
                 return run.fail(index, .invalidArguments(tool: descriptor.id, reason: problem), at: clock())
             }
 
-            if step.requiresApproval || policy.requiresApproval(for: descriptor.risk) {
-                let request = AgentPermissionRequest(runID: task.id, stepID: step.id, goal: plan.goal, reason: step.description,
-                                                toolID: descriptor.id, toolName: descriptor.name, risk: descriptor.risk,
-                                                arguments: step.arguments)
+            // Every step goes through the permission manager, whatever its risk: a safe step comes
+            // back allowed at once and silently, so asking costs nothing and nothing can skip it.
+            let request = permissionRequest(for: step, tool: tool, in: task, goal: plan.goal)
+            let upcoming = plan.steps[(index + 1)...].compactMap { next -> AgentPermissionRequest? in
+                guard let nextTool = tools.tool(id: next.toolID), policy.allows(nextTool.descriptor.risk),
+                      nextTool.descriptor.inputSchema.problem(with: next.arguments) == nil else { return nil }
+                return permissionRequest(for: next, tool: nextTool, in: task, goal: plan.goal)
+            }
+            let decision: PermissionDecision
+            switch await permissions.evaluate(request, upcoming: upcoming) {
+            case .allow:
+                decision = .granted
+            case .deny(let reason):
+                // The policy says never: the step fails and, unless it is optional, the run stops.
+                let error = AgentError.permissionDenied(tool: descriptor.id, reason: reason)
+                if step.isOptional {
+                    run.update(index, event: .stepSkipped(stepID: step.id)) {
+                        $0.status = .skipped
+                        $0.error = error
+                    }
+                    continue steps
+                }
+                return run.fail(index, error, at: clock())
+            case .ask(let approval):
                 run.update(index, state: .awaitingApproval, event: .approvalRequired(request)) {
                     $0.status = .awaitingApproval
                     $0.requiresApproval = true
                 }
-                let decision = await permissions.authorize(request)
+                let answer = await permissions.decision(on: approval)
                 if Task.isCancelled { return run.end(.cancelled, error: .cancelled, at: clock()) }
-                switch decision {
-                case .granted:
+                if answer == .granted {
                     run.update(index, event: .approvalGranted(stepID: step.id)) { $0.status = .pending }
-                case .denied(let reason):
-                    run.update(index, event: .approvalDenied(stepID: step.id, reason: reason)) { _ in }
-                    let error = AgentError.permissionDenied(tool: descriptor.id, reason: reason)
-                    let action = recovery.decide(after: error, attempt: 1, retriesUsed: retriesUsed, optional: step.isOptional)
-                    switch action {
-                    case .skip:
-                        run.update(index, event: .stepSkipped(stepID: step.id)) {
-                            $0.status = .skipped
-                            $0.error = error
-                        }
-                        continue steps
-                    case .retry, .cancel:
-                        // Asking again would only insist: a refusal ends the run.
-                        run.update(index) { $0.error = error }
-                        return run.end(.cancelled, error: error, at: clock())
-                    case .fail:
-                        return run.fail(index, error, at: clock())
+                }
+                decision = answer
+            }
+            if Task.isCancelled { return run.end(.cancelled, error: .cancelled, at: clock()) }
+
+            switch decision {
+            case .granted:
+                break
+            case .cancelled:
+                return run.end(.cancelled, error: .cancelled, at: clock())
+            case .expired:
+                // Nothing runs on an approval nobody gave. Asking again is a new run.
+                let error = AgentError.approvalExpired(tool: descriptor.id)
+                run.update(index, event: .approvalExpired(stepID: step.id)) { $0.error = error }
+                return run.end(.cancelled, error: error, at: clock())
+            case .denied(let reason):
+                run.update(index, event: .approvalDenied(stepID: step.id, reason: reason)) { _ in }
+                let error = AgentError.permissionDenied(tool: descriptor.id, reason: reason)
+                let action = recovery.decide(after: error, attempt: 1, retriesUsed: retriesUsed, optional: step.isOptional)
+                switch action {
+                case .skip:
+                    run.update(index, event: .stepSkipped(stepID: step.id)) {
+                        $0.status = .skipped
+                        $0.error = error
                     }
+                    continue steps
+                case .retry, .cancel:
+                    // Asking again would only insist: a refusal ends the run.
+                    run.update(index) { $0.error = error }
+                    return run.end(.cancelled, error: error, at: clock())
+                case .fail:
+                    return run.fail(index, error, at: clock())
                 }
             }
 
@@ -133,6 +173,16 @@ struct AgentExecutor {
         }
         if Task.isCancelled { return run.end(.cancelled, error: .cancelled, at: clock()) }
         return run.end(.completed, error: nil, at: clock())
+    }
+
+    /// What the permission manager is told about a step. The risk and the action come from the
+    /// tool's code; the planner only contributes the reason, shown as such.
+    private func permissionRequest(for step: AgentStep, tool: any Tool, in task: RuntimeTask, goal: String) -> AgentPermissionRequest {
+        let descriptor = tool.descriptor
+        return AgentPermissionRequest(runID: task.id, stepID: step.id, goal: goal, reason: step.description,
+                                      toolID: descriptor.id, toolName: descriptor.name, risk: descriptor.risk,
+                                      arguments: step.arguments, action: tool.action(for: step.arguments),
+                                      requiresApproval: step.requiresApproval || policy.requiresApproval(for: descriptor.risk))
     }
 
     // MARK: - Running a tool

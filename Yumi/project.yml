@@ -137,7 +137,7 @@ targets:
   # Unit tests. Not hosted by the app: the files under test are compiled into the
   # bundle, so running the tests never launches Yumi (no socket, no Keychain, no window).
   # Only add files here that have no dependency on the rest of the app.
-  # Core/, Modules/, Memory/, Initiative/, Context/ and AgentRuntime/ as a whole follow that rule: nothing in them may use a view, AppState,
+  # Core/, Modules/, Memory/, Initiative/, Context/, AgentRuntime/ and Permissions/ as a whole follow that rule: nothing in them may use a view, AppState,
   # the hook server or a sound. Core/ knows nothing about Modules/ either.
   YumiTests:
     type: bundle.unit-test
@@ -158,6 +158,7 @@ targets:
       - path: Sources/App/Initiative
       - path: Sources/App/Context
       - path: Sources/App/AgentRuntime
+      - path: Sources/App/Permissions
       - path: Sources/App/Contracts/RemarkTypes.swift
         group: Tests/UnderTest
       - path: Sources/App/Contracts/CharacterCommands.swift

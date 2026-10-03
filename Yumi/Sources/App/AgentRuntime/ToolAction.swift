@@ -1,0 +1,51 @@
+import Foundation
+
+/// What one call of a tool really does, described by the tool's own code from its arguments.
+/// The same tool can read a file (silent) or delete it (asks): permissions follow the action,
+/// not the tool. A planner or a model never writes this: it comes from `Tool.action(for:)`.
+struct ToolAction: Equatable, Codable, Sendable {
+    var kind: ActionKind
+    /// What the action touches. Empty when it touches nothing identifiable.
+    var resources: [ResourceRef]
+    /// False when the action cannot be undone (a sent email, a deleted file without a copy).
+    var reversible: Bool
+
+    init(kind: ActionKind, resources: [ResourceRef] = [], reversible: Bool = true) {
+        self.kind = kind
+        self.resources = resources
+        self.reversible = reversible
+    }
+}
+
+/// The verb of an action. Open to new cases; an unknown verb counts as risky.
+enum ActionKind: String, Equatable, Codable, Sendable, CaseIterable {
+    case read, create, modify, delete, run, send, publish, pay, other
+}
+
+/// Something an action touches.
+struct ResourceRef: Hashable, Codable, Sendable {
+    enum Kind: String, Hashable, Codable, Sendable {
+        /// Yumi's own state: its context snapshot, its settings. Never the person's data.
+        case yumi
+        /// A file or a folder on this Mac. `identifier` is its path.
+        case file
+        /// A shell command. `identifier` is the command line.
+        case command
+        /// A page or an API outside the Mac. `identifier` is the URL.
+        case url
+        /// An account of an outside service: `identifier` names it ("gmail:me@example.com").
+        case account
+        /// Anything else. Never matched by a remembered permission.
+        case unknown
+    }
+
+    var kind: Kind
+    var identifier: String
+
+    init(_ kind: Kind, _ identifier: String) {
+        self.kind = kind
+        self.identifier = identifier
+    }
+
+    static func file(_ path: String) -> ResourceRef { ResourceRef(.file, path) }
+}

@@ -14,6 +14,11 @@ struct GetCurrentContextTool: Tool {
             outputKeys: ["available"])
     }
 
+    /// Yumi reading its own snapshot: nothing to ask.
+    func action(for arguments: ToolArguments) -> ToolAction? {
+        ToolAction(kind: .read, resources: [ResourceRef(.yumi, "context")])
+    }
+
     func execute(_ arguments: ToolArguments, in context: ToolContext) async throws -> ToolOutput {
         guard let request = RequestContext(context.snapshot) else {
             return ToolOutput(summary: "No context was given with the request.", values: ["available": .bool(false)])

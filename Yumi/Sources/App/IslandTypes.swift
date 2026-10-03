@@ -161,6 +161,9 @@ struct ApprovalInfo: Sendable {
     var sessionId: String
     var tool: String
     var command: String
+    /// Set when Yumi's own agent asks (Permissions/): the island shows its short sentence, and
+    /// its details on demand, instead of a command.
+    var agentRequest: ApprovalRequest? = nil
 }
 
 // MARK: - Pill badge (shown on pill edge when non-focused task has an alert)

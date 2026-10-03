@@ -388,13 +388,17 @@ import Foundation
         #expect(permissions.requests.count == 1)
     }
 
-    @Test func untilThePermissionSystemExistsEverythingIsRefused() async throws {
+    @Test func withoutAPermissionSystemWhatNeedsConsentIsRefused() async throws {
         let writer = FakeTool(id: "write_note", risk: .write)
         let (agent, _) = try makeAgent([.text(planJSON(tools: ["write_note"]))], tools: [writer],
                                        policy: AgentPolicy(maximumRisk: .write))
         let result = await agent.run(AgentRequest(userIntent: "x"))
-        #expect(result.status == .cancelled)
+        // Refused by policy, not by the person: the step fails and the run stops.
+        #expect(result.status == .failed)
+        #expect(result.steps.first?.status == .failed)
+        if case .permissionDenied = result.error {} else { Issue.record("expected permissionDenied") }
         #expect(writer.calls == 0)
+        #expect(!names(agent).contains("approvalRequired"))
     }
 
     @Test func aRefusedOptionalStepIsSkipped() async throws {
