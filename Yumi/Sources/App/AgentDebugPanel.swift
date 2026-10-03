@@ -26,7 +26,7 @@ private struct AgentDebugContent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Works only when asked. Plans with the Anthropic key above; creating a file always asks first. What is on screen stays on the Mac unless you tick the box.")
+            Text("Works only when asked. Plans with Claude Code (no tools, your Claude Code login) or else the Anthropic key above; creating a file always asks first. What is on screen stays on the Mac unless you tick the box.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)

@@ -1,7 +1,7 @@
 import Foundation
 
-/// Creates one new text file in a folder Yumi may write to (the Desktop and Documents by
-/// default). Never replaces a file that exists, never creates a folder, never writes a hidden
+/// Creates one new text file in a folder Yumi may write to: Downloads (where a bare file name
+/// goes), the Desktop and Documents. Never replaces a file that exists, never creates a folder, never writes a hidden
 /// file. Whether it may run at all is the permission system's call: this tool only describes
 /// the action (`action(for:)`) and refuses what it was not made for.
 struct CreateFileTool: Tool {
@@ -13,17 +13,17 @@ struct CreateFileTool: Tool {
 
     init(home: String = NSHomeDirectory(), allowedFolders: [String]? = nil) {
         self.home = home
-        self.allowedFolders = allowedFolders ?? ["Desktop", "Documents"].map { (home as NSString).appendingPathComponent($0) }
+        self.allowedFolders = allowedFolders ?? ["Downloads", "Desktop", "Documents"].map { (home as NSString).appendingPathComponent($0) }
     }
 
     var descriptor: ToolDescriptor {
         ToolDescriptor(
             id: "create_file",
             name: "Create a file",
-            description: "Creates a new text file with the given content. Only on the Desktop (~/Desktop) or in Documents (~/Documents); never replaces an existing file.",
+            description: "Creates a new text file with the given content, in ~/Downloads unless the person names ~/Desktop or ~/Documents; never replaces an existing file.",
             inputSchema: ToolInputSchema(fields: [
                 .init(name: "path", type: .string, required: true,
-                      description: "where to create it, starting with ~/Desktop/ or ~/Documents/, file name included (todo.md)"),
+                      description: "~/Downloads/<name> by default (~/Downloads/todo.md); ~/Desktop/<name> or ~/Documents/<name> only when the person asks for that place"),
                 .init(name: "content", type: .string, required: true, description: "the full text of the file"),
             ]),
             risk: .write,
@@ -68,7 +68,7 @@ struct CreateFileTool: Tool {
     /// The absolute path the file will have, or why not.
     func destination(for raw: String) throws(ToolError) -> String {
         let expanded = expand(raw)
-        guard expanded.hasPrefix("/") else { throw .invalidInput("the path must start with ~/Desktop/ or ~/Documents/") }
+        guard expanded.hasPrefix("/") else { throw .invalidInput("the path must start with ~/Downloads/, ~/Desktop/ or ~/Documents/") }
         let url = URL(fileURLWithPath: expanded).standardizedFileURL
         let name = url.lastPathComponent
         guard !name.isEmpty, !name.hasPrefix("."), name != "/" else { throw .invalidInput("\(name) is not a usable file name") }
@@ -76,7 +76,7 @@ struct CreateFileTool: Tool {
         let folder = url.deletingLastPathComponent().resolvingSymlinksInPath().path
         let roots = allowedFolders.map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
         guard roots.contains(where: { RiskAssessor.path(folder, isInside: $0) }) else {
-            throw .invalidInput("Yumi can only create files on the Desktop or in Documents")
+            throw .invalidInput("Yumi can only create files in Downloads, on the Desktop or in Documents")
         }
         var isFolder: ObjCBool = false
         guard FileManager.default.fileExists(atPath: folder, isDirectory: &isFolder), isFolder.boolValue else {
@@ -85,9 +85,17 @@ struct CreateFileTool: Tool {
         return (folder as NSString).appendingPathComponent(name)
     }
 
+    /// The default folder: where a bare file name (`todo.md`) is created.
+    var defaultFolder: String { (home as NSString).appendingPathComponent("Downloads") }
+
+    /// `~/x` from the home folder; a bare name in the default folder; anything else as given (a
+    /// relative path with folders is refused later). The permission request shows the result.
     private func expand(_ raw: String) -> String {
         let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed == "~" { return home }
+        if !trimmed.isEmpty, !trimmed.contains("/"), trimmed != "..", trimmed != "." {
+            return (defaultFolder as NSString).appendingPathComponent(trimmed)
+        }
         return trimmed.hasPrefix("~/") ? home + trimmed.dropFirst() : trimmed
     }
 

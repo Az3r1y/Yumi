@@ -390,14 +390,20 @@ final class YumiCore {
             .sink { [context] enabled in context.setEnabled(enabled) }
     }
 
-    /// The runtime Yumi works with. The model is the one of the settings' Anthropic key, read
-    /// when a plan is asked for: no key, no plan. Writing is allowed up to creating a file, which
-    /// always asks first; the App Store build may not write outside its container, so it only reads.
+    /// The runtime Yumi works with. It plans with the Claude Code installed on the Mac, used as a
+    /// model without any tool, through the person's own Claude Code login; without it, with the
+    /// settings' Anthropic key; with neither, it says how to set one up. Writing is allowed up to
+    /// creating a file, which always asks first. The App Store build may not launch programs nor
+    /// write outside its container: it plans with the key only, and only reads.
     private static func makeAgent(permissions: LocalPermissionManager) -> RuntimeAgent {
-        let provider = AnthropicLLMProvider(model: "claude-sonnet-4-6", apiKey: { KeychainStore.shared.get("anthropic-api-key") })
+        let api = AnthropicLLMProvider(model: "claude-sonnet-4-6", apiKey: { KeychainStore.shared.get("anthropic-api-key") })
         #if APPSTORE
-        return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), permissions: permissions)
+        return RuntimeAgent(planner: LLMAgentPlanner(provider: api), permissions: permissions)
         #else
+        let claudeCode = ClaudeCodeLLMProvider(
+            binary: { ClaudeCLI.locate() },
+            folder: AppIdentity.supportDirectory.appendingPathComponent("planner").path)
+        let provider = FallbackLLMProvider(providers: [claudeCode, api])
         var tools = ToolRegistry.standard
         try? tools.register(CreateFileTool())
         return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), tools: tools, permissions: permissions,

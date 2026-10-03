@@ -34,7 +34,16 @@ Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependen
   <img src="docs/musique.png" alt="The music module in the island" width="720">
 </p>
 
-**You talk, he acts.** The chat runs through the Claude Code already installed on your Mac, so it needs no API key and adds no bill. Yumi can create files, which land in Downloads, and asks before each action.
+**You talk, he acts.** The chat runs through the Claude Code already installed on your Mac: in the chat it talks, reads and searches, and changes nothing. When you ask for an action, Yumi's own agent plans it, asks you with the exact path, does it and checks it. Today the only action is creating a text file, in Downloads unless you name the Desktop or Documents.
+
+### Which model plans the actions
+
+Yumi needs a model to turn a request into a plan. It tries, in order:
+
+1. **Claude Code**, if it is installed and you are logged in (`claude`, then `/login`). It is used as a model only: no tool, no shell, no file, no web, no MCP server, none of your Claude Code settings or hooks. It only answers a JSON plan, which Yumi checks like any other. It runs under your Claude Code account, so it counts against your subscription or whatever billing that account has; it is not free.
+2. **The Anthropic API**, if you saved a key in the settings. Billed by Anthropic per use.
+
+With neither, Yumi says so and does nothing. The App Store build can only use the API key.
 
 <p align="center">
   <img src="docs/parler.png" alt="The chat in the island" width="720">
@@ -118,6 +127,7 @@ Yumi works without any of these. Each one unlocks a feature, and is asked for wh
 - The calendar, the reminders and the memory never leave your Mac.
 - Network calls go only to the services behind the modules you turned on: Open-Meteo for the weather, GitHub with your own token.
 - The chat goes through your own Claude Code, under your own account.
+- A plan request sends the model your words and the list of Yumi's tools. What is on your screen is sent only if you tick it for that request.
 - Tokens are stored in the macOS Keychain, never on disk and never in git.
 - Yumi never approves a Claude Code permission without an explicit click.
 

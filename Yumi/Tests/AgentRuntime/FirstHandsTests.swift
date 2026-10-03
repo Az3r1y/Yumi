@@ -7,7 +7,7 @@ private final class TemporaryHome {
 
     init() throws {
         path = FileManager.default.temporaryDirectory.appendingPathComponent("yumi-home-\(UUID().uuidString)").path
-        for folder in ["Desktop", "Documents", "Library"] {
+        for folder in ["Downloads", "Desktop", "Documents", "Library"] {
             try FileManager.default.createDirectory(atPath: path + "/" + folder, withIntermediateDirectories: true)
         }
     }
@@ -51,7 +51,7 @@ private func context() -> ToolContext {
     @Test func refusesEverywhereElse() async throws {
         let home = try TemporaryHome()
         let tool = CreateFileTool(home: home.path)
-        for path in ["~/Library/evil.md", "~/todo.md", "~/Desktop/../Library/evil.md", "/tmp/todo.md", "todo.md",
+        for path in ["~/Library/evil.md", "~/todo.md", "~/Desktop/../Library/evil.md", "/tmp/todo.md", "notes/todo.md",
                      "~/Desktop/.hidden", "~/Desktop/missing/todo.md"] {
             await #expect(throws: ToolError.self, "\(path)") { try await tool.execute(createArguments(path), in: context()) }
         }
