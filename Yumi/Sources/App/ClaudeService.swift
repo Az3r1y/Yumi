@@ -191,13 +191,27 @@ final class ClaudeService {
     // MARK: - Chat through the agent runtime
 
     /// A message that asks Yumi to change something on the Mac is planned, approved, run and
-    /// verified by the runtime; the chat only shows it. Anything else (no key, a question, a
-    /// plan that only reads) returns false and goes to the conversation. What is on screen
+    /// verified by the runtime; the chat only shows it. A clear action no tool can do is refused
+    /// here. Anything else (no key, a question, an unclear request, a plan that only reads)
+    /// returns false and goes to the conversation, which cannot change the Mac (ChatTools). What is on screen
     /// stays on the Mac: the planner does not see it.
     private func runAsAgent(query: String, state: AppState) async -> Bool {
         guard let agent = state.agent, !agent.isRunning else { return false }
         let request = AgentRequest(userIntent: query, context: state.context.isEnabled ? state.context : nil)
-        guard case .agent(let plan) = ChatRoute.route(await agent.plan(for: request)) else { return false }
+        let plan: AgentPlan
+        switch ChatRoute.route(await agent.plan(for: request)) {
+        case .chat:
+            return false
+        case .blocked(let reason):
+            let result = AgentResult(runID: request.id, status: .failed, goal: nil, steps: [],
+                                     error: .unsupportedAction(reason), finishedAt: Date())
+            state.chatHistory.append(ChatMessage(role: .assistant, content: AgentLook.remark(for: result)?.text ?? ""))
+            state.stateOverride = nil
+            state.view = .prompt
+            return true
+        case .agent(let accepted):
+            plan = accepted
+        }
         state.chatHistory.append(ChatMessage(role: .assistant, content: "Je m'en occupe : \(plan.goal). Je te demande avant de toucher à quoi que ce soit."))
         state.view = .prompt
         let result = await agent.execute(plan, for: request)
@@ -253,6 +267,7 @@ final class ClaudeService {
         // The system prompt is not kept with a session: without it the summary would lose the voice and the rules.
         var arguments = ["-p", MemoryNotes.summaryRequest, "--resume", session, "--output-format", "json", "--permission-mode", "default",
                          "--append-system-prompt", ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: folder, memory: memory?.book)]
+            + ChatTools.arguments
         #if DEBUG
         arguments += (ProcessInfo.processInfo.environment["YUMI_CHAT_ARGS"] ?? "").split(separator: " ").map(String.init)
         #endif
@@ -385,6 +400,13 @@ final class ClaudeService {
 
                 case .toolFinished:
                     if state.stateOverride == .working { state.stateOverride = .thinking }
+
+                case .permissionRequested(let request) where !ChatTools.mayUse(request.toolName):
+                    // A tool that changes the Mac has nothing to do in the chat: refused without
+                    // asking, so a click can never let it through the permission manager's back.
+                    turn.send(ClaudeStream.answerLine(to: request, .deny(message: ChatPhrases.actionsGoThroughYumi)))
+                    tracker.permissionAnswered(toolUseID: request.toolUseID, allowed: false)
+                    transcript.refuse(toolUseID: request.toolUseID)
 
                 case .permissionRequested(let request):
                     // The request is shown in the island like the ones of any Claude Code session;

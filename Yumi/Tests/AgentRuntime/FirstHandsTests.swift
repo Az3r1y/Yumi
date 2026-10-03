@@ -302,6 +302,7 @@ private final class SentRequests: @unchecked Sendable {
 
     @Test func thePlannerIsToldThatTalkIsForTheChat() {
         let prompt = PlannerPrompt.make(for: AgentRequest(userIntent: "Salut"), tools: ToolRegistry.standard.descriptors, maxSteps: 12)
-        #expect(prompt.system.contains("only talking or asking a question, answer with cannotPlan"))
+        #expect(prompt.system.contains(#"{"cannotPlan": "reason", "isAction": false}"#))
+        #expect(prompt.system.contains(#"{"cannotPlan": "reason", "isAction": true}"#))
     }
 }

@@ -6,11 +6,16 @@ import Foundation
 enum ChatRoute: Equatable, Sendable {
     /// Run this plan: it acts on the Mac.
     case agent(AgentPlan)
-    /// Answer as a conversation.
+    /// A clear action on the Mac that Yumi cannot do: say so, do nothing, pass it to nobody.
+    case blocked(String)
+    /// Answer as a conversation. The chat cannot change the Mac (ChatTools).
     case chat
 
     static func route(_ planned: Result<AgentPlan, AgentError>) -> ChatRoute {
-        guard case .success(let plan) = planned, plan.estimatedRisk >= .write else { return .chat }
-        return .agent(plan)
+        switch planned {
+        case .success(let plan) where plan.estimatedRisk >= .write: .agent(plan)
+        case .failure(.unsupportedAction(let reason)): .blocked(reason)
+        default: .chat
+        }
     }
 }

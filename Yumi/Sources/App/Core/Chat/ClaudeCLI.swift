@@ -44,6 +44,7 @@ enum ClaudeCLI {
     /// Claude Code sends each request on stdout (`control_request`) and waits for the answer on
     /// stdin, which is why the input is `stream-json` and stays open during the turn.
     /// `--permission-mode default` is explicit so that nothing is ever accepted without being asked.
+    /// `ChatTools.arguments` leaves the chat only tools that read.
     static func arguments(session: Session, systemPrompt: String, readableFolders: [String] = [],
                           extra: [String] = []) -> [String] {
         var arguments = ["-p",
@@ -58,6 +59,8 @@ enum ClaudeCLI {
         case .resume(let id): arguments += ["--resume", id]
         }
         arguments += ["--append-system-prompt", systemPrompt]
+        // The chat talks and reads; acting on the Mac is the agent runtime's (ChatTools).
+        arguments += ChatTools.arguments
         for folder in readableFolders { arguments += ["--add-dir", folder] }
         return arguments + extra
     }
