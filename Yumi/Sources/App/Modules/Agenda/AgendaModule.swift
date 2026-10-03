@@ -74,7 +74,7 @@ final class AgendaModule: YumiModule {
         switch access {
         case .notDetermined:
             guard action == .primary else { return }
-            eventStore.requestFullAccessToEvents { [weak self] _, _ in
+            eventStore.requestFullAccessToEvents { @Sendable [weak self] _, _ in
                 Task { @MainActor in self?.reload() }
             }
         case .denied:

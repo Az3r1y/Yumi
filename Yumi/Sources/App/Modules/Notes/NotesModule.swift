@@ -96,7 +96,7 @@ final class NotesModule: YumiModule {
     }
 
     private func requestAccess() {
-        eventStore.requestFullAccessToReminders { [weak self] _, _ in
+        eventStore.requestFullAccessToReminders { @Sendable [weak self] _, _ in
             Task { @MainActor in
                 self?.fetchReminders()
                 self?.onChange?()
@@ -127,7 +127,9 @@ final class NotesModule: YumiModule {
         let calendar = Calendar.current
         let endOfToday = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: Date()))
         let predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: nil, ending: endOfToday, calendars: nil)
-        eventStore.fetchReminders(matching: predicate) { [weak self] found in
+        // EventKit answers on its own queue: the closure must not be isolated to the main actor,
+        // or Swift stops the app the moment it runs
+        eventStore.fetchReminders(matching: predicate) { @Sendable [weak self] found in
             let items = (found ?? []).map { reminder in
                 let components = reminder.dueDateComponents
                 return ReminderItem(id: reminder.calendarItemIdentifier,
