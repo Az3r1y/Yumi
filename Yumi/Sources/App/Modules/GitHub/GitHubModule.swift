@@ -45,6 +45,20 @@ final class GitHubModule: YumiModule {
     private var openPulls: Int?
     private var review: GitHubReview?
     private var last: (event: GitHubEvent, count: Int)?
+    /// Open pull requests of the followed repositories, with their checks.
+    private var pulls: [GitHubPull] = []
+    /// The last answer for each repository and each commit, kept for "not modified".
+    private var pullCache: [String: [GitHubPull]] = [:]
+    private var checkCache: [String: GitHubChecks?] = [:]
+    /// nil until the pull requests were read once.
+    private var pullsSeen = false
+    /// A pull request whose checks just turned red, until it is looked at or turns green.
+    private var red: GitHubPull?
+    /// The latest events of both feeds, newest first.
+    private var recent: [GitHubEvent] = []
+    private var rowObserver: NSObjectProtocol?
+    /// The person's repositories whose pull requests are listed.
+    private var followed: [String] = []
     private var wait = GitHubModule.pollInterval
     private var looks = 0
 
@@ -68,18 +82,25 @@ final class GitHubModule: YumiModule {
     }
 
     var snapshot: ModuleSnapshot {
-        GitHubSummary.snapshot(connection: connection, repo: repo, openPulls: openPulls, last: last, review: review)
+        GitHubSummary.snapshot(connection: connection, repo: repo, openPulls: openPulls, last: last, review: review,
+                               pulls: pulls, recent: recent, red: red)
     }
 
     // MARK: Lifecycle
 
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
+        rowObserver = NotificationCenter.default.addObserver(forName: .moduleRowAction, object: nil, queue: .main) { [weak self] note in
+            guard note.userInfo?["module"] as? String == "github", let row = note.userInfo?["row"] as? String else { return }
+            MainActor.assumeIsolated { self?.open(row) }
+        }
         restart()
     }
 
     func stop() {
         onChange = nil
+        if let rowObserver { NotificationCenter.default.removeObserver(rowObserver) }
+        rowObserver = nil
         polling?.cancel()
         polling = nil
     }
@@ -114,6 +135,10 @@ final class GitHubModule: YumiModule {
         case .primary:
             if connection == .noToken || connection == .refused {
                 onConnect()
+            } else if let shown = red {
+                red = nil
+                onChange?()
+                if let url = shown.url { NSWorkspace.shared.open(url) }
             } else if let url = review?.url ?? repo?.url ?? URL(string: "https://github.com") {
                 NSWorkspace.shared.open(url)
             }
@@ -123,6 +148,16 @@ final class GitHubModule: YumiModule {
             login = nil
             restart()
         }
+    }
+
+    /// A line of the list was clicked: its page opens.
+    private func open(_ row: String) {
+        guard let url = URL(string: row), url.host == "github.com" else { return }
+        if red?.url == url {
+            red = nil
+            onChange?()
+        }
+        NSWorkspace.shared.open(url)
     }
 
     // MARK: Local commits
@@ -170,15 +205,19 @@ final class GitHubModule: YumiModule {
 
         for (feed, received) in [("events", false), ("received_events", true)] {
             if case .fresh(let data) = await get("/users/\(login)/\(feed)?per_page=30", token: token, paced: true) {
-                announce(tracker.fresh(GitHubFeed.events(from: data, login: login, received: received), feed: feed))
+                let events = GitHubFeed.events(from: data, login: login, received: received)
+                remember(events)
+                announce(tracker.fresh(events, feed: feed))
             }
         }
         if slow {
             if case .fresh(let data) = await get("/user/repos?per_page=100&affiliation=owner&sort=pushed", token: token) {
                 repo = GitHubFeed.mostActiveRepo(from: data)
+                followed = GitHubFeed.followedRepos(from: data)
                 let totals = GitHubFeed.totals(from: data)
                 onTotals(totals.repos, totals.stars)
             }
+            await readPulls(token: token, login: login)
             if let repo, case .fresh(let data) = await get("/search/issues?per_page=1&q=" + Self.query("repo:\(repo.fullName) is:pr is:open"), token: token) {
                 openPulls = GitHubFeed.search(from: data).count
             }
@@ -188,6 +227,53 @@ final class GitHubModule: YumiModule {
         }
         if let data = try? JSONEncoder().encode(tracker) { defaults.set(data, forKey: Self.trackerKey) }
         onChange?()
+    }
+
+    /// Keeps the latest events for the list.
+    private func remember(_ events: [GitHubEvent]) {
+        var byID = Dictionary(recent.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        for event in events { byID[event.id] = event }
+        recent = Array(byID.values.sorted { $0.id > $1.id }.prefix(GitHubBoard.events))
+    }
+
+    /// The open pull requests of the followed repositories and their checks, read with the
+    /// slow looks (every five minutes): conditional requests, so an unchanged answer is free.
+    private func readPulls(token: String, login: String) async {
+        var all: [GitHubPull] = []
+        for name in followed {
+            var list = pullCache[name] ?? []
+            switch await get("/repos/\(name)/pulls?state=open&per_page=\(GitHubBoard.pullsPerRepo)&sort=updated&direction=desc", token: token) {
+            case .fresh(let data):
+                list = GitHubFeed.pulls(from: data, repo: name, login: login)
+                pullCache[name] = list
+            case .refused, .failed:
+                continue
+            case .unchanged:
+                break
+            }
+            for index in list.indices where !list[index].sha.isEmpty {
+                let sha = list[index].sha
+                switch await get("/repos/\(name)/commits/\(sha)/check-runs?per_page=50", token: token) {
+                case .fresh(let data):
+                    checkCache[sha] = .some(GitHubFeed.checks(from: data))
+                default:
+                    break
+                }
+                list[index].checks = checkCache[sha] ?? nil
+            }
+            all += list
+        }
+        let gone = GitHubBoard.turnedRed(before: pullsSeen ? pulls : nil, after: all)
+        if let first = gone.first { red = first }
+        if let shown = red, !all.contains(where: { $0.key == shown.key && $0.checks == .failed }) { red = nil }
+        // A new request for the person's review gets the scene of a pull request.
+        let asked = all.filter { pull in pull.asksMyReview && !pulls.contains { $0.key == pull.key && $0.asksMyReview } }
+        if pullsSeen, !asked.isEmpty { play(.pullRequest, asked.count) }
+        pulls = all
+        pullsSeen = true
+        let shas = Set(all.map(\.sha))
+        checkCache = checkCache.filter { shas.contains($0.key) }
+        etags = etags.filter { path, _ in !path.contains("/commits/") || shas.contains { path.contains("/commits/\($0)/") } }
     }
 
     /// Plays the scenes of new events and tells Yumi about the ones that count.

@@ -35,6 +35,43 @@ struct ModuleSnapshot: Identifiable, Equatable, Sendable {
     var secondarySymbol: String? = nil
     /// A bar the activity view can draw: a track playing, a timer running. nil without one.
     var progress: ModuleProgress? = nil
+    /// Lines the activity view lists under the headline: one Claude Code session each, one pull
+    /// request or one GitHub event each. Already in the order to show. Empty for most modules.
+    var rows: [ModuleRow] = []
+}
+
+/// One line of a module's list: a session, a pull request, an event.
+struct ModuleRow: Identifiable, Equatable, Sendable {
+    /// Stable while the thing it shows lives: a session id, "owner/name#12".
+    let id: String
+    /// "yumi", "Fix du repli".
+    var title: String
+    /// "modifie IslandRootView.swift", "louis", "étoile de lea".
+    var detail: String
+    var state: ModuleRowState
+    /// The state in a few words: "travaille", "attend un accord", "CI rouge".
+    var label: String
+    /// Since when it is in this state, or when it happened. nil when unknown.
+    var date: Date? = nil
+    /// Heading of the group the line belongs to: "estebanbaigts/Yumi", "Derniers événements".
+    /// nil keeps it with the line before.
+    var section: String? = nil
+    /// Sent back with `moduleRowAction` when the line is clicked. nil: the line is not a button.
+    var action: String? = nil
+}
+
+/// How a line reads at a glance. The island picks the colour.
+enum ModuleRowState: String, Equatable, Sendable {
+    /// Nothing to report: an event, an open pull request without checks.
+    case neutral
+    /// Running: a session working, checks in progress.
+    case busy
+    /// Someone waits for the user: an answer, an approval, a review.
+    case waiting
+    /// Done well: a session finished, checks green.
+    case success
+    /// Done badly: a session in error, checks red.
+    case failure
 }
 
 /// How far along something is, with the two labels at the ends of the bar.
@@ -103,4 +140,7 @@ extension Notification.Name {
     /// Posted by the island when a module button is pressed.
     /// userInfo: ["module": String (module id), "action": String ("primary" or "secondary")]
     static let moduleAction = AppIdentity.notification("moduleAction")
+    /// Posted by the island when a line of a module's list is clicked.
+    /// userInfo: ["module": String (module id), "row": String (the row's `action`)]
+    static let moduleRowAction = AppIdentity.notification("moduleRowAction")
 }

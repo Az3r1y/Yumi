@@ -70,16 +70,25 @@ enum ClaudeSessions {
         return snapshot
     }
 
-    /// The folded island only hears about Claude Code when a session is waiting for the user.
+    /// The folded island hears about Claude Code when a session is waiting for the user, and
+    /// when several sessions run: how many, and the one waiting first.
     /// `sessions` is ordered: a waiting session, if any, is the first one.
     static func live(_ sessions: [Session]) -> ModuleLive? {
-        guard let session = sessions.first, session.status == .waitingForUser else { return nil }
+        let open = sessions.filter { $0.status != .completed }.count
+        let count = open > 1 ? FrenchText.count(open, "session", "sessions") : nil
+        guard let session = sessions.first, session.status == .waitingForUser else {
+            guard let count else { return nil }
+            return ModuleLive(text: count, priority: ModuleLivePriority.ambient,
+                              controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])
+        }
         let name = projectName(session)
+        let approval: Bool
+        if case .requestingPermission = session.activity { approval = true } else { approval = false }
         let text: String
-        if case .requestingPermission = session.activity {
-            text = "Claude veut ton accord sur \(name)"
+        if let count {
+            text = approval ? "\(count) · accord sur \(name)" : "\(count) · \(name) t'attend"
         } else {
-            text = "Claude t'attend sur \(name)"
+            text = approval ? "Claude veut ton accord sur \(name)" : "Claude t'attend sur \(name)"
         }
         return ModuleLive(text: text, priority: ModuleLivePriority.attention,
                           controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])
@@ -137,5 +146,169 @@ enum SessionHost {
         // Only terminals set TERM_PROGRAM; the known ones are also recognised by their identifier.
         if !origin.hostName.isEmpty || knownPrograms.values.contains(id) { return .terminal }
         return .other
+    }
+}
+
+// MARK: - The list of sessions
+
+/// Every session of the module's list, with since when each one is in its state. A finished
+/// session (its answer done, or the session closed) stays a moment with its result, then leaves.
+struct SessionBoard: Equatable, Sendable {
+    /// How long a finished session stays in the list.
+    static let keepFinished: TimeInterval = 90
+
+    private struct Seen: Equatable, Sendable {
+        var session: Session
+        /// What the session is doing, in words: when it changes, the clock starts again.
+        var phase: String
+        var since: Date
+        /// The session closed: it is no longer in the store.
+        var closed = false
+    }
+
+    private var seen: [SessionID: Seen] = [:]
+    /// Finished sessions already gone from the list, with the phase they left in: they come
+    /// back only when they start something else.
+    private var departed: [SessionID: String] = [:]
+
+    init() {}
+
+    /// Takes the sessions of the store as they are now. A session missing from them was closed.
+    mutating func update(_ sessions: [Session], now: Date = .now) {
+        let present = Set(sessions.map(\.id))
+        for (id, entry) in seen where !present.contains(id) && !entry.closed {
+            seen[id]?.closed = true
+            seen[id]?.since = now
+        }
+        departed = departed.filter { present.contains($0.key) }
+        for session in sessions {
+            let phase = Self.phase(session)
+            if departed[session.id] == phase { continue }
+            departed[session.id] = nil
+            if let old = seen[session.id], !old.closed, old.phase == phase {
+                seen[session.id]?.session = session
+            } else {
+                seen[session.id] = Seen(session: session, phase: phase, since: now)
+            }
+        }
+        for (id, entry) in seen where Self.expired(entry, now: now) {
+            seen[id] = nil
+            if !entry.closed { departed[id] = entry.phase }
+        }
+    }
+
+    /// The sessions to list, the ones waiting for something first.
+    func rows(now: Date = .now) -> [ModuleRow] {
+        seen.values
+            .filter { !Self.expired($0, now: now) }
+            .sorted { a, b in
+                let rankA = Self.rank(a), rankB = Self.rank(b)
+                if rankA != rankB { return rankA < rankB }
+                if a.session.recency != b.session.recency { return a.session.recency > b.session.recency }
+                return a.session.id.value < b.session.id.value
+            }
+            .map(Self.row)
+    }
+
+    /// When the next finished session leaves the list, to refresh it then.
+    func nextDeparture(now: Date = .now) -> Date? {
+        seen.values.filter { Self.finished($0) }.map { $0.since.addingTimeInterval(Self.keepFinished) }
+            .filter { $0 > now }.min()
+    }
+
+    /// The session of a row's action, for the button.
+    func session(_ action: String) -> Session? {
+        seen[SessionID(action)]?.session
+    }
+
+    private static func finished(_ entry: Seen) -> Bool {
+        entry.closed || entry.session.status == .completed
+    }
+
+    private static func expired(_ entry: Seen, now: Date) -> Bool {
+        finished(entry) && now.timeIntervalSince(entry.since) >= keepFinished
+    }
+
+    private static func phase(_ session: Session) -> String {
+        switch session.activity {
+        case .requestingPermission: return "approval"
+        case .asking:               return "question"
+        case .working(let tool):    return "tool:\(tool.name):\(tool.summary)"
+        case .thinking:             return "thinking"
+        case .idle:                 return "idle:\(session.status):\(session.isTurnActive)"
+        }
+    }
+
+    /// Approval, question, working, error, open, finished.
+    private static func rank(_ entry: Seen) -> Int {
+        if entry.closed { return 5 }
+        let session = entry.session
+        switch session.activity {
+        case .requestingPermission: return 0
+        case .asking:               return 1
+        case .working, .thinking:   return 2
+        case .idle:
+            switch session.status {
+            case .waitingForUser: return 1
+            case .running:        return session.isTurnActive ? 2 : 4
+            case .errored, .rateLimited: return 3
+            case .completed:      return 5
+            }
+        }
+    }
+
+    private static func row(_ entry: Seen) -> ModuleRow {
+        let session = entry.session
+        var row = ModuleRow(id: session.id.value, title: ClaudeSessions.projectName(session), detail: "",
+                            state: .neutral, label: "", date: entry.since,
+                            action: SessionHost.kind(of: session.origin) == nil ? nil : session.id.value)
+        if entry.closed {
+            row.state = .success
+            row.label = "terminée"
+            row.detail = "Session fermée."
+            return row
+        }
+        switch session.activity {
+        case .requestingPermission(let request):
+            row.state = .waiting
+            row.label = "attend un accord"
+            row.detail = request.command.isEmpty ? "Demande \(request.tool)." : "Demande \(request.tool) : \(request.command)"
+        case .asking(let question):
+            row.state = .waiting
+            row.label = "attend ta réponse"
+            row.detail = question.text.isEmpty ? "A une question pour toi." : question.text
+        case .working(let tool):
+            row.state = .busy
+            row.label = "travaille"
+            row.detail = FrenchText.sentenceStart(ClaudeToolPhrase.sentence(tool))
+        case .thinking:
+            row.state = .busy
+            row.label = "travaille"
+            row.detail = "Réfléchit."
+        case .idle:
+            switch session.status {
+            case .waitingForUser:
+                row.state = .waiting
+                row.label = "attend ta réponse"
+                row.detail = "T'attend."
+            case .running:
+                row.state = session.isTurnActive ? .busy : .neutral
+                row.label = session.isTurnActive ? "travaille" : "ouverte"
+                row.detail = session.isTurnActive ? "Avance." : "Attend ton message."
+            case .errored:
+                row.state = .failure
+                row.label = "en erreur"
+                row.detail = "Ça a planté."
+            case .rateLimited:
+                row.state = .failure
+                row.label = "limite atteinte"
+                row.detail = "A atteint sa limite."
+            case .completed:
+                row.state = .success
+                row.label = "terminée"
+                row.detail = "C'est passé."
+            }
+        }
+        return row
     }
 }

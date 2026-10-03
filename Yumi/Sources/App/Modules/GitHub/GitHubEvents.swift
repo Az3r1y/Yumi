@@ -32,6 +32,8 @@ struct GitHubEvent: Equatable, Sendable {
     /// Title of the pull request or issue, name of the release, branch of the push.
     var detail: String = ""
     var url: URL? = nil
+    /// When it happened (`created_at`), when GitHub says.
+    var date: Date? = nil
 
     /// The repository's own name, without its owner.
     var repoName: String { repo.split(separator: "/").last.map(String.init) ?? repo }
@@ -43,6 +45,28 @@ struct GitHubRepo: Equatable, Sendable {
     var stars: Int
     var forks: Int
     var url: URL?
+}
+
+/// Where the checks (CI) of a pull request are.
+enum GitHubChecks: String, Equatable, Sendable {
+    case running, passed, failed
+}
+
+/// An open pull request of a followed repository.
+struct GitHubPull: Equatable, Sendable {
+    var repo: String
+    var number: Int
+    var title: String
+    var author: String
+    /// Head commit: its checks are the pull request's.
+    var sha: String
+    var url: URL?
+    /// The person is asked to review it.
+    var asksMyReview = false
+    var updated: Date? = nil
+    var checks: GitHubChecks? = nil
+
+    var key: String { "\(repo)#\(number)" }
 }
 
 /// A pull request waiting for the person's review.
@@ -69,6 +93,8 @@ enum GitHubFeed {
             let payload = item["payload"] as? [String: Any] ?? [:]
             let action = payload["action"] as? String ?? ""
             let page = URL(string: "https://github.com/\(repo)")
+            let date = (item["created_at"] as? String).flatMap { try? Date($0, strategy: .iso8601) }
+            let event: GitHubEvent? = {
             switch item["type"] as? String {
             case "WatchEvent" where action == "started":
                 return GitHubEvent(id: id, kind: .star, repo: repo, actor: actor, url: page)
@@ -99,7 +125,42 @@ enum GitHubFeed {
             default:
                 return nil
             }
+            }()
+            return event.map { var dated = $0; dated.date = date; return dated }
         }
+    }
+
+    /// The open pull requests of a repository, from `/repos/{owner}/{name}/pulls`.
+    static func pulls(from data: Data, repo: String, login: String?) -> [GitHubPull] {
+        guard let items = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+        return items.compactMap { item in
+            guard let number = item["number"] as? Int else { return nil }
+            let reviewers = (item["requested_reviewers"] as? [[String: Any]] ?? []).compactMap { $0["login"] as? String }
+            return GitHubPull(repo: repo, number: number, title: item["title"] as? String ?? "",
+                              author: (item["user"] as? [String: Any])?["login"] as? String ?? "",
+                              sha: (item["head"] as? [String: Any])?["sha"] as? String ?? "",
+                              url: (item["html_url"] as? String).flatMap(URL.init(string:)),
+                              asksMyReview: login.map { me in reviewers.contains { $0.lowercased() == me.lowercased() } } ?? false,
+                              updated: (item["updated_at"] as? String).flatMap { try? Date($0, strategy: .iso8601) })
+        }
+    }
+
+    /// Where the checks of a commit are, from `/repos/{owner}/{name}/commits/{sha}/check-runs`.
+    /// nil when the commit has no checks.
+    static func checks(from data: Data) -> GitHubChecks? {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let runs = object["check_runs"] as? [[String: Any]], !runs.isEmpty else { return nil }
+        let bad: Set<String> = ["failure", "timed_out", "cancelled", "action_required", "startup_failure"]
+        if runs.contains(where: { bad.contains($0["conclusion"] as? String ?? "") }) { return .failed }
+        if runs.contains(where: { ($0["status"] as? String ?? "completed") != "completed" }) { return .running }
+        return .passed
+    }
+
+    /// The person's own repositories pushed to most recently, at most `limit`: the ones followed.
+    static func followedRepos(from data: Data, limit: Int = 3) -> [String] {
+        guard let items = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
+        return Array(items.filter { $0["fork"] as? Bool != true && $0["archived"] as? Bool != true }
+            .compactMap { $0["full_name"] as? String }.prefix(limit))
     }
 
     /// Login and number of followers, from `/user`.
@@ -205,8 +266,12 @@ enum GitHubSummary {
     /// - Parameters:
     ///   - openPulls: open pull requests on the repository, when known.
     ///   - last: the latest event, with how many of its kind came together.
+    ///   - pulls: open pull requests of the followed repositories, with their checks.
+    ///   - recent: the latest events, newest first.
+    ///   - red: a pull request whose checks just turned red.
     static func snapshot(connection: Connection, repo: GitHubRepo?, openPulls: Int?, last: (event: GitHubEvent, count: Int)?,
-                         review: GitHubReview?) -> ModuleSnapshot {
+                         review: GitHubReview?, pulls: [GitHubPull] = [], recent: [GitHubEvent] = [],
+                         red: GitHubPull? = nil) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "github", name: "GitHub", colorHex: "#A371F7", status: "à brancher",
                                       title: "Je ne vois pas ton GitHub.", subtitle: "Donne-moi un jeton, je surveille tes dépôts.",
                                       primaryAction: "Brancher", secondaryAction: nil)
@@ -247,6 +312,104 @@ enum GitHubSummary {
                                        priority: ModuleLivePriority.attention,
                                        controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Relire")])
         }
+        // Checks gone red come before everything: something is broken now.
+        if let red {
+            snapshot.title = "La CI ne passe plus : \(red.title)"
+            snapshot.primaryAction = "Voir"
+            snapshot.needsAttention = true
+            snapshot.live = ModuleLive(text: "CI rouge : \(red.title)", priority: ModuleLivePriority.attention,
+                                       controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])
+        }
+        snapshot.rows = GitHubBoard.rows(pulls: pulls, recent: recent)
         return snapshot.withSymbols("arrow.triangle.branch")
+    }
+}
+
+/// The list of the GitHub activity: the open pull requests of each followed repository, then
+/// the latest events.
+enum GitHubBoard {
+    /// Pull requests shown per repository, events shown in all.
+    static let pullsPerRepo = 4
+    static let events = 4
+
+    static func rows(pulls: [GitHubPull], recent: [GitHubEvent]) -> [ModuleRow] {
+        var rows: [ModuleRow] = []
+        var repos: [String] = []
+        for pull in pulls where !repos.contains(pull.repo) { repos.append(pull.repo) }
+        for repo in repos {
+            let ordered = pulls.filter { $0.repo == repo }.sorted { rank($0) != rank($1) ? rank($0) < rank($1) : $0.number > $1.number }
+            for (index, pull) in ordered.prefix(pullsPerRepo).enumerated() {
+                rows.append(row(pull, section: index == 0 ? repo : nil))
+            }
+        }
+        for (index, event) in recent.prefix(events).enumerated() {
+            rows.append(ModuleRow(id: "event-\(event.id)", title: title(event), detail: "\(event.actor) · \(event.repoName)",
+                                  state: .neutral, label: label(event.kind), date: event.date,
+                                  section: index == 0 ? "Derniers événements" : nil,
+                                  action: event.url?.absoluteString))
+        }
+        return rows
+    }
+
+    /// Asked for review first, then red, running, green, without checks.
+    private static func rank(_ pull: GitHubPull) -> Int {
+        if pull.asksMyReview { return 0 }
+        switch pull.checks {
+        case .failed:  return 1
+        case .running: return 2
+        case .passed:  return 3
+        case nil:      return 4
+        }
+    }
+
+    static func row(_ pull: GitHubPull, section: String?) -> ModuleRow {
+        var row = ModuleRow(id: pull.key, title: pull.title.isEmpty ? "#\(pull.number)" : pull.title,
+                            detail: "#\(pull.number) · \(pull.author)", state: .neutral, label: "ouverte",
+                            date: pull.updated, section: section, action: pull.url?.absoluteString)
+        switch pull.checks {
+        case .failed:  row.state = .failure; row.label = "CI rouge"
+        case .running: row.state = .busy;    row.label = "CI en cours"
+        case .passed:  row.state = .success; row.label = "CI verte"
+        case nil:      break
+        }
+        if pull.asksMyReview {
+            row.state = .waiting
+            row.label = "ta review"
+        }
+        return row
+    }
+
+    private static func title(_ event: GitHubEvent) -> String {
+        switch event.kind {
+        case .star:        return "Une étoile"
+        case .fork:        return "Un fork"
+        case .follower:    return "Quelqu'un te suit"
+        case .push:        return event.detail.isEmpty ? "Du code poussé" : "Poussé sur \(event.detail)"
+        default:           return event.detail.isEmpty ? event.repoName : event.detail
+        }
+    }
+
+    private static func label(_ kind: GitHubEvent.Kind) -> String {
+        switch kind {
+        case .star: return "star"
+        case .fork: return "fork"
+        case .pullRequest: return "pull request"
+        case .merge: return "merge"
+        case .push: return "push"
+        case .issue: return "issue"
+        case .release: return "version"
+        case .follower: return "abonné"
+        }
+    }
+
+    /// Pull requests whose checks turned red since the last look. A first look reports nothing:
+    /// what was already red is history.
+    static func turnedRed(before: [GitHubPull]?, after: [GitHubPull]) -> [GitHubPull] {
+        guard let before else { return [] }
+        let was = Dictionary(before.map { ($0.key, $0.checks) }, uniquingKeysWith: { a, _ in a })
+        return after.filter { pull in
+            guard pull.checks == .failed, let old = was[pull.key] else { return false }
+            return old != .failed
+        }
     }
 }
