@@ -5,8 +5,9 @@ import Foundation
 /// person to a permission.
 @MainActor
 final class IslandApprovalPresenter: ApprovalPresenter {
-    func present(_ approval: ApprovalRequest, answer: @escaping @MainActor (ApprovalAnswer) -> Void) {
-        HookServer.shared.presentAgentApproval(approval) { decision in
+    func present(_ approval: ApprovalRequest, shown: @escaping @MainActor () -> Void,
+                 answer: @escaping @MainActor (ApprovalAnswer) -> Void) {
+        HookServer.shared.presentAgentApproval(approval, shown: shown) { decision in
             switch decision {
             case "allow": answer(.approveOnce)
             case "always": answer(.approveForSession)

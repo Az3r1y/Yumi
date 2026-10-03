@@ -23,6 +23,9 @@ final class ApprovalStore {
 
     func approval(id: UUID) -> ApprovalRequest? { pending[id] }
 
+    /// Moves the deadline of an approval still waiting.
+    func setExpiry(_ id: UUID, to date: Date) { pending[id]?.expiresAt = date }
+
     func status(of id: UUID) -> ApprovalRequest.Status? { pending[id]?.status ?? ended[id] }
 
     /// Ends an approval. Returns it with its final status, or nil when it was not pending.

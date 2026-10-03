@@ -35,7 +35,10 @@ struct CreateFileTool: Tool {
 
     func action(for arguments: ToolArguments) -> ToolAction? {
         guard case .string(let raw)? = arguments["path"] else { return nil }
-        return ToolAction(kind: .create, resources: [.file(expand(raw))], reversible: true)
+        // The approval shows what the file will hold, not only where it goes.
+        var content: String?
+        if case .string(let text)? = arguments["content"] { content = text }
+        return ToolAction(kind: .create, resources: [.file(expand(raw))], reversible: true, content: content)
     }
 
     func execute(_ arguments: ToolArguments, in context: ToolContext) async throws -> ToolOutput {

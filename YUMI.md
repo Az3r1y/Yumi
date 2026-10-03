@@ -216,6 +216,21 @@ Décisions validées sur cette maquette :
 
 Conséquence pour le code : les sept intégrations câblées en dur et la tâche Claude unique doivent laisser la place à un système de modules. Le moteur d'événements typé de la branche `legacy-v0` est la fondation prévue.
 
+## État de `main` au 3 octobre 2026 (stabilisation avant 0.1.0-alpha)
+
+Les sections par branche plus bas sont un journal : en cas de doute, cette section et le code font foi.
+
+| Sujet | État réel |
+|---|---|
+| Chemin d'une action | Message du chat → `AgentRequest` (mots, six derniers échanges, snapshot gardé sur le Mac) → `LLMAgentPlanner` (Claude Code sans outil, sinon clé Anthropic) → `PlanProposal` → `PlanValidator` → `ChatRoute` → `AgentExecutor` (revalidation, `check`, `PermissionManager.evaluate` pour chaque étape, exécution avec délai, contrôle de la sortie) → `verify` de chaque outil → `AgentResult` → `AgentLook` dans le chat. |
+| Outils (build direct) | `get_current_time`, `get_current_context`, `create_file`, `append_to_file`, `add_reminder`, `add_event`, `start_focus`, `get_today`. Plafond `write`. |
+| Outils (build App Store) | `get_current_time`, `get_current_context` seulement, plafond `read`, planification par clé API seulement. Une demande d'action y est refusée sans liste d'outils qu'il n'a pas. |
+| Chat | Claude Code avec `Read`, `Glob`, `Grep`, `WebSearch`, `WebFetch` seulement ; `Bash`, `Edit`, `Write`, `NotebookEdit`, `Task` refusés, toute demande d'outil qui écrit est refusée sans être montrée. Ses demandes de permission (lecture hors du dossier, web) sont répondues dans la file de l'île, pas décidées par `LocalPermissionManager`, mais chacune est écrite dans le même historique (`ChatPermissionAudit`, outil `chat:WebFetch`…) : autorisée, refusée, expirée, bloquée ou annulée, avec le fichier (depuis `~`) ou l'hôte seulement, jamais la recherche ni le reste de l'adresse. |
+| Demande d'accord | Le délai de 60 s part quand la demande est à l'écran (`ApprovalPresenter.present(_:shown:answer:)`), 10 min au plus en file. `create_file` montre le contenu du fichier : les cinq premières lignes puis « … et N lignes de plus », le nombre de lignes et de caractères dans les détails. Une étape qui écrit un texte n'est jamais regroupée avec d'autres : chaque texte est lu avant d'accepter. |
+| Ce qui ne s'exécute jamais | Une étape refusée, expirée ou annulée ; un outil inconnu ou au-dessus du plafond ; un outil qui écrit après un délai dépassé (pas de deuxième essai) ; une course dont la vérification échoue est un échec. |
+| Processeur (build Debug optimisé, mode studio, 20 s par état) | Repliée au repos 10,7 %, repliée avec musique 11,4 %, compacte au travail 8,2 %, ouverte 10,2 %, session Claude Code 12,8 %, lignes Claude Code 12,2 %, GitHub 6,3 %, module musique 7,7 %, habitude casque 8,6 %, fumée 8,4 %, sommeil profond 1,1 %, chat en direct 21,7 % (seulement pendant qu'une réponse arrive), approbation 13,0 % (20,6 % avant plafonnement). Cachée : 0 % (mesuré sur la copie installée ; le mode studio ne cache jamais l'île). Une approbation en attente tourne désormais à 30 images par seconde hors mouvement : seul le halo pulse, sur 1,1 s. |
+| Connu, non corrigé | Un message envoyé pendant une course de l'agent va directement au chat (qui ne peut rien changer). |
+
 ## État au 1er octobre 2026
 
 Les trois branches ont été fusionnées dans `main` et les renommages internes sont faits (`YumiApp`, `YumiConst`, `yumiPath`, `drawYumi`, état `.greeting`, préfixe de notifications `yumi.`). Les seules mentions restantes de Coucou dans le code sont les marqueurs des anciens hooks à retirer.
@@ -343,7 +358,7 @@ Première fondation de l'intelligence : Yumi sait ce que la personne fait sur so
 | Permissions | Aucune n'est demandée. Le titre des fenêtres n'est lu que si l'Accessibilité est déjà accordée (`AXIsProcessTrusted`, sans invite) ; le changement de permission est suivi. Pas d'enregistrement d'écran. Build App Store : pas de fenêtre. |
 | Désactivation | Réglages, section Context : interrupteur persisté sous `contextEngineEnabled`. Mode tournage : le moteur ne démarre pas (`LaunchPlan.context`). |
 | Personnage | `ContextPresence` : `idle`, `observing`, `contextChanged`. Quand l'application change, île repliée et rien d'autre en cours, Yumi jette un coup d'œil vers le bas puis reprend le pointeur. Rien de plus : pas d'action, pas de remarque. |
-| Confidentialité | Pas de capture d'écran, pas de frappes, rien envoyé à un modèle ni ailleurs. `ClaudeService` ne lit pas le contexte. |
+| Confidentialité | Pas de capture d'écran, pas de frappes, rien envoyé à un modèle ni ailleurs. `ClaudeService` joint le snapshot aux demandes d'action du chat pour les outils, sans jamais le montrer au planificateur ; seule la section Agent des réglages peut l'envoyer, case cochée. |
 
 Prochaines étapes possibles : providers de facettes (`ContextFacet` : écran, presse-papiers, fichiers, navigateur, calendrier, git, projet), puis un lien vers l'initiative et le chat, chacun derrière son propre réglage.
 
@@ -355,13 +370,13 @@ Le cerveau de Yumi, pas encore ses mains : une intention entre, un plan vérifi�
 |---|---|
 | Entrée | `AgentRequest` : l'intention, le `ContextSnapshot` du moment (ou rien), l'heure. Le contexte est joint par celui qui crée la demande, une fois, quand la personne demande : le runtime ne capture rien et ne s'abonne pas au Context Engine. |
 | Contexte transmis | `RequestContext` : application, fenêtre, nom du fichier (sans son dossier), application précédente, activité principale. Ni historique d'événements, ni liste d'applications. Dans la consigne du modèle il est entre balises `<context>`, présenté comme des données ; ses chevrons sont neutralisés pour qu'il ne puisse pas fermer le bloc. |
-| Modèle | `LLMProvider` (texte en entrée, texte en sortie) : Anthropic, OpenAI, Gemini ou un modèle local s'y branchent sans toucher au runtime. Aucun n'est branché : `UnavailableLLMProvider` répond « aucun modèle », le runtime n'invente jamais de plan. |
+| Modèle | `LLMProvider` (texte en entrée, texte en sortie) : Anthropic, OpenAI, Gemini ou un modèle local s'y branchent sans toucher au runtime. Branchés (build direct) : `ClaudeCodeLLMProvider` (Claude Code utilisé comme modèle, sans aucun outil) puis `AnthropicLLMProvider` (clé des réglages), dans `FallbackLLMProvider`. Build App Store : la clé seulement. Sans modèle, `noProvider` : le runtime n'invente jamais de plan. |
 | Planification | `AgentPlanner` propose (`LLMAgentPlanner` lit un objet JSON), `PlanValidator` décide : outil enregistré, sous le plafond de la politique, arguments conformes au schéma, douze étapes au plus. Le risque, les approbations et les identifiants d'étape viennent du registre et de la politique, jamais du modèle. Un modèle peut ajouter une approbation, jamais en retirer. `cannotPlan` permet de dire que ce n'est pas faisable. |
 | Outils | `Tool` (descripteur : id, nom, description, schéma d'entrée, risque, clés de sortie promises ; `execute`). `ToolRegistry` construit une fois, au lancement. Livrés : `get_current_time` (risque nul) et `get_current_context` (lecture, ne lit que le snapshot de la demande). |
-| Politique | `AgentPolicy` : plafond `read` (rien qui écrive ou sorte du Mac ne peut tourner, même approuvé), approbation à partir de `write`, et `write` comme `external` demandent toujours, quel que soit le réglage. |
-| Permissions | `PermissionManager` est la seule porte : chaque étape qui le demande y passe, le plan entier est revérifié avant l'exécution, aucun drapeau ne la contourne. Implémentation actuelle : `DenyingPermissionManager`, qui refuse tout. Un refus annule la course (ou saute l'étape si elle est facultative). |
+| Politique | `AgentPolicy` : plafond `read` par défaut, `write` dans le build direct (`AppDelegate.makeAgent`), `read` dans le build App Store. `external` ne tourne jamais. Approbation à partir de `write`, et `write` comme `external` demandent toujours, quel que soit le réglage. |
+| Permissions | `PermissionManager` est la seule porte : chaque étape qui le demande y passe, le plan entier est revérifié avant l'exécution, aucun drapeau ne la contourne. Implémentation de l'app : `LocalPermissionManager` (voir Permission System) ; `DenyingPermissionManager`, qui refuse tout ce qui demande un accord, reste le défaut du runtime. Un refus annule la course (ou saute l'étape si elle est facultative). |
 | Exécution | `AgentExecutor` : étape par étape, revérifie l'outil, demande l'accord, exécute hors du fil principal avec un délai maximal (30 s), contrôle la sortie, met l'état à jour. Une erreur d'outil devient une valeur, jamais un plantage. |
-| Reprise | `RecoveryPolicy` : `retry` pour une panne passagère ou un délai dépassé (3 essais par étape, 6 relances par course, plafonnés à 5 et 20), `skip` pour une étape facultative, `cancel` sur un refus, `fail` sinon. |
+| Reprise | `RecoveryPolicy` : `retry` pour une panne passagère ou un délai dépassé (3 essais par étape, 6 relances par course, plafonnés à 5 et 20), seulement pour un outil qui ne change rien (risque `none` ou `read`) : un outil qui écrit n'est jamais appelé deux fois, son effet a pu avoir lieu malgré le délai. `skip` pour une étape facultative, `cancel` sur un refus, `fail` sinon. |
 | Vérification | `AgentVerifier` : `StructuralVerifier` exige que chaque étape non facultative soit terminée avec un résultat. Un vérificateur futur pourra refuser un résultat, jamais exécuter. |
 | États | `ExecutionState` : idle, planning, awaitingApproval, executing, verifying, completed, failed, cancelled. `AgentActivity` les traduit pour le personnage (idle, thinking, planning, working, waiting, success, error), sans rien dire des poses : c'est au personnage de décider. |
 | Événements | `AgentEvent` : agentStarted, planCreated, stepStarted, stepCompleted, stepFailed, stepSkipped, approvalRequired, approvalGranted, approvalDenied, verificationStarted, agentCompleted, agentFailed, agentCancelled. Abonnement par `RuntimeAgent.events()`. `suggestedPriority` (`InteractionPriority` : silent, ambient, attention, blocking) n'est qu'une indication : seule une demande d'accord est bloquante, la progression est silencieuse. Aucune notification n'est affichée par le runtime. |
@@ -369,7 +384,7 @@ Le cerveau de Yumi, pas encore ses mains : une intention entre, un plan vérifi�
 | Interface | Réglages, section Agent : planificateur, outils, but, état, étape en cours, progression, erreur, derniers événements ; un champ pour lancer une demande, « Check tools » (un plan écrit par le développeur, qui passe par les mêmes règles) et « Cancel ». Le contexte n'est joint qu'au clic. Mode tournage : pas de runtime. |
 | Nommage | `RuntimeAgent` et `RuntimeTask`, parce que `Agent` (Core/) désigne déjà un produit externe et `AgentTask` une carte de l'île. `AgentPermissionRequest` pour la même raison (`PermissionRequest` est la demande d'un hook Claude Code). |
 
-Reste à faire : brancher un vrai `LLMProvider` (et décider ce qui peut être envoyé à un modèle, le Context Engine promettant aujourd'hui que rien n'y part), le Permission System derrière `PermissionManager` (dans la file d'approbations de l'île), relier `AgentActivity` et les événements au personnage et à l'île, puis les outils qui écrivent, une fois le Permission System en place.
+Fait depuis : providers Claude Code et Anthropic, `LocalPermissionManager` dans la file de l'île, `AgentReaction` (personnage et île), six outils (voir les sections suivantes).
 
 ## Cœur : le Permission System (branche `yumi/permissions`)
 
@@ -383,13 +398,15 @@ La frontière entre le cerveau de Yumi et ses actions. `Permissions/` suit la r�
 | Ordre de décision | règle qui refuse, critical (refus, ou question si une règle le dit), accord de cette course, high (toujours une question), règle ask/allow (allow plafonné à medium), permission donnée avant, puis défauts : safe passe, low passe pour un fichier choisi par la personne ou dans un projet déjà autorisé, sinon question. |
 | Portées | `oneTime`, `session` (projet ou ressources, jusqu'à la fin), `project` et `resource` (retenues), `tool` (projet ou compte, session). Jamais au-dessus de medium, jamais tout le Mac. Préfixes de chemins comparés par dossier entier, chemins résolus (`..`, liens). |
 | Regroupement | Les étapes suivantes de la même course avec même outil, action, risque et projet sont demandées ensemble : « Je dois modifier 5 fichiers dans le projet Yumi. » Chaque action reste dans l'historique. |
-| Approbation | `ApprovalRequest` (pending, approved, denied, expired, cancelled), expire après 60 s, ne se résout qu'une fois : une réponse tardive ou rejouée ne change rien. Montrée dans la file de l'île (`HookServer.presentAgentApproval`) : une phrase, « Voir les détails » (outil, fichiers, portée, risque, raison de l'agent étiquetée comme telle, conséquence), Refuser, Autoriser, « Pour cette session » si le risque le permet. |
+| Approbation | `ApprovalRequest` (pending, approved, denied, expired, cancelled), expire 60 s après être apparue à l'écran (une demande qui attend derrière une demande Claude Code n'use pas ce temps ; jamais affichée, elle expire après 10 min), ne se résout qu'une fois : une réponse tardive ou rejouée ne change rien. Montrée dans la file de l'île (`HookServer.presentAgentApproval`) : une phrase, « Voir les détails » (outil, fichiers, portée, risque, raison de l'agent étiquetée comme telle, conséquence), Refuser, Autoriser, « Pour cette session » si le risque le permet. |
 | Injection | Les permissions ne viennent que d'un clic (closure donnée au présentateur) ou des réglages. `AgentPermissionRequest` ne contient pas le contexte. Une règle trop large est refusée, et ignorée si écrite à la main dans le fichier. |
 | Stockage | `permissions.json` (règles et accords retenus) et `permissions-audit.jsonl` dans le dossier de Yumi, 0600. Aucun secret : ils restent dans le trousseau. Historique nettoyé : ni arguments, ni contenu, ni texte de l'agent, jetons masqués (`AuditRedactor`). |
 | Personnage | `PermissionEvent` décrit ; `ApprovalReaction` (app) fait regarder Yumi, puis `pop` et `working` à l'accord. |
 | Réglages | Section « Autorisations de Yumi » : accords à retirer, règles, historique effaçable. Distinct des autorisations macOS (`Modules/Permission.swift`). |
 
-Reste à faire : appeler `personChose(file:)` au dépôt d'un fichier dans l'île, une interface pour écrire des règles, les premiers outils qui écrivent (le plafond `AgentPolicy.maximumRisk` reste `read` d'ici là).
+Reste à faire : appeler `personChose(file:)` au dépôt d'un fichier dans l'île, une interface pour écrire des règles. Les outils qui écrivent existent (plafond `write` dans le build direct).
+
+Depuis la stabilisation : un clic sur Autoriser ou Refuser répond à la demande affichée et à aucune autre (`ApprovalInfo.requestID`) ; si la file a changé entre l'affichage et le clic, le clic est ignoré. Un `permissions.json` illisible est mis de côté (`permissions.unreadable-<secondes>.json`) au lieu d'être écrasé à la sauvegarde suivante.
 
 ## Cœur : trois outils pour l'agent (branche `yumi/outils`)
 
@@ -427,7 +444,7 @@ Hors périmètre, non commencés : suppression, terminal, mails, mémoire. Aucun
 | Fichiers connus du planificateur | La description de `append_to_file` liste les dix derniers fichiers créés par Yumi (chemins sous `~`), pour que « ma todo » désigne le bon. Rien d'autre du disque. |
 | Affichage des accords | Un fichier hors d'un projet s'affiche depuis le dossier personnel (`~/Downloads/todo.md`) et plus seulement par son nom. |
 
-Hors périmètre, non commencés : agenda (création d'événements), modification de fichier, suppression, terminal, mails, mémoire. Aucun outil ne supprime, ne modifie un existant, n'invite ni n'envoie.
+Hors périmètre, non commencés : suppression, terminal, mails, mémoire. Aucun outil ne supprime, n'invite ni n'envoie ; seul `append_to_file` modifie un fichier existant, et seulement un fichier que Yumi a créé.
 
 ## Île : sessions Claude Code et GitHub en lignes (branche `yumi/ile`)
 

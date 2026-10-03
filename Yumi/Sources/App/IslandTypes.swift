@@ -164,6 +164,9 @@ struct ApprovalInfo: Sendable {
     /// Set when Yumi's own agent asks (Permissions/): the island shows its short sentence, and
     /// its details on demand, instead of a command.
     var agentRequest: ApprovalRequest? = nil
+    /// The request this card answers (`HookServer`). A click answers this one or nothing: the
+    /// queue may have moved on (an expiry, a withdrawal) between the drawing and the click.
+    var requestID: String? = nil
 }
 
 // MARK: - Pill badge (shown on pill edge when non-focused task has an alert)

@@ -136,4 +136,23 @@ import Foundation
         #expect((attributes[.posixPermissions] as? NSNumber)?.intValue == 0o600)
         #expect(FilePermissionStore(url: url).load().rules == [rule])
     }
+
+    /// A file that cannot be read loses nothing: the next save would otherwise erase the refusals in it.
+    @Test func anUnreadablePermissionFileIsPutAsideNotOverwritten() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("yumi-perm-\(UUID().uuidString)")
+        defer { try? FileManager.default.removeItem(at: folder) }
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent("permissions.json")
+        let broken = Data(#"{"rules": [{"toolID": "*", "effect": "deny""#.utf8)
+        try broken.write(to: url)
+
+        let store = FilePermissionStore(url: url)
+        #expect(store.load() == PermissionRecord())
+        store.save(PermissionRecord())
+
+        let aside = try FileManager.default.contentsOfDirectory(atPath: folder.path).filter { $0.hasPrefix("permissions.unreadable-") }
+        #expect(aside.count == 1)
+        let kept = try #require(aside.first)
+        #expect(FileManager.default.contents(atPath: folder.appendingPathComponent(kept).path) == broken)
+    }
 }

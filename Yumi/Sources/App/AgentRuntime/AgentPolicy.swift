@@ -53,7 +53,11 @@ struct RecoveryPolicy: Equatable, Sendable {
     /// - Parameters:
     ///   - attempt: the try that just failed, from 1.
     ///   - retriesUsed: retries already spent in this run.
-    func decide(after error: AgentError, attempt: Int, retriesUsed: Int, optional: Bool) -> RecoveryAction {
+    ///   - repeatable: false for a step that changes something. It is never run twice: a call
+    ///     that timed out or failed may still have done its work (a reminder saved, a line
+    ///     added), and a second call would do it again.
+    func decide(after error: AgentError, attempt: Int, retriesUsed: Int, optional: Bool,
+                repeatable: Bool = true) -> RecoveryAction {
         let giveUp: RecoveryAction = optional ? .skip : .fail
         switch error {
         case .cancelled:
@@ -61,6 +65,7 @@ struct RecoveryPolicy: Equatable, Sendable {
         case .permissionDenied:
             return optional ? .skip : .cancel
         case .toolTimedOut, .toolFailed(_, _, transient: true):
+            guard repeatable else { return giveUp }
             return attempt < maxAttempts && retriesUsed < maxRetriesPerRun ? .retry : giveUp
         default:
             return giveUp

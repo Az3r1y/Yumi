@@ -489,13 +489,13 @@ struct AlertActivity: View {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
                 ActTitle(text: approval.tool == "Bash" ? "Claude veut lancer ça. Je laisse passer ?" : "Claude veut utiliser \(approval.tool). Je laisse passer ?").riseIn(1)
                 ActMono(prompt: approval.tool == "Bash" ? "$" : nil, text: approval.command, color: IslandTheme.amber).riseIn(2)
-                TextButton(label: "Toujours autoriser") { HookServer.shared.sendApprovalDecision("always") }.riseIn(3)
+                TextButton(label: "Toujours autoriser") { HookServer.shared.sendApprovalDecision("always", for: approval.requestID) }.riseIn(3)
             } trail: {
                 RoundButton(style: .fill, symbol: "xmark", label: "Refuser", color: IslandTheme.red) {
-                    HookServer.shared.sendApprovalDecision("deny")
+                    HookServer.shared.sendApprovalDecision("deny", for: approval.requestID)
                 }
                 RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
-                    HookServer.shared.sendApprovalDecision("allow")
+                    HookServer.shared.sendApprovalDecision("allow", for: approval.requestID)
                 }
             }
         } else {
@@ -523,6 +523,8 @@ private struct AgentApprovalCard: View {
     @State private var showsDetails = false
 
     private var color: Color { request.riskLevel >= .high ? IslandTheme.red : IslandTheme.amber }
+    /// The queue entry of this very approval: a click answers it, or nothing.
+    private var answering: String { request.id.uuidString }
 
     var body: some View {
         ActRow {
@@ -532,21 +534,25 @@ private struct AgentApprovalCard: View {
                 VStack(alignment: .leading, spacing: 1) {
                     ForEach(request.details, id: \.self) { ActMono(text: $0) }
                 }
+            } else if let preview = request.contentPreview {
+                VStack(alignment: .leading, spacing: 1) {
+                    ForEach(Array(preview.enumerated()), id: \.offset) { ActMono(text: $0.element) }
+                }.riseIn(2)
             } else if let subject = request.subject {
                 ActMono(prompt: "$", text: subject, color: color).riseIn(2)
             }
             HStack(spacing: 14) {
                 TextButton(label: showsDetails ? "Masquer les détails" : "Voir les détails") { showsDetails.toggle() }
                 if request.offersSession {
-                    TextButton(label: "Pour cette session") { HookServer.shared.sendApprovalDecision("always") }
+                    TextButton(label: "Pour cette session") { HookServer.shared.sendApprovalDecision("always", for: answering) }
                 }
             }.riseIn(3)
         } trail: {
             RoundButton(style: .fill, symbol: "xmark", label: "Refuser", color: IslandTheme.red) {
-                HookServer.shared.sendApprovalDecision("deny")
+                HookServer.shared.sendApprovalDecision("deny", for: answering)
             }
             RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
-                HookServer.shared.sendApprovalDecision("allow")
+                HookServer.shared.sendApprovalDecision("allow", for: answering)
             }
         }
     }

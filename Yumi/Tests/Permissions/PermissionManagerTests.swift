@@ -210,6 +210,41 @@ import Foundation
 
     // MARK: - Expiry, refusal, cancellation
 
+    /// Waiting behind a Claude Code request is not time the person had to answer.
+    @Test func theTimeToAnswerStartsWhenTheApprovalIsOnScreen() async throws {
+        presenter.showsAtOnce = false
+        let manager = Fixture.manager(lifetime: .milliseconds(150), presenter: presenter)
+        let edit = Fixture.request(editor, Fixture.file("App.swift"))
+        let approval = try #require(await manager.evaluate(edit, upcoming: []).approval)
+
+        try await Task.sleep(for: .milliseconds(400))
+        #expect(manager.waitingApprovals.map(\.id) == [approval.id])
+
+        presenter.bringOnScreen(approval.id)
+        #expect(await manager.decision(on: approval) == .expired)
+        #expect(manager.audit.entries.last?.decision == .expired)
+    }
+
+    @Test func anApprovalShownInTimeCanStillBeAnswered() async throws {
+        presenter.showsAtOnce = false
+        let manager = Fixture.manager(lifetime: .milliseconds(150), presenter: presenter)
+        let edit = Fixture.request(editor, Fixture.file("App.swift"))
+        let approval = try #require(await manager.evaluate(edit, upcoming: []).approval)
+        try await Task.sleep(for: .milliseconds(300))
+        presenter.bringOnScreen(approval.id)
+        presenter.answer(approval.id, .approveOnce)
+        #expect(await manager.decision(on: approval) == .granted)
+    }
+
+    /// Never shown (the queue stays blocked): it still ends, after the queue's own limit.
+    @Test func anApprovalNeverShownExpiresAfterTheQueueLimit() async throws {
+        presenter.showsAtOnce = false
+        let manager = Fixture.manager(lifetime: .seconds(60), queue: .milliseconds(100), presenter: presenter)
+        let approval = try #require(await manager.evaluate(Fixture.request(editor, Fixture.file("App.swift")), upcoming: []).approval)
+        #expect(await manager.decision(on: approval) == .expired)
+        #expect(presenter.withdrawn == [approval.id])
+    }
+
     @Test func anApprovalExpiresAndALateAnswerChangesNothing() async {
         let manager = Fixture.manager(lifetime: .milliseconds(50), presenter: presenter)
         let edit = Fixture.request(editor, Fixture.file("App.swift"))

@@ -151,7 +151,9 @@ struct AgentExecutor {
                     error = failure
                 }
 
-                let action = recovery.decide(after: error, attempt: attempt, retriesUsed: retriesUsed, optional: step.isOptional)
+                // Only a step that changes nothing is tried again.
+                let action = recovery.decide(after: error, attempt: attempt, retriesUsed: retriesUsed, optional: step.isOptional,
+                                             repeatable: descriptor.risk < .write)
                 run.update(index, event: .stepFailed(stepID: step.id, error: error, recovery: action)) { $0.error = error }
                 switch action {
                 case .retry:
