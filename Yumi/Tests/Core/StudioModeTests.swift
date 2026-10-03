@@ -14,12 +14,12 @@ import Foundation
     @Test func whileFilmingNothingStarts() {
         let plan = LaunchPlan(studio: true)
         #expect(plan.startsNothing)
-        #expect(!plan.hookServer && !plan.modules && !plan.memory && !plan.initiative && !plan.chat && !plan.keychain && !plan.integrationPollers)
+        #expect(!plan.hookServer && !plan.modules && !plan.memory && !plan.initiative && !plan.chat && !plan.keychain && !plan.integrationPollers && !plan.context)
     }
 
     @Test func anOrdinaryRunStartsEverything() {
         let plan = LaunchPlan(studio: false)
-        #expect(plan.hookServer && plan.modules && plan.memory && plan.initiative && plan.chat && plan.keychain && plan.integrationPollers)
+        #expect(plan.hookServer && plan.modules && plan.memory && plan.initiative && plan.chat && plan.keychain && plan.integrationPollers && plan.context)
         #expect(!plan.startsNothing)
     }
 

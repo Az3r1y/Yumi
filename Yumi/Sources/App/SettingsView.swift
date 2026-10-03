@@ -318,6 +318,13 @@ struct SettingsView: View {
                     .padding(6)
                 }
 
+                // MARK: Context
+                GroupBox("Context") {
+                    ContextDebugPanel(state: state)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(6)
+                }
+
                 // MARK: Hotkey
                 GroupBox("Hotkey") {
                     VStack(alignment: .leading, spacing: 10) {

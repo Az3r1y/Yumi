@@ -575,6 +575,17 @@ final class IslandWindowController: NSWindowController {
             .sink { [weak self] _ in self?.collapse() }
             .store(in: &subscriptions)
 
+        // The Context Engine: Yumi notices when the front application changes
+        state.$context
+            .map(\.presence)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] presence in
+                guard let self, !self.leaving, !self.frozen else { return }
+                self.model.contextPresenceChanged(presence, stage: self.model.stage(for: self.state.mode))
+            }
+            .store(in: &subscriptions)
+
         // Track last external app for window context capture
         let ourBundle = Bundle.main.bundleIdentifier ?? ""
         NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)
