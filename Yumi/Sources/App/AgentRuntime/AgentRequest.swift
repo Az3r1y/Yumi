@@ -10,17 +10,26 @@ struct AgentRequest: Identifiable, Equatable, Codable, Sendable {
     var userIntent: String
     /// nil when there was none to give (engine off, filming, a request from a script).
     var context: ContextSnapshot?
+    /// The person chose to let the planner, and so a model, see the context. Off by default:
+    /// the snapshot stays on the Mac (tools of this run may still read it). When on, only
+    /// `RequestContext` leaves, and the runtime records a `contextShared` event first.
+    var sharesContextWithModel: Bool
     var timestamp: Date
 
-    init(id: UUID = UUID(), userIntent: String, context: ContextSnapshot? = nil, timestamp: Date = Date()) {
+    init(id: UUID = UUID(), userIntent: String, context: ContextSnapshot? = nil,
+         sharesContextWithModel: Bool = false, timestamp: Date = Date()) {
         self.id = id
         self.userIntent = userIntent
         self.context = context
+        self.sharesContextWithModel = sharesContextWithModel
         self.timestamp = timestamp
     }
 
     /// The intent without surrounding spaces. Empty means there is nothing to do.
     var trimmedIntent: String { userIntent.trimmingCharacters(in: .whitespacesAndNewlines) }
+
+    /// What the planner may see of the context: nothing unless the person chose to share it.
+    var contextForPlanner: RequestContext? { sharesContextWithModel ? RequestContext(context) : nil }
 }
 
 /// The part of a `ContextSnapshot` that leaves the runtime: to a planner (and through it a

@@ -154,7 +154,7 @@ import Foundation
         let hostile = editorSnapshot(windowTitle: injection, documentPath: nil)
         let json = #"{"goal": "\#(injection)", "steps": [{"description": "\#(injection)", "tool": "send_email", "arguments": {"account": "gmail:me@example.com"}, "requiresApproval": false}]}"#
         let agent = try makeAgent(json, tools: [mailer], manager: manager)
-        let running = Task { await agent.run(AgentRequest(userIntent: "Résume cette page", context: hostile)) }
+        let running = Task { await agent.run(AgentRequest(userIntent: "Résume cette page", context: hostile, sharesContextWithModel: true)) }
         #expect(await eventuallyTrue { agent.state == .awaitingApproval })
 
         let approval = try #require(presenter.shown.first)

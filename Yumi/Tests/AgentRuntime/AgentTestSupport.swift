@@ -74,6 +74,14 @@ final class FakeTool: Tool, @unchecked Sendable {
     }
 
     var calls: Int { lock.withLock { count } }
+    /// What `verify` answers: nil, the effect is there.
+    var effectProblem: String? {
+        get { lock.withLock { problem } }
+        set { lock.withLock { problem = newValue } }
+    }
+    private var problem: String?
+
+    func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String? { effectProblem }
 
     func execute(_ arguments: ToolArguments, in context: ToolContext) async throws -> ToolOutput {
         let outcome: Outcome = lock.withLock {

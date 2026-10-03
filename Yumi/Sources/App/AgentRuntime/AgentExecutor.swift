@@ -171,8 +171,25 @@ struct AgentExecutor {
         if let error = await verifier.verify(run.task) {
             return run.end(.failed, error: error, at: clock())
         }
+        if let error = await verifyEffects(of: run.task) {
+            return run.end(.failed, error: error, at: clock())
+        }
         if Task.isCancelled { return run.end(.cancelled, error: .cancelled, at: clock()) }
-        return run.end(.completed, error: nil, at: clock())
+        // Every required step is done; an optional one that was left out makes it partial.
+        let partial = run.task.plan?.steps.contains { $0.status == .skipped } == true
+        return run.end(partial ? .partial : .completed, error: nil, at: clock())
+    }
+
+    /// Asks each tool that ran whether its effect is really there: a call that answered is not
+    /// yet a file on the Desktop.
+    private func verifyEffects(of task: RuntimeTask) async -> AgentError? {
+        for step in task.plan?.steps ?? [] where step.status == .completed {
+            guard let tool = tools.tool(id: step.toolID), let output = step.output else { continue }
+            if let problem = await tool.verify(step.arguments, output: output) {
+                return .verificationFailed("\(step.id): \(problem)")
+            }
+        }
+        return nil
     }
 
     /// What the permission manager is told about a step. The risk and the action come from the

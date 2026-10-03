@@ -204,7 +204,7 @@ final class AppState: ObservableObject {
     }
 
     // The agent runtime (see AgentRuntime/), set by the core at launch. nil while filming.
-    // Read by the settings' debug section only: no part of the island reacts to it yet.
+    // Started from the settings' agent section; Yumi reacts to its runs (AgentReaction).
     @Published var agent: RuntimeAgent? = nil
     // The permission system (see Permissions/), set by the core at launch. nil while filming.
     @Published var permissions: LocalPermissionManager? = nil

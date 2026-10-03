@@ -21,10 +21,12 @@ private struct AgentDebugContent: View {
     let agent: RuntimeAgent
     @ObservedObject var state: AppState
     @State private var intent = ""
+    /// Off unless the person ticks it, for this request only.
+    @State private var shareContext = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Works only when asked. No model is connected yet, and nothing that needs approval can run.")
+            Text("Works only when asked. Plans with the Anthropic key above; creating a file always asks first. What is on screen stays on the Mac unless you tick the box.")
                 .font(.system(size: 11))
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -36,6 +38,9 @@ private struct AgentDebugContent: View {
                 Button("Run", action: run)
                     .disabled(agent.isRunning || intent.nonEmptyTrimmed == nil)
             }
+            Toggle("Show the model what is on screen (application, window, document name)", isOn: $shareContext)
+                .font(.system(size: 11))
+                .disabled(!state.context.isEnabled)
             HStack(spacing: 8) {
                 Button("Check tools", action: checkTools)
                     .disabled(agent.isRunning)
@@ -92,10 +97,12 @@ private struct AgentDebugContent: View {
         return "\(done)/\(plan.steps.count) · \(step.id): \(step.description) (\(step.status.rawValue)\(attempt))"
     }
 
-    /// The context goes with the request only now, because the person asked.
+    /// The context goes with the request only now, because the person asked; it reaches the
+    /// model only when the box is ticked.
     private func run() {
         guard !agent.isRunning, intent.nonEmptyTrimmed != nil else { return }
-        let request = AgentRequest(userIntent: intent, context: state.context.isEnabled ? state.context : nil)
+        let request = AgentRequest(userIntent: intent, context: state.context.isEnabled ? state.context : nil,
+                                   sharesContextWithModel: shareContext && state.context.isEnabled)
         Task { await agent.run(request) }
     }
 

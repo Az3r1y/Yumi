@@ -71,7 +71,7 @@ enum PlannerPrompt {
             user += "- \(tool.id): \(tool.description) Arguments: \(fields.isEmpty ? "none" : fields)\n"
         }
         user += "</tools>\n\n"
-        if let context = RequestContext(request.context) {
+        if let context = request.contextForPlanner {
             user += "<context>\n"
             for (key, value) in context.fields { user += "\(key): \(dataOnly(value))\n" }
             user += "</context>\n\n"
