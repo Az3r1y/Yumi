@@ -401,11 +401,26 @@ Trois outils sur le modèle de `create_file` : `check` avant `PermissionManager`
 
 | Sujet | Décision |
 |---|---|
-| Accès Rappels | Jamais demandé par l'outil : le `check` dit « touche « Activer les rappels » dans le module Notes » (non demandé) ou renvoie vers Réglages Système (refusé), avant toute demande d'accord. |
+| Accès Rappels | Si macOS n'a jamais posé la question, le `check` la pose (`requestAccess`) avant la demande d'accord de Yumi ; refusé, il renvoie vers Réglages Système. Jamais redemandé ensuite (branche `yumi/outils-fix`). |
 | Risque d'un rappel | Le cahier demandait « low ». Le plancher de `RiskTable` pour `create` est `medium` et n'a pas été abaissé : le comportement voulu (toujours demander) est le même. |
 | Planificateur | Ne voit que les descripteurs, plus une ligne `<now>` (date, jour, heure du Mac) pour comprendre « demain ». Aucun rendez-vous, rappel ni météo avant que la personne demande, et jamais ensuite : le résumé est composé par le code de l'outil. |
 | Chat | `ChatRoute.runtimeTools` (`start_focus`, `get_today`) envoie aussi au runtime les plans sans écriture qui les utilisent. « Je m'en occupe… je te demande avant » n'est dit que si une étape demande un accord. |
 | Réponse | Un outil peut rendre `reply` : quand chaque étape terminée en a une, Yumi dit ces phrases à la place de « C'est fait, et j'ai vérifié ». Écrites par le code de l'outil après vérification, jamais par le modèle. |
 | Modules | `ModuleBridge` (Modules/AgentBridges.swift) lit Focus, Agenda, Notes et Météo sur le fil principal, à la demande. `FocusTimer.start(now:minutes:)` ; le bouton Démarrer remet les quatre manches de 25 minutes. |
 
-Hors périmètre, non commencés : agenda (création d'événements), modification de fichier, suppression, terminal, mails, mémoire. Aucun outil ne supprime, ne modifie un existant, n'invite ni n'envoie.
+Hors périmètre, non commencés : suppression, terminal, mails, mémoire. Aucun outil ne supprime, n'invite ni n'envoie ; seul `append_to_file` modifie un fichier existant, et seulement un fichier que Yumi a créé.
+
+## Cœur : deux outils de plus (branche `yumi/outils-2`)
+
+| Outil | Ce qu'il fait | Accord | Vérification |
+|---|---|---|---|
+| `add_event` | Ajoute un événement au calendrier par défaut (EventKit) : titre d'une ligne (120 caractères), jour `AAAA-MM-JJ` et heure de début `HH:mm` obligatoires, durée 5 à 720 minutes (60 par défaut), lieu facultatif. Jamais d'invités, jamais un calendrier en lecture seule, abonné ou d'anniversaires, jamais la modification d'un événement existant. | Toujours demandé. La demande montre « Je dois créer l'événement « Réunion client », jeudi 8 octobre, 14 h à 15 h, dans le calendrier Travail. » Ressource `unknown` : aucun accord retenu ne la couvre. | L'événement relu par son identifiant a ce titre, ces heures, et aucun invité. |
+| `append_to_file` | Ajoute du texte (4 000 caractères au plus, sur sa propre ligne) à la fin d'un fichier texte que `create_file` a créé, et seulement ceux-là : leur liste est dans `created-files.json` (dossier de Yumi), écrite par le code de `create_file`. Le fichier doit être encore là, à sa place, dans Téléchargements, sur le Bureau ou dans Documents, un fichier ordinaire et pas un lien (écriture en `O_APPEND | O_NOFOLLOW`), en UTF-8, de 1 Mo au plus. | Toujours demandé. La demande montre le chemin exact (`~/Downloads/todo.md`) et le texte ajouté (`ToolAction.content`, montré sous le titre et dans les détails). | Le début du fichier a la même empreinte SHA-256 qu'avant, et la fin est exactement le texte ajouté. |
+
+| Sujet | Décision |
+|---|---|
+| Accès Calendrier | Comme pour Rappels : la question macOS est posée par le `check` si elle ne l'a jamais été, avant la demande d'accord ; refusé, renvoi vers Réglages Système, Calendriers. |
+| Date ambiguë | Le jour et l'heure sont exigés, au format exact : « jeudi » seul, une heure seule ou un moment passé sont refusés par le `check`, sans demande d'accord, avec la raison. Le planificateur calcule la date depuis `<now>`. |
+| Risque | Le cahier demandait « low ». Les planchers de `RiskTable` (`create` et `modify` à `medium`) n'ont pas été abaissés : la demande d'accord est la même. |
+| Fichiers connus du planificateur | La description de `append_to_file` liste les dix derniers fichiers créés par Yumi (chemins sous `~`), pour que « ma todo » désigne le bon. Rien d'autre du disque. |
+| Affichage des accords | Un fichier hors d'un projet s'affiche depuis le dossier personnel (`~/Downloads/todo.md`) et plus seulement par son nom. |
