@@ -193,7 +193,7 @@ Claude Code, Agenda, Notes et rappels, Focus, Musique, Météo. Ils se branchent
 
 Yumi est un compagnon généraliste, pour le travail comme pour la vie. Trois gestes le définissent : il veille (il ne se manifeste que quand on est concerné), il reçoit (un fichier, une fenêtre, une phrase), il répond (sur place).
 
-La maquette validée est `design/yumi/maquette/reference.html` (à ouvrir dans un navigateur). C'est la référence visuelle et de mouvement pour le portage en Swift. Les fichiers `ile-v1` à `ile-v8` sont l'historique des essais.
+La maquette validée est `design/yumi/maquette/reference.html` (à ouvrir dans un navigateur). C'est la référence visuelle et de mouvement pour le portage en Swift. Les essais intermédiaires restent dans l'historique git (supprimés le 3 octobre 2026).
 
 Décisions validées sur cette maquette :
 
