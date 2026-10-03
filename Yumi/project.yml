@@ -78,7 +78,8 @@ targets:
         NSCalendarsFullAccessUsageDescription: "Je lis ton calendrier pour t'annoncer ton prochain rendez-vous. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, et je coche ceux que tu termines."
         NSDownloadsFolderUsageDescription: "Je dépose dans Téléchargements les fichiers que tu me demandes de créer."
-        NSDocumentsFolderUsageDescription: "Je travaille dans Documents si tu y as placé mon dossier."
+        NSDocumentsFolderUsageDescription: "Je crée dans Documents les fichiers que tu me demandes d'y mettre, et j'y travaille si tu y as placé mon dossier."
+        NSDesktopFolderUsageDescription: "Je crée sur ton Bureau les fichiers que tu me demandes d'y mettre."
         NSLocationWhenInUseUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
         NSLocationUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
     settings:
@@ -119,7 +120,8 @@ targets:
         NSCalendarsFullAccessUsageDescription: "Je lis ton calendrier pour t'annoncer ton prochain rendez-vous. Rien ne quitte ton Mac."
         NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, et je coche ceux que tu termines."
         NSDownloadsFolderUsageDescription: "Je dépose dans Téléchargements les fichiers que tu me demandes de créer."
-        NSDocumentsFolderUsageDescription: "Je travaille dans Documents si tu y as placé mon dossier."
+        NSDocumentsFolderUsageDescription: "Je crée dans Documents les fichiers que tu me demandes d'y mettre, et j'y travaille si tu y as placé mon dossier."
+        NSDesktopFolderUsageDescription: "Je crée sur ton Bureau les fichiers que tu me demandes d'y mettre."
         NSLocationWhenInUseUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
         NSLocationUsageDescription: "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
     settings:

@@ -14,12 +14,17 @@ protocol Tool: Sendable {
     /// Checks, after a successful call, that the effect is really there (the file exists and
     /// holds what was asked). nil when it is, otherwise why not. Reads only: it never repairs.
     func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String?
+    /// What can be known before asking the person: a refused place, a folder Yumi cannot
+    /// reach, a file already there. nil when nothing stands in the way, otherwise the reason, in
+    /// words for the person. Reads only. Checked again by `execute`: things can change meanwhile.
+    func check(_ arguments: ToolArguments) async -> String?
 }
 
 extension Tool {
     func action(for arguments: ToolArguments) -> ToolAction? { nil }
     /// A tool that changes nothing has nothing to check beyond its output.
     func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String? { nil }
+    func check(_ arguments: ToolArguments) async -> String? { nil }
 
     var id: String { descriptor.id }
     var name: String { descriptor.name }

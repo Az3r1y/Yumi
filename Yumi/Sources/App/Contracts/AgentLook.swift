@@ -49,8 +49,9 @@ struct AgentLook: Equatable, Sendable {
         case .providerFailed?: "Le modèle ne m'a pas répondu. Rien n'a été fait."
         case .unsupportedAction?: "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais seulement créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents)."
         case .cannotPlan?, .invalidPlan?: "Je ne sais pas encore faire ça. Rien n'a été fait."
-        case .verificationFailed?: "J'ai essayé, mais le résultat n'est pas celui attendu."
-        case .invalidArguments?: "Je n'ai pas pu : l'emplacement ou le fichier ne convient pas (le détail est dans les réglages)."
+        case .verificationFailed(let reason)?: "J'ai essayé, mais le résultat n'est pas celui attendu : \(reason)."
+        case .cannotRun(_, let reason)?: "Je ne peux pas le faire, alors je ne t'ai rien demandé : \(reason)."
+        case .invalidArguments(_, let reason)?, .toolFailed(_, let reason, _)?: "Je n'ai pas pu : \(reason)."
         default: "Ça n'a pas marché."
         }
     }
