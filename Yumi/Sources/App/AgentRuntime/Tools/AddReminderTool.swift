@@ -17,6 +17,8 @@ protocol ReminderStore: Sendable {
     /// Saves a new reminder in the default list. Returns its identifier.
     func add(title: String, due: DateComponents?) throws -> String
     func reminder(id: String) -> StoredReminder?
+    /// Shows macOS's own question about Reminders, once, when nobody answered it yet. True when granted.
+    func requestAccess() async -> Bool
 }
 
 /// Adds one reminder to the default list of the Reminders app: a title, and a date and a time
@@ -58,6 +60,9 @@ struct AddReminderTool: Tool {
     }
 
     func check(_ arguments: ToolArguments) async -> String? {
+        // Never asked yet: macOS asks the person now, before Yumi's own approval. Their answer is
+        // the system's to keep; nothing is added or changed here.
+        if store.access == .notDetermined { _ = await store.requestAccess() }
         if let problem = accessProblem() { return problem }
         guard title(arguments) != nil else { return "il me faut un titre d'une ligne, de \(Self.maxTitleLength) caractères au plus" }
         do { _ = try due(arguments) } catch { return error.reason }
@@ -98,7 +103,7 @@ struct AddReminderTool: Tool {
     private func accessProblem() -> String? {
         switch store.access {
         case .granted: nil
-        case .notDetermined: "je n'ai pas encore accès à tes Rappels. Touche « Activer les rappels » dans le module Notes, puis redemande-moi"
+        case .notDetermined: "macOS ne m'a pas encore donné accès à tes Rappels. Réponds « Autoriser » à sa question, ou autorise Yumi dans Réglages Système, Confidentialité et sécurité, Rappels, puis redemande-moi"
         case .denied: "macOS ne me laisse pas accéder à tes Rappels. Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Rappels"
         }
     }

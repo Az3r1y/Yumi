@@ -14,14 +14,18 @@ struct AgentRequest: Identifiable, Equatable, Codable, Sendable {
     /// the snapshot stays on the Mac (tools of this run may still read it). When on, only
     /// `RequestContext` leaves, and the runtime records a `contextShared` event first.
     var sharesContextWithModel: Bool
+    /// The messages of the chat before this one, oldest first, so that a follow-up (« et
+    /// demain ? ») can be understood. Words the person and Yumi exchanged, nothing from the screen.
+    var conversation: [ConversationTurn]
     var timestamp: Date
 
     init(id: UUID = UUID(), userIntent: String, context: ContextSnapshot? = nil,
-         sharesContextWithModel: Bool = false, timestamp: Date = Date()) {
+         sharesContextWithModel: Bool = false, conversation: [ConversationTurn] = [], timestamp: Date = Date()) {
         self.id = id
         self.userIntent = userIntent
         self.context = context
         self.sharesContextWithModel = sharesContextWithModel
+        self.conversation = ConversationTurn.recent(conversation)
         self.timestamp = timestamp
     }
 
@@ -67,5 +71,22 @@ extension String {
     var nonEmptyTrimmed: String? {
         let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
         return trimmed.isEmpty ? nil : trimmed
+    }
+}
+
+/// One message of the chat, as the planner may see it.
+struct ConversationTurn: Equatable, Codable, Sendable {
+    enum Role: String, Codable, Sendable { case person, yumi }
+    var role: Role
+    var text: String
+
+    static let limit = 6
+    static let maxCharacters = 400
+
+    /// The last turns only, each one cut short: enough for a follow-up, not a transcript.
+    static func recent(_ turns: [ConversationTurn]) -> [ConversationTurn] {
+        turns.compactMap { turn in
+            turn.text.nonEmptyTrimmed.map { ConversationTurn(role: turn.role, text: String($0.prefix(maxCharacters))) }
+        }.suffix(limit).map { $0 }
     }
 }
