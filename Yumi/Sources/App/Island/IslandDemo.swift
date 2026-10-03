@@ -195,9 +195,34 @@ enum IslandDemo {
             github.title = "Une pull request t'attend : le repli de l'île."
             github.primaryAction = "Relire"
         }
+        let now = Date.now
+        github.rows = [
+            ModuleRow(id: "p1", title: "Le repli de l'île", detail: "#14 · lea", state: .waiting, label: "ta review",
+                      date: now.addingTimeInterval(-600), section: "estebanbaigts/Yumi", action: "https://github.com"),
+            ModuleRow(id: "p2", title: "Les sons du lancement", detail: "#15 · estebanbaigts", state: .failure, label: "CI rouge",
+                      date: now.addingTimeInterval(-3000), action: "https://github.com"),
+            ModuleRow(id: "p3", title: "Météo en anglais", detail: "#11 · louis", state: .busy, label: "CI en cours",
+                      date: now.addingTimeInterval(-7000), action: "https://github.com"),
+            ModuleRow(id: "e1", title: "Une étoile", detail: "louis · Yumi", state: .neutral, label: "star",
+                      date: now.addingTimeInterval(-1500), section: "Derniers événements", action: "https://github.com"),
+            ModuleRow(id: "e2", title: "Poussé sur main", detail: "estebanbaigts · Yumi", state: .neutral, label: "push",
+                      date: now.addingTimeInterval(-90000), action: "https://github.com"),
+        ]
         return ModuleCatalog.placeholders.map { module in
             var module = module
             switch module.id {
+            case "claude-code":
+                module.status = "3 sessions"
+                module.title = "Claude veut ton accord sur api. Je laisse passer ?"
+                module.needsAttention = true
+                module.rows = [
+                    ModuleRow(id: "s1", title: "api", detail: "Demande Bash : rm -rf build", state: .waiting,
+                              label: "attend un accord", date: now.addingTimeInterval(-40), action: "s1"),
+                    ModuleRow(id: "s2", title: "yumi", detail: "Modifie IslandRows.swift", state: .busy,
+                              label: "travaille", date: now.addingTimeInterval(-720), action: "s2"),
+                    ModuleRow(id: "s3", title: "site", detail: "C'est passé.", state: .success,
+                              label: "terminée", date: now.addingTimeInterval(-50), action: "s3"),
+                ]
             case "agenda": module.primarySymbol = "video.fill"
             case "music":
                 module.progress = ModuleProgress(fraction: 0.58, leading: "1:52", trailing: "3:14")
@@ -262,7 +287,7 @@ enum IslandDemo {
         case "file":
             state.droppedFile = DroppedFile(url: URL(fileURLWithPath: "/tmp/Contrat-v3.pdf"), name: "Contrat-v3.pdf")
             controller.expand(to: .choose)
-        case "focus", "weather", "github":
+        case "focus", "weather", "github", "claude-code":
             model.selectedModuleID = name
             controller.expand(to: .module)
         case "github-pr":

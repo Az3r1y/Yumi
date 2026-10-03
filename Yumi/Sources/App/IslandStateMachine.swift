@@ -397,3 +397,29 @@ enum GitHubFigures {
         return token.isEmpty ? nil : token
     }
 }
+
+// MARK: - The time of a line of a module's list
+
+enum RowTime {
+    /// Since when, for a session: "à l'instant", "4 min", "1 h 05".
+    static func elapsed(since date: Date, now: Date) -> String {
+        let minutes = Int(max(0, now.timeIntervalSince(date)) / 60)
+        if minutes < 1 { return "à l'instant" }
+        if minutes < 60 { return "\(minutes) min" }
+        return "\(minutes / 60) h \(String(format: "%02d", minutes % 60))"
+    }
+
+    /// When, for an event: "14:05" today, "hier", or "3 oct." before.
+    static func clock(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
+        if calendar.isDate(date, inSameDayAs: now) {
+            let parts = calendar.dateComponents([.hour, .minute], from: date)
+            return String(format: "%02d:%02d", parts.hour ?? 0, parts.minute ?? 0)
+        }
+        if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
+            return "hier"
+        }
+        let parts = calendar.dateComponents([.day, .month], from: date)
+        let months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+        return "\(parts.day ?? 1) \(months[max(0, min(11, (parts.month ?? 1) - 1))])"
+    }
+}

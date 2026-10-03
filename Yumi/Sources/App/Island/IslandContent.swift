@@ -132,6 +132,13 @@ enum IslandActions {
         IslandModel.shared.pose(.pop)
     }
 
+    /// A line of a module's list was clicked.
+    static func row(_ module: String, _ action: String) {
+        NotificationCenter.default.post(name: .moduleRowAction, object: nil,
+                                        userInfo: ["module": module, "row": action])
+        tap()
+    }
+
     /// A button of the folded island: the same action as in the detail view, and the
     /// island stays folded.
     static func liveControl(_ id: String, _ action: String) {

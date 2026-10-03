@@ -6,6 +6,11 @@ final class ClaudeCodeModule: YumiModule {
     let id = "claude-code"
 
     private var sessions: [Session] = []
+    /// The list of the activity view: every session, a finished one for a moment more.
+    private var board = SessionBoard()
+    /// Wakes the module when a finished session leaves the list.
+    private var departure: Task<Void, Never>?
+    private var rowObserver: NSObjectProtocol?
     private var onChange: (@MainActor () -> Void)?
     /// Shows the sessions in the island (the pending approval if there is one).
     private let onShow: @MainActor () -> Void
@@ -19,6 +24,7 @@ final class ClaudeCodeModule: YumiModule {
 
     var snapshot: ModuleSnapshot {
         var snapshot = ClaudeSessions.snapshot(sessions)
+        snapshot.rows = board.rows()
         // A session waiting for the user stays ahead of the chat's own activity.
         if snapshot.live == nil, let chat {
             snapshot.live = ModuleLive(text: chat.text,
@@ -36,19 +42,48 @@ final class ClaudeCodeModule: YumiModule {
 
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
+        rowObserver = NotificationCenter.default.addObserver(forName: .moduleRowAction, object: nil, queue: .main) { [weak self] note in
+            guard note.userInfo?["module"] as? String == "claude-code", let row = note.userInfo?["row"] as? String else { return }
+            MainActor.assumeIsolated { self?.open(row) }
+        }
     }
 
     func stop() {
         onChange = nil
         sessions = []
+        board = SessionBoard()
         chat = nil
+        departure?.cancel()
+        departure = nil
+        if let rowObserver { NotificationCenter.default.removeObserver(rowObserver) }
+        rowObserver = nil
     }
 
     func receive(_ event: YumiEvent, sessions: [SessionID: Session]) {
         let ordered = ClaudeSessions.ordered(sessions)
         guard ordered != self.sessions else { return }
         self.sessions = ordered
+        board.update(ordered)
+        scheduleDeparture()
         onChange?()
+    }
+
+    /// A finished session leaves the list on its own, without waiting for another event.
+    private func scheduleDeparture() {
+        departure?.cancel()
+        guard let next = board.nextDeparture() else { return departure = nil }
+        departure = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(max(1, next.timeIntervalSinceNow)), tolerance: .seconds(5))
+            guard !Task.isCancelled, let self else { return }
+            self.board.update(self.sessions)
+            self.scheduleDeparture()
+            self.onChange?()
+        }
+    }
+
+    /// A line of the list was clicked: the application its session runs in comes forward.
+    private func open(_ row: String) {
+        Self.bringToFront(board.session(row)?.origin)
     }
 
     func perform(_ action: ModuleAction) {

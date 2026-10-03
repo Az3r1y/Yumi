@@ -34,7 +34,7 @@ import Foundation
                                + [.permissionRequested(a, PermissionRequest(tool: "Bash", command: "swift test")),
                                   .toolStarted(b, ToolInfo(name: "Read"))])
         let live = ClaudeSessions.snapshot(waiting).live
-        #expect(live?.text == "Claude veut ton accord sur yumi")
+        #expect(live?.text == "2 sessions · accord sur yumi")
         #expect(live?.priority == ModuleLivePriority.attention)
         #expect(live?.controls == [ModuleControl(id: "primary", symbol: "eye.fill", label: "Voir")])
     }
