@@ -126,6 +126,9 @@ final class ClaudeService {
 
     // Multi-turn conversation messages (for API)
     private var conversationMessages: [[String: Any]] = []
+    /// Messages the agent runtime answered that Claude Code has not seen yet: given with the next
+    /// message, so the chat keeps its thread.
+    private var unseenTurns: [(person: String, yumi: String)] = []
 
     #if !APPSTORE
     // Claude Code conversation: the session to resume, and the folder it belongs to
@@ -146,6 +149,7 @@ final class ClaudeService {
     func clearConversation(remember: Bool = true) {
         guard LaunchPlan.current.chat else { return }
         conversationMessages = []
+        unseenTurns = []
         #if !APPSTORE
         if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.locate() {
             summarize(session: session.id, folder: session.folder, binary: binary, noted: notedThisConversation)
@@ -197,7 +201,8 @@ final class ClaudeService {
     /// stays on the Mac: the planner does not see it.
     private func runAsAgent(query: String, state: AppState) async -> Bool {
         guard let agent = state.agent, !agent.isRunning else { return false }
-        let request = AgentRequest(userIntent: query, context: state.context.isEnabled ? state.context : nil)
+        let request = AgentRequest(userIntent: query, context: state.context.isEnabled ? state.context : nil,
+                                   conversation: Self.turns(before: query, in: state.chatHistory))
         let plan: AgentPlan
         switch ChatRoute.route(await agent.plan(for: request)) {
         case .chat:
@@ -205,7 +210,9 @@ final class ClaudeService {
         case .blocked(let reason):
             let result = AgentResult(runID: request.id, status: .failed, goal: nil, steps: [],
                                      error: .unsupportedAction(reason), finishedAt: Date())
-            state.chatHistory.append(ChatMessage(role: .assistant, content: AgentLook.remark(for: result)?.text ?? ""))
+            let text = AgentLook.remark(for: result)?.text ?? ""
+            state.chatHistory.append(ChatMessage(role: .assistant, content: text))
+            remember(query, answeredWith: text)
             state.stateOverride = nil
             state.view = .prompt
             return true
@@ -219,8 +226,26 @@ final class ClaudeService {
         let result = await agent.execute(plan, for: request)
         let text = AgentLook.remark(for: result)?.text ?? "C'est annulé, je n'ai rien fait."
         state.chatHistory.append(ChatMessage(role: .assistant, content: text))
+        remember(query, answeredWith: text)
         state.view = .prompt
         return true
+    }
+
+    /// The chat before this message, for the planner: the words only.
+    static func turns(before query: String, in history: [ChatMessage]) -> [ConversationTurn] {
+        var earlier = history
+        if let last = earlier.last, last.role == .user, last.content == query { earlier.removeLast() }
+        return earlier.map { ConversationTurn(role: $0.role == .user ? .person : .yumi, text: $0.content) }
+    }
+
+    /// An exchange the runtime answered joins the conversation the chat model keeps.
+    private func remember(_ query: String, answeredWith text: String) {
+        unseenTurns.append((query, text))
+        // The API conversation alternates user and assistant: the pair goes in whole.
+        if (conversationMessages.last?["role"] as? String) != "user" {
+            conversationMessages.append(["role": "user", "content": [["type": "text", "text": query]]])
+            conversationMessages.append(["role": "assistant", "content": [["type": "text", "text": text]]])
+        }
     }
 
     // MARK: - Chat through Claude Code
@@ -250,16 +275,19 @@ final class ClaudeService {
         if case .file(_, let path?) = attached, ChatFolder.contains(path, in: inbox), !readableFolders.contains(inbox) {
             readableFolders.append(inbox)
         }
-        let message = ChatPhrases.message(query: query, context: attached == sentContext ? nil : attached)
+        let message = ChatPhrases.earlierTurns(unseenTurns, before: ChatPhrases.message(query: query, context: attached == sentContext ? nil : attached))
 
         var outcome = await runTurn(binary: binary, message: message, folder: folder, state: state)
         if outcome == .unknownSession {
             // The session to resume is gone (its history was removed): start again, attachment included.
             session = nil
-            outcome = await runTurn(binary: binary, message: ChatPhrases.message(query: query, context: attached),
+            outcome = await runTurn(binary: binary, message: ChatPhrases.earlierTurns(unseenTurns, before: ChatPhrases.message(query: query, context: attached)),
                                     folder: folder, state: state)
         }
-        if outcome == .answered { sentContext = attached }
+        if outcome == .answered {
+            sentContext = attached
+            unseenTurns = []
+        }
     }
 
     /// Asks the conversation that just ended for a few lines about itself, and keeps them in the

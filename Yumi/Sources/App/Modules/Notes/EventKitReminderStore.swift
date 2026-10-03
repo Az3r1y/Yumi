@@ -1,7 +1,8 @@
 import EventKit
 
 /// The Reminders app through EventKit, for `AddReminderTool`. Only adds and reads: it never
-/// changes, completes or removes a reminder. Never asks for access: the Notes module does.
+/// changes, completes or removes a reminder. Asks for access only when nobody answered yet
+/// (`requestAccess`), the same question the Notes module asks.
 final class EventKitReminderStore: ReminderStore, @unchecked Sendable {
     // EKEventStore is thread-safe for these calls; the lock keeps save and fetch in order.
     private let store = EKEventStore()
@@ -13,6 +14,11 @@ final class EventKitReminderStore: ReminderStore, @unchecked Sendable {
         case .notDetermined: .notDetermined
         default: .denied
         }
+    }
+
+    func requestAccess() async -> Bool {
+        guard access == .notDetermined else { return access == .granted }
+        return (try? await store.requestFullAccessToReminders()) ?? false
     }
 
     func defaultListName() -> String? {
