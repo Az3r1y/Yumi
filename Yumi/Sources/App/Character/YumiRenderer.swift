@@ -1,3 +1,5 @@
+import AppKit
+import CoreText
 import SwiftUI
 
 /// Everything the renderer needs for one image. BotEngine fills it from the soft body and
@@ -55,8 +57,8 @@ struct YumiFrame {
 }
 
 /// The blurred part of the light (floor, halo, light inside the outline), drawn once for a
-/// body at rest and reused while the shape only breathes: blurring is what costs the most,
-/// and a breath moves the outline by less than a unit.
+/// body at rest and reused, stretched and sheared, while the shape stays close to it: blurring
+/// is what costs the most, and under the blur a few units of lean or height do not show.
 struct YumiLight {
     /// Floor and halo, behind the body.
     let behind: Image
@@ -66,6 +68,13 @@ struct YumiLight {
     let h: CGFloat
     let w: CGFloat
     let lean: CGFloat
+
+    /// The lean moves the top of the outline and barely its base: a shear about the base
+    /// carries the pictures from the lean they were drawn for to `lean`.
+    func lean(to lean: CGFloat) -> CGAffineTransform {
+        let k = (lean - self.lean) / (68 * h)
+        return CGAffineTransform(a: 1, b: 0, c: -k, d: 1, tx: 76 * k, ty: 0)
+    }
 
     /// The part of the mock-up's box the pictures cover: the widest body at rest, its halo and its blur.
     static let bounds = CGRect(x: -50, y: -32, width: 200, height: 136)
@@ -186,6 +195,7 @@ enum YumiRenderer {
             stored.translateBy(x: 50, y: 76)
             stored.scaleBy(x: f.w / light.w, y: f.h / light.h)
             stored.translateBy(x: -50, y: -76)
+            stored.concatenate(light.lean(to: f.lean))
         }
 
         // .pose: the body follows the lean a little, and jumps
@@ -221,6 +231,7 @@ enum YumiRenderer {
                 spill.translateBy(x: 50, y: 76)
                 spill.scaleBy(x: f.w / light.w, y: f.h / light.h)
                 spill.translateBy(x: -50, y: -76)
+                spill.concatenate(light.lean(to: f.lean))
                 spill.draw(light.inner, in: YumiLight.bounds)
             } else {
                 drawSpill(f, body: body, in: inside)
@@ -584,12 +595,9 @@ enum YumiRenderer {
         guard alpha * opacity > 0.01 else { return }
         let e = YumiCurve.easeInOut(p)
 
-        var text = context.resolve(Text(string).font(.system(size: size, weight: .heavy, design: .rounded)))
-        let room = CGSize(width: 200, height: 200)
-        let measured = text.measure(in: room)
         // SVG places text by its baseline
-        let rect = CGRect(x: origin.x, y: origin.y - text.firstBaseline(in: room), width: measured.width, height: measured.height)
-        text.shading = shading(rect)
+        let glyph = Glyph.of(string, size: size)
+        let rect = CGRect(x: origin.x, y: origin.y - glyph.ascent, width: glyph.width, height: glyph.ascent + glyph.descent)
 
         var c = context
         c.opacity = alpha * opacity
@@ -597,7 +605,48 @@ enum YumiRenderer {
         c.translateBy(x: rect.midX, y: rect.midY)
         c.scaleBy(x: 0.6 + 0.5 * e, y: 0.6 + 0.5 * e)
         c.translateBy(x: -rect.midX, y: -rect.midY)
-        c.draw(text, in: rect)
+        c.translateBy(x: origin.x, y: origin.y)
+        c.fill(glyph.path, with: shading(rect.offsetBy(dx: -origin.x, dy: -origin.y)))
+    }
+
+    /// A note or a z as an outline, made once: laying text out again on every picture cost
+    /// more than all the rest of a habit.
+    private struct Glyph {
+        /// The outline, its baseline on y = 0, y down.
+        let path: Path
+        let width, ascent, descent: CGFloat
+
+        nonisolated(unsafe) private static var made: [String: Glyph] = [:]
+
+        static func of(_ string: String, size: CGFloat) -> Glyph {
+            let key = "\(string) \(size)"
+            if let glyph = made[key] { return glyph }
+            let base = NSFont.systemFont(ofSize: size, weight: .heavy)
+            let font = base.fontDescriptor.withDesign(.rounded).flatMap { NSFont(descriptor: $0, size: size) } ?? base
+            // CTLine picks a fallback font for ♪ and ♫, as Text does
+            let line = CTLineCreateWithAttributedString(NSAttributedString(string: string, attributes: [.font: font]))
+            var ascent: CGFloat = 0, descent: CGFloat = 0, leading: CGFloat = 0
+            let width = CGFloat(CTLineGetTypographicBounds(line, &ascent, &descent, &leading))
+            let outline = CGMutablePath()
+            for run in CTLineGetGlyphRuns(line) as? [CTRun] ?? [] {
+                let count = CTRunGetGlyphCount(run)
+                var glyphs = [CGGlyph](repeating: 0, count: count)
+                var positions = [CGPoint](repeating: .zero, count: count)
+                CTRunGetGlyphs(run, CFRange(), &glyphs)
+                CTRunGetPositions(run, CFRange(), &positions)
+                let attributes = CTRunGetAttributes(run) as NSDictionary
+                guard let runFont = attributes[kCTFontAttributeName] else { continue }
+                let ctFont = runFont as! CTFont
+                for (g, at) in zip(glyphs, positions) {
+                    guard let shape = CTFontCreatePathForGlyph(ctFont, g, nil) else { continue }
+                    // Core Text draws y up
+                    outline.addPath(shape, transform: CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: at.x, ty: -at.y))
+                }
+            }
+            let glyph = Glyph(path: Path(outline), width: width, ascent: ascent, descent: descent)
+            made[key] = glyph
+            return glyph
+        }
     }
 
     private static func drawNotes(_ f: YumiFrame, in context: GraphicsContext) {

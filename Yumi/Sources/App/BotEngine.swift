@@ -631,6 +631,11 @@ final class BotEngine: ObservableObject {
 
     func play(_ newPose: YumiPose) {
         guard !isMini else { return }
+        #if DEBUG
+        if ProcessInfo.processInfo.environment["YUMI_TRACE_CADENCE"] == "3" {
+            fputs(String(format: "YUMI play %.2f s: \(newPose)\n", clock), stderr)
+        }
+        #endif
         wake()
         blob.play(newPose, now: clock * 1000)
         pose = newPose
@@ -697,6 +702,11 @@ final class BotEngine: ObservableObject {
     func setState(_ newState: BotState, force: Bool = false) {
         guard state != newState || force else { return }
         let changed = state != newState
+        #if DEBUG
+        if !isMini, ProcessInfo.processInfo.environment["YUMI_TRACE_CADENCE"] == "3" {
+            fputs(String(format: "YUMI state %.2f s: \(state) -> \(newState) force \(force)\n", clock), stderr)
+        }
+        #endif
         state = newState
         wake()
         emote = nil
@@ -706,8 +716,12 @@ final class BotEngine: ObservableObject {
         case .finished:         play(.celebrate)
         case .error:            play(.squash)
         case .approval, .dizzy: play(.shake)
-        case .sleeping:         break
-        default:                play(.pop)
+        default:
+            // No pop for the other states: they come and go with every session of Claude Code
+            // (idle, working, idle again), and each pop forced full cadence for nothing. The
+            // island and the agent's look send a pose themselves when a view or an activity
+            // calls for one.
+            break
         }
     }
 
@@ -881,13 +895,18 @@ final class BotEngine: ObservableObject {
     private func storedLight(for f: YumiFrame, unit: CGFloat) -> YumiLight? {
         guard f.y == 0, !f.air, f.armTime == nil, f.scene == nil, f.glow == 0.85, f.drawn >= 0.999 else { return nil }
         let key = f.rim.flatMap { [$0.r, $0.g, $0.b] } + [f.rimWidth, unit, displayScale]
-        if let l = light_, key == lightKey, abs(f.h - l.h) <= 0.035, abs(f.lean - l.lean) <= 0.2 { return l }
+        if let l = light_, key == lightKey, abs(f.h - l.h) <= 0.1, abs(f.lean - l.lean) <= 10 { return l }
 
-        let steady = abs(blob.vh) < 0.05 && abs(blob.vl) < 0.3
-            && !rimStops.joined().contains { $0.isActive(at: clock) } && !rimWidth.isActive(at: clock)
-        if steady, !lightQueued, clock - lightBuiltAt > 0.25 {
+        let fading = rimStops.joined().contains { $0.isActive(at: clock) } || rimWidth.isActive(at: clock)
+        let steady = abs(blob.vh) < 0.05 && abs(blob.vl) < 0.3 && !fading
+        // A habit that lasts keeps him moving round his shape at rest (the headphones: height
+        // 0.92…1.08, lean ±7): the pictures are drawn for that one, and the stretch and the
+        // shear follow the beat
+        let swaying = !fading && pose == nil && [.headphones, .whistle, .smoke, .coffee, .cloud].contains(blob.habit)
+        if steady || swaying, !lightQueued, clock - lightBuiltAt > 0.25 {
             lightQueued = true
-            let h = blob.h, lean = blob.lean, rim = f.rim, width = f.rimWidth, scale = displayScale
+            let h = steady ? blob.h : 1, lean = steady ? blob.lean : 0
+            let rim = f.rim, width = f.rimWidth, scale = displayScale
             let w = max(0.68, min(1.55, 1 / pow(h, 0.62)))
             // Not while the canvas draws: right after
             DispatchQueue.main.async { [weak self] in
@@ -1031,8 +1050,27 @@ final class BotEngine: ObservableObject {
 
     /// Draws Yumi for `frame`: the box of the mock-up is centred in it. The context may be
     /// larger than the frame (see `canvasRect(for:overhang:)`).
+    #if DEBUG
+    private var cpuWindow: (start: Double, cpu: Double, frames: Int)?
+    #endif
+
     func draw(context: GraphicsContext, frame: CGRect) {
         let unit = BotEngine.unit(for: frame)
+        #if DEBUG
+        // `YUMI_TRACE_CADENCE=4` prints, every 10 s, the CPU of the whole app and the frames drawn
+        if !isMini, ProcessInfo.processInfo.environment["YUMI_TRACE_CADENCE"] == "4" {
+            let wall = Date().timeIntervalSinceReferenceDate
+            let cpu = Double(clock_gettime_nsec_np(CLOCK_PROCESS_CPUTIME_ID)) / 1e9
+            if let w = cpuWindow {
+                cpuWindow?.frames += 1
+                if wall - w.start >= 10 {
+                    fputs(String(format: "YUMI cpu %.1f %% frames/s %.1f unit %.3f\n", (cpu - w.cpu) / (wall - w.start) * 100,
+                                 Double(w.frames) / (wall - w.start), unit), stderr)
+                    cpuWindow = (wall, cpu, 0)
+                }
+            } else { cpuWindow = (wall, cpu, 0) }
+        }
+        #endif
         var ctx = context
         ctx.translateBy(x: frame.midX - 50 * unit, y: frame.midY + particleOverhang / 2 - 42 * unit)
         ctx.scaleBy(x: unit, y: unit)
