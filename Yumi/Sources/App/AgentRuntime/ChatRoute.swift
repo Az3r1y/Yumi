@@ -11,9 +11,13 @@ enum ChatRoute: Equatable, Sendable {
     /// Answer as a conversation. The chat cannot change the Mac (ChatTools).
     case chat
 
+    /// Tools that do their job without changing anything risky, but that only the runtime can
+    /// run: a plan using one of them goes to the runtime too.
+    static let runtimeTools: Set<String> = ["start_focus", "get_today"]
+
     static func route(_ planned: Result<AgentPlan, AgentError>) -> ChatRoute {
         switch planned {
-        case .success(let plan) where plan.estimatedRisk >= .write: .agent(plan)
+        case .success(let plan) where plan.estimatedRisk >= .write || plan.requiredTools.contains(where: runtimeTools.contains): .agent(plan)
         case .failure(.unsupportedAction(let reason)): .blocked(reason)
         default: .chat
         }

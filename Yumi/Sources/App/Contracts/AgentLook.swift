@@ -26,6 +26,8 @@ struct AgentLook: Equatable, Sendable {
     static func remark(for result: AgentResult) -> YumiRemark? {
         let goal = result.goal?.nonEmptyTrimmed.map { " (\($0))" } ?? ""
         switch result.status {
+        case .completed where !replies(result).isEmpty:
+            return YumiRemark(id: "agent-\(result.runID)", text: replies(result).joined(separator: " "), mood: .happy, duration: 8)
         case .completed:
             return YumiRemark(id: "agent-\(result.runID)", text: "C'est fait, et j'ai vérifié\(goal).", mood: .happy, duration: 6)
         case .partial:
@@ -42,12 +44,23 @@ struct AgentLook: Equatable, Sendable {
         }
     }
 
+    /// What the tools said, in Yumi's voice, when every step that ran gave a reply. Written by
+    /// the code of the tools after it checked its work, never by a model.
+    private static func replies(_ result: AgentResult) -> [String] {
+        let done = result.steps.filter { $0.status == .completed }
+        let replies = done.compactMap { step -> String? in
+            guard case .string(let reply)? = step.output?.values["reply"] else { return nil }
+            return reply.nonEmptyTrimmed
+        }
+        return replies.count == done.count ? replies : []
+    }
+
     private static func failure(_ error: AgentError?) -> String {
         switch error {
         case .busy?: "Je suis déjà sur une autre tâche. Redemande-moi juste après."
         case .noProvider?: "Je n'ai pas de modèle pour réfléchir : installe Claude Code et connecte-toi (claude, puis /login), ou ajoute une clé Anthropic dans les réglages."
         case .providerFailed?: "Le modèle ne m'a pas répondu. Rien n'a été fait."
-        case .unsupportedAction?: "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais seulement créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents)."
+        case .unsupportedAction?: "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents), ajouter un rappel, lancer un Focus et te dire ce que tu as aujourd'hui."
         case .cannotPlan?, .invalidPlan?: "Je ne sais pas encore faire ça. Rien n'a été fait."
         case .verificationFailed(let reason)?: "J'ai essayé, mais le résultat n'est pas celui attendu : \(reason)."
         case .cannotRun(_, let reason)?: "Je ne peux pas le faire, alors je ne t'ai rien demandé : \(reason)."

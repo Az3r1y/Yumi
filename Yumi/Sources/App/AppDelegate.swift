@@ -256,7 +256,6 @@ final class YumiCore {
 
     init(state: AppState) {
         ingress = EventIngress(engine: engine)
-        agent = Self.makeAgent(permissions: permissions)
         let mirror = ClaudeTaskMirror(state: state)
         self.mirror = mirror
         memory = MemoryStore { book in
@@ -266,6 +265,10 @@ final class YumiCore {
         let claudeCode = ClaudeCodeModule(onShow: { mirror.show() })
         let agenda = AgendaModule()
         let focus = FocusModule()
+        let notes = NotesModule()
+        let weather = WeatherModule()
+        agent = Self.makeAgent(permissions: permissions,
+                               modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather))
         let memory = memory
         var initiativeDefaults = UserDefaults.standard
         #if DEBUG
@@ -308,10 +311,10 @@ final class YumiCore {
             modules: [
                 claudeCode,
                 agenda,
-                NotesModule(),
+                notes,
                 focus,
                 MusicModule(),
-                WeatherModule(),
+                weather,
                 GitHubModule(
                     token: { KeychainStore.shared.get("github-token") },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
@@ -393,9 +396,10 @@ final class YumiCore {
     /// The runtime Yumi works with. It plans with the Claude Code installed on the Mac, used as a
     /// model without any tool, through the person's own Claude Code login; without it, with the
     /// settings' Anthropic key; with neither, it says how to set one up. Writing is allowed up to
-    /// creating a file, which always asks first. The App Store build may not launch programs nor
-    /// write outside its container: it plans with the key only, and only reads.
-    private static func makeAgent(permissions: LocalPermissionManager) -> RuntimeAgent {
+    /// creating a file or a reminder, which always asks first; starting a Focus and summing up the
+    /// day need no question. The App Store build may not launch programs nor write outside its
+    /// container: it plans with the key only, and only reads.
+    private static func makeAgent(permissions: LocalPermissionManager, modules: ModuleBridge) -> RuntimeAgent {
         let api = AnthropicLLMProvider(model: "claude-sonnet-4-6", apiKey: { KeychainStore.shared.get("anthropic-api-key") })
         #if APPSTORE
         return RuntimeAgent(planner: LLMAgentPlanner(provider: api), permissions: permissions)
@@ -406,6 +410,9 @@ final class YumiCore {
         let provider = FallbackLLMProvider(providers: [claudeCode, api])
         var tools = ToolRegistry.standard
         try? tools.register(CreateFileTool())
+        try? tools.register(AddReminderTool(store: EventKitReminderStore()))
+        try? tools.register(StartFocusTool(focus: modules))
+        try? tools.register(GetTodayTool(source: modules))
         return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), tools: tools, permissions: permissions,
                             policy: AgentPolicy(maximumRisk: .write))
         #endif

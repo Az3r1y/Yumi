@@ -23,6 +23,13 @@ final class NotesModule: YumiModule {
         NotesSummary.snapshot(notes: notes, reminders: reminders, remindersAccess: access, now: Date())
     }
 
+    /// Incomplete reminders due today, for whoever needs more than the snapshot. nil while the
+    /// module is stopped or the reminders cannot be read.
+    func remindersDue(on day: Date, calendar: Calendar = .current) -> [ReminderItem]? {
+        guard onChange != nil, access == .granted else { return nil }
+        return reminders.filter { $0.due.map { calendar.isDate($0, inSameDayAs: day) } ?? false }
+    }
+
     private var access: PermissionState {
         switch EKEventStore.authorizationStatus(for: .reminder) {
         case .fullAccess:    return .granted

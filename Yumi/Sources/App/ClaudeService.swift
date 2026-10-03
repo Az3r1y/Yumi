@@ -212,8 +212,10 @@ final class ClaudeService {
         case .agent(let accepted):
             plan = accepted
         }
-        state.chatHistory.append(ChatMessage(role: .assistant, content: "Je m'en occupe : \(plan.goal). Je te demande avant de toucher à quoi que ce soit."))
-        state.view = .prompt
+        if plan.steps.contains(where: \.requiresApproval) {
+            state.chatHistory.append(ChatMessage(role: .assistant, content: "Je m'en occupe : \(plan.goal). Je te demande avant de toucher à quoi que ce soit."))
+            state.view = .prompt
+        }
         let result = await agent.execute(plan, for: request)
         let text = AgentLook.remark(for: result)?.text ?? "C'est annulé, je n'ai rien fait."
         state.chatHistory.append(ChatMessage(role: .assistant, content: text))

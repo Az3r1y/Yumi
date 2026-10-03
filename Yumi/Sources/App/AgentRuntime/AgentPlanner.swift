@@ -78,6 +78,8 @@ enum PlannerPrompt {
             user += "- \(tool.id): \(tool.description) Arguments: \(fields.isEmpty ? "none" : fields)\n"
         }
         user += "</tools>\n\n"
+        // The date only, so that "demain" can be planned: nothing personal.
+        user += "<now>\n\(nowLine(request.timestamp))\n</now>\n\n"
         if let context = request.contextForPlanner {
             user += "<context>\n"
             for (key, value) in context.fields { user += "\(key): \(dataOnly(value))\n" }
@@ -88,6 +90,15 @@ enum PlannerPrompt {
         user += "<request>\n\(dataOnly(request.trimmedIntent))\n</request>"
         return LLMRequest(system: system, messages: [LLMMessage(role: .user, content: user)],
                           expectsJSON: true, maxOutputTokens: 1500)
+    }
+
+    /// "2026-10-03 Saturday 14:05", in the Mac's time zone.
+    static func nowLine(_ date: Date, timeZone: TimeZone = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "yyyy-MM-dd EEEE HH:mm"
+        return formatter.string(from: date)
     }
 
     /// Reads the model's answer. Tolerates text or a code fence around the JSON object,

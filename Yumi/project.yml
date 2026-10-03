@@ -76,7 +76,7 @@ targets:
         NSAccessibilityUsageDescription: "Je lis le titre de la fenêtre que tu me montres, et j'écoute la touche Échap et ton raccourci."
         # Asked the first time the user presses the matching button of a module, never at launch.
         NSCalendarsFullAccessUsageDescription: "Je lis ton calendrier pour t'annoncer ton prochain rendez-vous. Rien ne quitte ton Mac."
-        NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, et je coche ceux que tu termines."
+        NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, je coche ceux que tu termines, et j'en ajoute quand tu me le demandes."
         NSDownloadsFolderUsageDescription: "Je dépose dans Téléchargements les fichiers que tu me demandes de créer."
         NSDocumentsFolderUsageDescription: "Je crée dans Documents les fichiers que tu me demandes d'y mettre, et j'y travaille si tu y as placé mon dossier."
         NSDesktopFolderUsageDescription: "Je crée sur ton Bureau les fichiers que tu me demandes d'y mettre."
@@ -118,7 +118,7 @@ targets:
         ITSAppUsesNonExemptEncryption: NO
         # Asked the first time the user presses the matching button of a module, never at launch.
         NSCalendarsFullAccessUsageDescription: "Je lis ton calendrier pour t'annoncer ton prochain rendez-vous. Rien ne quitte ton Mac."
-        NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, et je coche ceux que tu termines."
+        NSRemindersFullAccessUsageDescription: "Je te montre tes rappels du jour, je coche ceux que tu termines, et j'en ajoute quand tu me le demandes."
         NSDownloadsFolderUsageDescription: "Je dépose dans Téléchargements les fichiers que tu me demandes de créer."
         NSDocumentsFolderUsageDescription: "Je crée dans Documents les fichiers que tu me demandes d'y mettre, et j'y travaille si tu y as placé mon dossier."
         NSDesktopFolderUsageDescription: "Je crée sur ton Bureau les fichiers que tu me demandes d'y mettre."

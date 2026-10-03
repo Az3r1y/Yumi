@@ -1,0 +1,28 @@
+import Foundation
+
+/// The modules as the agent's tools see them: the Focus timer, and what the day holds. Reads
+/// the modules on the main actor when a tool asks, never before; holds nothing itself.
+@MainActor
+final class ModuleBridge: FocusControl, TodaySource {
+    private weak var focus: FocusModule?
+    private weak var agenda: AgendaModule?
+    private weak var notes: NotesModule?
+    private weak var weather: WeatherModule?
+
+    init(focus: FocusModule, agenda: AgendaModule, notes: NotesModule, weather: WeatherModule) {
+        self.focus = focus
+        self.agenda = agenda
+        self.notes = notes
+        self.weather = weather
+    }
+
+    func status() async -> FocusStatus { focus?.status ?? .off }
+
+    func start(minutes: Int) async -> Bool { focus?.startSession(minutes: minutes) ?? false }
+
+    func facts(now: Date) async -> TodayFacts {
+        TodayFacts(events: agenda?.upcomingTodayIfRunning,
+                   reminders: notes?.remindersDue(on: now),
+                   weather: weather?.currentReport)
+    }
+}
