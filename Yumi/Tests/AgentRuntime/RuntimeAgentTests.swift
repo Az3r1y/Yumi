@@ -281,6 +281,32 @@ import Foundation
         #expect(agent.current?.events.contains { $0.kind == .stepFailed(stepID: "step-1", error: .toolTimedOut(tool: "slow"), recovery: .retry) } == true)
     }
 
+    /// A write that timed out may have happened (EventKit saved, then answered late): a second
+    /// call would add the reminder or the line twice.
+    @Test func aWriteThatTimesOutIsNeverRunTwice() async throws {
+        let slow = FakeTool(id: "slow_write", risk: .write, outcomes: [.hang])
+        let (agent, _) = try makeAgent([.text(planJSON(tools: ["slow_write"]))], tools: [slow],
+                                       permissions: ScriptedPermissionManager([.decision(.granted)]),
+                                       policy: AgentPolicy(maximumRisk: .write),
+                                       recovery: RecoveryPolicy(maxAttempts: 3, retryDelay: .zero, stepTimeout: .milliseconds(50)))
+        let result = await agent.run(AgentRequest(userIntent: "x"))
+        #expect(slow.calls == 1)
+        #expect(result.status == .failed)
+        #expect(result.error == .toolTimedOut(tool: "slow_write"))
+        #expect(agent.current?.events.contains { $0.kind == .stepFailed(stepID: "step-1", error: .toolTimedOut(tool: "slow_write"), recovery: .fail) } == true)
+    }
+
+    @Test func aWriteThatFailsForNowIsNotRetried() async throws {
+        let busy = FakeTool(id: "busy_write", risk: .write, outcomes: [.error(ToolError.unavailable("busy"))])
+        let (agent, _) = try makeAgent([.text(planJSON(tools: ["busy_write"]))], tools: [busy],
+                                       permissions: ScriptedPermissionManager([.decision(.granted)]),
+                                       policy: AgentPolicy(maximumRisk: .write))
+        let result = await agent.run(AgentRequest(userIntent: "x"))
+        #expect(busy.calls == 1)
+        #expect(result.status == .failed)
+        #expect(result.error == .toolFailed(tool: "busy_write", reason: "busy", transient: true))
+    }
+
     @Test func anOptionalStepThatFailsIsSkipped() async throws {
         let broken = FakeTool(id: "broken", fallback: .error(ToolError.failed("nope")))
         let fine = FakeTool(id: "fine")
@@ -509,6 +535,10 @@ import Foundation
         #expect(policy.decide(after: .permissionDenied(tool: "t", reason: nil), attempt: 1, retriesUsed: 0, optional: false) == .cancel)
         #expect(policy.decide(after: .permissionDenied(tool: "t", reason: nil), attempt: 1, retriesUsed: 0, optional: true) == .skip)
         #expect(policy.decide(after: .cancelled, attempt: 1, retriesUsed: 0, optional: true) == .cancel)
+        // A step that changes something is never tried again.
+        #expect(policy.decide(after: transient, attempt: 1, retriesUsed: 0, optional: false, repeatable: false) == .fail)
+        #expect(policy.decide(after: .toolTimedOut(tool: "t"), attempt: 1, retriesUsed: 0, optional: false, repeatable: false) == .fail)
+        #expect(policy.decide(after: .toolTimedOut(tool: "t"), attempt: 1, retriesUsed: 0, optional: true, repeatable: false) == .skip)
     }
 
     @Test func historyKeepsTheMostRecentRuns() {

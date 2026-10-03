@@ -96,12 +96,40 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
         return "Je dois \(verb) \(object)\(place)."
     }
 
-    /// What will be touched, on one line, when there is a single thing to show: the command, the file.
+    /// What will be touched, on one line, when there is a single thing to show: the command, a
+    /// text of one line. A text of several lines is shown by `contentPreview` instead.
     var subject: String? {
-        if let content { return "« \(content) »" }
+        if let content {
+            let lines = Self.lines(of: content)
+            if lines.count <= 1 { return "« \(lines.first ?? "") »" }
+            return nil
+        }
         guard resources.count == 1 else { return nil }
         let resource = resources[0]
         return resource.kind == .command ? resource.identifier : nil
+    }
+
+    /// Lines of a text of several lines, as the person reads them before agreeing: the first
+    /// ones, then how many more. nil for a text of one line (`subject` shows it).
+    var contentPreview: [String]? {
+        guard let content else { return nil }
+        let lines = Self.lines(of: content)
+        guard lines.count > 1 else { return nil }
+        var shown = lines.prefix(Self.previewLines).map { $0.isEmpty ? " " : $0 }
+        if lines.count > Self.previewLines {
+            let more = lines.count - Self.previewLines
+            shown.append("… et \(more) ligne\(more > 1 ? "s" : "") de plus")
+        }
+        return shown
+    }
+
+    static let previewLines = 5
+
+    /// The lines of a text, without the empty ones at its end.
+    static func lines(of text: String) -> [String] {
+        var lines = text.components(separatedBy: .newlines)
+        while lines.last?.trimmingCharacters(in: .whitespaces).isEmpty == true { lines.removeLast() }
+        return lines
     }
 
     /// The planner's goal, cut to one short line.
@@ -114,7 +142,11 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
             let names = resources.prefix(6).map { Self.displayName($0, in: container) }
             lines.append("Concerne : " + names.joined(separator: ", ") + (resources.count > 6 ? " et \(resources.count - 6) autres" : ""))
         }
-        if let content { lines.append("Texte ajouté : « \(content) »") }
+        if let content {
+            let count = Self.lines(of: content).count
+            let label = action == .create ? "Contenu" : "Texte ajouté"
+            lines.append(count > 1 ? "\(label) : \(count) lignes, \(content.count) caractères" : "\(label) : « \(content.trimmingCharacters(in: .newlines)) »")
+        }
         lines.append("Portée : \(scope.label)" + (offersSession ? " (ou cette session)" : ""))
         lines.append("Risque : \(riskLevel.label)")
         if let why = Self.oneLine(reason, limit: 120) { lines.append("Raison donnée par l'agent : \(why)") }

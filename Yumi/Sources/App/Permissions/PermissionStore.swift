@@ -38,8 +38,19 @@ final class FilePermissionStore: PermissionStore, @unchecked Sendable {
             guard let data = try? Data(contentsOf: url) else { return PermissionRecord() }
             let decoder = JSONDecoder()
             decoder.dateDecodingStrategy = .iso8601
-            return (try? decoder.decode(PermissionRecord.self, from: data)) ?? PermissionRecord()
+            if let record = try? decoder.decode(PermissionRecord.self, from: data) { return record }
+            // Unreadable (edited by hand, cut short): put aside, never overwritten by the next save,
+            // so that the person's refusals can still be read and restored.
+            try? FileManager.default.moveItem(at: url, to: unreadableCopy)
+            return PermissionRecord()
         }
+    }
+
+    /// Where an unreadable file is put aside: `permissions.unreadable-<seconds>.json`.
+    private var unreadableCopy: URL {
+        let name = url.deletingPathExtension().lastPathComponent
+        return url.deletingLastPathComponent()
+            .appendingPathComponent("\(name).unreadable-\(Int(Date().timeIntervalSince1970)).\(url.pathExtension)")
     }
 
     func save(_ record: PermissionRecord) {

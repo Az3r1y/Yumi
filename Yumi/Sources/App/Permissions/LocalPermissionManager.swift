@@ -28,8 +28,11 @@ final class LocalPermissionManager: PermissionManager {
     @ObservationIgnored let audit: PermissionAuditLog
     @ObservationIgnored private let approvals = ApprovalStore()
     @ObservationIgnored weak var presenter: (any ApprovalPresenter)?
-    /// How long an approval waits for the person.
+    /// How long an approval waits for the person, from the moment it is on screen.
     @ObservationIgnored let approvalLifetime: Duration
+    /// How long an approval may wait in the queue before it is shown at all (behind requests of
+    /// Claude Code sessions). Past that, it expires unseen.
+    @ObservationIgnored let queueLifetime: Duration
     /// A session permission also ends after this long.
     @ObservationIgnored let sessionLifetime: TimeInterval
     @ObservationIgnored private let clock: @Sendable () -> Date
@@ -43,16 +46,23 @@ final class LocalPermissionManager: PermissionManager {
     /// Files the person handed to Yumi themselves, this session.
     @ObservationIgnored private var chosenByPerson: Set<String> = []
     @ObservationIgnored private var subscribers: [UUID: AsyncStream<PermissionEvent>.Continuation] = [:]
+    /// The current deadline of each waiting approval: a deadline replaced (the approval came on
+    /// screen) no longer expires it.
+    @ObservationIgnored private var deadlines: [UUID: UUID] = [:]
+    /// Approvals already shown once: their time to answer is running.
+    @ObservationIgnored private var onScreen: Set<UUID> = []
 
     init(store: any PermissionStore = MemoryPermissionStore(),
          audit: PermissionAuditLog = PermissionAuditLog(sink: MemoryAuditSink()),
          assessor: RiskAssessor = RiskAssessor(),
          approvalLifetime: Duration = .seconds(60),
+         queueLifetime: Duration = .seconds(600),
          sessionLifetime: TimeInterval = 12 * 3600,
          clock: @escaping @Sendable () -> Date = Date.init) {
         self.store = store
         self.audit = audit
         self.approvalLifetime = approvalLifetime
+        self.queueLifetime = queueLifetime
         self.sessionLifetime = sessionLifetime
         self.clock = clock
         let record = store.load()
@@ -92,13 +102,11 @@ final class LocalPermissionManager: PermissionManager {
             approvals.add(approval)
             emit(.permissionRequired(approval))
             let id = approval.id
-            presenter.present(approval) { [weak self] answer in self?.answer(id, answer) }
+            // Until it is on screen, only the long wait of the queue counts.
+            expire(id, after: queueLifetime)
+            presenter.present(approval, shown: { [weak self] in self?.shown(id) },
+                              answer: { [weak self] answer in self?.answer(id, answer) })
             emit(.waitingForUser(approvalID: id))
-            let lifetime = approvalLifetime
-            Task { [weak self] in
-                try? await Task.sleep(for: lifetime)
-                self?.end(id, as: .expired)
-            }
             return .ask(approval)
         }
     }
@@ -237,9 +245,10 @@ final class LocalPermissionManager: PermissionManager {
         var resources = assessment.resources
         var reversible = assessment.reversible
         // Similar steps of the same run are asked together: same tool, action, risk and project,
-        // and each one would have to be asked anyway. Never for a critical risk.
-        if assessment.risk != .critical {
-            for next in upcoming where next.runID == request.runID && next.toolID == request.toolID
+        // and each one would have to be asked anyway. Never for a critical risk, and never for a
+        // step that writes a text: each text is read on its own before agreeing.
+        if assessment.risk != .critical, request.action?.content == nil {
+            for next in upcoming where next.runID == request.runID && next.toolID == request.toolID && next.action?.content == nil
                 && next.stepID != request.stepID && !items.contains(where: { $0.fingerprint == next.fingerprint }) {
                 guard case .success(let other) = assessor.assess(next), other.kind == assessment.kind,
                       other.risk == assessment.risk, other.container == assessment.container,
@@ -259,14 +268,37 @@ final class LocalPermissionManager: PermissionManager {
                 offered.append(.session)
             }
         }
-        let expiresAt = now.addingTimeInterval(Double(approvalLifetime.components.seconds)
-                                               + Double(approvalLifetime.components.attoseconds) / 1e18)
+        // Not on screen yet: the queue's limit until the presenter says it is shown.
+        let expiresAt = now.addingTimeInterval(Self.seconds(queueLifetime))
         return ApprovalRequest(agentRunID: request.runID, toolID: request.toolID, toolName: request.toolName,
                                action: assessment.kind, goal: request.goal, reason: request.reason,
                                riskLevel: assessment.risk, offeredScopes: offered, resources: resources,
                                container: assessment.container, reversible: reversible,
                                content: items.count == 1 ? request.action?.content : nil, items: items,
                                createdAt: now, expiresAt: expiresAt)
+    }
+
+    /// The approval is on screen: the person has `approvalLifetime` from now. Only the first time counts.
+    private func shown(_ id: UUID) {
+        guard approvals.approval(id: id) != nil, !onScreen.contains(id) else { return }
+        onScreen.insert(id)
+        approvals.setExpiry(id, to: clock().addingTimeInterval(Self.seconds(approvalLifetime)))
+        expire(id, after: approvalLifetime)
+    }
+
+    /// Expires the approval after `delay`, unless a later deadline replaced this one.
+    private func expire(_ id: UUID, after delay: Duration) {
+        let token = UUID()
+        deadlines[id] = token
+        Task { [weak self] in
+            try? await Task.sleep(for: delay)
+            guard let self, self.deadlines[id] == token else { return }
+            self.end(id, as: .expired)
+        }
+    }
+
+    private static func seconds(_ duration: Duration) -> TimeInterval {
+        Double(duration.components.seconds) + Double(duration.components.attoseconds) / 1e18
     }
 
     /// The person answered. Called only through the closure given to the presenter.
@@ -283,6 +315,8 @@ final class LocalPermissionManager: PermissionManager {
         case .approve(let asked):
             let scope = approval.offeredScopes.contains(asked) ? asked : .oneTime
             guard let approved = approvals.resolve(id, as: .approved) else { return }
+            deadlines[id] = nil
+            onScreen.remove(id)
             grant(approved, scope: scope, now: now)
             for item in approved.items {
                 recordItem(approved, item, .approved, by: .user, scope: scope)
@@ -294,6 +328,8 @@ final class LocalPermissionManager: PermissionManager {
     /// Ends an approval that is still waiting. Does nothing once it ended.
     private func end(_ id: UUID, as status: ApprovalRequest.Status) {
         guard status != .approved, let ended = approvals.resolve(id, as: status) else { return }
+        deadlines[id] = nil
+        onScreen.remove(id)
         let decision: PermissionAuditEntry.Decision = switch status {
         case .denied: .denied
         case .expired: .expired

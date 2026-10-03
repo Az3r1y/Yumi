@@ -11,12 +11,21 @@ final class FakePresenter: ApprovalPresenter {
     private var answers: [UUID: @MainActor (ApprovalAnswer) -> Void] = [:]
     /// Answered as soon as shown, when set.
     var autoAnswer: ApprovalAnswer?
+    /// False: approvals wait in a queue, as behind a Claude Code request in the island, until
+    /// `bringOnScreen` is called. True (the default): on screen at once.
+    var showsAtOnce = true
+    private var onScreen: [UUID: @MainActor () -> Void] = [:]
 
-    func present(_ approval: ApprovalRequest, answer: @escaping @MainActor (ApprovalAnswer) -> Void) {
-        shown.append(approval)
+    func present(_ approval: ApprovalRequest, shown: @escaping @MainActor () -> Void,
+                 answer: @escaping @MainActor (ApprovalAnswer) -> Void) {
+        self.shown.append(approval)
         answers[approval.id] = answer
+        if showsAtOnce { shown() } else { onScreen[approval.id] = shown }
         if let autoAnswer { Task { @MainActor in answer(autoAnswer) } }
     }
+
+    /// The approval reaches the front of the queue.
+    func bringOnScreen(_ id: UUID) { onScreen.removeValue(forKey: id)?() }
 
     func withdraw(_ approvalID: UUID) { withdrawn.append(approvalID) }
 
@@ -88,8 +97,10 @@ enum Fixture {
     static func manager(store: any PermissionStore = MemoryPermissionStore(),
                         audit: PermissionAuditLog = PermissionAuditLog(sink: MemoryAuditSink()),
                         lifetime: Duration = .seconds(60),
+                        queue: Duration = .seconds(600),
                         presenter: FakePresenter? = nil) -> LocalPermissionManager {
-        let manager = LocalPermissionManager(store: store, audit: audit, assessor: assessor, approvalLifetime: lifetime)
+        let manager = LocalPermissionManager(store: store, audit: audit, assessor: assessor, approvalLifetime: lifetime,
+                                             queueLifetime: queue)
         manager.presenter = presenter
         return manager
     }

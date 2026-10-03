@@ -951,7 +951,7 @@ final class BotEngine: ObservableObject {
         // `YUMI_FREEZE=1` stops the character after 20 s: what the app still costs is not him
         if now > 20, ProcessInfo.processInfo.environment["YUMI_FREEZE"] != nil { return .still }
         #endif
-        if pose != nil || scene != nil || state == .approval { return .full }
+        if pose != nil || scene != nil { return .full }
         // A habit that lasts keeps the body moving, so it is never settled: thirty a second is
         // enough for it, whatever eases meanwhile
         switch blob.habit {
@@ -971,6 +971,11 @@ final class BotEngine: ObservableObject {
         let phase = (now + blinkPhase).truncatingRemainder(dividingBy: 5.4)
         if phase > 5.4 * 0.955 - 0.1 { return .full }
         if let b = blinkAt, now - b < 0.3 { return .full }
+
+        // Waiting for an approval, only the glow pulses, over 1.1 s: like a lasting habit, thirty
+        // pictures a second look the same. The shake, the blinks, the look and the face still
+        // get every frame through the checks above.
+        if state == .approval { return .habit }
 
         switch blob.habit {
         case .smoke, .coffee, .headphones, .whistle, .cloud:

@@ -361,6 +361,13 @@ final class ClaudeService {
 
         var transcript = ChatTranscript()
         var waiting: Set<String> = []
+        /// The requests still waiting, to write in the history how they ended.
+        var asked: [String: ChatPermissionRequest] = [:]
+        // Every request of the chat goes in the same history as the agent's own decisions.
+        func record(_ request: ChatPermissionRequest, _ outcome: ChatPermissionAudit.Outcome) {
+            state.permissions?.audit.record(ChatPermissionAudit.entry(tool: request.toolName, input: request.inputJSON,
+                                                                      outcome: outcome, date: Date()))
+        }
         var result: ChatTurnResult?
 
         // The answer in progress, for the island (Contracts/ChatLive.swift). Words arrive by the
@@ -435,6 +442,7 @@ final class ClaudeService {
                     // A tool that changes the Mac has nothing to do in the chat: refused without
                     // asking, so a click can never let it through the permission manager's back.
                     turn.send(ClaudeStream.answerLine(to: request, .deny(message: ChatPhrases.actionsGoThroughYumi)))
+                    record(request, .blocked)
                     tracker.permissionAnswered(toolUseID: request.toolUseID, allowed: false)
                     transcript.refuse(toolUseID: request.toolUseID)
 
@@ -442,11 +450,15 @@ final class ClaudeService {
                     // The request is shown in the island like the ones of any Claude Code session;
                     // the answer goes back to the process, which waits for it.
                     waiting.insert(request.requestID)
+                    asked[request.requestID] = request
                     HookServer.shared.presentChatApproval(
                         id: request.requestID, session: target.id, tool: request.toolName, command: request.summary
                     ) { [weak turn] decision in
                         let answer = ChatPermissionDecision(islandAnswer: decision)
                         turn?.send(ClaudeStream.answerLine(to: request, answer))
+                        if asked.removeValue(forKey: request.requestID) != nil {
+                            record(request, ChatPermissionAudit.outcome(islandAnswer: decision))
+                        }
                         var allowed = true
                         if case .deny = answer { allowed = false }
                         tracker.permissionAnswered(toolUseID: request.toolUseID, allowed: allowed)
@@ -462,6 +474,7 @@ final class ClaudeService {
 
                 case .permissionCancelled(let requestID):
                     waiting.remove(requestID)
+                    if let request = asked.removeValue(forKey: requestID) { record(request, .cancelled) }
                     HookServer.shared.cancelChatApproval(id: requestID)
 
                 case .finished(let turnResult):
@@ -477,6 +490,7 @@ final class ClaudeService {
         // Nothing can answer the requests still on screen. A cancelled turn leaves the view alone.
         let wasCancelled = turn.isCancelled && result == nil
         for requestID in waiting { HookServer.shared.cancelChatApproval(id: requestID, backToChat: !wasCancelled) }
+        for request in asked.values { record(request, .cancelled) }
 
         if wasCancelled {
             // Unless another message took over, the character stops looking busy.

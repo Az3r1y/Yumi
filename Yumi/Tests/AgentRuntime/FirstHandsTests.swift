@@ -76,7 +76,7 @@ private func context() -> ToolContext {
     @Test func describesItsActionFromTheArgumentsOnly() {
         let tool = CreateFileTool(home: "/Users/someone")
         let action = tool.action(for: createArguments("~/Desktop/todo.md"))
-        #expect(action == ToolAction(kind: .create, resources: [.file("/Users/someone/Desktop/todo.md")], reversible: true))
+        #expect(action == ToolAction(kind: .create, resources: [.file("/Users/someone/Desktop/todo.md")], reversible: true, content: todo))
         #expect(tool.descriptor.risk == .write)
     }
 
@@ -108,6 +108,46 @@ private func context() -> ToolContext {
         guard case .ask(let approval) = evaluation else { Issue.record("expected ask, got \(evaluation)"); return }
         #expect(approval.riskLevel == .medium)
         #expect(approval.action == .create)
+    }
+
+    /// The person reads what the file will hold before agreeing, not only where it goes.
+    @Test func theApprovalShowsWhatTheFileWillHold() async throws {
+        let presenter = await FakePresenter()
+        let manager = await Fixture.manager(presenter: presenter)
+        let long = (1...8).map { "- [ ] Tâche \($0)" }.joined(separator: "\n") + "\n"
+        let arguments = createArguments("~/Desktop/todo.md", long)
+        let asked = AgentPermissionRequest(runID: UUID(), stepID: "step-1", goal: "Créer une liste", reason: "Créer todo.md",
+                                           toolID: tool.descriptor.id, toolName: tool.descriptor.name, risk: tool.descriptor.risk,
+                                           arguments: arguments, action: tool.action(for: arguments), requiresApproval: true)
+        let approval = try #require(await manager.evaluate(asked, upcoming: []).approval)
+        #expect(approval.contentPreview == ["- [ ] Tâche 1", "- [ ] Tâche 2", "- [ ] Tâche 3", "- [ ] Tâche 4", "- [ ] Tâche 5",
+                                            "… et 3 lignes de plus"])
+        #expect(approval.subject == nil)
+        #expect(approval.details.contains("Contenu : 8 lignes, \(long.count) caractères"))
+
+        let one = createArguments("~/Desktop/note.txt", "Bonjour\n")
+        let short = AgentPermissionRequest(runID: UUID(), stepID: "step-1", goal: "g", reason: "r", toolID: tool.descriptor.id,
+                                           toolName: tool.descriptor.name, risk: tool.descriptor.risk, arguments: one,
+                                           action: tool.action(for: one), requiresApproval: true)
+        let single = try #require(await manager.evaluate(short, upcoming: []).approval)
+        #expect(single.subject == "« Bonjour »")
+        #expect(single.contentPreview == nil)
+    }
+
+    /// Two files of the same run are asked one by one: each content is read on its own.
+    @Test func twoFilesAreNeverAskedTogether() async throws {
+        let presenter = await FakePresenter()
+        let manager = await Fixture.manager(presenter: presenter)
+        let run = UUID()
+        func step(_ id: String, _ path: String) -> AgentPermissionRequest {
+            let arguments = createArguments(path)
+            return AgentPermissionRequest(runID: run, stepID: id, goal: "g", reason: "r", toolID: tool.descriptor.id,
+                                          toolName: tool.descriptor.name, risk: tool.descriptor.risk, arguments: arguments,
+                                          action: tool.action(for: arguments), requiresApproval: true)
+        }
+        let approval = try #require(await manager.evaluate(step("step-1", "~/Desktop/a.md"), upcoming: [step("step-2", "~/Desktop/b.md")]).approval)
+        #expect(approval.items.count == 1)
+        #expect(approval.content == todo)
     }
 
     @Test func aSecretPathIsNeverAllowed() async throws {
@@ -272,6 +312,28 @@ private final class SentRequests: @unchecked Sendable {
     @Test func aCancelledRunSaysNothing() {
         let result = AgentResult(runID: UUID(), status: .cancelled, goal: nil, steps: [], error: .cancelled, finishedAt: Date())
         #expect(AgentLook.remark(for: result) == nil)
+    }
+
+    @Test func aRefusalIsNeverSaidAsASuccess() {
+        let ruled = AgentResult(runID: UUID(), status: .failed, goal: nil, steps: [],
+                                error: .permissionDenied(tool: "create_file", reason: "Une règle de tes réglages l'interdit."), finishedAt: Date())
+        #expect(AgentLook.remark(for: ruled)?.text == "Une règle de tes réglages l'interdit. Je n'ai rien fait.")
+        #expect(AgentLook.remark(for: ruled)?.mood == .worried)
+
+        var refused = AgentStep(id: "step-2", description: "Ajouter", toolID: "append_to_file", isOptional: true)
+        refused.status = .skipped
+        refused.error = .permissionDenied(tool: "append_to_file", reason: "Tu as refusé.")
+        var done = AgentStep(id: "step-1", description: "Créer", toolID: "create_file")
+        done.status = .completed
+        done.output = ToolOutput(summary: "Created.")
+        let partial = AgentResult(runID: UUID(), status: .partial, goal: "todo", steps: [done, refused], error: nil, finishedAt: Date())
+        #expect(AgentLook.remark(for: partial)?.text == "C'est fait en partie (todo) : tu as refusé une étape, je l'ai laissée.")
+        #expect(AgentLook.remark(for: partial)?.mood != .happy)
+    }
+
+    @Test func aTimeoutSaysTheEffectMayBeThere() {
+        let result = AgentResult(runID: UUID(), status: .failed, goal: nil, steps: [], error: .toolTimedOut(tool: "add_reminder"), finishedAt: Date())
+        #expect(AgentLook.remark(for: result)?.text.contains("Je ne sais pas si c'est fait") == true)
     }
 }
 

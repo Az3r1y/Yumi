@@ -37,6 +37,8 @@ final class HookServer: @unchecked Sendable {
         var respond: (@MainActor (String) -> Void)?
         /// A request of Yumi's own agent runtime (Permissions/): its expiry belongs to the permission system.
         var isAgent = false
+        /// Told when the request comes on screen: the permission system starts its time to answer then.
+        var shown: (@MainActor () -> Void)?
 
         var isChat: Bool { respond != nil && !isAgent }
     }
@@ -154,7 +156,7 @@ final class HookServer: @unchecked Sendable {
 
         approvals.append(PendingApproval(
             requestID: request.id, sessionID: sessionID,
-            info: ApprovalInfo(sessionId: sessionID.value, tool: request.tool, command: request.command)))
+            info: ApprovalInfo(sessionId: sessionID.value, tool: request.tool, command: request.command, requestID: request.id)))
 
         // The script now knows the app is alive and waits for the user.
         if socket.acknowledges { socket.send(#"{"ack":true}"#) }
@@ -181,21 +183,24 @@ final class HookServer: @unchecked Sendable {
         nbLog("PermissionRequest (chat) \(tool): \(command)")
         approvals.append(PendingApproval(
             requestID: requestID, sessionID: SessionID(session),
-            info: ApprovalInfo(sessionId: session, tool: tool, command: command),
+            info: ApprovalInfo(sessionId: session, tool: tool, command: command, requestID: requestID),
             respond: respond))
         if approvals.count == 1 { showApproval(approvals[0]) }
     }
 
     /// Queues an approval of Yumi's own agent runtime. It is shown like the others; the answer
     /// ("allow", "always" for this session, "deny") goes to `respond`, and only from a click.
-    /// The permission system expires it and withdraws it itself (`withdrawAgentApproval`).
+    /// The permission system expires it and withdraws it itself (`withdrawAgentApproval`), counting
+    /// the time to answer from the moment it is on screen (`shown`), not while it queues.
     @MainActor
-    func presentAgentApproval(_ approval: ApprovalRequest, respond: @escaping @MainActor (String) -> Void) {
+    func presentAgentApproval(_ approval: ApprovalRequest, shown: @escaping @MainActor () -> Void,
+                              respond: @escaping @MainActor (String) -> Void) {
         nbLog("Approval (agent) \(approval.toolID), \(approval.items.count) action(s), risk \(approval.riskLevel.rawValue)")
         approvals.append(PendingApproval(
             requestID: approval.id.uuidString, sessionID: SessionID("yumi-agent"),
-            info: ApprovalInfo(sessionId: "yumi-agent", tool: approval.toolName, command: approval.headline, agentRequest: approval),
-            respond: respond, isAgent: true))
+            info: ApprovalInfo(sessionId: "yumi-agent", tool: approval.toolName, command: approval.headline, agentRequest: approval,
+                                requestID: approval.id.uuidString),
+            respond: respond, isAgent: true, shown: shown))
         if approvals.count == 1 { showApproval(approvals[0]) }
     }
 
@@ -231,8 +236,10 @@ final class HookServer: @unchecked Sendable {
     private func showApproval(_ approval: PendingApproval) {
         let state = AppState.shared
         if approval.isAgent {
-            // Yumi itself asks: the character shows it. The time limit is the permission system's.
+            // Yumi itself asks: the character shows it. The time limit is the permission system's,
+            // and starts now.
             state.stateOverride = .approval
+            approval.shown?()
         } else if approval.isChat {
             // The chat is not one of the sessions of the pill: the character itself shows the request.
             state.stateOverride = .approval
@@ -255,10 +262,16 @@ final class HookServer: @unchecked Sendable {
     }
 
     /// Called by ApprovalView buttons. Writes the decision to the waiting hook script and cleans up.
+    /// - Parameter requestID: the request the button was drawn for. When another one is now in
+    ///   front, the click is dropped: an answer never goes to a request the person did not see.
     @MainActor
-    func sendApprovalDecision(_ decision: String) {
+    func sendApprovalDecision(_ decision: String, for requestID: String? = nil) {
         guard let current = approvals.first else {
             closeApprovalView(after: nil)
+            return
+        }
+        if let requestID, requestID != current.requestID {
+            nbLog("Approval answer dropped: \(requestID) is no longer in front")
             return
         }
         resolveApproval(current.requestID, decision: decision)

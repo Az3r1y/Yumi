@@ -34,7 +34,16 @@ Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependen
   <img src="docs/musique.png" alt="The music module in the island" width="720">
 </p>
 
-**You talk, he acts.** The chat runs through the Claude Code already installed on your Mac: in the chat it talks, reads and searches, and changes nothing. When you ask for an action, Yumi's own agent plans it, asks you with the exact path, does it and checks it. Today the only action is creating a text file, in Downloads unless you name the Desktop or Documents.
+**You talk, he acts.** The chat runs through the Claude Code already installed on your Mac: in the chat it talks, reads and searches, and changes nothing. When you ask for an action, Yumi's own agent plans it, asks you before anything changes (showing the exact file and what it will hold, the reminder or the event, with a minute to answer once the question is on screen), does it and checks that it is really there. Today he can:
+
+- create a new text file, in Downloads unless you name the Desktop or Documents (never replacing a file);
+- add a line at the end of a file he created himself;
+- add a reminder to your default Reminders list;
+- add an event to your default calendar, without inviting anyone;
+- start a Focus session (no question asked: nothing leaves the Mac);
+- sum up your day from what his modules already show (no question asked).
+
+He never deletes, sends, runs a command or edits a file he did not create. A request he cannot do is refused and passed to nobody. If a step that writes takes too long, he does not try it a second time and tells you to check.
 
 ### Which model plans the actions
 
@@ -113,12 +122,12 @@ Yumi works without any of these. Each one unlocks a feature, and is asked for wh
 
 | Permission | What it is for |
 | --- | --- |
-| Calendar | Announcing your next event |
-| Reminders | Showing today's reminders and ticking them |
+| Calendar | Announcing your next event, adding the events you ask for |
+| Reminders | Showing today's reminders, ticking them, adding the ones you ask for |
 | Location | The weather where you are, to the nearest kilometre |
 | Automation | Pause and next track, the address of the page you show him |
 | Accessibility | The title of the window you show him, the Escape key, the global shortcut |
-| Downloads | Dropping the files you ask him to create |
+| Downloads, Desktop, Documents | Creating the files you ask for, and adding to them |
 | Login item | Launching Yumi at startup, if you turn it on |
 
 ## Privacy
@@ -127,9 +136,10 @@ Yumi works without any of these. Each one unlocks a feature, and is asked for wh
 - The calendar, the reminders and the memory never leave your Mac.
 - Network calls go only to the services behind the modules you turned on: Open-Meteo for the weather, GitHub with your own token.
 - The chat goes through your own Claude Code, under your own account.
-- A plan request sends the model your words and the list of Yumi's tools. What is on your screen is sent only if you tick it for that request.
+- A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. What is on your screen is never sent from the chat; only the Agent section of the settings can send it, when you tick it for that request.
 - Tokens are stored in the macOS Keychain, never on disk and never in git.
 - Yumi never approves a Claude Code permission without an explicit click.
+- Every permission decision, Yumi's own and those of the chat, is kept in one history on your Mac (Settings, Yumi's permissions): which tool, which file or site, what was decided. Never the content, the search or the full address.
 
 ## Repository
 

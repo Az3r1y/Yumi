@@ -31,7 +31,12 @@ struct AgentLook: Equatable, Sendable {
         case .completed:
             return YumiRemark(id: "agent-\(result.runID)", text: "C'est fait, et j'ai vérifié\(goal).", mood: .happy, duration: 6)
         case .partial:
-            return YumiRemark(id: "agent-\(result.runID)", text: "C'est fait en partie\(goal) : une étape facultative a été laissée.",
+            // A step left out because the person said no is said as such: it is not a success.
+            let refused = result.steps.contains {
+                if $0.status == .skipped, case .permissionDenied? = $0.error { true } else { false }
+            }
+            let left = refused ? "tu as refusé une étape, je l'ai laissée" : "une étape facultative a été laissée"
+            return YumiRemark(id: "agent-\(result.runID)", text: "C'est fait en partie\(goal) : \(left).",
                               mood: .neutral, duration: 8)
         case .failed:
             return YumiRemark(id: "agent-\(result.runID)", text: failure(result.error), mood: .worried, duration: 8)
@@ -55,16 +60,31 @@ struct AgentLook: Equatable, Sendable {
         return replies.count == done.count ? replies : []
     }
 
+    /// What Yumi can do, said when he is asked something he cannot. The App Store build has no
+    /// tool that changes anything.
+    private static var unsupported: String {
+        #if APPSTORE
+        "Je ne sais pas faire ça dans cette version, alors je n'ai rien touché."
+        #else
+        "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents) et ajouter du texte à ceux que j'ai créés, ajouter un rappel ou un événement à ton calendrier, lancer un Focus et te dire ce que tu as aujourd'hui."
+        #endif
+    }
+
     private static func failure(_ error: AgentError?) -> String {
         switch error {
         case .busy?: "Je suis déjà sur une autre tâche. Redemande-moi juste après."
         case .noProvider?: "Je n'ai pas de modèle pour réfléchir : installe Claude Code et connecte-toi (claude, puis /login), ou ajoute une clé Anthropic dans les réglages."
         case .providerFailed?: "Le modèle ne m'a pas répondu. Rien n'a été fait."
-        case .unsupportedAction?: "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents) et ajouter du texte à ceux que j'ai créés, ajouter un rappel ou un événement à ton calendrier, lancer un Focus et te dire ce que tu as aujourd'hui."
+        case .unsupportedAction?: unsupported
         case .cannotPlan?, .invalidPlan?: "Je ne sais pas encore faire ça. Rien n'a été fait."
         case .verificationFailed(let reason)?: "J'ai essayé, mais le résultat n'est pas celui attendu : \(reason)."
         case .cannotRun(_, let reason)?: "Je ne peux pas le faire, alors je ne t'ai rien demandé : \(reason)."
         case .invalidArguments(_, let reason)?, .toolFailed(_, let reason, _)?: "Je n'ai pas pu : \(reason)."
+        // Refused by a rule or by the permission system itself, before anything ran.
+        case .permissionDenied(_, let reason?)?: "\(reason) Je n'ai rien fait."
+        case .permissionDenied?: "Je n'en ai pas le droit, alors je n'ai rien fait."
+        // A write is never run twice: the effect may be there, the person must look.
+        case .toolTimedOut?: "Ça a pris trop de temps. Je ne sais pas si c'est fait : regarde avant de me redemander."
         default: "Ça n'a pas marché."
         }
     }

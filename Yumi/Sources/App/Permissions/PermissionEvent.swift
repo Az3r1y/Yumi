@@ -28,7 +28,10 @@ enum ApprovalAnswer: Equatable, Sendable {
 @MainActor
 protocol ApprovalPresenter: AnyObject {
     /// Shows the approval. `answer` is called at most once, from a click of the person.
-    func present(_ approval: ApprovalRequest, answer: @escaping @MainActor (ApprovalAnswer) -> Void)
+    /// `shown` is called when the approval is really on screen: it may first wait behind other
+    /// requests, and the time to answer only starts then.
+    func present(_ approval: ApprovalRequest, shown: @escaping @MainActor () -> Void,
+                 answer: @escaping @MainActor (ApprovalAnswer) -> Void)
     /// The approval ended without an answer (expired, cancelled): take it off screen.
     func withdraw(_ approvalID: UUID)
 }
