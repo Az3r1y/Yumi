@@ -77,7 +77,8 @@ final class AgentReaction {
         }
         switch event.kind {
         case .agentCompleted, .agentFailed, .agentCancelled:
-            guard let result = agent.current?.result, let remark = AgentLook.remark(for: result) else { return }
+            // Asked from the chat, the answer is written there (ClaudeService.runAsAgent).
+            guard state.view != .prompt, let result = agent.current?.result, let remark = AgentLook.remark(for: result) else { return }
             say(remark, in: state)
         default:
             break

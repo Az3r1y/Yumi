@@ -174,6 +174,7 @@ final class ClaudeService {
     func chat(query: String, context: PromptContext?, state: AppState) async {
         // While filming the chat is the island's to stage: nothing is launched, nothing is sent.
         guard LaunchPlan.current.chat else { return }
+        if await runAsAgent(query: query, state: state) { return }
         #if APPSTORE
         await chatWithAPI(query: query, context: context, state: state)
         #else
@@ -185,6 +186,25 @@ final class ClaudeService {
             await showError(ChatPhrases.notInstalled, state: state)
         }
         #endif
+    }
+
+    // MARK: - Chat through the agent runtime
+
+    /// A message that asks Yumi to change something on the Mac is planned, approved, run and
+    /// verified by the runtime; the chat only shows it. Anything else (no key, a question, a
+    /// plan that only reads) returns false and goes to the conversation. What is on screen
+    /// stays on the Mac: the planner does not see it.
+    private func runAsAgent(query: String, state: AppState) async -> Bool {
+        guard let agent = state.agent, !agent.isRunning else { return false }
+        let request = AgentRequest(userIntent: query, context: state.context.isEnabled ? state.context : nil)
+        guard case .agent(let plan) = ChatRoute.route(await agent.plan(for: request)) else { return false }
+        state.chatHistory.append(ChatMessage(role: .assistant, content: "Je m'en occupe : \(plan.goal). Je te demande avant de toucher à quoi que ce soit."))
+        state.view = .prompt
+        let result = await agent.execute(plan, for: request)
+        let text = AgentLook.remark(for: result)?.text ?? "C'est annulé, je n'ai rien fait."
+        state.chatHistory.append(ChatMessage(role: .assistant, content: text))
+        state.view = .prompt
+        return true
     }
 
     // MARK: - Chat through Claude Code

@@ -274,3 +274,34 @@ private final class SentRequests: @unchecked Sendable {
         #expect(AgentLook.remark(for: result) == nil)
     }
 }
+
+@MainActor
+@Suite struct ChatRouteTests {
+    private func agent(_ answer: String) throws -> RuntimeAgent {
+        var tools = ToolRegistry.standard
+        try tools.register(CreateFileTool(home: "/Users/someone"))
+        return RuntimeAgent(planner: LLMAgentPlanner(provider: ScriptedLLMProvider(json: answer)), tools: tools,
+                            policy: AgentPolicy(maximumRisk: .write))
+    }
+
+    @Test func anActionOnTheMacGoesToTheRuntime() async throws {
+        let json = #"{"goal": "Créer todo.md", "steps": [{"description": "Créer", "tool": "create_file", "arguments": {"path": "~/Desktop/todo.md", "content": "- a"}}]}"#
+        let route = ChatRoute.route(await try agent(json).plan(for: AgentRequest(userIntent: "Crée todo.md sur mon Bureau")))
+        guard case .agent(let plan) = route else { Issue.record("expected the runtime"); return }
+        #expect(plan.requiredTools == ["create_file"])
+    }
+
+    @Test func talkingReadingAndFailuresStayInTheChat() async throws {
+        let reading = planJSON(tools: ["get_current_time"])
+        #expect(ChatRoute.route(await try agent(reading).plan(for: AgentRequest(userIntent: "Quelle heure est-il ?"))) == .chat)
+        let talk = #"{"cannotPlan": "the person is talking"}"#
+        #expect(ChatRoute.route(await try agent(talk).plan(for: AgentRequest(userIntent: "Salut Yumi"))) == .chat)
+        let none = RuntimeAgent(planner: LLMAgentPlanner(provider: UnavailableLLMProvider()))
+        #expect(ChatRoute.route(await none.plan(for: AgentRequest(userIntent: "Crée todo.md"))) == .chat)
+    }
+
+    @Test func thePlannerIsToldThatTalkIsForTheChat() {
+        let prompt = PlannerPrompt.make(for: AgentRequest(userIntent: "Salut"), tools: ToolRegistry.standard.descriptors, maxSteps: 12)
+        #expect(prompt.system.contains("only talking or asking a question, answer with cannotPlan"))
+    }
+}
