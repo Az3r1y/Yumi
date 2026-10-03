@@ -409,7 +409,11 @@ final class YumiCore {
             folder: AppIdentity.supportDirectory.appendingPathComponent("planner").path)
         let provider = FallbackLLMProvider(providers: [claudeCode, api])
         var tools = ToolRegistry.standard
-        try? tools.register(CreateFileTool())
+        // The files Yumi created: the only ones it may add to later.
+        let created = FileCreatedFilesLog(url: AppIdentity.supportDirectory.appendingPathComponent("created-files.json"))
+        try? tools.register(CreateFileTool(log: created))
+        try? tools.register(AppendToFileTool(log: created))
+        try? tools.register(AddEventTool(store: EventKitEventStore()))
         try? tools.register(AddReminderTool(store: EventKitReminderStore()))
         try? tools.register(StartFocusTool(focus: modules))
         try? tools.register(GetTodayTool(source: modules))

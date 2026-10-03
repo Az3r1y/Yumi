@@ -38,6 +38,8 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
     /// The project folder or the account, when all resources share one.
     var container: String?
     var reversible: Bool
+    /// What the action writes, from the tool (`ToolAction.content`): shown in full before agreeing.
+    var content: String?
     var items: [Item]
     let createdAt: Date
     var expiresAt: Date
@@ -45,8 +47,9 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
 
     init(id: UUID = UUID(), agentRunID: UUID, toolID: String, toolName: String, action: ActionKind?,
          goal: String, reason: String, riskLevel: RiskLevel, offeredScopes: [PermissionScope] = [.oneTime],
-         resources: [ResourceRef], container: String?, reversible: Bool, items: [Item],
+         resources: [ResourceRef], container: String?, reversible: Bool, content: String? = nil, items: [Item],
          createdAt: Date, expiresAt: Date) {
+        self.content = content
         self.id = id
         self.agentRunID = agentRunID
         self.toolID = toolID
@@ -95,6 +98,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
 
     /// What will be touched, on one line, when there is a single thing to show: the command, the file.
     var subject: String? {
+        if let content { return "« \(content) »" }
         guard resources.count == 1 else { return nil }
         let resource = resources[0]
         return resource.kind == .command ? resource.identifier : nil
@@ -110,6 +114,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
             let names = resources.prefix(6).map { Self.displayName($0, in: container) }
             lines.append("Concerne : " + names.joined(separator: ", ") + (resources.count > 6 ? " et \(resources.count - 6) autres" : ""))
         }
+        if let content { lines.append("Texte ajouté : « \(content) »") }
         lines.append("Portée : \(scope.label)" + (offersSession ? " (ou cette session)" : ""))
         lines.append("Risque : \(riskLevel.label)")
         if let why = Self.oneLine(reason, limit: 120) { lines.append("Raison donnée par l'agent : \(why)") }
@@ -127,13 +132,17 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
     }
 
     /// A file relative to its project, a site by its host, anything else as it is.
-    static func displayName(_ resource: ResourceRef, in container: String?) -> String {
+    /// A file outside a project shows its whole place, from the home folder: `~/Downloads/todo.md`.
+    static func displayName(_ resource: ResourceRef, in container: String?, home: String = NSHomeDirectory()) -> String {
         switch resource.kind {
         case .file:
             if let container, RiskAssessor.path(resource.identifier, isInside: container), resource.identifier != container {
                 return String(resource.identifier.dropFirst(container.count + 1))
             }
-            return (resource.identifier as NSString).lastPathComponent
+            if RiskAssessor.path(resource.identifier, isInside: home), resource.identifier != home {
+                return "~" + resource.identifier.dropFirst(home.count)
+            }
+            return resource.identifier
         case .url:
             return URL(string: resource.identifier)?.host ?? resource.identifier
         case .command, .account, .yumi, .unknown:

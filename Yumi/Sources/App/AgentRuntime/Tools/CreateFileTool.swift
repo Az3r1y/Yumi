@@ -10,9 +10,12 @@ struct CreateFileTool: Tool {
     /// The folders a file may be created in, directly or below. Absolute, without `~`.
     var allowedFolders: [String]
     var home: String
+    /// Where each created file is noted, so that only those can be added to later.
+    var log: (any CreatedFilesLog)?
 
-    init(home: String = NSHomeDirectory(), allowedFolders: [String]? = nil) {
+    init(home: String = NSHomeDirectory(), allowedFolders: [String]? = nil, log: (any CreatedFilesLog)? = nil) {
         self.home = home
+        self.log = log
         self.allowedFolders = allowedFolders ?? ["Downloads", "Desktop", "Documents"].map { (home as NSString).appendingPathComponent($0) }
     }
 
@@ -48,6 +51,7 @@ struct CreateFileTool: Tool {
         } catch {
             throw ToolError.failed(writeFailure(error, path: path))
         }
+        log?.record(path)
         return ToolOutput(summary: "Created \(display(path)).",
                           values: ["path": .string(path), "bytes": .number(Double(data.count))])
     }

@@ -60,7 +60,7 @@ struct AgentLook: Equatable, Sendable {
         case .busy?: "Je suis déjà sur une autre tâche. Redemande-moi juste après."
         case .noProvider?: "Je n'ai pas de modèle pour réfléchir : installe Claude Code et connecte-toi (claude, puis /login), ou ajoute une clé Anthropic dans les réglages."
         case .providerFailed?: "Le modèle ne m'a pas répondu. Rien n'a été fait."
-        case .unsupportedAction?: "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents), ajouter un rappel, lancer un Focus et te dire ce que tu as aujourd'hui."
+        case .unsupportedAction?: "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents) et ajouter du texte à ceux que j'ai créés, ajouter un rappel ou un événement à ton calendrier, lancer un Focus et te dire ce que tu as aujourd'hui."
         case .cannotPlan?, .invalidPlan?: "Je ne sais pas encore faire ça. Rien n'a été fait."
         case .verificationFailed(let reason)?: "J'ai essayé, mais le résultat n'est pas celui attendu : \(reason)."
         case .cannotRun(_, let reason)?: "Je ne peux pas le faire, alors je ne t'ai rien demandé : \(reason)."

@@ -264,7 +264,8 @@ final class LocalPermissionManager: PermissionManager {
         return ApprovalRequest(agentRunID: request.runID, toolID: request.toolID, toolName: request.toolName,
                                action: assessment.kind, goal: request.goal, reason: request.reason,
                                riskLevel: assessment.risk, offeredScopes: offered, resources: resources,
-                               container: assessment.container, reversible: reversible, items: items,
+                               container: assessment.container, reversible: reversible,
+                               content: items.count == 1 ? request.action?.content : nil, items: items,
                                createdAt: now, expiresAt: expiresAt)
     }
 

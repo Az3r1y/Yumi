@@ -9,11 +9,15 @@ struct ToolAction: Equatable, Codable, Sendable {
     var resources: [ResourceRef]
     /// False when the action cannot be undone (a sent email, a deleted file without a copy).
     var reversible: Bool
+    /// The text the action writes, when the person should read it before agreeing (what is
+    /// added to a file). Written by the tool from its arguments, shown as it is.
+    var content: String?
 
-    init(kind: ActionKind, resources: [ResourceRef] = [], reversible: Bool = true) {
+    init(kind: ActionKind, resources: [ResourceRef] = [], reversible: Bool = true, content: String? = nil) {
         self.kind = kind
         self.resources = resources
         self.reversible = reversible
+        self.content = content
     }
 }
 
