@@ -51,6 +51,10 @@ struct AgentExecutor {
             if let problem = descriptor.inputSchema.problem(with: step.arguments) {
                 return run.fail(index, .invalidArguments(tool: descriptor.id, reason: problem), at: clock())
             }
+            // What is known in advance is said now, not after the person agreed to something impossible.
+            if let problem = await tool.check(step.arguments) {
+                return run.fail(index, .cannotRun(tool: descriptor.id, reason: problem), at: clock())
+            }
 
             // Every step goes through the permission manager, whatever its risk: a safe step comes
             // back allowed at once and silently, so asking costs nothing and nothing can skip it.

@@ -37,18 +37,16 @@ struct CreateFileTool: Tool {
 
     func execute(_ arguments: ToolArguments, in context: ToolContext) async throws -> ToolOutput {
         guard case .string(let raw)? = arguments["path"], case .string(let content)? = arguments["content"] else {
-            throw ToolError.invalidInput("path and content are required")
+            throw ToolError.invalidInput("il manque l'emplacement ou le contenu")
         }
         let path = try destination(for: raw)
         let data = Data(content.utf8)
-        guard data.count <= Self.maxBytes else { throw ToolError.invalidInput("the content is larger than \(Self.maxBytes) bytes") }
+        guard data.count <= Self.maxBytes else { throw ToolError.invalidInput("le contenu dépasse \(Self.maxBytes / 1000) Ko") }
         try Task.checkCancellation()
         do {
             try data.write(to: URL(fileURLWithPath: path), options: [.withoutOverwriting])
-        } catch CocoaError.fileWriteFileExists {
-            throw ToolError.invalidInput("\(display(path)) already exists")
         } catch {
-            throw ToolError.failed("could not write \(display(path))")
+            throw ToolError.failed(writeFailure(error, path: path))
         }
         return ToolOutput(summary: "Created \(display(path)).",
                           values: ["path": .string(path), "bytes": .number(Double(data.count))])
@@ -63,24 +61,75 @@ struct CreateFileTool: Tool {
         return written == Data(content.utf8) ? nil : "\(display(path)) does not hold the expected content"
     }
 
+    /// Everything `execute` would refuse, checked before the person is asked.
+    func check(_ arguments: ToolArguments) async -> String? {
+        guard case .string(let raw)? = arguments["path"], case .string(let content)? = arguments["content"] else {
+            return "il manque l'emplacement ou le contenu"
+        }
+        let path: String
+        do { path = try destination(for: raw) } catch {
+            if case .invalidInput(let reason) = error { return reason }
+            return "emplacement impossible"
+        }
+        if Data(content.utf8).count > Self.maxBytes { return "le contenu dépasse \(Self.maxBytes / 1000) Ko" }
+        if FileManager.default.fileExists(atPath: path) { return "\(display(path)) existe déjà, et je ne remplace jamais un fichier" }
+        let folder = (path as NSString).deletingLastPathComponent
+        // Listing the folder is what macOS guards for Documents, the Desktop and Downloads: a refusal
+        // here is the same one the write would meet (and a signed build gets its question now).
+        do {
+            _ = try FileManager.default.contentsOfDirectory(atPath: folder)
+        } catch {
+            return posixCode(of: error) == .EACCES ? "je n'ai pas le droit d'ouvrir \(display(folder))" : noAccess(to: folder)
+        }
+        if !FileManager.default.isWritableFile(atPath: folder) { return "je n'ai pas le droit d'écrire dans \(display(folder))" }
+        return nil
+    }
+
+    private func noAccess(to folder: String) -> String {
+        "macOS ne me laisse pas accéder à \(display(folder)). Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Fichiers et dossiers"
+    }
+
+    /// The exact reason a write failed, in words for the person.
+    private func writeFailure(_ error: Error, path: String) -> String {
+        let folder = (path as NSString).deletingLastPathComponent
+        if (error as? CocoaError)?.code == .fileWriteFileExists { return "\(display(path)) existe déjà, et je ne remplace jamais un fichier" }
+        switch posixCode(of: error) {
+        case .EPERM?: return noAccess(to: folder)
+        case .EACCES?: return "je n'ai pas le droit d'écrire dans \(display(folder))"
+        case .ENOSPC?: return "le disque est plein"
+        case .EROFS?: return "\(display(folder)) est en lecture seule"
+        default:
+            if (error as? CocoaError)?.code == .fileWriteNoPermission { return noAccess(to: folder) }
+            return "l'écriture de \(display(path)) a échoué (\((error as NSError).domain) \((error as NSError).code))"
+        }
+    }
+
+    /// The system's reason under a Foundation error. EPERM on a folder of the home is macOS's
+    /// privacy protection; EACCES is the ordinary file permissions.
+    private func posixCode(of error: Error) -> POSIXErrorCode? {
+        let underlying = (error as NSError).userInfo[NSUnderlyingErrorKey] as? NSError
+        guard let underlying, underlying.domain == NSPOSIXErrorDomain else { return nil }
+        return POSIXErrorCode(rawValue: Int32(underlying.code))
+    }
+
     // MARK: - Paths
 
     /// The absolute path the file will have, or why not.
     func destination(for raw: String) throws(ToolError) -> String {
         let expanded = expand(raw)
-        guard expanded.hasPrefix("/") else { throw .invalidInput("the path must start with ~/Downloads/, ~/Desktop/ or ~/Documents/") }
+        guard expanded.hasPrefix("/") else { throw .invalidInput("l'emplacement doit être dans Téléchargements, sur le Bureau ou dans Documents") }
         let url = URL(fileURLWithPath: expanded).standardizedFileURL
         let name = url.lastPathComponent
-        guard !name.isEmpty, !name.hasPrefix("."), name != "/" else { throw .invalidInput("\(name) is not a usable file name") }
+        guard !name.isEmpty, !name.hasPrefix("."), name != "/" else { throw .invalidInput("« \(name) » n'est pas un nom de fichier utilisable") }
         // The folder is resolved (symbolic links included); the file itself does not exist yet.
         let folder = url.deletingLastPathComponent().resolvingSymlinksInPath().path
         let roots = allowedFolders.map { URL(fileURLWithPath: $0).resolvingSymlinksInPath().path }
         guard roots.contains(where: { RiskAssessor.path(folder, isInside: $0) }) else {
-            throw .invalidInput("Yumi can only create files in Downloads, on the Desktop or in Documents")
+            throw .invalidInput("je ne crée des fichiers que dans Téléchargements, sur le Bureau ou dans Documents, pas dans \(display(folder))")
         }
         var isFolder: ObjCBool = false
         guard FileManager.default.fileExists(atPath: folder, isDirectory: &isFolder), isFolder.boolValue else {
-            throw .invalidInput("the folder \(display(folder)) does not exist")
+            throw .invalidInput("le dossier \(display(folder)) n'existe pas")
         }
         return (folder as NSString).appendingPathComponent(name)
     }

@@ -19,6 +19,9 @@ enum AgentError: Error, Equatable, Codable, Sendable {
     case unsupportedAction(String)
     case unknownTool(String)
     case invalidArguments(tool: String, reason: String)
+    /// Known before asking: the tool cannot do it (a refused place, a folder Yumi cannot reach).
+    /// Nobody was asked, nothing ran.
+    case cannotRun(tool: String, reason: String)
     /// The tool is above what the policy lets the runtime do.
     case toolNotAllowed(tool: String, risk: ToolRisk)
     case toolFailed(tool: String, reason: String, transient: Bool)
@@ -43,6 +46,7 @@ enum AgentError: Error, Equatable, Codable, Sendable {
         case .unsupportedAction(let reason): "This action is not available yet: \(reason)"
         case .unknownTool(let tool): "Unknown tool \(tool)."
         case .invalidArguments(let tool, let reason): "Wrong arguments for \(tool): \(reason)"
+        case .cannotRun(let tool, let reason): "\(tool) cannot run: \(reason)"
         case .toolNotAllowed(let tool, let risk): "\(tool) is not allowed (\(risk.rawValue))."
         case .toolFailed(let tool, let reason, _): "\(tool) failed: \(reason)"
         case .toolTimedOut(let tool): "\(tool) took too long."

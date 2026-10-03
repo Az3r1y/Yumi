@@ -306,3 +306,100 @@ private final class SentRequests: @unchecked Sendable {
         #expect(prompt.system.contains(#"{"cannotPlan": "reason", "isAction": true}"#))
     }
 }
+
+/// Documents (or any allowed folder) that Yumi cannot reach: said before asking, with the reason.
+@MainActor
+@Suite struct UnreachableFolderTests {
+    private final class Home {
+        let path = FileManager.default.temporaryDirectory.appendingPathComponent("yumi-locked-\(UUID().uuidString)").path
+        init() throws {
+            for folder in ["Downloads", "Desktop", "Documents"] {
+                try FileManager.default.createDirectory(atPath: path + "/" + folder, withIntermediateDirectories: true)
+            }
+        }
+        func lock(_ folder: String, _ mode: Int) throws {
+            try FileManager.default.setAttributes([.posixPermissions: mode], ofItemAtPath: path + "/" + folder)
+        }
+        deinit {
+            for folder in ["Downloads", "Desktop", "Documents"] { try? lock(folder, 0o755) }
+            try? FileManager.default.removeItem(atPath: path)
+        }
+    }
+
+    private func plan(_ path: String) -> String {
+        #"{"goal": "Créer notes-test.md", "steps": [{"description": "Créer", "tool": "create_file", "arguments": {"path": "\#(path)", "content": "- a"}}]}"#
+    }
+
+    private func agent(_ home: Home, _ path: String, _ permissions: ScriptedPermissionManager) throws -> RuntimeAgent {
+        var tools = ToolRegistry.standard
+        try tools.register(CreateFileTool(home: home.path))
+        return RuntimeAgent(planner: LLMAgentPlanner(provider: ScriptedLLMProvider(json: plan(path))), tools: tools,
+                            permissions: permissions, policy: AgentPolicy(maximumRisk: .write),
+                            recovery: RecoveryPolicy(retryDelay: .zero), sleep: { _ in })
+    }
+
+    @Test func anUnreadableDocumentsFolderIsSaidBeforeAskingWithItsReason() async throws {
+        let home = try Home()
+        try home.lock("Documents", 0o000)
+        let permissions = ScriptedPermissionManager([.decision(.granted)])
+        let result = await try agent(home, "~/Documents/notes-test.md", permissions).run(AgentRequest(userIntent: "crée-moi notes-test.md dans Documents"))
+        #expect(result.status == .failed)
+        #expect(permissions.requests.isEmpty)
+        guard case .cannotRun(let tool, let reason)? = result.error else { Issue.record("got \(String(describing: result.error))"); return }
+        #expect(tool == "create_file")
+        #expect(reason.contains("~/Documents"))
+        let text = AgentLook.remark(for: result)?.text ?? ""
+        #expect(text.contains(reason))
+        #expect(text.contains("je ne t'ai rien demandé"))
+    }
+
+    @Test func aReadOnlyFolderIsSaidBeforeAsking() async throws {
+        let home = try Home()
+        try home.lock("Documents", 0o555)
+        let permissions = ScriptedPermissionManager([.decision(.granted)])
+        let result = await try agent(home, "~/Documents/notes-test.md", permissions).run(AgentRequest(userIntent: "crée notes-test.md dans Documents"))
+        #expect(permissions.requests.isEmpty)
+        #expect(result.error == .cannotRun(tool: "create_file", reason: "je n'ai pas le droit d'écrire dans ~/Documents"))
+    }
+
+    @Test func aRefusedPlaceAndAnExistingFileAreSaidBeforeAsking() async throws {
+        let home = try Home()
+        try "x".write(toFile: home.path + "/Documents/notes-test.md", atomically: true, encoding: .utf8)
+        for (path, expected) in [("~/Library/notes.md", "pas dans ~/Library"),
+                                 ("~/Documents/notes-test.md", "existe déjà")] {
+            let permissions = ScriptedPermissionManager([.decision(.granted)])
+            let result = await try agent(home, path, permissions).run(AgentRequest(userIntent: "crée"))
+            #expect(permissions.requests.isEmpty, "\(path)")
+            guard case .cannotRun(_, let reason)? = result.error else { Issue.record("\(path): \(String(describing: result.error))"); continue }
+            #expect(reason.contains(expected), "\(reason)")
+        }
+    }
+
+    @Test func aWriteThatFailsAfterApprovalSaysWhy() async throws {
+        // Locked between the check and the write: the failure carries the system's reason.
+        let home = try Home()
+        let tool = CreateFileTool(home: home.path)
+        let arguments: ToolArguments = ["path": .string("~/Documents/notes-test.md"), "content": .string("- a")]
+        #expect(await tool.check(arguments) == nil)
+        try home.lock("Documents", 0o555)
+        do {
+            _ = try await tool.execute(arguments, in: ToolContext(runID: UUID(), stepID: "step-1", snapshot: nil, now: Date()))
+            Issue.record("expected a failure")
+        } catch ToolError.failed(let reason) {
+            #expect(reason == "je n'ai pas le droit d'écrire dans ~/Documents")
+        }
+        let failed = AgentResult(runID: UUID(), status: .failed, goal: nil, steps: [],
+                                 error: .toolFailed(tool: "create_file", reason: "je n'ai pas le droit d'écrire dans ~/Documents", transient: false),
+                                 finishedAt: Date())
+        #expect(AgentLook.remark(for: failed)?.text == "Je n'ai pas pu : je n'ai pas le droit d'écrire dans ~/Documents.")
+    }
+
+    @Test func aReachableDocumentsFolderWorks() async throws {
+        let home = try Home()
+        let permissions = ScriptedPermissionManager([.decision(.granted)])
+        let result = await try agent(home, "~/Documents/notes-test.md", permissions).run(AgentRequest(userIntent: "crée notes-test.md dans Documents"))
+        #expect(result.status == .completed)
+        #expect(permissions.requests.count == 1)
+        #expect(FileManager.default.fileExists(atPath: home.path + "/Documents/notes-test.md"))
+    }
+}
