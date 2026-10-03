@@ -38,6 +38,27 @@ final class FocusModule: YumiModule {
         onChange?()
     }
 
+    /// Where the timer stands, for the agent. `.off` while the module is not selected.
+    var status: FocusStatus {
+        guard onChange != nil else { return .off }
+        let now = Date()
+        switch timer.state {
+        case .idle, .finished:
+            return .idle
+        case .running(let phase, _, _), .paused(let phase, _, _):
+            return .busy(remaining: timer.remaining(now: now) ?? 0, length: timer.plan.focus, focusing: phase == .focus)
+        }
+    }
+
+    /// Starts one session of this length, only when nothing runs. False otherwise.
+    func startSession(minutes: Int) -> Bool {
+        guard status == .idle else { return false }
+        timer.start(now: Date(), minutes: minutes)
+        syncTicking()
+        onChange?()
+        return true
+    }
+
     func perform(_ action: ModuleAction) {
         timer.perform(action, now: Date())
         syncTicking()

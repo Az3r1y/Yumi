@@ -388,3 +388,24 @@ La frontière entre le cerveau de Yumi et ses actions. `Permissions/` suit la r�
 | Réglages | Section « Autorisations de Yumi » : accords à retirer, règles, historique effaçable. Distinct des autorisations macOS (`Modules/Permission.swift`). |
 
 Reste à faire : appeler `personChose(file:)` au dépôt d'un fichier dans l'île, une interface pour écrire des règles, les premiers outils qui écrivent (le plafond `AgentPolicy.maximumRisk` reste `read` d'ici là).
+
+## Cœur : trois outils pour l'agent (branche `yumi/outils`)
+
+Trois outils sur le modèle de `create_file` : `check` avant `PermissionManager`, action décrite par `action(for:)`, vérification après exécution, raison exacte en français en cas d'échec. Enregistrés dans `AppDelegate.makeAgent` (build direct seulement ; le build App Store garde ses outils de lecture). Le plafond `AgentPolicy` reste `write`.
+
+| Outil | Ce qu'il fait | Accord | Vérification |
+|---|---|---|---|
+| `add_reminder` | Ajoute un rappel à la liste par défaut de Rappels (EventKit) : titre d'une ligne (120 caractères), date `AAAA-MM-JJ` et heure `HH:mm` facultatives, une heure seule vaut pour aujourd'hui, jamais dans le passé. Une alarme à l'heure dite, pour que Rappels notifie. | Toujours demandé. La demande montre « Je dois créer le rappel « titre », demain à 10:00, dans la liste Rappels. » La ressource est de type `unknown` : aucun accord retenu ne la couvre. | Le rappel relu par son identifiant a ce titre et cette date. |
+| `start_focus` | Lance une session du module Focus : une seule manche, 5 à 180 minutes, 25 par défaut. Jamais si une session tourne, est en pause ou en pause café ; jamais si le module est coupé. | Aucun (risque `none`, rien ne sort du Mac). | Le Focus tourne, en phase de travail, avec la durée demandée. |
+| `get_today` | Résume la journée en une ou deux phrases dans la voix de Yumi : prochains rendez-vous du jour, rappels du jour, météo actuelle. Seulement ce que les modules tiennent déjà ; un module coupé ou sans accès est omis. | Aucun : il lit les modules de Yumi (`yumi:modules`), ce que l'île montre déjà. | La réponse tient en deux phrases au plus, sans liste. |
+
+| Sujet | Décision |
+|---|---|
+| Accès Rappels | Jamais demandé par l'outil : le `check` dit « touche « Activer les rappels » dans le module Notes » (non demandé) ou renvoie vers Réglages Système (refusé), avant toute demande d'accord. |
+| Risque d'un rappel | Le cahier demandait « low ». Le plancher de `RiskTable` pour `create` est `medium` et n'a pas été abaissé : le comportement voulu (toujours demander) est le même. |
+| Planificateur | Ne voit que les descripteurs, plus une ligne `<now>` (date, jour, heure du Mac) pour comprendre « demain ». Aucun rendez-vous, rappel ni météo avant que la personne demande, et jamais ensuite : le résumé est composé par le code de l'outil. |
+| Chat | `ChatRoute.runtimeTools` (`start_focus`, `get_today`) envoie aussi au runtime les plans sans écriture qui les utilisent. « Je m'en occupe… je te demande avant » n'est dit que si une étape demande un accord. |
+| Réponse | Un outil peut rendre `reply` : quand chaque étape terminée en a une, Yumi dit ces phrases à la place de « C'est fait, et j'ai vérifié ». Écrites par le code de l'outil après vérification, jamais par le modèle. |
+| Modules | `ModuleBridge` (Modules/AgentBridges.swift) lit Focus, Agenda, Notes et Météo sur le fil principal, à la demande. `FocusTimer.start(now:minutes:)` ; le bouton Démarrer remet les quatre manches de 25 minutes. |
+
+Hors périmètre, non commencés : agenda (création d'événements), modification de fichier, suppression, terminal, mails, mémoire. Aucun outil ne supprime, ne modifie un existant, n'invite ni n'envoie.

@@ -25,6 +25,9 @@ final class AgendaModule: YumiModule {
             .sorted { $0.start < $1.start }
     }
 
+    /// Today's appointments still to come, nil while the module is stopped or without access.
+    var upcomingTodayIfRunning: [AgendaEvent]? { onChange == nil ? nil : upcomingToday }
+
     private var access: PermissionState {
         switch EKEventStore.authorizationStatus(for: .event) {
         case .fullAccess:    return .granted

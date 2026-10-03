@@ -25,6 +25,12 @@ final class WeatherModule: NSObject, YumiModule {
 
     var snapshot: ModuleSnapshot { WeatherSummary.snapshot(state, now: Date()) }
 
+    /// The weather on screen, nil while there is none.
+    var currentReport: WeatherReport? {
+        guard onChange != nil, case .ready(let report) = state else { return nil }
+        return report
+    }
+
     private var access: PermissionState {
         switch locationManager?.authorizationStatus ?? .notDetermined {
         case .authorizedAlways, .authorized: return .granted

@@ -26,7 +26,15 @@ struct FocusTimer: Equatable, Sendable {
         return false
     }
 
+    /// The usual rounds, from the button.
     mutating func start(now: Date) {
+        plan = Plan()
+        state = .running(.focus, round: 1, endsAt: now.addingTimeInterval(plan.focus))
+    }
+
+    /// One work session of this length, asked for in words ("je bosse 45 minutes").
+    mutating func start(now: Date, minutes: Int) {
+        plan = Plan(focus: TimeInterval(minutes * 60), rest: Plan().rest, rounds: 1)
         state = .running(.focus, round: 1, endsAt: now.addingTimeInterval(plan.focus))
     }
 
