@@ -25,6 +25,9 @@ final class AgendaModule: YumiModule {
             .sorted { $0.start < $1.start }
     }
 
+    /// On, but macOS does not let Yumi read the calendar.
+    var runsWithoutAccess: Bool { onChange != nil && access != .granted }
+
     /// Today's appointments still to come, nil while the module is stopped or without access.
     var upcomingTodayIfRunning: [AgendaEvent]? { onChange == nil ? nil : upcomingToday }
 

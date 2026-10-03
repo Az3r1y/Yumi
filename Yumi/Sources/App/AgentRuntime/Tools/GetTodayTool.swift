@@ -1,13 +1,18 @@
 import Foundation
 
 /// What the modules already know about today. nil means the module is off or has no access:
-/// it is left out, not reported as empty.
+/// it is left out, not reported as empty. A missing macOS access is said (`noAccess`): the
+/// person asked about their day, they must know a part of it could not be read.
 struct TodayFacts: Equatable, Sendable {
+    enum Source: Equatable, Sendable { case agenda, reminders }
+
     /// Today's appointments still to come, the all-day ones aside, soonest first.
     var events: [AgendaEvent]?
     /// Incomplete reminders due today.
     var reminders: [ReminderItem]?
     var weather: WeatherReport?
+    /// Modules that are on but that macOS does not let Yumi read.
+    var noAccess: [Source] = []
 }
 
 /// Reads `TodayFacts` from the modules, on demand. Implemented by the modules' bridge.
@@ -62,10 +67,25 @@ enum TodayPhrase {
         if let weather = facts.weather {
             sentences.append("Dehors, \(Int(weather.temperature.rounded()))° et \(WeatherSummary.sky(weather.code)).")
         }
+        if let missing = missing(facts.noAccess) {
+            // Still two sentences at most: the gap joins the last one when there are already two.
+            if sentences.count < 2 {
+                sentences.append(FrenchText.sentenceStart(missing) + ".")
+            } else {
+                sentences[sentences.count - 1] = String(sentences[sentences.count - 1].dropLast()) + ", mais " + missing + "."
+            }
+        }
         if sentences.isEmpty {
             return "Je ne vois ni ton agenda, ni tes rappels, ni la météo. Active-les dans mes réglages et je te dirai."
         }
         return sentences.joined(separator: " ")
+    }
+
+    /// "je n'ai pas accès à ton agenda ni à tes rappels (Réglages Système, Confidentialité et sécurité)".
+    private static func missing(_ sources: [TodayFacts.Source]) -> String? {
+        let names = [TodayFacts.Source.agenda, .reminders].filter(sources.contains).map { $0 == .agenda ? "à ton agenda" : "à tes rappels" }
+        guard !names.isEmpty else { return nil }
+        return "je n'ai pas accès \(names.joined(separator: " ni ")), autorise Yumi dans Réglages Système, Confidentialité et sécurité"
     }
 
     private static func agenda(_ events: [AgendaEvent]?, calendar: Calendar) -> String? {

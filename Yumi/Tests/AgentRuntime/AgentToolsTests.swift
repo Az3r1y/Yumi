@@ -574,3 +574,25 @@ private let cloudy = WeatherReport(temperature: 18.6, code: 3, hours: [])
         #expect(ChatPhrases.earlierTurns([], before: "Salut") == "Salut")
     }
 }
+
+
+@Suite struct TodayMissingAccessTests {
+    @Test func onlyTheWeatherAndNoAccessSaysSo() {
+        let facts = TodayFacts(events: nil, reminders: nil, weather: cloudy, noAccess: [.agenda, .reminders])
+        let reply = TodayPhrase.reply(facts, now: morning, calendar: paris)
+        #expect(reply == "Dehors, 19° et un ciel couvert. Je n'ai pas accès à ton agenda ni à tes rappels, autorise Yumi dans Réglages Système, Confidentialité et sécurité.")
+    }
+
+    @Test func aGapJoinsTheLastSentenceToStayAtTwo() async {
+        let facts = TodayFacts(events: [pointProduit], reminders: nil, weather: cloudy, noAccess: [.reminders])
+        let reply = TodayPhrase.reply(facts, now: morning, calendar: paris)
+        #expect(reply == "Encore un rendez-vous aujourd'hui : Point produit à 14:30. Dehors, 19° et un ciel couvert, mais je n'ai pas accès à tes rappels, autorise Yumi dans Réglages Système, Confidentialité et sécurité.")
+        let tool = GetTodayTool(source: FixedToday(value: facts), calendar: paris)
+        #expect(await tool.verify([:], output: ToolOutput(summary: reply, values: ["reply": .string(reply)])) == nil)
+    }
+
+    @Test func nothingButMissingAccessIsNotTheGenericAnswer() {
+        let reply = TodayPhrase.reply(TodayFacts(noAccess: [.agenda]), now: morning, calendar: paris)
+        #expect(reply == "Je n'ai pas accès à ton agenda, autorise Yumi dans Réglages Système, Confidentialité et sécurité.")
+    }
+}
