@@ -4,7 +4,7 @@ import Foundation
 /// Order matters: the first `ModuleCatalog.pinnedLimit` go in the island, the rest in the second square.
 struct ModuleSelection: Equatable, Sendable {
     /// Selected on first launch: the modules that work on the Mac without any account.
-    static let defaultIDs = ["claude-code", "agenda", "notes", "focus", "music", "weather", "github"]
+    static let defaultIDs = ["claude-code", "github", "music", "focus", "notes", "weather", "agenda"]
 
     /// The modules of the first version: a selection saved without a record of what was known knew these.
     static let firstModules = ["claude-code", "agenda", "notes", "focus", "music", "weather"]
