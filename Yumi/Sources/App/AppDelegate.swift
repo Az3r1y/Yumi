@@ -241,6 +241,11 @@ final class YumiCore {
     let context = ContextEngine(providers: [WorkspaceContextProvider(), WindowContextProvider()])
     private var contextConsumer: Task<Void, Never>?
     private var contextSwitch: AnyCancellable?
+    /// Turns a request into checked, observable work (AgentRuntime/). Does nothing until asked.
+    /// No model is connected yet, and nothing that needs approval runs until the Permission
+    /// System exists (`DenyingPermissionManager`).
+    let agent = RuntimeAgent(planner: LLMAgentPlanner(provider: UnavailableLLMProvider()))
+    private var agentConsumer: Task<Void, Never>?
 
     init(state: AppState) {
         ingress = EventIngress(engine: engine)
@@ -327,6 +332,7 @@ final class YumiCore {
 
     func start() {
         startContext(state: .shared)
+        startAgent(state: .shared)
         memory.start()
         ClaudeService.shared.memory = memory
         modules.start()
@@ -374,6 +380,27 @@ final class YumiCore {
         contextSwitch = state.$contextEnabled
             .removeDuplicates()
             .sink { [context] enabled in context.setEnabled(enabled) }
+    }
+
+    /// The settings' debug section reaches the runtime through `AppState.agent`. Nothing else
+    /// listens yet: whether Yumi reacts to a run is for the island to decide later.
+    private func startAgent(state: AppState) {
+        state.agent = agent
+        #if DEBUG
+        guard ProcessInfo.processInfo.environment["YUMI_TRACE_AGENT"] != nil else { return }
+        let events = agent.events()
+        agentConsumer = Task {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = [.sortedKeys]
+            for await event in events {
+                if let data = try? encoder.encode(event), let line = String(data: data, encoding: .utf8) {
+                    print("[agent] \(line)")
+                    fflush(stdout)
+                }
+            }
+        }
+        #endif
     }
 
     /// Debug builds only: with `YUMI_TRACE_CONTEXT` set, prints each context event as JSON.
