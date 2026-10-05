@@ -131,7 +131,7 @@ export const YumiFigure: React.FC<{
   const id = useId().replace(/:/g, "");
   const ids = {
     rim: `${id}rim`, fade: `${id}fade`, fadeG: `${id}fadeG`, lower: `${id}lower`, lowerG: `${id}lowerG`,
-    blur: `${id}blur`, body: `${id}body`, white: `${id}white`, shine: `${id}shine`, out: `${id}out`,
+    blur: `${id}blur`, body: `${id}body`, white: `${id}white`, shine: `${id}shine`, out: `${id}out`, glaze: `${id}glaze`,
   };
   const rim = `url(#${ids.rim})`;
   const body = bodyPath(f.h, f.w, f.lean);
@@ -222,6 +222,10 @@ export const YumiFigure: React.FC<{
             <JoinedShapes joined={joined} paint={(kind, w) => (kind === "body" ? { fill: "#000" } : { stroke: "#000", strokeWidth: w.strand })} />
           </mask>
         ) : null}
+        <linearGradient id={ids.glaze} gradientUnits="userSpaceOnUse" x1="64" y1="55" x2="78" y2="63">
+          <stop offset="0" stopColor="rgb(227,218,200)" />
+          <stop offset="1" stopColor="rgb(187,174,154)" />
+        </linearGradient>
         <radialGradient id={ids.white} cx="0.42" cy="0.36" r="0.75">
           <stop offset="0.45" stopColor="#fff" />
           <stop offset="1" stopColor="rgb(180,191,230)" />
@@ -396,6 +400,20 @@ export const YumiFigure: React.FC<{
                 <path d="M65 54H78V60A6.5 6.5 0 0 1 65 60Z" fill="rgb(244,245,248)" />
                 <path d="M78 56Q83.5 56 83.5 59.6Q83.5 63.2 78 63" stroke="rgb(244,245,248)" strokeWidth={1.9} />
                 <path d="M66.6 55.4H76.4" stroke="rgb(107,66,38)" strokeWidth={1.7} strokeLinecap="round" />
+              </g>
+            ) : null}
+            {f.props.matcha > 0.01 ? (
+              // A chawan held in both hands; it tips towards the mouth for a sip, gently
+              <g
+                opacity={f.props.matcha}
+                transform={`translate(7 8) translate(70 60) rotate(${-22 * f.sip}) translate(${-3 * f.sip} ${-2.5 * f.sip}) translate(-70 -60)`}
+              >
+                <path d="M61.5 54.5C61.6 59.5 63.4 62.8 66.5 64L74 64C77.2 62.8 78.9 59.4 79 54.2Z" fill={`url(#${ids.glaze})`} />
+                <rect x={67.4} y={63.4} width={5.8} height={1.9} rx={0.8} fill="rgb(187,174,154)" />
+                <path d="M75.6 55.6L75.1 59.2" stroke="rgba(255,255,255,0.35)" strokeWidth={1.1} strokeLinecap="round" />
+                <ellipse cx={70.4} cy={54.8} rx={8.4} ry={1.5} fill="rgb(148,188,102)" />
+                <ellipse cx={70.4} cy={54.8} rx={5.8} ry={0.8} fill="rgb(178,211,126)" />
+                <circle cx={73.4} cy={54.7} r={0.6} fill="rgb(213,232,169)" />
               </g>
             ) : null}
             {f.props.sunglasses > 0.01 ? (

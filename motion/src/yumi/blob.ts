@@ -11,10 +11,10 @@ export type Pose =
 
 // The cigarette of the app is left out on purpose: the video never shows it.
 export type Habit =
-  | "exhausted" | "coffee" | "headphones" | "sunglasses" | "cloud" | "whistle" | "sleep";
+  | "exhausted" | "coffee" | "matcha" | "headphones" | "sunglasses" | "cloud" | "whistle" | "sleep";
 
 export const HABITS: readonly Habit[] = [
-  "exhausted", "coffee", "headphones", "sunglasses", "cloud", "whistle", "sleep",
+  "exhausted", "coffee", "matcha", "headphones", "sunglasses", "cloud", "whistle", "sleep",
 ];
 
 /** A droplet thrown by a landing or a shake. */
@@ -247,6 +247,30 @@ export class Blob {
         }
         break;
       }
+      case "matcha": {
+        // A bowl of matcha held in both hands. A thin steam, slower than the coffee's; every
+        // seven seconds a long sip, then a sigh of content with the eyes closed
+        this.sa += dt;
+        const c = this.st % 7;
+        if (this.sa > 0.55 && !this.sip) {
+          this.sa = 0;
+          const p = this.world(70 + R() * 6, 61);
+          this.puff(p.x, p.y, R() * 3 - 1.5, -9, 0.75, 1.6);
+        }
+        if (c > 3.6 && c < 4.9) {
+          this.sip = true; this.leanTarget = -3; this.th = 1.02; this.ex = false;
+          this.tempFace = null;
+        } else {
+          this.sip = false; this.leanTarget = 0; this.th = 1;
+          if (c >= 4.9 && c < 6.1) {
+            if (!this.ex) { this.ex = true; this.vh -= 1.6; this.tempFace = POSE_FACES.shut; }
+            this.th = 0.97;
+          } else if (this.ex) {
+            this.ex = false; this.tempFace = null;
+          }
+        }
+        break;
+      }
       case "headphones":
         // He keeps the beat with his whole body
         this.th = 1 + 0.055 * Math.sin(this.st * 12.6);
@@ -334,6 +358,7 @@ export const POSE_DURATION: Record<Pose, number> = {
 export const HABIT_FACE: Record<Habit, Face> = {
   exhausted: POSE_FACES.blank,
   coffee: POSE_FACES.weary,
+  matcha: POSE_FACES.serene,
   headphones: MOODS.happy,
   sunglasses: MOODS.neutral,
   cloud: MOODS.worried,
@@ -344,6 +369,7 @@ export const HABIT_FACE: Record<Habit, Face> = {
 export const HABIT_RIM: Record<Habit, RimTone> = {
   exhausted: "calm",
   coffee: "warn",
+  matcha: "done",
   headphones: "joy",
   sunglasses: "done",
   cloud: "error",
