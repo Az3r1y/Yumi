@@ -1,0 +1,13 @@
+{
+  "name": "yumi-site",
+  "private": true,
+  "description": "The website of Yumi. Static: build only to regenerate assets/yumi.js.",
+  "scripts": {
+    "build": "node build.mjs",
+    "serve": "python3 -m http.server 8000"
+  },
+  "devDependencies": {
+    "esbuild": "0.24.2",
+    "preact": "10.25.4"
+  }
+}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 84">
+  <defs>
+    <linearGradient id="rim" x1="0" x2="1">
+      <stop offset="0" stop-color="#5B8CFF" />
+      <stop offset="0.5" stop-color="#8B6CFF" />
+      <stop offset="1" stop-color="#F58AD9" />
+    </linearGradient>
+  </defs>
+  <path d="M8 66.6C8 35.6 27 8 50 8C73 8 92 35.6 92 66.6C92 73 82 76 50 76C18 76 8 73 8 66.6Z" fill="#000" stroke="url(#rim)" stroke-width="5" />
+  <ellipse cx="37" cy="45" rx="9" ry="11" fill="#fff" />
+  <ellipse cx="63" cy="45" rx="9" ry="11" fill="#fff" />
+  <circle cx="37" cy="46" r="5.4" fill="#000" />
+  <circle cx="63" cy="46" r="5.4" fill="#000" />
+</svg>

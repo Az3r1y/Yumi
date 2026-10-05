@@ -134,7 +134,7 @@ class Engine {
     this.frames.push(this.snapshot());
   }
 
-  private apply(cue: Cue) {
+  apply(cue: Cue) {
     if (cue.habit !== undefined) this.habitCommand = cue.habit;
     if (cue.lit !== undefined && cue.lit !== this.lit) {
       this.lit = cue.lit;
@@ -202,7 +202,7 @@ class Engine {
     this.blob.derive();
   }
 
-  private step(dt: number) {
+  step(dt: number) {
     this.applyDue();
     this.clock += dt;
     const now = this.clock;
@@ -262,7 +262,7 @@ class Engine {
     return q < 1 ? keyframes(q, [[0, 1], [0.444, 0.08], [1, 1]], CURVES.ease) : 1;
   }
 
-  private snapshot(): YumiFrame {
+  snapshot(): YumiFrame {
     const now = this.clock;
     const blob = this.blob;
     const poseTime = this.pose ? now - this.poseStart : null;
@@ -311,6 +311,38 @@ class Engine {
       this.frames.push(this.snapshot());
     }
     return this.frames[index];
+  }
+}
+
+/**
+ * Yumi driven live instead of by a script: the website, where he follows the pointer.
+ * Commands apply at once; the caller lets time pass, in steps of 1/60 s like a film.
+ */
+export class LiveYumi {
+  private readonly engine: Engine;
+
+  constructor(seed = 1) {
+    this.engine = new Engine({ seed, cues: [] }, 60);
+  }
+
+  /** A command, now (the same fields as a cue of a script). */
+  command(cue: Omit<Cue, "at">) {
+    this.engine.apply({ ...cue, at: 0 });
+  }
+
+  /** Lets `seconds` pass. After a long pause (a hidden tab), only a quarter of a second does. */
+  advance(seconds: number) {
+    let left = Math.min(seconds, 0.25);
+    while (left > 1e-6) {
+      const dt = Math.min(1 / 60, left);
+      this.engine.step(dt);
+      left -= dt;
+    }
+  }
+
+  /** What to draw now. */
+  frame(): YumiFrame {
+    return this.engine.snapshot();
   }
 }
 
