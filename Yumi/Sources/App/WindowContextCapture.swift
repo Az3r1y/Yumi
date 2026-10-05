@@ -8,7 +8,11 @@ enum WindowContextCapture {
     /// Returns a PromptContext from the given app (typically the last app active before Yumi).
     /// Uses AXUIElement for window title (requires Accessibility permission).
     /// Uses AppleScript for browser URL (Safari, Chrome, Arc, Firefox, Edge).
-    static func captureActive(from app: NSRunningApplication? = NSWorkspace.shared.frontmostApplication) -> PromptContext? {
+    /// - Parameter askingFirst: false when the person did not point at the window (the chat just
+    ///   opened): the address is read only from a browser that already let Yumi read it, so macOS's
+    ///   Automation question never shows up uninvited.
+    static func captureActive(from app: NSRunningApplication? = NSWorkspace.shared.frontmostApplication,
+                              askingFirst: Bool = true) -> PromptContext? {
         #if APPSTORE
         // App Store: no Accessibility API, no screen capture
         return nil
@@ -35,7 +39,7 @@ enum WindowContextCapture {
         }
 
         // --- Browser URL ---
-        let url = browserURL(for: app)
+        let url = browserURL(for: app, askingFirst: askingFirst)
 
         return .window(appName: appName, title: title, url: url)
         #endif
@@ -56,14 +60,18 @@ enum WindowContextCapture {
             "tell application \"Microsoft Edge\" to return URL of active tab of front window",
     ]
 
-    private static func browserURL(for app: NSRunningApplication) -> String? {
+    private static func browserURL(for app: NSRunningApplication, askingFirst: Bool) -> String? {
         #if APPSTORE
         return nil  // No AppleScript in App Store sandbox
         #else
         guard let bundleId = app.bundleIdentifier,
               let script = browserScripts[bundleId] else { return nil }
+        // Same rule as the music players: remembered after a read that went through.
+        let allowedKey = "browserAllowed.\(bundleId)"
+        guard askingFirst || UserDefaults.standard.bool(forKey: allowedKey) else { return nil }
         var error: NSDictionary?
         let result = NSAppleScript(source: script)?.executeAndReturnError(&error)
+        UserDefaults.standard.set(error == nil, forKey: allowedKey)
         return error == nil ? result?.stringValue : nil
         #endif
     }

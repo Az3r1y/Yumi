@@ -23,6 +23,8 @@ struct ClaudeCodeLLMProvider: LLMProvider {
     var folder: String
     var model: String?
     var runner: Runner = ClaudeCodeLLMProvider.runProcess
+    /// A planner that does not answer in this time is stopped: a request never waits forever.
+    var timeout: Duration = .seconds(120)
 
     var name: String { "claude-code" }
 
@@ -42,7 +44,20 @@ struct ClaudeCodeLLMProvider: LLMProvider {
         let output: Data
         do {
             try FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
-            output = try await runner(binary, Self.arguments(system: request.system, model: model), Data(text.utf8), folder)
+            output = try await withThrowingTaskGroup(of: Data?.self) { group in
+                group.addTask { [runner, model, folder] in
+                    try await runner(binary, Self.arguments(system: request.system, model: model), Data(text.utf8), folder)
+                }
+                group.addTask { [timeout] in
+                    try await Task.sleep(for: timeout)
+                    return nil
+                }
+                defer { group.cancelAll() }
+                guard let first = try await group.next(), let data = first else { throw TimedOut() }
+                return data
+            }
+        } catch is TimedOut {
+            throw LLMProviderError.failed("Claude Code did not answer in time")
         } catch is CancellationError {
             throw CancellationError()
         } catch {
@@ -52,7 +67,11 @@ struct ClaudeCodeLLMProvider: LLMProvider {
             throw LLMProviderError.failed("unreadable answer from Claude Code")
         }
         if object["is_error"] as? Bool == true {
-            // Not logged in, no quota… The text can quote the request: only the kind is kept.
+            // Not logged in: as if Claude Code were not there, so the next provider (the API key)
+            // can plan, and the chat says how to log in.
+            let said = ([object["result"] as? String ?? ""] + (object["errors"] as? [String] ?? [])).joined(separator: " ")
+            if ChatPhrases.isLoginProblem(said) { throw LLMProviderError.unavailable }
+            // No quota… The text can quote the request: only the kind is kept.
             throw LLMProviderError.failed("Claude Code: \(object["subtype"] as? String ?? "error")")
         }
         guard let result = (object["result"] as? String)?.nonEmptyTrimmed else {
@@ -90,6 +109,8 @@ struct ClaudeCodeLLMProvider: LLMProvider {
         }
     }
 }
+
+private struct TimedOut: Error {}
 
 /// Asks each provider in turn: the next one is tried only when the previous one is not
 /// configured (`unavailable`). A provider that was reached and failed is not retried
