@@ -94,6 +94,68 @@ enum IslandStudio {
         return [claude, agenda, notes, focus, music, weather, github]
     }
 
+    /// What GetTodayTool answers for tomorrow when asked for the free time, on a day with two
+    /// example appointments: 10:00 to 12:00 and 17:00 to 20:00.
+    static func freeTimeAnswer(now: Date = .now) -> String {
+        let calendar = Calendar.current
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
+        func at(_ hour: Int) -> Date { calendar.date(bySettingHour: hour, minute: 0, second: 0, of: tomorrow) ?? tomorrow }
+        let events = [
+            AgendaEvent(id: "studio-1", title: "Point produit", start: at(10), end: at(12), isAllDay: false, location: ""),
+            AgendaEvent(id: "studio-2", title: "Atelier client", start: at(17), end: at(20), isAllDay: false, location: ""),
+        ]
+        let facts = TodayFacts(events: events, reminders: nil, weather: nil, dayEvents: events)
+        return TodayPhrase.reply(facts, day: tomorrow, now: now, freeTime: true, calendar: calendar)
+    }
+
+    enum SessionsMoment { case working, waiting, answered }
+
+    /// The example modules with the Claude Code module as ClaudeSessions would make it: one
+    /// session at work, or three with one asking, or the same three once it was answered.
+    /// Same sentences as the module's (ClaudeSessions.phrase, snapshot, live).
+    static func sessions(_ moment: SessionsMoment) -> [ModuleSnapshot] {
+        var all = modules(musicPlaying: false)
+        guard let index = all.firstIndex(where: { $0.id == "claude-code" }) else { return all }
+        let now = Date.now
+        var claude = all[index]
+        let atelier = ModuleRow(id: "s2", title: "atelier", detail: "Modifie Accueil.swift", state: .busy,
+                                label: "travaille", date: now.addingTimeInterval(-720), action: "s2")
+        switch moment {
+        case .working:
+            claude.status = "1 session"
+            claude.title = "Claude modifie Accueil.swift sur atelier."
+            claude.subtitle = "Une session ouverte."
+            claude.rows = [atelier]
+        case .waiting:
+            claude.status = "3 sessions"
+            claude.title = "Claude veut ton accord sur api. Je laisse passer ?"
+            claude.subtitle = "Trois sessions ouvertes, une t'attend."
+            claude.needsAttention = true
+            claude.live = ModuleLive(text: "3 sessions · accord sur api", priority: ModuleLivePriority.attention,
+                                     controls: [ModuleControl(id: "primary", symbol: "eye.fill", label: "Voir")])
+            claude.rows = [
+                ModuleRow(id: "s1", title: "api", detail: "Demande Bash : npm test", state: .waiting,
+                          label: "attend un accord", date: now.addingTimeInterval(-40), action: "s1"),
+                atelier,
+                ModuleRow(id: "s3", title: "site", detail: "C'est passé.", state: .success,
+                          label: "terminée", date: now.addingTimeInterval(-120), action: "s3"),
+            ]
+        case .answered:
+            claude.status = "3 sessions"
+            claude.title = "C'est passé sur api."
+            claude.subtitle = "Trois sessions ouvertes."
+            claude.rows = [
+                ModuleRow(id: "s1", title: "api", detail: "C'est passé.", state: .success,
+                          label: "terminée", date: now, action: "s1"),
+                atelier,
+                ModuleRow(id: "s3", title: "site", detail: "C'est passé.", state: .success,
+                          label: "terminée", date: now.addingTimeInterval(-120), action: "s3"),
+            ]
+        }
+        all[index] = claude
+        return all
+    }
+
     // MARK: - Starting
 
     static func startIfRequested(controller: IslandWindowController) {
@@ -122,11 +184,15 @@ enum IslandStudio {
 
     /// `YUMI_STUDIO_SHOTS=<folder>` plays every shot in turn and saves a picture of the island
     /// twice a second, to check the mode without filming.
+    /// `YUMI_STUDIO_ONLY=10,11,12` plays only these shots, in this order.
     private static func rehearse(into folder: String) {
-        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6]
+        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15]
+        let only = (ProcessInfo.processInfo.environment["YUMI_STUDIO_ONLY"] ?? "")
+            .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        let shots = only.isEmpty ? Array(1...9) : only
         Task { @MainActor in
             try? await Task.sleep(for: .seconds(6))
-            for shot in 1...9 {
+            for shot in shots {
                 play(shot)
                 for frame in 0..<Int((lengths[shot] ?? 6) * 2) {
                     try? await Task.sleep(for: .milliseconds(500))
@@ -164,10 +230,11 @@ enum IslandStudio {
 
     // MARK: - Keys
 
-    /// 1 to 9 play a shot, Space plays the last one again, Escape puts Yumi back at rest,
-    /// R folds the island.
+    /// 1 to 9 play a shot, and the three keys after them (0, then the two to its right) play
+    /// shots 10 to 12. Space plays the last one again, Escape puts Yumi back at rest, R folds
+    /// the island.
     private static func key(_ code: UInt16) -> Bool {
-        let shots: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9]
+        let shots: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9, 29: 10, 27: 11, 24: 12]
         if let shot = shots[code] { play(shot); return true }
         switch code {
         case 49: if let lastShot { play(lastShot) }; return true        // Space
@@ -325,6 +392,67 @@ enum IslandStudio {
         case 9:
             // The goodbye
             controller.studioGoodbye()
+
+        case 10:
+            // Tomorrow's free time, asked in the chat. The answer goes through the agent runtime
+            // in the app (get_today), which this mode does not run: the sentence is written by
+            // the tool's own code, from two example appointments, and arrives as a whole, as
+            // the runtime's answers do
+            after(0.6) {
+                state.stateOverride = .thinking
+                state.chatHistory = [ChatMessage(role: .user, content: "Combien de temps libre j'ai demain pour avancer sur Yumi ?")]
+                controller.expand(to: .prompt)
+            }
+            after(2.6) {
+                state.chatHistory.append(ChatMessage(role: .assistant, content: freeTimeAnswer()))
+                state.stateOverride = .idle
+                model.setMood(.happy, force: true)
+                model.pose(.celebrate)
+            }
+
+        case 11:
+            // An agent at work, and Yumi with his matcha: folded first, then open on the
+            // session, where he is large enough for the bowl to be seen
+            after(0.4) {
+                show(sessions(.working))
+                state.stateOverride = .working
+                model.setHabit(.matcha)
+            }
+            after(3.0) {
+                model.selectedModuleID = "claude-code"
+                controller.expand(to: .module)
+            }
+
+        case 12:
+            // Three sessions, one waits for an answer; it is given from the notch
+            after(0.5) {
+                show(sessions(.waiting))
+                model.selectedModuleID = "claude-code"
+                controller.expand(to: .module)
+            }
+            after(4.5) {
+                // The approval is the one of the api session
+                if let i = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) {
+                    state.tasks[i].name = "api"
+                    state.tasks[i].steps = ["Exécute · npm test"]
+                }
+                state.stateOverride = .approval
+                state.pendingApproval = ApprovalInfo(sessionId: "studio", tool: "Bash", command: "npm test")
+                controller.expand(to: .approval)
+            }
+            after(7.1) { model.studioPress = true }
+            after(7.35) {
+                model.studioPress = false
+                state.pendingApproval = nil
+                state.stateOverride = .finished
+                state.view = .finished
+            }
+            after(9.7) {
+                state.stateOverride = .idle
+                show(sessions(.answered))
+                model.selectedModuleID = "claude-code"
+                controller.expand(to: .module)
+            }
 
         default:
             break
