@@ -95,22 +95,35 @@ final class AgendaModule: YumiModule {
 
     // MARK: Events
 
+    /// Every appointment of one day, cancelled ones aside, for the agent. nil while the module is
+    /// stopped or without access.
+    func events(on day: Date, calendar: Calendar = .current) -> [AgendaEvent]? {
+        guard onChange != nil, access == .granted else { return nil }
+        let start = calendar.startOfDay(for: day)
+        guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return nil }
+        return read(from: start, to: end).sorted { $0.start < $1.start }
+    }
+
+    private func read(from start: Date, to end: Date) -> [AgendaEvent] {
+        let predicate = eventStore.predicateForEvents(withStart: start, end: end, calendars: nil)
+        return eventStore.events(matching: predicate)
+            .filter { $0.status != .canceled }
+            .map { event in
+                AgendaEvent(id: event.eventIdentifier ?? UUID().uuidString,
+                            title: event.title ?? "Événement",
+                            start: event.startDate, end: event.endDate, isAllDay: event.isAllDay,
+                            location: event.location ?? "",
+                            joinURL: AgendaSummary.joinURL(in: [event.url?.absoluteString, event.location, event.notes]))
+            }
+    }
+
     /// Reads today's and tomorrow's events, then reports. Does nothing without the permission.
     private func reload() {
         if access == .granted {
             let calendar = Calendar.current
             let start = Date()
             let end = calendar.date(byAdding: .day, value: 2, to: calendar.startOfDay(for: start)) ?? start
-            let predicate = eventStore.predicateForEvents(withStart: start, end: end, calendars: nil)
-            events = eventStore.events(matching: predicate)
-                .filter { $0.status != .canceled }
-                .map { event in
-                    AgendaEvent(id: event.eventIdentifier ?? UUID().uuidString,
-                                title: event.title ?? "Événement",
-                                start: event.startDate, end: event.endDate, isAllDay: event.isAllDay,
-                                location: event.location ?? "",
-                                joinURL: AgendaSummary.joinURL(in: [event.url?.absoluteString, event.location, event.notes]))
-                }
+            events = read(from: start, to: end)
         } else {
             events = []
         }

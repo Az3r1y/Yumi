@@ -118,6 +118,26 @@ final class NotesModule: YumiModule {
 
     // MARK: Reminders
 
+    /// Incomplete reminders due on one day, read from Rappels when asked. nil while the module is
+    /// stopped or without access.
+    func reminders(on day: Date, calendar: Calendar = .current) async -> [ReminderItem]? {
+        guard onChange != nil, access == .granted else { return nil }
+        let start = calendar.startOfDay(for: day)
+        guard let end = calendar.date(byAdding: .day, value: 1, to: start) else { return nil }
+        let predicate = eventStore.predicateForIncompleteReminders(withDueDateStarting: start, ending: end, calendars: nil)
+        return await withCheckedContinuation { continuation in
+            // EventKit answers on its own queue: the closure must not be isolated to the main actor.
+            eventStore.fetchReminders(matching: predicate) { @Sendable found in
+                let items = (found ?? []).map { reminder in
+                    let components = reminder.dueDateComponents
+                    return ReminderItem(id: reminder.calendarItemIdentifier, title: reminder.title ?? "Rappel",
+                                        due: components.flatMap { calendar.date(from: $0) }, hasTime: components?.hour != nil)
+                }
+                continuation.resume(returning: items)
+            }
+        }
+    }
+
     /// Reads the incomplete reminders due up to the end of today. Does nothing without the permission.
     private func fetchReminders() {
         guard access == .granted else {

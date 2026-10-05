@@ -27,6 +27,16 @@ final class ModuleBridge: FocusControl, TodaySource {
         return TodayFacts(events: agenda?.upcomingTodayIfRunning,
                           reminders: notes?.remindersDue(on: now),
                           weather: weather?.currentReport,
-                          noAccess: noAccess)
+                          noAccess: noAccess,
+                          dayEvents: agenda?.events(on: now))
+    }
+
+    func facts(on day: Date, now: Date) async -> TodayFacts {
+        var noAccess: [TodayFacts.Source] = []
+        if agenda?.runsWithoutAccess == true { noAccess.append(.agenda) }
+        if notes?.runsWithoutAccess == true { noAccess.append(.reminders) }
+        let events = agenda?.events(on: day).map { $0.filter { !$0.isAllDay } }
+        return TodayFacts(events: events, reminders: await notes?.reminders(on: day), weather: nil,
+                          noAccess: noAccess, dayEvents: events)
     }
 }

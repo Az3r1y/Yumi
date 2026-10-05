@@ -70,6 +70,19 @@ struct AgentLook: Equatable, Sendable {
         #endif
     }
 
+    static let busy = "Je suis déjà sur une autre tâche. Redemande-moi juste après."
+
+    /// Said when a question about the person's agenda could not be answered: what Yumi can do,
+    /// never an invitation to paste their data elsewhere.
+    static func agendaKeptFromChat(_ error: AgentError?) -> String {
+        switch error {
+        case .noProvider?: return failure(error)
+        case .cannotRun(_, let reason)?, .invalidArguments(_, let reason)?: return "Je ne peux pas : \(reason)."
+        default:
+            return "Je n'ai pas réussi à lire ça. Pour ton agenda, tes rappels et ton temps libre, demande-moi un jour précis, d'aujourd'hui à dans quatorze jours, par exemple « qu'est-ce que j'ai demain ? » ou « combien de temps libre jeudi ? »."
+        }
+    }
+
     private static func failure(_ error: AgentError?) -> String {
         switch error {
         case .busy?: "Je suis déjà sur une autre tâche. Redemande-moi juste après."

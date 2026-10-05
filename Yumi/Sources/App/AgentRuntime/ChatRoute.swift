@@ -8,6 +8,10 @@ enum ChatRoute: Equatable, Sendable {
     case agent(AgentPlan)
     /// A clear action on the Mac that Yumi cannot do: say so, do nothing, pass it to nobody.
     case blocked(String)
+    /// A question about the person's calendar, reminders or free time that the runtime could not
+    /// answer: Yumi says what he can do. Never the chat, which cannot read them and would only ask
+    /// the person to paste their data. Carries why the runtime could not plan, if it knows.
+    case agendaKeptFromChat(AgentError?)
     /// Answer as a conversation. The chat cannot change the Mac (ChatTools).
     case chat
 
@@ -21,5 +25,28 @@ enum ChatRoute: Equatable, Sendable {
         case .failure(.unsupportedAction(let reason)): .blocked(reason)
         default: .chat
         }
+    }
+
+    /// The same, and a message about the person's agenda never goes to the chat.
+    static func route(_ planned: Result<AgentPlan, AgentError>?, message: String) -> ChatRoute {
+        let route = planned.map(route) ?? .chat
+        guard route == .chat, isPersonalAgenda(message) else { return route }
+        if case .failure(let error)? = planned { return .agendaKeptFromChat(error) }
+        return .agendaKeptFromChat(nil)
+    }
+
+    /// "Qu'est-ce que j'ai demain ?", "combien de temps libre jeudi", "mes rendez-vous de lundi".
+    /// Only keeps a message away from the chat; it never makes anything run.
+    static func isPersonalAgenda(_ message: String) -> Bool {
+        let text = " " + message.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: Locale(identifier: "fr_FR"))
+            .replacingOccurrences(of: "’", with: "'") + " "
+        let topics = ["agenda", "calendrier", "rendez-vous", "rendez vous", " rdv", "reunion", "rappel", "temps libre",
+                      "creneau", "dispo", "planning", "emploi du temps", "occupe", "libre "]
+        let personal = [" mon ", " ma ", " mes ", "j'ai", "je suis", " moi", " m'", "ai-je", "suis-je", " je "]
+        if topics.contains(where: text.contains), personal.contains(where: text.contains) { return true }
+        let asks = ["qu'est-ce que j'ai", "qu'est ce que j'ai", "qu'ai-je", "j'ai quoi", "j ai quoi", "qu'est-ce qui m'attend"]
+        let days = ["aujourd'hui", "demain", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche",
+                    "ce soir", "ce matin", "cet apres-midi", "semaine", "week-end", "prevu"]
+        return asks.contains(where: text.contains) && days.contains(where: text.contains)
     }
 }
