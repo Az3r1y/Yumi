@@ -22,6 +22,26 @@ import Foundation
         #expect(locate(["/Users/moi/.local/bin/claude", "/opt/homebrew/bin/claude"]) == "/opt/homebrew/bin/claude")
     }
 
+    @Test func findsAGlobalNpmInstall() {
+        let bare = ["PATH": "/usr/bin:/bin"]
+        let none: (String) -> [String] = { _ in [] }
+        for folder in [".npm-global/bin", ".volta/bin", ".bun/bin", "Library/pnpm", ".asdf/shims"] {
+            let path = "/Users/moi/\(folder)/claude"
+            #expect(ClaudeCLI.locate(environment: bare, home: home, isExecutable: { $0 == path }, list: none) == path)
+        }
+    }
+
+    @Test func findsTheNewestNvmNodeFirst() {
+        let list: (String) -> [String] = { $0 == "/Users/moi/.nvm/versions/node" ? ["v18.20.1", "v22.3.0", "v20.11.0", ".DS_Store"] : [] }
+        let present: Set = ["/Users/moi/.nvm/versions/node/v20.11.0/bin/claude",
+                            "/Users/moi/.nvm/versions/node/v22.3.0/bin/claude"]
+        #expect(ClaudeCLI.locate(environment: ["PATH": "/usr/bin"], home: home, isExecutable: present.contains, list: list)
+                == "/Users/moi/.nvm/versions/node/v22.3.0/bin/claude")
+        #expect(ClaudeCLI.nvmFolders(home: home, list: list) == ["/Users/moi/.nvm/versions/node/v22.3.0/bin",
+                                                                  "/Users/moi/.nvm/versions/node/v20.11.0/bin",
+                                                                  "/Users/moi/.nvm/versions/node/v18.20.1/bin"])
+    }
+
     @Test func thePathOfTheAppComesFirst() {
         let found = ClaudeCLI.locate(environment: ["PATH": "/custom/bin:/usr/bin"], home: home,
                                      isExecutable: ["/custom/bin/claude", "/opt/homebrew/bin/claude"].contains)

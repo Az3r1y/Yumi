@@ -8,19 +8,81 @@ import Foundation
 
 enum ClaudeCLI {
     /// Folders where Claude Code installs itself. An app launched from the Finder does not
-    /// have the PATH of the terminal, so these are checked after the PATH it does have.
+    /// have the PATH of the terminal, so these are checked after the PATH it does have:
+    /// the official installer, Homebrew, then the usual homes of a global npm install
+    /// (npm prefix, Volta, Bun, pnpm, asdf, mise).
     static func usualFolders(home: String) -> [String] {
-        ["/opt/homebrew/bin", "/usr/local/bin", "\(home)/.claude/local", "\(home)/.local/bin"]
+        ["/opt/homebrew/bin", "/usr/local/bin", "\(home)/.claude/local", "\(home)/.local/bin",
+         "\(home)/.npm-global/bin", "\(home)/.volta/bin", "\(home)/.bun/bin", "\(home)/Library/pnpm",
+         "\(home)/.asdf/shims", "\(home)/.local/share/mise/shims",
+         "\(home)/Library/Application Support/fnm/aliases/default/bin"]
     }
 
-    /// Path of the `claude` binary, or nil when Claude Code is not installed.
+    /// The bin folders of the Node versions nvm installed, newest first: `npm install -g`
+    /// puts `claude` in the bin folder of the Node version that was active.
+    static func nvmFolders(home: String, list: (String) -> [String]) -> [String] {
+        let root = "\(home)/.nvm/versions/node"
+        func version(_ name: String) -> [Int] {
+            name.drop(while: { $0 == "v" }).split(separator: ".").map { Int($0) ?? 0 }
+        }
+        return list(root)
+            .filter { $0.hasPrefix("v") }
+            .sorted { version($0).lexicographicallyPrecedes(version($1)) == false && version($0) != version($1) }
+            .map { "\(root)/\($0)/bin" }
+    }
+
+    /// Path of the `claude` binary, or nil when it is in none of the known places.
     static func locate(environment: [String: String] = ProcessInfo.processInfo.environment,
                        home: String = NSHomeDirectory(),
-                       isExecutable: (String) -> Bool = FileManager.default.isExecutableFile(atPath:)) -> String? {
+                       isExecutable: (String) -> Bool = FileManager.default.isExecutableFile(atPath:),
+                       list: (String) -> [String] = { (try? FileManager.default.contentsOfDirectory(atPath: $0)) ?? [] }) -> String? {
         let fromPath = (environment["PATH"] ?? "").split(separator: ":").map(String.init)
-        return (fromPath + usualFolders(home: home))
+        return (fromPath + usualFolders(home: home) + nvmFolders(home: home, list: list))
             .map { $0.hasSuffix("/") ? "\($0)claude" : "\($0)/claude" }
             .first(where: isExecutable)
+    }
+
+    /// `locate`, then, for any other install, what the person's own login shell finds
+    /// (`command -v claude` in their PATH). The shell is asked once per launch of Yumi.
+    static func find() -> String? {
+        if let found = locate() { return found }
+        return shellLookup.value
+    }
+
+    private static let shellLookup = ShellLookup()
+
+    /// Asks the login shell once, with a time limit: a slow or broken shell profile only costs
+    /// three seconds, once.
+    private final class ShellLookup: @unchecked Sendable {
+        private let lock = NSLock()
+        private var done = false
+        private var result: String?
+
+        var value: String? {
+            lock.withLock {
+                if !done { result = Self.ask(); done = true }
+                return result
+            }
+        }
+
+        private static func ask() -> String? {
+            let shell = ProcessInfo.processInfo.environment["SHELL"].flatMap { $0.isEmpty ? nil : $0 } ?? "/bin/zsh"
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: shell)
+            process.arguments = ["-l", "-i", "-c", "command -v claude"]
+            let output = Pipe()
+            process.standardOutput = output
+            process.standardError = FileHandle.nullDevice
+            process.standardInput = FileHandle.nullDevice
+            guard (try? process.run()) != nil else { return nil }
+            let deadline = Date().addingTimeInterval(3)
+            while process.isRunning, Date() < deadline { Thread.sleep(forTimeInterval: 0.05) }
+            if process.isRunning { process.terminate(); return nil }
+            let text = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
+            // The last line that is an absolute path to an executable (profiles may print things)
+            return text.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+                .last(where: { $0.hasPrefix("/") && FileManager.default.isExecutableFile(atPath: $0) })
+        }
     }
 
     /// Which conversation a message belongs to.

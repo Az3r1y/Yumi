@@ -151,7 +151,7 @@ final class ClaudeService {
         conversationMessages = []
         unseenTurns = []
         #if !APPSTORE
-        if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.locate() {
+        if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.find() {
             summarize(session: session.id, folder: session.folder, binary: binary, noted: notedThisConversation)
         }
         answeredTurns = 0
@@ -182,7 +182,7 @@ final class ClaudeService {
         #if APPSTORE
         await chatWithAPI(query: query, context: context, state: state)
         #else
-        if let binary = ClaudeCLI.locate() {
+        if let binary = ClaudeCLI.find() {
             await chatWithClaudeCode(binary: binary, query: query, context: context, state: state)
         } else if let key = apiKey, !key.isEmpty {
             await chatWithAPI(query: query, context: context, state: state)

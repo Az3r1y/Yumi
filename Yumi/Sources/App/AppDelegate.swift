@@ -405,7 +405,7 @@ final class YumiCore {
         return RuntimeAgent(planner: LLMAgentPlanner(provider: api), permissions: permissions)
         #else
         let claudeCode = ClaudeCodeLLMProvider(
-            binary: { ClaudeCLI.locate() },
+            binary: { ClaudeCLI.find() },
             folder: AppIdentity.supportDirectory.appendingPathComponent("planner").path)
         let provider = FallbackLLMProvider(providers: [claudeCode, api])
         var tools = ToolRegistry.standard
