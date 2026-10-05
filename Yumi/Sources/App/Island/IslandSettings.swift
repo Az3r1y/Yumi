@@ -175,7 +175,7 @@ struct IslandToggle: View {
 }
 
 /// `.seg button`
-private struct SegmentButton: View {
+struct SegmentButton: View {
     let label: String
     let on: Bool
     let action: () -> Void

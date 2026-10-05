@@ -39,13 +39,32 @@ import Testing
     }
 
     @Test func eachChoiceGivesItsHabit() {
-        #expect(YumiWorkHabit.habit(for: .smoke, filming: false) == .smoke)
-        #expect(YumiWorkHabit.habit(for: .coffee, filming: false) == .coffee)
-        #expect(YumiWorkHabit.habit(for: .matcha, filming: false) == .matcha)
+        #expect(YumiWorkHabit.smoke.habit(filming: false) == .smoke)
+        #expect(YumiWorkHabit.coffee.habit(filming: false) == .coffee)
+        #expect(YumiWorkHabit.matcha.habit(filming: false) == .matcha)
+    }
+
+    @Test func randomDrawsOneOfTheThree() {
+        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.1 }) == .smoke)
+        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.5 }) == .coffee)
+        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.9 }) == .matcha)
+        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.99999 }) == .matcha)
     }
 
     @Test func noCigaretteOnFilm() {
-        #expect(YumiWorkHabit.habit(for: .smoke, filming: true) == .coffee)
-        #expect(YumiWorkHabit.habit(for: .matcha, filming: true) == .matcha)
+        #expect(YumiWorkHabit.smoke.habit(filming: true) == .coffee)
+        #expect(YumiWorkHabit.random.habit(filming: true, draw: { 0.1 }) == .coffee)
+        #expect(YumiWorkHabit.matcha.habit(filming: true) == .matcha)
+    }
+
+    @Test func chosenOnlyOnceThePersonChose() {
+        let d = defaults()
+        #expect(!YumiWorkHabit.isChosen(in: d))
+        d.set("random", forKey: YumiWorkHabit.defaultsKey)
+        #expect(YumiWorkHabit.isChosen(in: d))
+        #expect(YumiWorkHabit.current(in: d) == .random)
+        let old = defaults()
+        old.set(false, forKey: YumiWorkHabit.oldSmokeKey)
+        #expect(YumiWorkHabit.isChosen(in: old))
     }
 }

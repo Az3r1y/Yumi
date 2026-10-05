@@ -102,6 +102,8 @@ final class IslandModel: ObservableObject {
     private var sentMood: YumiMood?
     private var sentRim: YumiRimTone?
     private var lateHabit: DispatchWorkItem?
+    /// What he holds in the current session of work; nil when no agent works.
+    private var workPick: YumiHabit?
     private var winkBack: DispatchWorkItem?
 
     /// The character view is in the window and listens to the commands.
@@ -275,8 +277,8 @@ final class IslandModel: ObservableObject {
         /// The screen shown, or the one that would be if the island were open.
         var screen: IslandScreen
         var moduleID: String?
-        /// What he holds while an agent works (the setting, already resolved for filming).
-        var workHabit: YumiHabit
+        /// What he holds while an agent works (the setting).
+        var workHabit: YumiWorkHabit
         /// The live module is the music, and it is playing.
         var music = false
         /// The chat is carrying out an action right now (reading, writing, running).
@@ -320,10 +322,15 @@ final class IslandModel: ObservableObject {
         // An agent at work: the cigarette, the coffee or the matcha chosen in the settings.
         // Shown wherever the island is not about something else.
         let atWork = new.busy && (!open || new.screen == .home || new.screen == .working)
+        if !atWork { workPick = nil }
         switch new.screen {
         case _ where atWork:
             cancelLateHabit()
-            setHabit(new.workHabit)
+            // Drawn once per session of work, so the random choice does not change hands
+            if workPick == nil || old?.workHabit != new.workHabit {
+                workPick = new.workHabit.habit(filming: IslandStudio.isOn)
+            }
+            setHabit(workPick)
         case .error:
             cancelLateHabit()
             setHabit(.cloud)

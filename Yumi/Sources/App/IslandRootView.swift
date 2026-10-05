@@ -60,7 +60,7 @@ struct IslandScene: View {
             stage: stage,
             screen: stage == .open ? screen : IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: approval),
             moduleID: stage == .open && screen == .module ? model.selectedModule(in: state.modules)?.id : nil,
-            workHabit: YumiWorkHabit.habit(for: YumiWorkHabit(rawValue: workHabit) ?? .coffee, filming: IslandStudio.isOn),
+            workHabit: YumiWorkHabit(rawValue: workHabit) ?? .coffee,
             music: folded.musicPlaying,
             chatActs: state.chatLive?.activity != nil,
             busy: busy,
