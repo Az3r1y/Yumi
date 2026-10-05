@@ -842,3 +842,36 @@ import Foundation
         #expect(RowTime.clock(try! Date("2026-09-28T10:00:00+02:00", strategy: .iso8601), now: now, calendar: calendar) == "28 sept.")
     }
 }
+
+@Suite struct YumiVersionTests {
+    private func v(_ text: String) -> YumiVersion { YumiVersion(text)! }
+
+    @Test func preReleasesComeBeforeTheirRelease() {
+        #expect(v("0.1.0-alpha") < v("0.1.0-alpha.2"))
+        #expect(v("0.1.0-alpha.2") < v("0.1.0"))
+        #expect(v("0.1.0-alpha") < v("0.1.0"))
+        #expect(v("0.1.0-alpha.2") < v("0.1.0-alpha.10"))
+        #expect(v("0.1.0-alpha.9") < v("0.1.0-beta"))
+        #expect(v("0.1.0") < v("0.1.1-alpha"))
+        #expect(v("0.9.9") < v("0.10.0"))
+    }
+
+    @Test func tagsAreRead() {
+        #expect(v("v0.1.0-alpha") == v("0.1.0-alpha"))
+        #expect(v("0.2") == v("0.2.0"))
+        #expect(!(v("0.1.0-alpha") < v("v0.1.0-alpha")))
+        #expect(YumiVersion("nightly") == nil)
+        #expect(YumiVersion("") == nil)
+    }
+}
+
+@Suite struct FeedbackTests {
+    @Test func theFormIsFilledWithTheMacAndNothingElse() {
+        let url = Feedback.url(version: "0.1.0-alpha", macOS: "26.1.0", model: "Mac15,3", notch: true)!
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)!.queryItems!
+        #expect(url.absoluteString.hasPrefix("https://github.com/estebanbaigts/Yumi/issues/new?"))
+        #expect(items.map(\.name) == ["template", "version-yumi", "version-macos", "mac"])
+        #expect(items.map(\.value) == ["bug.yml", "0.1.0-alpha", "26.1.0", "Mac15,3, notch : oui"])
+        #expect(Feedback.fields(version: "1", macOS: "2", model: "Mac14,2", notch: false).last?.1 == "Mac14,2, notch : non")
+    }
+}

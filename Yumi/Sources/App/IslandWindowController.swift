@@ -118,6 +118,7 @@ final class IslandWindowController: NSWindowController {
         IslandDemo.startIfRequested(controller: self)
         #endif
         IslandStudio.startIfRequested(controller: self)
+        YumiUpdates.shared.start()
     }
 
     // MARK: - FSM wiring

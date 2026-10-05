@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 // The everyday settings, without leaving the island (`.set` in the mock-up): sounds and
@@ -7,6 +8,7 @@ struct SettingsActivity: View {
     @ObservedObject var state: AppState
     @AppStorage(IslandPrefs.smokeKey) private var smokes = true
     @State private var githubToken = ""
+    @ObservedObject private var updates = YumiUpdates.shared
     @State private var githubConnected = IslandActions.githubConnected
     /// How much he speaks first (Contracts/RemarkTypes.swift).
     @AppStorage(YumiTalk.defaultsKey) private var talk = YumiTalk.discreet.rawValue
@@ -91,6 +93,19 @@ struct SettingsActivity: View {
                 TextButton(label: state.memory.isEmpty ? "Voir" : "Voir (\(state.memory.count))") { IslandActions.go(.memory) }
             }
             .riseIn(3)
+            row("Yumi \(YumiUpdates.installed)") {
+                if let newer = updates.newer {
+                    TextButton(label: "\(newer.tag) est là") { updates.openRelease() }
+                }
+                TextButton(label: "Envoyer un retour") {
+                    if let url = YumiUpdates.feedbackURL() { NSWorkspace.shared.open(url) }
+                }
+            }
+            .riseIn(5)
+            row("Préviens-moi des nouvelles versions") {
+                IslandToggle(isOn: Binding(get: { updates.enabled }, set: { updates.enabled = $0 }), label: "Nouvelles versions")
+            }
+            .riseIn(6)
         }
         .padding(.top, 2)
         .frame(maxWidth: .infinity)

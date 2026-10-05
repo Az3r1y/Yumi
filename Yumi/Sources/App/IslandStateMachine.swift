@@ -423,3 +423,59 @@ enum RowTime {
         return "\(parts.day ?? 1) \(months[max(0, min(11, (parts.month ?? 1) - 1))])"
     }
 }
+
+// MARK: - Versions and feedback
+
+/// A version of Yumi as GitHub tags it: "v0.1.0-alpha.2", compared the semantic-versioning way.
+struct YumiVersion: Comparable, Equatable, Sendable {
+    var core: [Int]
+    /// "alpha.2" → ["alpha", "2"]. Empty for a release.
+    var pre: [String]
+
+    init?(_ text: String) {
+        var text = text.trimmingCharacters(in: .whitespaces)
+        if text.hasPrefix("v") || text.hasPrefix("V") { text.removeFirst() }
+        text = String(text.split(separator: "+", maxSplits: 1).first ?? "")
+        let parts = text.split(separator: "-", maxSplits: 1).map(String.init)
+        guard let first = parts.first, !first.isEmpty else { return nil }
+        let numbers = first.split(separator: ".").map { Int($0) }
+        guard !numbers.isEmpty, numbers.allSatisfy({ $0 != nil }) else { return nil }
+        core = numbers.compactMap { $0 }
+        while core.count < 3 { core.append(0) }
+        pre = parts.count > 1 ? parts[1].split(separator: ".").map(String.init) : []
+    }
+
+    static func < (a: YumiVersion, b: YumiVersion) -> Bool {
+        if a.core != b.core { return a.core.lexicographicallyPrecedes(b.core) }
+        // A release comes after all its pre-releases
+        if a.pre.isEmpty || b.pre.isEmpty { return !a.pre.isEmpty && b.pre.isEmpty }
+        for (x, y) in zip(a.pre, b.pre) where x != y {
+            switch (Int(x), Int(y)) {
+            case let (i?, j?): return i < j
+            case (_?, nil):    return true
+            case (nil, _?):    return false
+            default:           return x < y
+            }
+        }
+        return a.pre.count < b.pre.count
+    }
+}
+
+/// The "Envoyer un retour" link: a new issue of the repository, on the bug form, with the facts
+/// of this Mac filled in. Nothing else: no logs, nothing personal. GitHub's chooser page drops
+/// what is passed to it, so the link goes to the form itself; the form links back to the others.
+enum Feedback {
+    static let newIssue = "https://github.com/estebanbaigts/Yumi/issues/new"
+
+    /// The fields of `.github/ISSUE_TEMPLATE/bug.yml`, by their `id`.
+    static func fields(version: String, macOS: String, model: String, notch: Bool) -> [(String, String)] {
+        [("version-yumi", version), ("version-macos", macOS), ("mac", "\(model), notch : \(notch ? "oui" : "non")")]
+    }
+
+    static func url(version: String, macOS: String, model: String, notch: Bool) -> URL? {
+        var parts = URLComponents(string: newIssue)
+        parts?.queryItems = [URLQueryItem(name: "template", value: "bug.yml")]
+            + fields(version: version, macOS: macOS, model: model, notch: notch).map { URLQueryItem(name: $0.0, value: $0.1) }
+        return parts?.url
+    }
+}
