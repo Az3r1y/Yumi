@@ -42,11 +42,12 @@ final class IslandWindowController: NSWindowController {
 
     convenience init() {
         let notch = Self.notchScreen()
-        let screen = notch ?? NSScreen.main ?? NSScreen.screens[0]
+        // No screen at all (a Mac started headless): a default frame, moved when a screen appears.
+        let screen = notch ?? NSScreen.main ?? NSScreen.screens.first
 
         let panelW = IslandConst.panelWidth * IslandStudio.scale
         let panelH = IslandConst.panelHeight * IslandStudio.scale
-        let sf = screen.frame
+        let sf = screen?.frame ?? NSRect(x: 0, y: 0, width: 1440, height: 900)
         let panel = IslandPanel(
             contentRect: NSRect(x: sf.midX - panelW/2, y: sf.maxY - panelH,
                                 width: panelW, height: panelH),
@@ -56,8 +57,8 @@ final class IslandWindowController: NSWindowController {
 
         self.init(window: panel)
         self.islandPanel = panel
-        model.layout = IslandLayout(notchWidth: Self.notchWidth(for: screen),
-                                    notchHeight: Self.notchHeight(for: screen),
+        model.layout = IslandLayout(notchWidth: screen.map(Self.notchWidth(for:)) ?? IslandConst.notchWidth,
+                                    notchHeight: screen.map(Self.notchHeight(for:)) ?? IslandConst.notchHeight,
                                     hasNotch: notch != nil)
         setupPanel()
     }
@@ -545,6 +546,12 @@ final class IslandWindowController: NSWindowController {
     private func startObservers() {
         let center = NotificationCenter.default
 
+        // A display plugged in or out, the lid closed on an external screen: the island moves to
+        // the screen that has the notch, or the main one, instead of staying where no screen is.
+        center.publisher(for: NSApplication.didChangeScreenParametersNotification)
+            .sink { [weak self] _ in self?.followScreens() }
+            .store(in: &subscriptions)
+
         // Hook server expand requests (alerts only)
         center.publisher(for: .hookExpand)
             .sink { [weak self] note in
@@ -792,6 +799,20 @@ final class IslandWindowController: NSWindowController {
 
     private func windowContextAtPoint(_ screenPoint: NSPoint) -> PromptContext? {
         externalWindow(at: screenPoint).flatMap { WindowContextCapture.captureActive(from: $0.app) }
+    }
+
+    /// Puts the panel back at the top centre of the screen it belongs on, with that screen's notch.
+    private func followScreens() {
+        guard let panel = window, let screen = Self.notchScreen() ?? NSScreen.main ?? NSScreen.screens.first else { return }
+        let frame = panel.frame
+        let origin = NSPoint(x: screen.frame.midX - frame.width / 2, y: screen.frame.maxY - frame.height)
+        if frame.origin != origin { panel.setFrameOrigin(origin) }
+        let layout = IslandLayout(notchWidth: Self.notchWidth(for: screen), notchHeight: Self.notchHeight(for: screen),
+                                  hasNotch: screen.safeAreaInsets.top > 0)
+        guard layout != model.layout else { return }
+        model.layout = layout
+        state.notchWidth = layout.notchWidth
+        state.notchHeight = layout.notchHeight
     }
 
     // MARK: - Notch detection (static)

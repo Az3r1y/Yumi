@@ -16,10 +16,23 @@ final class MemoryStore {
         self.onChange = onChange
     }
 
+    /// Where an unreadable memory file is moved: `memoire.illisible-20261005-141200.md`.
+    var unreadableCopy: URL {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.dateFormat = "yyyyMMdd-HHmmss"
+        return fileURL.deletingLastPathComponent()
+            .appendingPathComponent("memoire.illisible-\(formatter.string(from: Date())).md")
+    }
+
     /// Reads the file and starts listening to the island.
     func start() {
         if let text = try? String(contentsOf: fileURL, encoding: .utf8) {
             book = MemoryBook(markdown: text)
+        } else if FileManager.default.fileExists(atPath: fileURL.path) {
+            // There but unreadable (not UTF-8, no permission): put aside, so that the next change
+            // starts a new file instead of writing over what the person wrote.
+            try? FileManager.default.moveItem(at: fileURL, to: unreadableCopy)
         }
         onChange(book)
 

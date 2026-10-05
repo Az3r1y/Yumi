@@ -67,7 +67,7 @@ private let request = LLMRequest(system: "rules", messages: [LLMMessage(role: .u
     }
 
     @Test func aFailedRunIsAFailureWithoutItsText() async {
-        let provider = claudeCode(answer: cliResult("Not logged in · plan this secret", error: true))
+        let provider = claudeCode(answer: cliResult("Quota exceeded · plan this secret", error: true))
         do {
             _ = try await provider.complete(request)
             Issue.record("expected an error")

@@ -384,6 +384,21 @@ final class HookServer: @unchecked Sendable {
 
     // MARK: - Hook script installation
 
+    /// The launcher at `url` (the path settings.json names) and the Python relay beside it.
+    @discardableResult
+    static func writeHook(at url: URL, throwing: Bool = false) throws -> Bool {
+        let relay = url.deletingLastPathComponent().appendingPathComponent(HookLauncher.relayName)
+        do {
+            try hookScriptSource.write(to: relay, atomically: true, encoding: .utf8)
+            try HookLauncher.script.write(to: url, atomically: true, encoding: .utf8)
+            try FileManager.default.setAttributes([.posixPermissions: 0o755 as NSNumber], ofItemAtPath: url.path)
+            return true
+        } catch {
+            if throwing { throw error }
+            return false
+        }
+    }
+
     func installHookScript() {
         #if APPSTORE
         // In App Store mode the script is written during settings hook installation
@@ -391,12 +406,7 @@ final class HookServer: @unchecked Sendable {
         #else
         let dir = Self.supportDir
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let scriptURL = URL(fileURLWithPath: Self.hookScriptPath)
-        try? Self.hookScriptSource.write(to: scriptURL, atomically: true, encoding: .utf8)
-        _ = try? FileManager.default.setAttributes(
-            [.posixPermissions: 0o755 as NSNumber],
-            ofItemAtPath: scriptURL.path
-        )
+        _ = try? Self.writeHook(at: URL(fileURLWithPath: Self.hookScriptPath))
         #endif
     }
 
@@ -430,23 +440,10 @@ final class HookServer: @unchecked Sendable {
         }
     }
 
-    /// Removes the hooks whose command satisfies `shouldRemove` from the matcher entries of one
-    /// event. Other hooks of the same entry are kept; an entry left without hooks is dropped.
-    /// Returns the number of hooks removed.
+    /// Removes the hooks whose command satisfies `shouldRemove` (see `HookSettings.strip`).
     private static func stripHooks(from matchers: inout [[String: Any]],
                                    where shouldRemove: (String) -> Bool) -> Int {
-        var removed = 0
-        matchers = matchers.compactMap { matcher in
-            let list = hookList(matcher)
-            let kept = list.filter { !(($0["command"] as? String).map(shouldRemove) ?? false) }
-            guard kept.count < list.count else { return matcher }
-            removed += list.count - kept.count
-            guard !kept.isEmpty else { return nil }
-            var matcher = matcher
-            matcher["hooks"] = kept
-            return matcher
-        }
-        return removed
+        HookSettings.strip(&matchers, where: shouldRemove)
     }
 
     /// The "hooks" dictionary of settings.json, or nil if the file is missing or unreadable.
@@ -496,49 +493,42 @@ final class HookServer: @unchecked Sendable {
         return String(data: data, encoding: .utf8) ?? ""
     }
 
-    /// Writes the hooks to disk (call after user confirms preview).
+    /// Writes the hooks to disk (call after user confirms preview). An existing file is backed
+    /// up first, and nothing is written if the backup fails.
     func writeClaudeHooks() throws {
         guard let data = _pendingHooksData else { return }
-        let settingsURL = Self.defaultSettingsURL
-        // Backup first
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd-HHmm"
-        let stamp = formatter.string(from: Date())
-        let backupURL = settingsURL.deletingLastPathComponent()
-            .appendingPathComponent("settings.json.bak-\(stamp)")
-        try? FileManager.default.copyItem(at: settingsURL, to: backupURL)
-        try? FileManager.default.createDirectory(at: settingsURL.deletingLastPathComponent(),
-                                                  withIntermediateDirectories: true)
-        try data.write(to: settingsURL, options: .atomic)
+        try Self.backUpAndWrite(data, to: Self.defaultSettingsURL)
         _pendingHooksData = nil
     }
 
+    /// Backup of the current file (if there is one), then the new content. Throws before writing
+    /// anything when the backup cannot be made.
+    static func backUpAndWrite(_ data: Data, to settingsURL: URL) throws {
+        let manager = FileManager.default
+        try manager.createDirectory(at: settingsURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        if manager.fileExists(atPath: settingsURL.path) {
+            let backup = HookSettings.backupURL(for: settingsURL, now: Date()) { manager.fileExists(atPath: $0.path) }
+            try manager.copyItem(at: settingsURL, to: backup)
+        }
+        try data.write(to: settingsURL, options: .atomic)
+    }
+
     /// Merges this app's hooks into the settings.json at `settingsURL`, replacing any it already has
-    /// and removing the legacy Coucou and NotchBuddy hooks from every event.
+    /// and removing the legacy Coucou and NotchBuddy hooks from every event. A file that cannot be
+    /// read as a JSON object is refused, never replaced.
     private func buildHooksData(settingsURL: URL) throws -> Data {
-        var settings: [String: Any] = [:]
-        if let data = try? Data(contentsOf: settingsURL),
-           let parsed = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
-            settings = parsed
+        let existing: Data?
+        if FileManager.default.fileExists(atPath: settingsURL.path) {
+            do { existing = try Data(contentsOf: settingsURL) } catch {
+                throw HookSettingsReadError(path: settingsURL.path)
+            }
+        } else {
+            existing = nil
         }
-        let command = AppIdentity.hookCommand
-        var hooks = settings["hooks"] as? [String: Any] ?? [:]
-        var legacyCount = 0
-        for key in hooks.keys {
-            guard var matchers = hooks[key] as? [[String: Any]] else { continue }
-            legacyCount += Self.stripHooks(from: &matchers, where: AppIdentity.isLegacyHookCommand)
-            _ = Self.stripHooks(from: &matchers, where: AppIdentity.isOwnHookCommand)
-            if matchers.isEmpty { hooks.removeValue(forKey: key) }
-            else { hooks[key] = matchers }
-        }
-        for (event, timeout) in Self.hookEvents {
-            var existing = hooks[event] as? [[String: Any]] ?? []
-            existing.append(["hooks": [["type": "command", "command": command, "timeout": timeout]]])
-            hooks[event] = existing
-        }
-        settings["hooks"] = hooks
-        pendingLegacyHookCount = legacyCount
-        return try JSONSerialization.data(withJSONObject: settings, options: [.prettyPrinted, .sortedKeys])
+        let merged = try HookSettings.merge(existing, command: AppIdentity.hookCommand, events: Self.hookEvents,
+                                            isOwn: AppIdentity.isOwnHookCommand, isLegacy: AppIdentity.isLegacyHookCommand)
+        pendingLegacyHookCount = merged.legacyRemoved
+        return merged.data
     }
 
     func uninstallClaudeHooks() throws {
@@ -584,16 +574,10 @@ final class HookServer: @unchecked Sendable {
         let scriptURL = claudeURL.appendingPathComponent(AppIdentity.appStoreHookScriptRelativePath)
         try FileManager.default.createDirectory(at: scriptURL.deletingLastPathComponent(),
                                                 withIntermediateDirectories: true)
-        try Self.hookScriptSource.write(to: scriptURL, atomically: true, encoding: .utf8)
-        _ = try? FileManager.default.setAttributes([.posixPermissions: 0o755 as NSNumber], ofItemAtPath: scriptURL.path)
+        try Self.writeHook(at: scriptURL, throwing: true)
 
-        // Write settings.json (with backup)
-        let settingsURL = claudeURL.appendingPathComponent("settings.json")
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyyMMdd-HHmm"
-        let backupURL = claudeURL.appendingPathComponent("settings.json.bak-\(formatter.string(from: Date()))")
-        try? FileManager.default.copyItem(at: settingsURL, to: backupURL)
-        try data.write(to: settingsURL, options: .atomic)
+        // Write settings.json, after a backup
+        try Self.backUpAndWrite(data, to: claudeURL.appendingPathComponent("settings.json"))
         _pendingHooksData = nil
     }
 
@@ -603,6 +587,12 @@ final class HookServer: @unchecked Sendable {
         try removeHooks(settingsURL: claudeURL.appendingPathComponent("settings.json"))
     }
     #endif
+}
+
+/// settings.json exists but cannot be read (permissions): nothing is written.
+struct HookSettingsReadError: LocalizedError {
+    var path: String
+    var errorDescription: String? { "Je ne peux pas lire \((path as NSString).abbreviatingWithTildeInPath). Je n'y ai pas touché." }
 }
 
 // MARK: - Socket helpers

@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var showDiff: Bool = false
     @State private var pendingHookJSON: String = ""
     @State private var hookNeedsUpdate: Bool = HookServer.hooksNeedUpdate()
+    @State private var pythonAvailable: Bool = HookLauncher.pythonAvailable()
     #if APPSTORE
     @State private var claudeAccessGranted: Bool = (UserDefaults.standard.data(forKey: "claudeDirectoryBookmark") != nil)
     #endif
@@ -67,6 +68,16 @@ struct SettingsView: View {
                 // MARK: Hooks
                 GroupBox("Claude Code Hooks") {
                     VStack(alignment: .leading, spacing: 10) {
+                        if !pythonAvailable {
+                            HStack(alignment: .top, spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundColor(.orange)
+                                Text(HookLauncher.missingPython)
+                                    .font(.system(size: 11))
+                                    .foregroundColor(.orange)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
                         if hookNeedsUpdate {
                             HStack(spacing: 6) {
                                 Image(systemName: "exclamationmark.triangle.fill")

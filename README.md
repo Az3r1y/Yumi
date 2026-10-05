@@ -78,7 +78,7 @@ You choose which modules appear and in which order.
 
 ## Build
 
-You need macOS 15 or later, Xcode 16 or later, [XcodeGen](https://github.com/yonaskolb/XcodeGen), and `python3` on your `PATH` for the hook script. The chat also needs [Claude Code](https://claude.com/claude-code) installed.
+You need macOS 15 or later, Xcode 16 or later, [XcodeGen](https://github.com/yonaskolb/XcodeGen), and, for the hook script that shows Claude Code sessions in the notch, a `python3`: Homebrew's, python.org's, or Apple's once the Command Line Tools are installed (`xcode-select --install`). Without one, Claude Code works as usual and only the sessions are missing; the settings say so. The chat also needs [Claude Code](https://claude.com/claude-code) installed.
 
 ```bash
 brew install xcodegen

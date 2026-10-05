@@ -104,7 +104,7 @@ enum IslandActions {
         leaveChatError(next: view)
         #if !APPSTORE
         if view == .prompt, state.promptContext == nil {
-            state.promptContext = WindowContextCapture.captureActive(from: state.lastExternalApp)
+            state.promptContext = WindowContextCapture.captureActive(from: state.lastExternalApp, askingFirst: false)
         }
         #endif
         if view == .upload {
