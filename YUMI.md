@@ -455,3 +455,10 @@ Fait par la session Île sur décision de la coordination, qui l'a autorisée à
 - GitHub : les trois dépôts du compte poussés le plus récemment (hors forks et archives) sont suivis. À chaque regard lent (toutes les cinq minutes, comme les dépôts), leurs pull requests ouvertes (quatre au plus par dépôt) et les checks de leur dernier commit, toujours en requêtes conditionnelles avec ETag. Lignes : ta review, CI rouge, CI en cours, CI verte, puis les quatre derniers événements avec l'heure.
 - Une CI qui passe au rouge (vue d'abord en cours ou verte) met GitHub devant dans l'île repliée jusqu'à ce qu'on ouvre la PR ou qu'elle repasse au vert. Une nouvelle demande de review joue la scène `pullRequest`. Aucune scène n'existe pour une CI rouge.
 - Vues : `Island/IslandRows.swift`. Démo : `YUMI_ISLAND_VIEW=claude-code` et `YUMI_ISLAND_VIEW=github`.
+
+## Île : alpha, version, retours et nouvelles versions (branche `yumi/ile`)
+
+- Version : `CFBundleShortVersionString` 0.1.0, et `YumiDisplayVersion` « 0.1.0-alpha » (project.yml, Yumi et YumiAppStore), affichée dans les réglages de l'île.
+- « Envoyer un retour » (réglages de l'île) ouvre le formulaire de bug du dépôt (`issues/new?template=bug.yml`) avec la version de Yumi, la version de macOS, le modèle du Mac et la présence d'une notch déjà remplis. Rien d'autre. La page de choix `issues/new/choose` ne garde pas ce qu'on lui passe : le lien va donc au formulaire, qui permet de revenir aux autres modèles.
+- Modèles d'issue en français : `.github/ISSUE_TEMPLATE/bug.yml` et `idee.yml`.
+- Nouvelles versions (`Island/IslandUpdates.swift`) : au lancement puis une fois par jour au plus, sans jeton, `releases?per_page=1` (pré-versions comprises). Une version plus récente (comparaison `YumiVersion`, semver) donne une ligne dans les réglages et, une seule fois par version, la remarque « Une nouvelle version de Yumi est là » dans l'île repliée ; « Voir » ouvre la page de la release. Jamais de téléchargement. Désactivable (« Préviens-moi des nouvelles versions »). Aucun appel en mode tournage.

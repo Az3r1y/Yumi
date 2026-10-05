@@ -1,0 +1,14 @@
+name: Une idée
+description: Quelque chose que Yumi pourrait faire, ou faire mieux.
+labels: [idée]
+body:
+  - type: textarea
+    id: idee
+    attributes:
+      label: L'idée
+    validations:
+      required: true
+  - type: textarea
+    id: pourquoi
+    attributes:
+      label: Pourquoi elle t'aiderait

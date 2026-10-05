@@ -1,0 +1,44 @@
+name: Un bug
+description: Quelque chose ne marche pas comme prévu.
+labels: [bug]
+body:
+  - type: textarea
+    id: passe
+    attributes:
+      label: Ce qui s'est passé
+    validations:
+      required: true
+  - type: textarea
+    id: attendu
+    attributes:
+      label: Ce que tu attendais
+    validations:
+      required: true
+  - type: textarea
+    id: etapes
+    attributes:
+      label: Les étapes pour le refaire
+      placeholder: |
+        1. Ouvrir l'île
+        2. Cliquer sur...
+  - type: input
+    id: version-yumi
+    attributes:
+      label: Version de Yumi
+      description: Dans les réglages de l'île, ou dans le texte prérempli par « Envoyer un retour ».
+      placeholder: 0.1.0-alpha
+    validations:
+      required: true
+  - type: input
+    id: version-macos
+    attributes:
+      label: Version de macOS
+      placeholder: "26.1"
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac
+      description: Le modèle, et s'il a une notch.
+      placeholder: "Mac15,3, notch : oui"
