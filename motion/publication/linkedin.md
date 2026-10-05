@@ -120,7 +120,7 @@ Vidéo : `out/linkedin/linkedin-lancement.mp4` (5 s).
 
 ## Post 4 : une journée de dev avec Yumi
 
-Vidéo : `out/linkedin/journee-4x5.mp4` (22,6 s, 4:5), ou `journee-9x16.mp4`. Sous-titrée dans l'image, faite pour être vue en entier.
+Vidéo : `out/linkedin/journee-4x5.mp4` (24,4 s, 4:5), ou `journee-9x16.mp4`. Sous-titrée dans l'image, faite pour être vue en entier.
 
 Rendu :
 
@@ -129,7 +129,9 @@ npx remotion render LinkedIn-Journee-4x5 out/linkedin/journee-4x5.mp4
 npx remotion render LinkedIn-Journee-9x16 out/linkedin/journee-9x16.mp4
 ```
 
-Les écrans de l'île sont redessinés d'après le code de l'app (la vue en lignes, la demande d'accord, la phrase exacte de `get_today`), avec des données d'exemple : le mode tournage ne montre pas encore ces scènes.
+Toutes les images de l'île sont de vraies prises : l'app filmée sur l'écran du MacBook dans son mode tournage (scènes 10 à 12 de `Island/IslandStudio.swift`, branche `yumi/tournage`), avec ses données d'exemple, recadrées autour de la notch, jamais redessinées. La phrase du temps libre est celle qu'écrit `get_today`. Le film le dit dans l'image : « Filmé sur mon Mac · mode tournage, données d'exemple ».
+
+Prises : `public/prises/journee-temps-libre.mp4`, `journee-matcha.mp4`, `journee-sessions.mp4`.
 
 > Je demande à mon Mac combien de temps libre j'ai demain. Il me répond depuis la notch.
 >
