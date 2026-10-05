@@ -120,7 +120,7 @@ Vidéo : `out/linkedin/linkedin-lancement.mp4` (5 s).
 
 ## Post 4 : une journée de dev avec Yumi
 
-Vidéo : `out/linkedin/journee-4x5.mp4` (24,4 s, 4:5), ou `journee-9x16.mp4`. Sous-titrée dans l'image, faite pour être vue en entier.
+Vidéo : `out/linkedin/journee-4x5.mp4` (24,8 s, 4:5), ou `journee-9x16.mp4`. Sous-titrée dans l'image, faite pour être vue en entier.
 
 Rendu :
 
@@ -132,6 +132,13 @@ npx remotion render LinkedIn-Journee-9x16 out/linkedin/journee-9x16.mp4
 Toutes les images de l'île sont de vraies prises : l'app filmée sur l'écran du MacBook dans son mode tournage (scènes 10 à 12 de `Island/IslandStudio.swift`, branche `yumi/tournage`), avec ses données d'exemple, recadrées autour de la notch, jamais redessinées. La phrase du temps libre est celle qu'écrit `get_today`. Le film le dit dans l'image : « Filmé sur mon Mac · mode tournage, données d'exemple ».
 
 Prises : `public/prises/journee-temps-libre.mp4`, `journee-matcha.mp4`, `journee-sessions.mp4`.
+
+Deuxième mise en scène, pour varier : `out/linkedin/journee-edito-4x5.mp4` et `journee-edito-9x16.mp4` (24,8 s). Mêmes prises, mêmes sous-titres, en page de magazine : fond papier, grands titres à l'encre que la prise recouvre en partie, prises décalées qui débordent du cadre, page verte matcha pour le matcha, transitions par masques.
+
+```console
+npx remotion render LinkedIn-Journee-Edito-4x5 out/linkedin/journee-edito-4x5.mp4
+npx remotion render LinkedIn-Journee-Edito-9x16 out/linkedin/journee-edito-9x16.mp4
+```
 
 > Je demande à mon Mac combien de temps libre j'ai demain. Il me répond depuis la notch.
 >
