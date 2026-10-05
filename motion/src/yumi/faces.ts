@@ -46,6 +46,8 @@ export const POSE_FACES = {
   squeezed: face({ ps: 0.85, tl: 0.3, tr: 0.3, al: 10, ar: -10, bl: 0.3, br: 0.3 }),
   skyward: face({ esl: 1.14, esr: 1.14, ps: 0.8, look: [0, -1] }),
   shut: face({ tl: 1.1, tr: 1.1, cl: 1, cr: 1 }),
+  /** Calm and content: the matcha. */
+  serene: face({ tl: 0.34, tr: 0.34, bl: 0.4, br: 0.4, tilt: -3 }),
 } as const satisfies Record<string, Face>;
 
 export type RGB = readonly [number, number, number];

@@ -116,3 +116,33 @@ Vidéo : `out/linkedin/linkedin-lancement.mp4` (5 s).
 - Choisir la miniature dans LinkedIn au moment de l'envoi : une image où Yumi a les yeux ouverts.
 - Ajouter un texte alternatif. Pour le post 1, celui de `legendes.md` convient.
 - Vérifier que le dépôt GitHub est bien public avant de mettre le lien.
+
+
+## Post 4 : une journée de dev avec Yumi
+
+Vidéo : `out/linkedin/journee-4x5.mp4` (22,6 s, 4:5), ou `journee-9x16.mp4`. Sous-titrée dans l'image, faite pour être vue en entier.
+
+Rendu :
+
+```console
+npx remotion render LinkedIn-Journee-4x5 out/linkedin/journee-4x5.mp4
+npx remotion render LinkedIn-Journee-9x16 out/linkedin/journee-9x16.mp4
+```
+
+Les écrans de l'île sont redessinés d'après le code de l'app (la vue en lignes, la demande d'accord, la phrase exacte de `get_today`), avec des données d'exemple : le mode tournage ne montre pas encore ces scènes.
+
+> Je demande à mon Mac combien de temps libre j'ai demain. Il me répond depuis la notch.
+>
+> Yumi, le petit compagnon que je construis, lit maintenant l'agenda de n'importe quel jour des deux semaines à venir et trouve les créneaux libres. L'agenda reste sur le Mac : il n'est jamais envoyé au chat.
+>
+> Pendant qu'un agent Claude Code travaille, il boit son matcha. Et quand une session attend une autorisation, je réponds depuis la notch, sans quitter ce que je fais.
+>
+> L'alpha est gratuite et open source, pour macOS 15 et plus. Le lien est en commentaire.
+>
+> Vous lui demanderiez quoi, vous ?
+>
+> #macOS #ClaudeCode #IndieDev #OpenSource
+
+**Premier commentaire**
+
+> L'alpha : https://github.com/estebanbaigts/Yumi/releases/tag/v0.1.0-alpha
