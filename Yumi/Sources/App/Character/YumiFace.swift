@@ -37,6 +37,8 @@ struct YumiFace: Equatable, Sendable {
     static let squeezed  = YumiFace(ps: 0.85, tl: 0.3, tr: 0.3, al: 10, ar: -10, bl: 0.3, br: 0.3) // serre
     static let skyward   = YumiFace(esl: 1.14, esr: 1.14, ps: 0.8, look: CGPoint(x: 0, y: -1))    // haut
     static let shut      = YumiFace(tl: 1.1, tr: 1.1, cl: 1, cr: 1)                               // ferme
+    /// Matcha: soothed and content, the lids low and the cheeks up.
+    static let serene    = YumiFace(tl: 0.34, tr: 0.34, bl: 0.4, br: 0.4, tilt: -3)
 }
 
 extension YumiMood {

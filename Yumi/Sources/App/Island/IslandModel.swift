@@ -275,7 +275,8 @@ final class IslandModel: ObservableObject {
         /// The screen shown, or the one that would be if the island were open.
         var screen: IslandScreen
         var moduleID: String?
-        var smokes: Bool
+        /// What he holds while an agent works (the setting, already resolved for filming).
+        var workHabit: YumiHabit
         /// The live module is the music, and it is playing.
         var music = false
         /// The chat is carrying out an action right now (reading, writing, running).
@@ -316,13 +317,13 @@ final class IslandModel: ObservableObject {
         // folded, on the home view, and on the view of the music module.
         let listening = (new.music && (!open || new.screen == .home))
             || (open && new.screen == .module && Self.isMusic(new.moduleID))
-        // An agent at work: a cigarette, or a coffee for those who turned the cigarette off.
+        // An agent at work: the cigarette, the coffee or the matcha chosen in the settings.
         // Shown wherever the island is not about something else.
         let atWork = new.busy && (!open || new.screen == .home || new.screen == .working)
         switch new.screen {
         case _ where atWork:
             cancelLateHabit()
-            setHabit(new.smokes ? .smoke : .coffee)
+            setHabit(new.workHabit)
         case .error:
             cancelLateHabit()
             setHabit(.cloud)
@@ -406,6 +407,7 @@ final class IslandModel: ObservableObject {
         case .cloud:      return "Sale journée"
         case .whistle:    return "La la la"
         case .sleep:      return "Chut"
+        case .matcha:     return "Pause matcha"
         }
     }
 }
@@ -413,8 +415,9 @@ final class IslandModel: ObservableObject {
 // MARK: - Preferences of the island
 
 enum IslandPrefs {
-    /// "La cigarette doit pouvoir être désactivée" (YUMI.md).
-    static let smokeKey = "habitSmoke"
+    /// Cigarette, coffee or matcha while an agent works (YumiWorkHabit). "La cigarette doit
+    /// pouvoir être désactivée" (YUMI.md): it is one of the three choices.
+    static let workHabitKey = YumiWorkHabit.defaultsKey
     /// When Yumi last asked the first name.
     static let nameAskedKey = "firstNameAskedAt"
 }
