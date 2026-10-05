@@ -28,7 +28,7 @@ final class YumiGalleryModel {
             setup(engine)
             return Cell(label: label, engine: engine, pose: pose)
         }
-        habits = zip(YumiHabit.allCases, ["Clope", "Épuisé", "Café", "Casque", "Lunettes", "Nuage", "Sifflote", "Dodo"])
+        habits = zip(YumiHabit.allCases, ["Clope", "Épuisé", "Café", "Casque", "Lunettes", "Nuage", "Sifflote", "Dodo", "Matcha"])
             .map { habit, label in cell(label) { $0.setHabit(habit) } }
         // `POSES` of the mock-up, each with the face it wears on the sheet
         let sheet: [(YumiPose, String, YumiMood)] = [

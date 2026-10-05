@@ -25,7 +25,7 @@ struct IslandRootView: View {
 struct IslandScene: View {
     @ObservedObject var state: AppState
     @ObservedObject var model: IslandModel
-    @AppStorage(IslandPrefs.smokeKey) private var smokes = true
+    @AppStorage(IslandPrefs.workHabitKey) private var workHabit = YumiWorkHabit.current().rawValue
     /// Counts the openings, so that the content rises again each time the island opens.
     @State private var openings = 0
 
@@ -60,7 +60,7 @@ struct IslandScene: View {
             stage: stage,
             screen: stage == .open ? screen : IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: approval),
             moduleID: stage == .open && screen == .module ? model.selectedModule(in: state.modules)?.id : nil,
-            smokes: smokes && !IslandStudio.isOn,   // no cigarette on film: coffee
+            workHabit: YumiWorkHabit(rawValue: workHabit) ?? .coffee,
             music: folded.musicPlaying,
             chatActs: state.chatLive?.activity != nil,
             busy: busy,

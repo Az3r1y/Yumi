@@ -2,11 +2,12 @@ import AppKit
 import SwiftUI
 
 // The everyday settings, without leaving the island (`.set` in the mock-up): sounds and
-// their volume, how long before the island folds back, and the cigarette. They act at once.
+// their volume, how long before the island folds back, and what he holds while an agent
+// works. They act at once.
 
 struct SettingsActivity: View {
     @ObservedObject var state: AppState
-    @AppStorage(IslandPrefs.smokeKey) private var smokes = true
+    @AppStorage(IslandPrefs.workHabitKey) private var workHabit = YumiWorkHabit.current().rawValue
     @State private var githubToken = ""
     @ObservedObject private var updates = YumiUpdates.shared
     @State private var githubConnected = IslandActions.githubConnected
@@ -47,8 +48,17 @@ struct SettingsActivity: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(1)
-            row("Je fume quand un agent bosse") {
-                IslandToggle(isOn: $smokes, label: "Cigarette")
+            row("Quand un agent bosse") {
+                HStack(spacing: 0) {
+                    ForEach(YumiWorkHabit.allCases, id: \.self) { choice in
+                        SegmentButton(label: choice.label, on: workHabit == choice.rawValue) {
+                            workHabit = choice.rawValue
+                            IslandActions.tap()
+                        }
+                    }
+                }
+                .padding(2)
+                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(2)
             row("Yumi parle") {
@@ -165,7 +175,7 @@ struct IslandToggle: View {
 }
 
 /// `.seg button`
-private struct SegmentButton: View {
+struct SegmentButton: View {
     let label: String
     let on: Bool
     let action: () -> Void

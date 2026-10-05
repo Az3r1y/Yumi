@@ -114,7 +114,7 @@ Ce qui change :
 | Barre du bas | Toujours là : la vue d'ensemble, une icône par module (celui à l'écran déplie son nom, un point signale ce qui est vivant, le nom apparaît en étiquette au survol), puis le chat et les réglages. |
 | Vue « Tous » | Tous les modules sur deux colonnes : icône, nom complet, chiffre clé. C'est ce qui s'affiche quand on ouvre l'île et que rien n'est urgent. |
 | Chat | Accessible par son icône dans la barre et par un clic sur Yumi. La réponse s'écrit en direct, l'action en cours s'affiche sous le texte. |
-| Réglages dans l'île | Sons et volume, délai avant que l'île se replie (5 s, 15 s, 30 s, 1 min, jamais ; 15 s par défaut), cigarette quand un agent travaille (sinon café). Ces réglages doivent réellement agir. |
+| Réglages dans l'île | Sons et volume, délai avant que l'île se replie (5 s, 15 s, 30 s, 1 min, jamais ; 15 s par défaut), ce que Yumi tient quand un agent travaille : Cigarette, Café, Matcha ou Aléatoire (un des trois, tiré à chaque fois qu'un agent se met au travail). La personne choisit entre café, cigarette et matcha au premier lancement, sous la question du prénom ; l'ancien interrupteur est repris (cigarette activée donne Cigarette, sinon Café), et tant que rien n'est choisi c'est Café. Ces réglages doivent réellement agir. |
 | Île repliée | Yumi d'un côté de la notch, l'activité principale de l'autre. Une seconde activité vit dans une bulle qui se détache de l'île comme une goutte. |
 | Lancement | Yumi seul, sans aucun texte : la goutte, les yeux dans le noir, l'ouverture, la lumière, le salut, le clin d'œil, le repli. Environ 4,5 secondes. |
 | Départ | En quittant : il salue, clin d'œil, s'endort, sa lumière s'éteint comme elle s'était allumée, la goutte remonte dans la notch. |
@@ -209,7 +209,7 @@ Décisions validées sur cette maquette :
 | Volume | Les yeux sont posés sur une sphère (la tête tourne), reflet et éclat mobiles, lumière qui déborde à l'intérieur du contour. |
 | État | Porté par la couleur du liseré, jamais par le corps. |
 | Poses | Saut, étirer, s'écraser, secouer, célébrer. |
-| Habitudes | Clope (agent au travail), épuisé, café, casque (musique), lunettes (réussite), nuage (erreur), sifflote (attente), dodo (inactif). La cigarette doit pouvoir être désactivée. |
+| Habitudes | Clope (agent au travail), épuisé, café, casque (musique), lunettes (réussite), nuage (erreur), sifflote (attente), dodo (inactif), matcha (agent au travail, au choix). Quand un agent travaille, la personne choisit cigarette, café ou matcha : la cigarette peut donc être écartée. |
 | Lancement | Une goutte sous la notch, deux yeux endormis dans le noir, ils s'ouvrent et regardent autour, l'île s'ouvre, la lumière s'allume et le contour se dessine, salut, nom, modules, clin d'œil, repli. Environ 5 secondes. |
 | Débordement | Yumi est dessiné au-dessus de l'île : gouttes, fumée et poses peuvent dépasser sur les côtés et en bas, jamais au-dessus du bord supérieur de l'écran. |
 | Langue et ton | Interface en français, Yumi tutoie et parle court. |

@@ -537,6 +537,36 @@ enum YumiRenderer {
             c.stroke(line(CGPoint(x: 66.6, y: 55.4), CGPoint(x: 76.4, y: 55.4)), with: .color(Color(.sRGB, red: 0.420, green: 0.259, blue: 0.149)), style: round(1.7))
         }
 
+        if let o = f.props[.matcha], o > 0.01 {
+            var c = props
+            c.opacity = o
+            c.translateBy(x: 7, y: 8)
+            // The bowl tips towards the mouth for a sip, gently
+            c.translateBy(x: 70, y: 60)
+            c.rotate(by: .degrees(Double(-22 * f.sip)))
+            c.translateBy(x: -3 * f.sip, y: -2.5 * f.sip)
+            c.translateBy(x: -70, y: -60)
+            // A chawan: wide, low, a little uneven, glazed in a warm stone colour
+            var bowl = Path()
+            bowl.move(to: CGPoint(x: 61.5, y: 54.5))
+            bowl.addCurve(to: CGPoint(x: 66.5, y: 64), control1: CGPoint(x: 61.6, y: 59.5), control2: CGPoint(x: 63.4, y: 62.8))
+            bowl.addLine(to: CGPoint(x: 74, y: 64))
+            bowl.addCurve(to: CGPoint(x: 79, y: 54.2), control1: CGPoint(x: 77.2, y: 62.8), control2: CGPoint(x: 78.9, y: 59.4))
+            bowl.closeSubpath()
+            let glaze = Color(.sRGB, red: 0.890, green: 0.855, blue: 0.784)
+            let shade = Color(.sRGB, red: 0.733, green: 0.682, blue: 0.604)
+            c.fill(bowl, with: .linearGradient(Gradient(colors: [glaze, shade]),
+                                               startPoint: CGPoint(x: 64, y: 55), endPoint: CGPoint(x: 78, y: 63)))
+            // The foot ring, and a run of glaze down the side
+            c.fill(Path(roundedRect: CGRect(x: 67.4, y: 63.4, width: 5.8, height: 1.9), cornerRadius: 0.8), with: .color(shade))
+            c.stroke(line(CGPoint(x: 75.6, y: 55.6), CGPoint(x: 75.1, y: 59.2)), with: .color(.white.opacity(0.35)), style: round(1.1))
+            // The matcha: a soft green surface with its foam
+            let surface = CGRect(x: 62, y: 53.3, width: 16.8, height: 3)
+            c.fill(Path(ellipseIn: surface), with: .color(Color(.sRGB, red: 0.580, green: 0.737, blue: 0.400)))
+            c.fill(Path(ellipseIn: surface.insetBy(dx: 2.6, dy: 0.7)), with: .color(Color(.sRGB, red: 0.698, green: 0.827, blue: 0.494)))
+            c.fill(circle(73.4, 54.7, 0.6), with: .color(Color(.sRGB, red: 0.835, green: 0.910, blue: 0.663)))
+        }
+
         if let o = f.props[.sunglasses], o > 0.01 {
             // They drop onto his nose in 0.55 s
             let p = YumiCurve.spring(f.habitTime / 0.55)

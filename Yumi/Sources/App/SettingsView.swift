@@ -4,7 +4,7 @@ import AppKit
 
 struct SettingsView: View {
     @ObservedObject private var state = AppState.shared
-    @AppStorage(IslandPrefs.smokeKey) private var smokes = true
+    @AppStorage(IslandPrefs.workHabitKey) private var workHabit = YumiWorkHabit.current().rawValue
     @State private var apiKey: String = KeychainStore.shared.get("anthropic-api-key") ?? ""
     @State private var launchAtStartup: Bool = (SMAppService.mainApp.status == .enabled)
     @State private var statusMessage: String = ""
@@ -280,8 +280,12 @@ struct SettingsView: View {
                                 .frame(width: 48)
                             Text("min without movement")
                         }
-                        // The cigarette habit can be turned off (YUMI.md)
-                        Toggle("Yumi smokes while an agent works", isOn: $smokes)
+                        // The cigarette can be turned off (YUMI.md): one choice among three
+                        Picker("Quand un agent bosse", selection: $workHabit) {
+                            ForEach(YumiWorkHabit.allCases, id: \.self) { Text($0.label).tag($0.rawValue) }
+                        }
+                        .pickerStyle(.segmented)
+                        .fixedSize()
                     }
                     .padding(6)
                 }

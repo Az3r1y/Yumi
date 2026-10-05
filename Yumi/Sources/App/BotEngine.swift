@@ -902,7 +902,7 @@ final class BotEngine: ObservableObject {
         // A habit that lasts keeps him moving round his shape at rest (the headphones: height
         // 0.92…1.08, lean ±7): the pictures are drawn for that one, and the stretch and the
         // shear follow the beat
-        let swaying = !fading && pose == nil && [.headphones, .whistle, .smoke, .coffee, .cloud].contains(blob.habit)
+        let swaying = !fading && pose == nil && [.headphones, .whistle, .smoke, .coffee, .matcha, .cloud].contains(blob.habit)
         if steady || swaying, !lightQueued, clock - lightBuiltAt > 0.25 {
             lightQueued = true
             let h = steady ? blob.h : 1, lean = steady ? blob.lean : 0
@@ -955,7 +955,7 @@ final class BotEngine: ObservableObject {
         // A habit that lasts keeps the body moving, so it is never settled: thirty a second is
         // enough for it, whatever eases meanwhile
         switch blob.habit {
-        case .smoke, .coffee, .headphones, .whistle, .cloud: return .habit
+        case .smoke, .coffee, .matcha, .headphones, .whistle, .cloud: return .habit
         case .sleep where !isDeepAsleep: return .habit
         default: break
         }
@@ -978,7 +978,7 @@ final class BotEngine: ObservableObject {
         if state == .approval { return .habit }
 
         switch blob.habit {
-        case .smoke, .coffee, .headphones, .whistle, .cloud:
+        case .smoke, .coffee, .matcha, .headphones, .whistle, .cloud:
             return .habit
         case .sunglasses:
             // They drop onto his nose in 0.55 s, then nothing moves but his breathing

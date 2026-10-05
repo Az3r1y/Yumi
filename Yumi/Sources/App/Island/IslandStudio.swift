@@ -282,9 +282,9 @@ enum IslandStudio {
             after(7.5) { state.remark = nil }
 
         case 6:
-            // His moods, one after the other: coffee, cloud, sunglasses, sleep
+            // His moods, one after the other: coffee, matcha, cloud, sunglasses, sleep
             after(0.5) { controller.expand(to: .overview) }
-            let habits: [YumiHabit] = [.coffee, .cloud, .sunglasses, .sleep]
+            let habits: [YumiHabit] = [.coffee, .matcha, .cloud, .sunglasses, .sleep]
             for (index, habit) in habits.enumerated() {
                 after(1.6 + Double(index) * 1.5) {
                     model.setHabit(habit)

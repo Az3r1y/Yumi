@@ -15,6 +15,7 @@ extension YumiHabit {
         case .cloud:      return .worried
         case .whistle:    return .elsewhere
         case .sleep:      return .asleep
+        case .matcha:     return .serene
         }
     }
 
@@ -28,6 +29,7 @@ extension YumiHabit {
         case .cloud:      return .error
         case .whistle:    return .calm
         case .sleep:      return .calm
+        case .matcha:     return .done
         }
     }
 
@@ -81,6 +83,29 @@ extension YumiHabit {
                 b.sip = false; b.leanTarget = 0; b.th = 1
                 if c >= 4.4 && c < 5.4 {
                     if !b.ex { b.ex = true; b.vh -= 3.5; b.tempFace = .surprised }
+                } else if b.ex {
+                    b.ex = false; b.tempFace = nil
+                }
+            }
+
+        case .matcha:
+            // A bowl of matcha held in both hands. A thin steam, slower than the coffee's; every
+            // seven seconds a long sip, then a sigh of content with the eyes closed
+            b.sa += dt
+            let c = b.st.truncatingRemainder(dividingBy: 7)
+            if b.sa > 0.55 && !b.sip {
+                b.sa = 0
+                let p = b.world(70 + R() * 6, 61)
+                b.puff(p.x, p.y, R() * 3 - 1.5, -9, 0.75, 1.6)
+            }
+            if c > 3.6 && c < 4.9 {
+                b.sip = true; b.leanTarget = -3; b.th = 1.02; b.ex = false
+                b.tempFace = nil
+            } else {
+                b.sip = false; b.leanTarget = 0; b.th = 1
+                if c >= 4.9 && c < 6.1 {
+                    if !b.ex { b.ex = true; b.vh -= 1.6; b.tempFace = .shut }
+                    b.th = 0.97
                 } else if b.ex {
                     b.ex = false; b.tempFace = nil
                 }
