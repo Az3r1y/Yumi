@@ -200,13 +200,22 @@ final class ClaudeService {
     /// returns false and goes to the conversation, which cannot change the Mac (ChatTools). What is on screen
     /// stays on the Mac: the planner does not see it.
     private func runAsAgent(query: String, state: AppState) async -> Bool {
-        guard let agent = state.agent, !agent.isRunning else { return false }
+        guard let agent = state.agent else { return false }
         let request = AgentRequest(userIntent: query, context: state.context.isEnabled ? state.context : nil,
                                    conversation: Self.turns(before: query, in: state.chatHistory))
+        // Busy: no plan now, but a question about the agenda still never goes to the chat.
+        let planned: Result<AgentPlan, AgentError>? = agent.isRunning ? .failure(.busy) : await agent.plan(for: request)
         let plan: AgentPlan
-        switch ChatRoute.route(await agent.plan(for: request)) {
+        switch ChatRoute.route(planned, message: query) {
         case .chat:
             return false
+        case .agendaKeptFromChat(let error):
+            let text = error == .busy ? AgentLook.busy : AgentLook.agendaKeptFromChat(error)
+            state.chatHistory.append(ChatMessage(role: .assistant, content: text))
+            remember(query, answeredWith: text)
+            state.stateOverride = nil
+            state.view = .prompt
+            return true
         case .blocked(let reason):
             let result = AgentResult(runID: request.id, status: .failed, goal: nil, steps: [],
                                      error: .unsupportedAction(reason), finishedAt: Date())
