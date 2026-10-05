@@ -9,6 +9,8 @@ import { Humeurs } from "./scenes/Humeurs";
 import { StoryHumeurs, StoryLancement, StoryPermission, StorySalut, StoryYeux } from "./stories/Stories";
 import { Pov } from "./scenes/Pov";
 import { Planche } from "./scenes/Planche";
+import { LinkedInFilm, LinkedInLancement, LinkedInPermission } from "./linkedin/LinkedIn";
+import { MASTERCLASS_LENGTH, Masterclass } from "./linkedin/masterclass/Masterclass";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -38,6 +40,13 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="Story3-Permission" component={StoryPermission} durationInFrames={255} fps={60} width={1080} height={1920} />
         <Composition id="Story4-Humeurs" component={StoryHumeurs} durationInFrames={360} fps={60} width={1080} height={1920} />
         <Composition id="Story5-Salut" component={StorySalut} durationInFrames={300} fps={60} width={1080} height={1920} />
+      </Folder>
+      <Folder name="LinkedIn">
+        <Composition id="Masterclass-16x9" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1920} height={1080} />
+        <Composition id="Masterclass-9x16" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="LinkedIn-Film" component={LinkedInFilm} durationInFrames={1656} fps={60} width={1080} height={1350} />
+        <Composition id="LinkedIn-Permission" component={LinkedInPermission} durationInFrames={255} fps={60} width={1080} height={1350} />
+        <Composition id="LinkedIn-Lancement" component={LinkedInLancement} durationInFrames={300} fps={60} width={1080} height={1350} />
       </Folder>
       <Folder name="Plans">
         <Composition

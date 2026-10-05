@@ -20,7 +20,7 @@ export const Reel: React.FC<{
   return (
     <>
       {/* Under his sounds, never over them (outils/musique.py) */}
-      <Audio src={staticFile("musique/ambiance.wav")} volume={0.5} />
+      <Audio src={staticFile("musique/ambiance.wav")} volume={0.5} from={1} />
       <Series>
         <Series.Sequence name="Accroche" durationInFrames={300} premountFor={fps}>
           {accroche === "pov" ? <Pov /> : <Accroche />}

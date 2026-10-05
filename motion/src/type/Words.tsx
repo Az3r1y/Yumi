@@ -40,10 +40,10 @@ export const Words: React.FC<{
         <div key={line}>
           {line.split(by === "word" ? " " : "").map((word) => {
             const i = index++;
-            const rise = interpolate(t, [enter + i * stagger, enter + i * stagger + 0.6], [108, 0], { ...CLAMP, easing: EASE.out });
+            const rise = interpolate(t, [enter + i * stagger, enter + i * stagger + 0.6], [150, 0], { ...CLAMP, easing: EASE.out });
             const leave = exit === undefined
               ? 0
-              : interpolate(t, [exit + i * 0.066, exit + i * 0.066 + 0.33], [0, -108], { ...CLAMP, easing: EASE.in });
+              : interpolate(t, [exit + i * 0.066, exit + i * 0.066 + 0.33], [0, -150], { ...CLAMP, easing: EASE.in });
             return (
               // The mask: taller than the line so descenders are not cut
               <span

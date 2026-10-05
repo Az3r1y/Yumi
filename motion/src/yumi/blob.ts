@@ -22,7 +22,7 @@ export type Drop = { x: number; y: number; vx: number; vy: number; r: number; li
 /** A puff of steam or sigh. */
 export type Puff = Drop & { max: number; ph: number };
 /** One beat of a pose: `run` fires `at` milliseconds after the pose started. */
-type Step = { at: number; run: (b: Blob) => void };
+export type Step = { at: number; run: (b: Blob) => void };
 
 export class Blob {
   // Height spring (1 = at rest) and its target
@@ -104,6 +104,14 @@ export class Blob {
 
   puff(x: number, y: number, vx: number, vy: number, r: number, life: number) {
     this.puffs.push({ x, y, vx, vy, r, life, max: life, ph: this.random() * 6 });
+  }
+
+  /** Plays the beats of a scene the same way as a pose. */
+  run(steps: readonly Step[], now: number) {
+    this.soft();
+    this.leanTarget = 0; this.th = 1;
+    this.steps = [...steps];
+    this.t0 = now;
   }
 
   play(pose: Pose, now: number) {
