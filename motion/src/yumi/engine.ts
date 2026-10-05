@@ -4,6 +4,8 @@ import {
 } from "./blob";
 import { MOODS, RIMS, type Face, type Mood, type RGB, type RimTone } from "./faces";
 import { CURVES, Transition, keyframes, mulberry32 } from "./motion";
+import { SCENE_DURATION, sceneSteps, type SceneMoment, type SceneName } from "./scenes";
+import type { SkinName } from "./skins";
 
 // Port of BotEngine.swift, without the island: the character is driven by a script of cues
 // (the commands of Contracts/CharacterCommands.swift, each with its time) instead of
@@ -23,7 +25,13 @@ export type Cue = {
   /** -1…1 on both axes, y down. null looks straight ahead again. */
   readonly gaze?: readonly [number, number] | null;
   readonly pose?: Pose;
+  /** Something that happened outside (Contracts/EventAnimations.swift), played once. */
+  readonly scene?: SceneName;
+  /** How many events the scene stands for, 1 to 4: a larger count amplifies it a little. */
+  readonly amount?: number;
   readonly blink?: boolean;
+  /** Something he wears (src/yumi/skins.tsx). null takes it off. */
+  readonly skin?: SkinName | null;
 };
 
 export type YumiScript = {
@@ -62,6 +70,13 @@ export type YumiFrame = {
   /** Seconds since the arms or the sparks started, null when they are not out. */
   armTime: number | null;
   sparkTime: number | null;
+  /** The scene being played, if any. */
+  scene: SceneMoment | null;
+  /** What he wears, and since when (seconds), for it to pop on. */
+  skin: SkinName | null;
+  skinTime: number;
+  /** Seconds since the start, for what moves on its own. */
+  time: number;
   drops: readonly Drop[];
   puffs: readonly Puff[];
 };
@@ -79,8 +94,11 @@ class Engine {
   private rimTone: RimTone = "calm";
   private gazeCommand: readonly [number, number] | null = null;
   private lit = true;
+  private skin: SkinName | null = null;
+  private skinStart = -10;
 
   private pose: Pose | null = null;
+  private scene: { name: SceneName; start: number; amount: number } | null = null;
   private poseStart = 0;
   private habitStart = 0;
 
@@ -141,7 +159,18 @@ class Engine {
       this.pose = cue.pose;
       this.poseStart = this.clock;
     }
+    if (cue.scene !== undefined) {
+      const amount = Math.max(1, Math.min(4, cue.amount ?? 1));
+      this.blob.run(sceneSteps(cue.scene, amount), this.clock * 1000);
+      this.pose = null;
+      this.scene = { name: cue.scene, start: this.clock, amount };
+    }
     if (cue.blink) this.blinkAt = this.clock;
+    if (cue.skin !== undefined) {
+      this.skin = cue.skin;
+      // Worn from the first image: already in place, not popping on
+      this.skinStart = this.clock === 0 ? -10 : this.clock;
+    }
   }
 
   private applyDue() {
@@ -188,6 +217,7 @@ class Engine {
     const tone = RIMS[(habit && HABIT_RIM[habit]) ?? this.rimTone];
 
     if (this.pose && now - this.poseStart >= POSE_DURATION[this.pose]) this.pose = null;
+    if (this.scene && now - this.scene.start >= SCENE_DURATION[this.scene.name]) this.scene = null;
     const face = blob.tempFace ?? mood;
 
     if (now >= this.nextGlance) {
@@ -263,6 +293,10 @@ class Engine {
       sip: this.sip.value(now),
       armTime: this.pose === "celebrate" || this.pose === "wave" ? poseTime : null,
       sparkTime: this.pose === "celebrate" ? poseTime : null,
+      scene: this.scene ? { name: this.scene.name, t: now - this.scene.start, amount: this.scene.amount } : null,
+      skin: this.skin,
+      skinTime: now - this.skinStart,
+      time: now,
       drops: blob.drops.map((d) => ({ ...d })),
       puffs: blob.puffs.map((p) => ({ ...p })),
     };

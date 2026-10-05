@@ -3,6 +3,10 @@ import { useCurrentFrame, useVideoConfig } from "remotion";
 import { yumiFrameAt, type YumiFrame, type YumiScript } from "./engine";
 import type { RGB } from "./faces";
 import { CURVES, curve, keyframes } from "./motion";
+import { bodyPath } from "./shape";
+import { raisedArm, twins } from "./scenes";
+import { JoinedShapes, SceneExtras, TwinArt } from "./SceneArt";
+import { SKIN_PLACE, Skin } from "./skins";
 
 // Port of Character/YumiRenderer.swift: Yumi drawn element for element as the mock-up does,
 // in its 100 × 84 box (the body spans x 8…92 and y 8…76 at rest).
@@ -10,26 +14,7 @@ import { CURVES, curve, keyframes } from "./motion";
 const BLUR = 3.2;
 const INK = "#000";
 
-/** `bodyPath(h, w, L)` of the mock-up: h is the height, w the width, L the lean of the top. */
-export const bodyPath = (h: number, w: number, L: number): string => {
-  const by = 76;
-  const ty = by - 68 * h;
-  const tx = 50 + L;
-  const sy = by - 14 * Math.pow(h, 0.7);
-  const wb = 1 + (w - 1) * 0.55;
-  const lx = 50 - 42 * w + L * 0.12;
-  const rx = 50 + 42 * w + L * 0.12;
-  const cy = sy - 31 * h;
-  const my = sy + (by - sy) * 0.71;
-  return [
-    `M${lx} ${sy}`,
-    `C${lx} ${cy} ${tx - 23 * w} ${ty} ${tx} ${ty}`,
-    `C${tx + 23 * w} ${ty} ${rx} ${cy} ${rx} ${sy}`,
-    `C${rx} ${my} ${50 + 32 * wb} ${by} 50 ${by}`,
-    `C${50 - 32 * wb} ${by} ${lx} ${my} ${lx} ${sy}`,
-    "Z",
-  ].join("");
-};
+export { bodyPath } from "./shape";
 
 const rgb = ([r, g, b]: RGB) => `rgb(${r.toFixed(1)},${g.toFixed(1)},${b.toFixed(1)})`;
 const loop = (t: number, period: number) => (t < 0 ? 0 : (t / period) % 1);
@@ -146,12 +131,19 @@ export const YumiFigure: React.FC<{
   const id = useId().replace(/:/g, "");
   const ids = {
     rim: `${id}rim`, fade: `${id}fade`, fadeG: `${id}fadeG`, lower: `${id}lower`, lowerG: `${id}lowerG`,
-    blur: `${id}blur`, body: `${id}body`, white: `${id}white`, shine: `${id}shine`,
+    blur: `${id}blur`, body: `${id}body`, white: `${id}white`, shine: `${id}shine`, out: `${id}out`,
   };
   const rim = `url(#${ids.rim})`;
   const body = bodyPath(f.h, f.w, f.lean);
   const top = 76 - 68 * f.h;
   const lit = f.light > 0.01;
+
+  // A scene from outside (Character/YumiScenes.swift): the other slimes, and the ones still
+  // part of him, which share his outline
+  const scene = f.scene;
+  const tw = scene ? twins(scene) : [];
+  const joined = tw.filter((w) => w.attached);
+  const raised = scene ? raisedArm(scene) : 0;
 
   const tilt = f.face.tilt !== 0 ? `rotate(${f.face.tilt} 50 76)` : undefined;
   const pose = `translate(${-f.lean * 0.12} ${f.y})`;
@@ -216,12 +208,20 @@ export const YumiFigure: React.FC<{
           <rect x={-120} y={-120} width={340} height={320} fill={`url(#${ids.lowerG})`} />
         </mask>
         {/* Only as large as the light can reach: a blur costs by the area it covers */}
-        <filter id={ids.blur} filterUnits="userSpaceOnUse" x={-40} y={Math.min(top, 74) - 12} width={180} height={96 - (Math.min(top, 74) - 12)}>
+        <filter id={ids.blur} filterUnits="userSpaceOnUse" x={scene ? -60 : -40} y={Math.min(top, 74) - 12} width={scene ? 260 : 180} height={96 - (Math.min(top, 74) - 12)}>
           <feGaussianBlur stdDeviation={BLUR} />
         </filter>
         <clipPath id={ids.body}>
           <path d={body} />
         </clipPath>
+        {joined.length > 0 ? (
+          // Everything but the inside of the shape he shares with a twin: only the outer half of a stroke shows
+          <mask id={ids.out} maskUnits="userSpaceOnUse" x={-120} y={-120} width={400} height={320}>
+            <rect x={-120} y={-120} width={400} height={320} fill="#fff" />
+            <path d={body} fill="#000" />
+            <JoinedShapes joined={joined} paint={(kind, w) => (kind === "body" ? { fill: "#000" } : { stroke: "#000", strokeWidth: w.strand })} />
+          </mask>
+        ) : null}
         <radialGradient id={ids.white} cx="0.42" cy="0.36" r="0.75">
           <stop offset="0.45" stopColor="#fff" />
           <stop offset="1" stopColor="rgb(180,191,230)" />
@@ -250,15 +250,33 @@ export const YumiFigure: React.FC<{
         {/* The body follows the lean a little, and jumps */}
         <g transform={pose}>
           {arms}
+          {raised > 0.01 ? (
+            // The arm that holds something up during a scene
+            <g transform={`translate(${f.lean * 0.35} ${(1 - f.h) * 24})`} opacity={raised}>
+              <path d="M83 52L100 38" stroke={rim} strokeWidth={12} strokeLinecap="round" />
+              <path d="M83 52L100 38" stroke={INK} strokeWidth={8.4} strokeLinecap="round" />
+            </g>
+          ) : null}
           {/* Halo */}
           {lit ? (
             <g opacity={0.85 * f.light} mask={`url(#${ids.fade})`}>
-              <path d={body} stroke={rim} strokeWidth={rimWidth * 2.2} filter={`url(#${ids.blur})`} />
+              <g filter={`url(#${ids.blur})`}>
+                <path d={body} stroke={rim} strokeWidth={rimWidth * 2.2} />
+                <JoinedShapes
+                  joined={joined}
+                  paint={(kind, w) =>
+                    kind === "body"
+                      ? { stroke: rim, strokeWidth: (rimWidth * 2.2) / w.scale }
+                      : { stroke: rgb(f.rim[1]), strokeWidth: w.strand + rimWidth * 2.2 }
+                  }
+                />
+              </g>
             </g>
           ) : null}
 
           {/* The body is pure black: unlit on a black frame, only the eyes show */}
           <path d={body} fill={INK} />
+          <JoinedShapes joined={joined} paint={(kind, w) => (kind === "body" ? { fill: INK } : { stroke: INK, strokeWidth: w.strand })} />
 
           <g clipPath={`url(#${ids.body})`}>
             <g transform={faceBox}>
@@ -290,7 +308,7 @@ export const YumiFigure: React.FC<{
           </g>
 
           {/* The rim, crisp. It is drawn from the left side, over the top, and round the base. */}
-          {f.drawn > 0.001 ? (
+          {f.drawn > 0.001 && joined.length === 0 ? (
             <g mask={`url(#${ids.fade})`}>
               <path
                 d={body}
@@ -301,9 +319,38 @@ export const YumiFigure: React.FC<{
               />
             </g>
           ) : null}
+          {f.drawn > 0.001 && joined.length > 0 ? (
+            // One body that divides or closes up: one rim, round the outside of both
+            <g mask={`url(#${ids.fade})`}>
+              <g mask={`url(#${ids.out})`}>
+                <path d={body} stroke={rim} strokeWidth={rimWidth * 2} />
+                <JoinedShapes
+                  joined={joined}
+                  paint={(kind, w) =>
+                    kind === "body"
+                      ? { stroke: rim, strokeWidth: (rimWidth * 2) / w.scale }
+                      : { stroke: rgb(f.rim[1]), strokeWidth: w.strand + rimWidth * 2 }
+                  }
+                />
+              </g>
+            </g>
+          ) : null}
+
+          {/* The other slimes of a scene */}
+          {tw.map((w, i) => (
+            <TwinArt key={i} w={w} rim={rim} rimWidth={rimWidth} />
+          ))}
+
+          {/* What he wears on the front of his body */}
+          {f.skin && SKIN_PLACE[f.skin] === "body" ? (
+            <g transform={faceBox}>
+              <Skin name={f.skin} t={f.skinTime} time={f.time} />
+            </g>
+          ) : null}
 
           {/* Props above the head */}
           <g transform={`translate(${f.lean} ${68 - 68 * f.h})`}>
+            {f.skin && SKIN_PLACE[f.skin] === "head" ? <Skin name={f.skin} t={f.skinTime} time={f.time} /> : null}
             {f.props.headphones > 0.01 ? (
               <g opacity={f.props.headphones}>
                 <path d="M9 47C9 16 28 1 50 1C72 1 91 16 91 47" stroke="rgb(43,46,63)" strokeWidth={4.2} strokeLinecap="round" />
@@ -339,6 +386,7 @@ export const YumiFigure: React.FC<{
 
           {/* Props on the face */}
           <g transform={faceBox}>
+            {f.skin && SKIN_PLACE[f.skin] === "face" ? <Skin name={f.skin} t={f.skinTime} time={f.time} /> : null}
             {f.props.coffee > 0.01 ? (
               // The cup tips towards the mouth for a sip
               <g
@@ -380,6 +428,15 @@ export const YumiFigure: React.FC<{
             ) : null}
           </g>
         </g>
+
+        {scene ? (
+          <SceneExtras
+            m={scene}
+            rim={f.rim}
+            top={top + f.y}
+            faceShift={{ x: f.faceShift.x - f.lean * 0.12, y: f.faceShift.y + f.y }}
+          />
+        ) : null}
 
         {/* Droplets and steam live in the tilted space, outside the pose */}
         {f.drops.slice(0, 12).map((d, i) => {

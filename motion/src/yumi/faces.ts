@@ -61,6 +61,11 @@ export const RIMS = {
   error: [hex(0xff4d5e), hex(0xff5d6c), hex(0xff9aa4)],
   done: [hex(0x22c98a), hex(0x3ddc97), hex(0x9bf0c8)],
   joy: [hex(0xb07bff), hex(0xf58ad9), hex(0xffb3e6)],
+  // Light skins: other colours for the rim, chosen rather than given by a state
+  mint: [hex(0x2fd4b0), hex(0x5ff0c8), hex(0xb6ffe6)],
+  lava: [hex(0xff5a36), hex(0xff8a3d), hex(0xffd06a)],
+  ice: [hex(0x8fd3ff), hex(0xc9ecff), hex(0xf2fbff)],
+  gold: [hex(0xc99a2e), hex(0xffd37a), hex(0xfff1c2)],
 } as const satisfies Record<string, readonly RGB[]>;
 
 export type RimTone = keyof typeof RIMS;
