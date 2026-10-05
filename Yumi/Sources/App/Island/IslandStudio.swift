@@ -186,7 +186,7 @@ enum IslandStudio {
     /// twice a second, to check the mode without filming.
     /// `YUMI_STUDIO_ONLY=10,11,12` plays only these shots, in this order.
     private static func rehearse(into folder: String) {
-        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 10, 12: 12]
+        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15]
         let only = (ProcessInfo.processInfo.environment["YUMI_STUDIO_ONLY"] ?? "")
             .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         let shots = only.isEmpty ? Array(1...9) : only
@@ -400,7 +400,7 @@ enum IslandStudio {
             // the runtime's answers do
             after(0.6) {
                 state.stateOverride = .thinking
-                state.chatHistory = [ChatMessage(role: .user, content: "Combien de temps libre j'ai demain pour avancer sur Atelier ?")]
+                state.chatHistory = [ChatMessage(role: .user, content: "Combien de temps libre j'ai demain pour avancer sur Yumi ?")]
                 controller.expand(to: .prompt)
             }
             after(2.6) {
@@ -411,11 +411,16 @@ enum IslandStudio {
             }
 
         case 11:
-            // An agent at work, and Yumi with his matcha
+            // An agent at work, and Yumi with his matcha: folded first, then open on the
+            // session, where he is large enough for the bowl to be seen
             after(0.4) {
                 show(sessions(.working))
                 state.stateOverride = .working
                 model.setHabit(.matcha)
+            }
+            after(3.0) {
+                model.selectedModuleID = "claude-code"
+                controller.expand(to: .module)
             }
 
         case 12:
@@ -425,7 +430,7 @@ enum IslandStudio {
                 model.selectedModuleID = "claude-code"
                 controller.expand(to: .module)
             }
-            after(3.0) {
+            after(4.5) {
                 // The approval is the one of the api session
                 if let i = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) {
                     state.tasks[i].name = "api"
@@ -435,14 +440,14 @@ enum IslandStudio {
                 state.pendingApproval = ApprovalInfo(sessionId: "studio", tool: "Bash", command: "npm test")
                 controller.expand(to: .approval)
             }
-            after(5.6) { model.studioPress = true }
-            after(5.85) {
+            after(7.1) { model.studioPress = true }
+            after(7.35) {
                 model.studioPress = false
                 state.pendingApproval = nil
                 state.stateOverride = .finished
                 state.view = .finished
             }
-            after(8.2) {
+            after(9.7) {
                 state.stateOverride = .idle
                 show(sessions(.answered))
                 model.selectedModuleID = "claude-code"
