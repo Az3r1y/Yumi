@@ -11,9 +11,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Ignore SIGPIPE — prevents crash when the hook script closes socket before we write response
         signal(SIGPIPE, SIG_IGN)
-        // Warm up Keychain cache on main thread BEFORE any poller or view touches it.
+        // Warm up Keychain cache on main thread BEFORE any module or view touches it.
         // While filming (YUMI_STUDIO) the store stays empty and never touches the Keychain.
         _ = KeychainStore.shared
+        // The keys of the integrations inherited from Coucou go, once (they are no longer in Yumi).
+        KeychainStore.shared.eraseRetiredKeys()
         NSApp.setActivationPolicy(.accessory)
         setupMenuBarItem()
         setupIsland()
@@ -118,7 +120,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             core.start()
             self.core = core
         }
-        IntegrationPollers.sync(active: AppState.shared.activeIntegrations)
         #if DEBUG
         if plan.chat { sendDevelopmentChatPrompts() }
         #endif
@@ -320,8 +321,7 @@ final class YumiCore {
                 GitHubModule(
                     token: { KeychainStore.shared.get("github-token") },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
-                    onNews: { [initiative] event, count in initiative.notice(.repository(event, count: count)) },
-                    onTotals: { repos, stars in state.githubStats = GitHubStats(totalRepos: repos, totalStars: stars) }),
+                    onNews: { [initiative] event, count in initiative.notice(.repository(event, count: count)) }),
             ],
             onPublish: { snapshots in
                 state.modules = snapshots

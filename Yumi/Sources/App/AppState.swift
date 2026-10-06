@@ -4,24 +4,9 @@ import Combine
 
 // Integration pills — always-present, never purged
 extension AgentTask {
-    /// All available integration pills. Claude is always active; others are opt-in (max 4).
-    static let integrationAgents: [AgentTask] = [
-        AgentTask(id: "integration_claude",  name: "Claude Code", color: "#F5F6F8", state: .idle, steps: [], source: .claudeCode, isIntegration: true),
-        AgentTask(id: "integration_resend",  name: "Resend",    color: "#22C55E", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_n8n",     name: "n8n",       color: "#F29B38", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_vercel",  name: "Vercel",    color: "#7C5CFF", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_github",  name: "GitHub",    color: "#F4505E", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_notion",  name: "Notion",    color: "#8C8C8C", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_calcom",  name: "Cal.com",   color: "#C9956A", state: .idle, steps: [], source: .n8n, isIntegration: true),
-        AgentTask(id: "integration_stripe",  name: "Stripe",    color: "#0570DE", state: .idle, steps: [], source: .n8n, isIntegration: true),
-    ]
-
-    /// IDs that can be toggled (Claude Code is always on and excluded from this list)
-    static let toggleableIntegrationIds: [String] = [
-        "integration_resend", "integration_n8n", "integration_vercel", "integration_github",
-        "integration_notion", "integration_calcom", "integration_stripe",
-    ]
-
+    /// The permanent Claude Code task: the sessions' state lives in it (ClaudeTaskMirror).
+    static let claudeCode = AgentTask(id: "integration_claude", name: "Claude Code", color: "#F5F6F8",
+                                      state: .idle, steps: [], source: .claudeCode, isIntegration: true)
 }
 
 @MainActor
@@ -120,62 +105,6 @@ final class AppState: ObservableObject {
     }
 
     // Vercel project filter — empty = watch all projects
-    @Published var vercelProjectFilter: Set<String> = [] {
-        didSet {
-            if let data = try? JSONEncoder().encode(Array(vercelProjectFilter)) {
-                UserDefaults.standard.set(data, forKey: "vercelProjectFilter")
-            }
-        }
-    }
-
-    // n8n workflow filter — empty = watch all workflows
-    @Published var n8nWorkflowFilter: Set<String> = [] {
-        didSet {
-            if let data = try? JSONEncoder().encode(Array(n8nWorkflowFilter)) {
-                UserDefaults.standard.set(data, forKey: "n8nWorkflowFilter")
-            }
-        }
-    }
-
-    // Active integration pills (VS Code excluded — always on). Max 4.
-    @Published var activeIntegrations: Set<String> = ["integration_resend", "integration_n8n", "integration_vercel", "integration_github"] {
-        didSet {
-            if let data = try? JSONEncoder().encode(Array(activeIntegrations)) {
-                UserDefaults.standard.set(data, forKey: "activeIntegrations")
-            }
-        }
-    }
-
-    // Pending API result
-    @Published var searchResult: SearchResult? = nil
-
-    // Vercel deployments (populated by VercelPoller)
-    @Published var vercelDeployments: [VercelDeployment] = []
-
-    // Resend emails (populated by ResendPoller)
-    @Published var resendEmails: [ResendEmail] = []
-    @Published var resendTotal: Int? = nil
-
-    // GitHub stats (populated by the GitHub module, for the old integration card)
-    @Published var githubStats: GitHubStats? = nil
-
-    // Stripe (populated by StripePoller)
-    @Published var stripePayments: [StripePayment] = []
-    @Published var stripeBalance: Int = 0           // raw balance in cents
-    @Published var stripeDisplayBalance: Int = 0    // animated balance target
-    @Published var stripeCurrency: String = "eur"
-    @Published var stripeLoaded: Bool = false       // true after first successful poll
-    @Published var stripeError: String? = nil      // last API error (nil = ok)
-
-    // Cal.com (populated by CalcomPoller)
-    @Published var calcomBookings: [CalcomBooking] = []
-    @Published var calcomLoaded: Bool = false
-    @Published var calcomError: String? = nil
-
-    // Notion (populated by NotionPoller)
-    @Published var notionPages: [NotionPage] = []
-    @Published var notionLoaded: Bool = false
-    @Published var notionError: String? = nil
 
     // Chat conversation history
     @Published var chatHistory: [ChatMessage] = []
@@ -230,12 +159,6 @@ final class AppState: ObservableObject {
         if let v = ud.object(forKey: "contextEngineEnabled") as? Bool { contextEnabled = v }
         if let v = ud.object(forKey: "hotkeyFlags")   as? Int   { hotkeyFlags = UInt(v) }
         if let v = ud.object(forKey: "hotkeyCode")    as? Int   { hotkeyCode = UInt16(v) }
-        if let d = ud.data(forKey: "vercelProjectFilter"),
-           let a = try? JSONDecoder().decode([String].self, from: d) { vercelProjectFilter = Set(a) }
-        if let d = ud.data(forKey: "n8nWorkflowFilter"),
-           let a = try? JSONDecoder().decode([String].self, from: d) { n8nWorkflowFilter = Set(a) }
-        if let d = ud.data(forKey: "activeIntegrations"),
-           let a = try? JSONDecoder().decode([String].self, from: d) { activeIntegrations = Set(a) }
 
         // Sync SoundEngine volume on launch
         SoundEngine.shared.volume = Float(soundVolume)
@@ -297,62 +220,10 @@ final class AppState: ObservableObject {
         else if view == .overview && tasks.isEmpty { view = .empty }
     }
 
-    /// Load integration pills respecting activeIntegrations. VS Code always loads. Safe to call multiple times.
+    /// Loads the permanent Claude Code task. Safe to call multiple times.
     func loadIntegrationTasks() {
-        for task in AgentTask.integrationAgents {
-            let shouldLoad = task.id == "integration_claude" || activeIntegrations.contains(task.id)
-            let loaded = tasks.contains(where: { $0.id == task.id })
-            if shouldLoad && !loaded { tasks.append(task) }
-            if !shouldLoad && loaded { tasks.removeAll { $0.id == task.id } }
-        }
-        if focusId == nil { focusId = "integration_claude" }
-        syncMode()
-    }
-
-    /// Toggle an integration pill on/off. VS Code cannot be toggled. Max 4 active at once.
-    func toggleIntegration(_ id: String) {
-        guard id != "integration_claude" else { return }
-        if activeIntegrations.contains(id) {
-            activeIntegrations.remove(id)
-            tasks.removeAll { $0.id == id }
-            if focusId == id { focusId = "integration_claude" }
-        } else {
-            guard activeIntegrations.count < 4 else { return }
-            activeIntegrations.insert(id)
-            if let task = AgentTask.integrationAgents.first(where: { $0.id == id }),
-               !tasks.contains(where: { $0.id == id }) {
-                tasks.append(task)
-            }
-        }
-        syncMode()
-        IntegrationPollers.sync(active: activeIntegrations)
-    }
-
-}
-
-// MARK: - Integration pollers
-// Each legacy integration polls its service on a timer. A poller runs only while its
-// integration is selected: a deselected one makes no request and keeps no timer.
-
-@MainActor
-enum IntegrationPollers {
-    private static let all: [(id: String, start: () -> Void, stop: () -> Void)] = [
-        ("integration_n8n",    { N8nPoller.shared.start() },    { N8nPoller.shared.stop() }),
-        ("integration_vercel", { VercelPoller.shared.start() }, { VercelPoller.shared.stop() }),
-        ("integration_resend", { ResendPoller.shared.start() }, { ResendPoller.shared.stop() }),
-        ("integration_stripe", { StripePoller.shared.start() }, { StripePoller.shared.stop() }),
-        ("integration_calcom", { CalcomPoller.shared.start() }, { CalcomPoller.shared.stop() }),
-        ("integration_notion", { NotionPoller.shared.start() }, { NotionPoller.shared.stop() }),
-    ]
-
-    /// Starts the pollers of the selected integrations and stops the others.
-    /// Starting a running poller, or stopping a stopped one, does nothing.
-    static func sync(active: Set<String>) {
-        // Nothing real is asked while filming.
-        guard LaunchPlan.current.integrationPollers else { return }
-        for poller in all {
-            if active.contains(poller.id) { poller.start() } else { poller.stop() }
-        }
+        if !tasks.contains(where: { $0.id == AgentTask.claudeCode.id }) { tasks.append(AgentTask.claudeCode) }
+        if focusId == nil { focusId = AgentTask.claudeCode.id }
     }
 }
 
@@ -366,131 +237,6 @@ enum PromptContext {
 struct DroppedFile {
     var url: URL
     var name: String
-}
-
-struct SearchResult {
-    var title: String
-    var items: [ResultItem]
-    var note: String?
-}
-
-struct ResultItem {
-    var label: String
-    var detail: String
-    var url: String?
-}
-
-// MARK: - Vercel
-
-struct VercelDeployment: Identifiable {
-    let id: String
-    let projectName: String
-    let url: String
-    let state: String        // "READY", "ERROR", "CANCELED"
-    let createdAt: Date
-    let commitMessage: String?
-    let branch: String?
-
-    var isSuccess: Bool { state == "READY" }
-    var statusLabel: String { isSuccess ? "Ready" : (state == "CANCELED" ? "Canceled" : "Error") }
-    var timeAgo: String {
-        let diff = Date().timeIntervalSince(createdAt)
-        if diff < 60    { return "just now" }
-        if diff < 3600  { return "\(Int(diff/60))m" }
-        if diff < 86400 { return "\(Int(diff/3600))h" }
-        return "\(Int(diff/86400))d"
-    }
-}
-
-// MARK: - Resend
-
-struct ResendEmail: Identifiable {
-    let id: String
-    let to: [String]
-    let subject: String
-    let createdAt: Date
-    let lastEvent: String   // "delivered", "bounced", "complained", "opened", etc.
-
-    var recipientShort: String {
-        guard let first = to.first else { return "?" }
-        return first.components(separatedBy: "@").first ?? first
-    }
-    var timeAgo: String {
-        let diff = Date().timeIntervalSince(createdAt)
-        if diff < 60    { return "just now" }
-        if diff < 3600  { return "\(Int(diff/60))m" }
-        if diff < 86400 { return "\(Int(diff/3600))h" }
-        return "\(Int(diff/86400))d"
-    }
-    var isDelivered: Bool { lastEvent == "delivered" }
-}
-
-// MARK: - GitHub
-
-struct GitHubStats {
-    let totalRepos: Int
-    let totalStars: Int
-}
-
-// MARK: - Stripe
-
-struct StripePayment: Identifiable, Equatable {
-    let id: String
-    let amount: Int         // in cents/smallest unit
-    let currency: String
-    let description: String?
-    let createdAt: Date
-    let status: String      // "succeeded", "pending", "failed"
-
-    var amountFormatted: String { String(format: "%.2f", Double(amount) / 100.0) }
-    var isSuccess: Bool { status == "succeeded" }
-    var timeAgo: String {
-        let diff = Date().timeIntervalSince(createdAt)
-        if diff < 60    { return "just now" }
-        if diff < 3600  { return "\(Int(diff/60))m" }
-        if diff < 86400 { return "\(Int(diff/3600))h" }
-        return "\(Int(diff/86400))d"
-    }
-}
-
-// MARK: - Cal.com
-
-struct CalcomBooking: Identifiable, Equatable {
-    let id: Int
-    let title: String
-    let startTime: Date
-    let endTime: Date
-    let status: String
-    let attendeeName: String?
-    let attendeeEmail: String?
-    let attendeeNotes: String?
-
-    var isActive: Bool { status == "ACCEPTED" || status == "PENDING" }
-    var timeLabel: String {
-        let f = DateFormatter(); f.dateFormat = "HH:mm"; return f.string(from: startTime)
-    }
-    var dayKey: String {
-        let c = Calendar.current.dateComponents([.year, .month, .day], from: startTime)
-        return "\(c.year!)-\(String(format: "%02d", c.month!))-\(String(format: "%02d", c.day!))"
-    }
-}
-
-// MARK: - Notion
-
-struct NotionPage: Identifiable {
-    let id: String
-    let title: String
-    let emoji: String?
-    let lastEditedAt: Date
-    let url: String
-
-    var timeAgo: String {
-        let diff = Date().timeIntervalSince(lastEditedAt)
-        if diff < 60 { return "now" }
-        if diff < 3600 { return "\(Int(diff/60))m" }
-        if diff < 86400 { return "\(Int(diff/3600))h" }
-        return "\(Int(diff/86400))d"
-    }
 }
 
 // MARK: - Chat

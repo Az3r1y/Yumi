@@ -168,68 +168,6 @@ private struct YumiProbeView: NSViewRepresentable {
     }
 }
 
-/// Mini character (for agent pills/column): the outline in the colour of its task, two eyes.
-struct MiniBotCanvasView: View {
-    let task: AgentTask
-    @StateObject private var engine: BotEngine
-
-    init(task: AgentTask) {
-        self.task = task
-        _engine = StateObject(wrappedValue: {
-            let e = BotEngine()
-            e.isMini = true
-            e.bodyColor = cgColorFromHex(task.color)
-            return e
-        }())
-    }
-
-    /// A blink now and then is all the life it has: it is only redrawn while it blinks.
-    @State private var blinking = false
-
-    var body: some View {
-        TimelineView(.animation(paused: !blinking)) { timeline in
-            Canvas { context, size in
-                engine.advance(to: timeline.date)
-                engine.draw(context: context, frame: CGRect(origin: .zero, size: size))
-            }
-        }
-        .task {
-            // Each one starts at its own moment, then blinks every 5.4 s like the main character
-            try? await Task.sleep(nanoseconds: UInt64.random(in: 0...5_000_000_000))
-            while !Task.isCancelled {
-                engine.blink()
-                blinking = true
-                try? await Task.sleep(nanoseconds: 300_000_000)
-                blinking = false
-                try? await Task.sleep(nanoseconds: 5_100_000_000)
-            }
-        }
-        .onChange(of: task.state) { _, newState in
-            engine.setState(newState)
-        }
-        .onAppear {
-            engine.setState(task.state, force: true)
-        }
-    }
-}
-
-// MARK: - CGColor from hex string
-
-func cgColorFromHex(_ hex: String) -> CGColor? {
-    let h = hex.trimmingCharacters(in: CharacterSet(charactersIn: "#"))
-    guard let val = UInt64(h, radix: 16) else { return nil }
-    let r = CGFloat((val >> 16) & 0xFF) / 255
-    let g = CGFloat((val >> 8)  & 0xFF) / 255
-    let b = CGFloat( val        & 0xFF) / 255
-    return CGColor(red: r, green: g, blue: b, alpha: 1)
-}
-
-extension CGColor {
-    static func from(_ hex: String) -> CGColor {
-        cgColorFromHex(hex) ?? CGColor(gray: 0.5, alpha: 1)
-    }
-}
-
 // MARK: - Character demo (Debug builds only)
 
 #if DEBUG

@@ -1,5 +1,7 @@
 # Architecture de Coucou (base du fork Yumi)
 
+> Document historique : il décrit le code d'origine, pas Yumi aujourd'hui.
+>
 > Ce document décrit Coucou, le projet d'origine, tel qu'il était avant l'import dans ce dépôt. Les chemins `NotchBuddy/...` correspondent ici à `Yumi/...`. Les icônes, sons, médias, prototypes et le portage Windows cités plus bas n'ont pas été importés. Les décisions propres à Yumi sont dans `YUMI.md`.
 
 Document d'analyse du dépôt `Louis-CFM/coucou` au commit `5ae7bd9`, rédigé avant toute modification de code. Objectif : comprendre chaque système pour créer l'application macOS **Yumi** sans changer le comportement existant.

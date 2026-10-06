@@ -10,7 +10,7 @@ enum IslandAgent {
     /// "Claude Code · yumi"
     static func name(_ task: AgentTask?) -> String {
         guard let task else { return "Claude Code" }
-        let source = task.source == .n8n ? "n8n" : "Claude Code"
+        let source = "Claude Code"
         // "VS Code" is the name of the task while no session has given its project
         return task.name.isEmpty || task.name == "VS Code" || task.name == source ? source : "\(source) · \(task.name)"
     }
@@ -21,7 +21,6 @@ enum IslandAgent {
         case .thinking:  return "Claude réfléchit"
         case .searching: return "Claude cherche"
         default:
-            if state.focusTask?.source == .n8n { return state.focusTask?.steps.first ?? "Un workflow tourne" }
             return state.focusTask?.steps.last.flatMap(sentence(forStep:)) ?? "Claude travaille"
         }
     }
@@ -227,14 +226,8 @@ enum IslandActions {
         }
     }
 
-    /// Brings the agent's own window forward: the application its session runs in, or n8n.
+    /// Brings the agent's own window forward: the application its session runs in.
     static func openAgent(_ task: AgentTask?) {
-        if task?.source == .n8n {
-            if let text = KeychainStore.shared.get("n8n-url"), let url = URL(string: text) {
-                NSWorkspace.shared.open(url)
-            }
-            return
-        }
         // Where the conversation is: the terminal, the editor or the Claude app the session runs in.
         ClaudeTaskMirror.openSession()
     }

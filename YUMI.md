@@ -256,7 +256,7 @@ Le chemin d'un événement : script de hook, socket, `ClaudeHookTranslator`, `Ev
 | Permissions | Jamais demandées au lancement, seulement au clic sur le bouton du module. Textes en français dans `project.yml`, entitlements calendrier et position dans `Resources/`. |
 | Météo | Open-Meteo, sans clé. Position arrondie au kilomètre, ou ville fixée par la préférence `weatherCity`. |
 | Notes | Fichier texte `notes.txt` dans le dossier de support. « Nouvelle note » enregistre le presse-papiers tant que l'île n'a pas de champ de saisie. |
-| Pollers hérités | Chacun ne tourne que si son intégration est cochée. |
+| Pollers hérités | Retirés (branche `yumi/menage`). |
 
 Reste à faire côté île : dessiner `AppState.modules`, remplacer les « VS Code » écrits en dur par le nom de la pastille, proposer le choix des modules et la ville de la météo dans les réglages. Reste à vérifier à la main : Musique et Spotify en lecture, Agenda et rappels après autorisation, Météo par localisation, boutons Deny et Always.
 
@@ -480,7 +480,29 @@ But : que l'on puisse essayer le chat et l'agent sans Claude Code.
 
 - Une barre latérale (`SettingsPage`, testée) : Général, Yumi, Modules, Moteurs, Claude Code, Autorisations, Mémoire, À propos, et Développeur, cachée tant que « Afficher les outils de développeur » (À propos, clé `settingsDeveloper`) n'est pas coché ou qu'on n'a pas cliqué sur À propos avec Option.
 - Chaque page est un `Form` groupé (`Sources/App/Settings/`). Les clés UserDefaults et Trousseau sont celles d'avant (`SettingsPage.settings` les range par page, un test vérifie que chaque ancien réglage a sa place).
-- Moteurs : nouvelle présentation dans `Settings/EnginesSettings.swift`, même logique (`EngineSettings`, `EngineDetector`, `EngineFactory`). `EnginesSettingsView.swift` n'est plus affiché ; à supprimer quand yumi/moteurs ne s'en sert plus.
-- Les six intégrations héritées de Coucou (Resend, n8n, Vercel, Stripe, Cal.com, Notion) sont dans la page Développeur, sous « Intégrations héritées », réglages intacts (docs/BACKLOG.md). Modules garde GitHub et les pastilles. Mémoire propose « Tout effacer… » avec une confirmation (`memoryClear`).
+- Moteurs : présentation dans `Settings/EnginesSettings.swift`, logique dans `EngineSettings`, `EngineDetector`, `EngineFactory`.
+- Les intégrations héritées de Coucou ont été retirées (branche `yumi/menage`). Modules garde GitHub. Mémoire propose « Tout effacer… » avec une confirmation (`memoryClear`).
 - Restent en anglais : les panneaux Contexte et Agent (page Développeur) et les mots de l'historique des autorisations (`allowed`, `approved`), qui viennent de fichiers du cœur.
 - Captures : `YUMI_SETTINGS_SHOTS=<dossier>` (Debug) ouvre chaque page en clair puis en sombre et écrit `ready` avec le numéro de fenêtre pour `screencapture -l`.
+
+## Ménage : ce qui restait de Coucou (branche `yumi/menage`)
+
+| Retiré | Pourquoi |
+|---|---|
+| Six intégrations et leurs pollers (Resend, n8n, Vercel, Stripe, Cal.com, Notion), leurs états dans `AppState`, leurs types, leurs filtres, leurs réglages (page Développeur, « Pastilles de l'île »), `IntegrationPollers`, `LaunchPlan.integrationPollers` | Décision : on ajoute nos propres intégrations au fur et à mesure. |
+| Leurs clés du trousseau et leurs préférences | Effacées une fois au lancement (`KeychainStore.eraseRetiredKeys`, drapeau `retiredKeysErased`). |
+| Pastilles d'intégration (sauf la tâche Claude Code) et `AgentSource.n8n` | L'île ne dessine plus de pastilles ; seule la tâche Claude Code porte l'état des sessions (`ClaudeTaskMirror`). |
+| Recherche structurée (`ClaudeService.search`, `SearchResult`, `searchResult`) | Plus appelée ; aucune vue ne la lisait. |
+| Vues `IslandView.mail` et `.uploading` | Jamais affichées. |
+| Totaux GitHub de l'ancienne carte (`githubStats`, `onTotals`, `GitHubFeed.totals`) | Écrits, jamais lus. |
+| `EnginesSettingsView`, `MiniBotCanvasView`, `YumiExpression`, `EyeShape`, `IslandGlyph(View)`, `FlowLayout`, `cgColorFromHex` | Plus utilisés. |
+
+| Gardé | Utilisé par |
+|---|---|
+| Chat par l'API Anthropic (`chatWithAPI`, `readFileAsBlock`) | Le moteur Anthropic et la build App Store. |
+| Dépôt de fichier (`FileDropView`, vues `.upload`, `.choose`) et capture de fenêtre (`WindowContextCapture`) | Glisser un fichier ou une fenêtre vers Yumi, « Résumer ». |
+| Tâche Claude Code (`AgentTask.claudeCode`, `focusTask`, badges) | L'état des sessions et du personnage. |
+| Retrait des hooks Coucou et NotchBuddy à l'installation | Protège qui avait Coucou. |
+| `IslandDemo`, `BotDemo`, mode tournage | Outils de développement et de tournage. |
+
+Correction faite au passage : `openai-api-key` et `gemini-api-key` n'étaient pas lues au lancement par `KeychainStore` : ces clés étaient oubliées à chaque redémarrage.

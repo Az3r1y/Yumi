@@ -78,68 +78,6 @@ struct SettingsHelp: View {
     }
 }
 
-// MARK: - Integration filter row (Vercel, n8n)
-
-struct IntegrationFilterRow: View {
-    let label: String
-    let items: [String]
-    @Binding var filter: Set<String>
-    let loading: Bool
-    let onLoad: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                Text(label)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-                Spacer()
-                if loading {
-                    ProgressView().scaleEffect(0.6)
-                } else {
-                    Button(items.isEmpty ? "Charger la liste" : "Actualiser") { onLoad() }
-                        .buttonStyle(.bordered)
-                        .controlSize(.mini)
-                }
-                if !filter.isEmpty {
-                    Button("Tout suivre") { filter = [] }
-                        .buttonStyle(.bordered)
-                        .controlSize(.mini)
-                        .foregroundColor(.secondary)
-                }
-            }
-            if !items.isEmpty {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(items, id: \.self) { item in
-                        Toggle(item, isOn: Binding(
-                            get: { filter.isEmpty || filter.contains(item) },
-                            set: { on in
-                                if on { filter.insert(item) }
-                                else  {
-                                    // First click on any item: switch from "all" to explicit set
-                                    if filter.isEmpty { filter = Set(items).subtracting([item]) }
-                                    else { filter.remove(item) }
-                                    if filter.count == items.count { filter = [] } // all = empty
-                                }
-                            }
-                        ))
-                        .font(.system(size: 11))
-                        .toggleStyle(.checkbox)
-                    }
-                }
-                .padding(.leading, 4)
-                if !filter.isEmpty {
-                    Text("\(filter.count) suivis sur \(items.count)")
-                        .font(.system(size: 10))
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-    }
-}
-
-// MARK: - Shortcut recorder button
-
 struct ShortcutRecorderButton: View {
     @Binding var flags: UInt
     @Binding var code: UInt16

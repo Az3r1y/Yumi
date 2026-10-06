@@ -30,8 +30,6 @@ final class GitHubModule: YumiModule {
     private let onConnect: @MainActor () -> Void
     /// Events worth a word of Yumi (a star, a fork, a merge, a release), with how many came together.
     private let onNews: @MainActor (GitHubEvent, Int) -> Void
-    /// Total repositories and stars, for the old integration card.
-    private let onTotals: @MainActor (Int, Int) -> Void
     /// Plays a scene: by default, the notification of the contract.
     private let play: @MainActor (YumiScene, Int) -> Void
 
@@ -67,7 +65,6 @@ final class GitHubModule: YumiModule {
          fetch: @escaping Fetch = GitHubModule.network,
          onConnect: @escaping @MainActor () -> Void = {},
          onNews: @escaping @MainActor (GitHubEvent, Int) -> Void = { _, _ in },
-         onTotals: @escaping @MainActor (Int, Int) -> Void = { _, _ in },
          play: @escaping @MainActor (YumiScene, Int) -> Void = { scene, count in
              NotificationCenter.default.post(name: .yumiScene, object: scene, userInfo: count > 1 ? ["count": count] : nil)
          }) {
@@ -77,7 +74,6 @@ final class GitHubModule: YumiModule {
         self.fetch = fetch
         self.onConnect = onConnect
         self.onNews = onNews
-        self.onTotals = onTotals
         tracker = defaults.data(forKey: Self.trackerKey).flatMap { try? JSONDecoder().decode(GitHubTracker.self, from: $0) } ?? GitHubTracker()
     }
 
@@ -214,8 +210,6 @@ final class GitHubModule: YumiModule {
             if case .fresh(let data) = await get("/user/repos?per_page=100&affiliation=owner&sort=pushed", token: token) {
                 repo = GitHubFeed.mostActiveRepo(from: data)
                 followed = GitHubFeed.followedRepos(from: data)
-                let totals = GitHubFeed.totals(from: data)
-                onTotals(totals.repos, totals.stars)
             }
             await readPulls(token: token, login: login)
             if let repo, case .fresh(let data) = await get("/search/issues?per_page=1&q=" + Self.query("repo:\(repo.fullName) is:pr is:open"), token: token) {
