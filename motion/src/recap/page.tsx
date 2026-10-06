@@ -25,38 +25,57 @@ export const P = {
 
 export type Rect = { readonly x: number; readonly y: number; readonly w: number; readonly h: number };
 
-/** Where things go: 16:9 puts the type on the left and the takes on the right, 4:5 stacks them. */
+/**
+ * Where things go. 16:9 puts the type on the left and the takes on the right; 4:5 stacks them;
+ * 9:16 stacks them too, inside the part of the frame Instagram and TikTok leave free: their
+ * buttons run down the right edge and their caption covers the bottom.
+ */
 export const useMise = () => {
   const { width, height } = useVideoConfig();
-  const wide = width / height > 1.2;
-  return wide
-    ? {
-        W: width,
-        H: height,
-        wide,
-        margin: 120,
-        kickerY: 96,
-        titleY: 168,
-        titleSize: 88,
-        /** The right column: takes and anything that is not type. Takes bleed off the right edge. */
-        stage: { x: 960, y: 230, w: 960, h: 520 },
-        captionY: 850,
-        captionW: 1400,
-        footY: 985,
-      }
-    : {
-        W: width,
-        H: height,
-        wide,
-        margin: 80,
-        kickerY: 86,
-        titleY: 150,
-        titleSize: 84,
-        stage: { x: 80, y: 560, w: 1000, h: 380 },
-        captionY: 990,
-        captionW: 920,
-        footY: 1250,
-      };
+  const ratio = height / width;
+  const base = { W: width, H: height, wide: ratio < 0.8, tall: ratio > 1.5 };
+  if (base.wide) {
+    return {
+      ...base,
+      margin: 120,
+      /** Where type stops on the right. */
+      right: 120,
+      kickerY: 96,
+      titleY: 168,
+      titleSize: 88,
+      /** The right column: takes and anything that is not type. Takes bleed off the right edge. */
+      stage: { x: 960, y: 230, w: 960, h: 520 },
+      captionY: 850,
+      captionW: 1400,
+      footY: 985,
+    };
+  }
+  if (base.tall) {
+    return {
+      ...base,
+      margin: 80,
+      right: 170,
+      kickerY: 230,
+      titleY: 300,
+      titleSize: 92,
+      stage: { x: 80, y: 720, w: 1000, h: 400 },
+      captionY: 1190,
+      captionW: 830,
+      footY: 1400,
+    };
+  }
+  return {
+    ...base,
+    margin: 80,
+    right: 80,
+    kickerY: 86,
+    titleY: 150,
+    titleSize: 84,
+    stage: { x: 80, y: 560, w: 1000, h: 380 },
+    captionY: 990,
+    captionW: 920,
+    footY: 1250,
+  };
 };
 
 /** The small line above the title: number and subject of the chapter. */
@@ -80,7 +99,7 @@ export const Kicker: React.FC<{ readonly at: number; readonly end: number; reado
 export const Folio: React.FC<{ readonly at: number; readonly end: number; readonly children: string }> = ({ at, end, children }) => {
   const m = useMise();
   return (
-    <div style={{ position: "absolute", right: m.margin, top: m.kickerY }}>
+    <div style={{ position: "absolute", right: m.right, top: m.kickerY }}>
       <Words lines={[children]} enter={at} exit={end} size={28} stagger={0.03} by="letter" style={{ textAlign: "right", fontFamily: P.mono, fontWeight: 500, color: P.soft }} />
     </div>
   );
@@ -101,7 +120,7 @@ export const Titre: React.FC<{
   const t = useT();
   const subIn = sub ? ease(t, at + 0.35, at + 0.8, EASE.out) * (end === undefined ? 1 : 1 - ease(t, end - 0.05, end + 0.25, EASE.in)) : 0;
   return (
-    <div style={{ position: "absolute", left: m.margin - s * 0.05, top: y ?? m.titleY, width: m.wide ? 840 : 940 }}>
+    <div style={{ position: "absolute", left: m.margin - s * 0.05, top: y ?? m.titleY, width: m.wide ? 840 : m.W - m.margin - m.right }}>
       <Words lines={lines} enter={at} exit={end} size={s} style={{ textAlign: "left", fontWeight: 800, lineHeight: 1.0, whiteSpace: "nowrap", color }} />
       {sub ? (
         <div
@@ -229,7 +248,7 @@ export const Pied: React.FC<{ readonly lines: readonly { readonly at: number; re
           position: "absolute",
           left: m.margin,
           top: m.footY,
-          width: (m.W - m.margin * 2) * ease(t, 0.2, 1.4),
+          width: (m.W - m.margin - m.right) * ease(t, 0.2, 1.4),
           height: 4,
           background: P.light,
         }}
