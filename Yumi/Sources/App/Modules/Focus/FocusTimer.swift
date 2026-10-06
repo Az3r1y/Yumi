@@ -119,7 +119,7 @@ extension FocusTimer {
             snapshot.status = FrenchText.countdown(left)
             snapshot.title = loc("Tu es dedans. Je me tais.")
             snapshot.subtitle = loc("Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(left)).")
-            snapshot.primaryAction = "Pause"
+            snapshot.primaryAction = loc("Pause")
             snapshot.secondaryAction = loc("Arrêter")
             // The first round was started by hand; the next ones start by themselves.
             snapshot.needsAttention = round > 1 && plan.focus - left < Self.attentionSpan
@@ -129,23 +129,23 @@ extension FocusTimer {
             snapshot.status = FrenchText.countdown(left)
             snapshot.title = loc("Pause. Souffle un peu.")
             snapshot.subtitle = round == 0 ? loc("Je te rappelle dans \(FrenchText.duration(left)).") : loc("Session \(round + 1) sur \(plan.rounds) dans \(FrenchText.duration(left)).")
-            snapshot.primaryAction = "Passer"
+            snapshot.primaryAction = loc("Passer")
             snapshot.secondaryAction = loc("Arrêter")
             snapshot.needsAttention = plan.rest - left < Self.attentionSpan
 
         case .paused(let phase, let round, let remaining):
-            snapshot.status = "pause"
+            snapshot.status = loc("pause")
             snapshot.title = phase == .focus ? loc("En pause. Je garde ta place.") : loc("La pause attend aussi.")
             snapshot.subtitle = loc("Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(remaining)).")
-            snapshot.primaryAction = "Reprendre"
+            snapshot.primaryAction = loc("Reprendre")
             snapshot.secondaryAction = loc("Arrêter")
 
         case .finished(let at):
-            snapshot.status = "fini"
+            snapshot.status = loc("fini")
             snapshot.title = loc("\(FrenchText.sentenceStart(FrenchText.spelledCount(plan.rounds, "session", "sessions", feminine: true))). C'est fait.")
             snapshot.subtitle = loc("Va prendre l'air, je garde la maison.")
-            snapshot.primaryAction = "Recommencer"
-            snapshot.secondaryAction = "Fermer"
+            snapshot.primaryAction = loc("Recommencer")
+            snapshot.secondaryAction = loc("Fermer")
             snapshot.needsAttention = now.timeIntervalSince(at) < Self.attentionSpan
         }
         snapshot.live = live(now: now)

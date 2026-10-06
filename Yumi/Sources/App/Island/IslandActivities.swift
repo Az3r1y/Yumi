@@ -345,7 +345,7 @@ struct ModuleActivity: View {
             RoundButton(style: .white, symbol: module.primarySymbol ?? (playing ? "pause.fill" : "play.fill"),
                         label: module.primaryAction, action: primary)
             RoundButton(style: .bare, symbol: module.secondarySymbol ?? "forward.end.fill",
-                        label: module.secondaryAction ?? "Suivant", action: secondary)
+                        label: module.secondaryAction ?? loc("Suivant"), action: secondary)
         }
     }
 
@@ -413,7 +413,7 @@ struct ModuleActivity: View {
             if let figures = GitHubFigures.parse(module.status) {
                 HStack(spacing: 12) {
                     GitHubFigure(symbol: "star.fill", value: figures.stars, label: loc("étoiles"))
-                    GitHubFigure(symbol: "arrow.triangle.branch", value: figures.forks, label: "forks")
+                    GitHubFigure(symbol: "arrow.triangle.branch", value: figures.forks, label: loc("forks"))
                     GitHubFigure(symbol: "arrow.triangle.pull", value: figures.pulls, label: loc("pull requests ouvertes"))
                 }
                 .padding(.top, 2)

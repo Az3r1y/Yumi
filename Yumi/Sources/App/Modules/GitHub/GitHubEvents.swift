@@ -278,10 +278,10 @@ enum GitHubSummary {
             snapshot.subtitle = loc("Donne-m'en un neuf, je reprends ma garde.")
             return snapshot.withSymbols("arrow.triangle.branch")
         case .offline:
-            snapshot.status = "hors ligne"
+            snapshot.status = loc("hors ligne")
             snapshot.title = loc("Je n'arrive pas à joindre GitHub.")
             snapshot.subtitle = loc("Je réessaie dans un moment.")
-            snapshot.primaryAction = "Ouvrir"
+            snapshot.primaryAction = loc("Ouvrir")
             return snapshot.withSymbols("arrow.triangle.branch")
         case .connected:
             break
@@ -296,20 +296,20 @@ enum GitHubSummary {
             snapshot.subtitle = loc("Je regarde tes dépôts.")
         }
         snapshot.title = last.map { sentence(for: $0.event, count: $0.count) } ?? loc("Rien de neuf. Je surveille.")
-        snapshot.primaryAction = "Ouvrir"
+        snapshot.primaryAction = loc("Ouvrir")
 
         if let review {
             snapshot.title = review.title.isEmpty ? loc("Une pull request t'attend.") : loc("Une pull request t'attend : \(review.title)")
-            snapshot.primaryAction = "Relire"
+            snapshot.primaryAction = loc("Relire")
             snapshot.needsAttention = true
-            snapshot.live = ModuleLive(text: review.title.isEmpty ? "Une relecture t'attend" : "Relecture : \(review.title)",
+            snapshot.live = ModuleLive(text: review.title.isEmpty ? loc("Une relecture t'attend") : loc("Relecture : \(review.title)"),
                                        priority: ModuleLivePriority.attention,
                                        controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Relire"))])
         }
         // Checks gone red come before everything: something is broken now.
         if let red {
             snapshot.title = loc("La CI ne passe plus : \(red.title)")
-            snapshot.primaryAction = "Voir"
+            snapshot.primaryAction = loc("Voir")
             snapshot.needsAttention = true
             snapshot.live = ModuleLive(text: loc("CI rouge : \(red.title)"), priority: ModuleLivePriority.attention,
                                        controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Voir"))])
@@ -357,13 +357,13 @@ enum GitHubBoard {
     }
 
     static func row(_ pull: GitHubPull, section: String?) -> ModuleRow {
-        var row = ModuleRow(id: pull.key, title: pull.title.isEmpty ? "#\(pull.number)" : pull.title,
-                            detail: "#\(pull.number) · \(pull.author)", state: .neutral, label: "ouverte",
+        var row = ModuleRow(id: pull.key, title: pull.title.isEmpty ? loc("#\(pull.number)") : pull.title,
+                            detail: loc("#\(pull.number) · \(pull.author)"), state: .neutral, label: loc("ouverte"),
                             date: pull.updated, section: section, action: pull.url?.absoluteString)
         switch pull.checks {
-        case .failed:  row.state = .failure; row.label = "CI rouge"
+        case .failed:  row.state = .failure; row.label = loc("CI rouge")
         case .running: row.state = .busy;    row.label = loc("CI en cours")
-        case .passed:  row.state = .success; row.label = "CI verte"
+        case .passed:  row.state = .success; row.label = loc("CI verte")
         case nil:      break
         }
         if pull.asksMyReview {

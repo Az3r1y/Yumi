@@ -145,7 +145,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
         if let content {
             let count = Self.lines(of: content).count
             let label = action == .create ? loc("Contenu") : loc("Texte ajouté")
-            lines.append(count > 1 ? "\(label) : \(count) lignes, \(content.count) caractères" : "\(label) : « \(content.trimmingCharacters(in: .newlines)) »")
+            lines.append(count > 1 ? loc("\(label) : \(count) lignes, \(content.count) caractères") : loc("\(label) : « \(content.trimmingCharacters(in: .newlines)) »"))
         }
         lines.append(loc("Portée : \(scope.label)") + (offersSession ? loc(" (ou cette session)") : ""))
         lines.append("Risque : \(riskLevel.label)")

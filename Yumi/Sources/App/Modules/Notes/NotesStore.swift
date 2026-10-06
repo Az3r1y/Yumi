@@ -91,17 +91,17 @@ enum NotesSummary {
         let due = ordered(reminders)
         let total = notes.count + due.count
         var snapshot = ModuleSnapshot(id: "notes", name: "Notes", colorHex: "#F2C744",
-                                      status: total == 0 ? "vide" : "\(total)",
+                                      status: total == 0 ? loc("vide") : "\(total)",
                                       title: loc("Rien à garder pour l'instant."),
                                       subtitle: loc("Copie un texte, je le garde en note."),
                                       primaryAction: loc("Nouvelle note"),
                                       secondaryAction: remindersAccess == .notDetermined ? loc("Activer les rappels") : loc("Tout voir"))
 
         if let reminder = due.first {
-            snapshot.title = "Rappel : \(reminder.title)"
+            snapshot.title = loc("Rappel : \(reminder.title)")
             snapshot.subtitle = when(reminder, now: now, calendar: calendar)
             if due.count == 2 { snapshot.subtitle += loc(" Un autre attend.") }
-            if due.count > 2 { snapshot.subtitle += " \(FrenchText.sentenceStart(FrenchText.spelled(due.count - 1))) autres attendent." }
+            if due.count > 2 { snapshot.subtitle += loc(" \(FrenchText.sentenceStart(FrenchText.spelled(due.count - 1))) autres attendent.") }
             snapshot.primaryAction = loc("Terminé")
             snapshot.secondaryAction = loc("Tout voir")
             snapshot.needsAttention = isLate(reminder, now: now, calendar: calendar)

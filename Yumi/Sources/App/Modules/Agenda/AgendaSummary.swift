@@ -48,7 +48,7 @@ enum AgendaSummary {
 
     private static func plainSnapshot(events: [AgendaEvent], access: PermissionState, now: Date,
                                       calendar: Calendar) -> ModuleSnapshot {
-        var snapshot = ModuleSnapshot(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "libre",
+        var snapshot = ModuleSnapshot(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: loc("libre"),
                                       title: loc("Rien de prévu."), subtitle: loc("Ta journée est à toi."),
                                       primaryAction: loc("Voir la journée"), secondaryAction: nil)
         switch access {
@@ -56,7 +56,7 @@ enum AgendaSummary {
             snapshot.status = loc("à brancher")
             snapshot.title = loc("Je ne vois pas ton agenda.")
             snapshot.subtitle = loc("Tu me l'ouvres ?")
-            snapshot.primaryAction = "Autoriser"
+            snapshot.primaryAction = loc("Autoriser")
             return snapshot
         case .denied:
             snapshot.status = loc("bloqué")
@@ -76,11 +76,11 @@ enum AgendaSummary {
             snapshot.status = loc("en cours")
             snapshot.title = loc("\(event.title) a commencé.")
         } else if !startsToday {
-            snapshot.title = "Demain, \(event.title)."
+            snapshot.title = loc("Demain, \(event.title).")
             snapshot.subtitle = loc("Plus rien aujourd'hui")
         } else if event.start.timeIntervalSince(now) < 3600 {
             snapshot.status = clock
-            snapshot.title = "\(event.title) dans \(FrenchText.spokenMinutes(event.start.timeIntervalSince(now)))."
+            snapshot.title = loc("\(event.title) dans \(FrenchText.spokenMinutes(event.start.timeIntervalSince(now))).")
         } else {
             snapshot.status = clock
             snapshot.title = loc("\(event.title) à \(clock).")
@@ -94,7 +94,7 @@ enum AgendaSummary {
         if startsToday || event.start <= now {
             snapshot.subtitle = FrenchText.sentenceStart(details.joined(separator: ", ")) + "."
         } else {
-            snapshot.subtitle += ", demain " + details.joined(separator: ", ") + "."
+            snapshot.subtitle += loc(", demain ") + details.joined(separator: ", ") + "."
         }
 
         // The folded island announces today's events only: tomorrow is not happening now.
@@ -110,7 +110,7 @@ enum AgendaSummary {
                                        controls: announced == event && event.joinURL != nil ? [join] : [])
         }
 
-        snapshot.primaryAction = event.joinURL != nil ? "Rejoindre" : "Ouvrir"
+        snapshot.primaryAction = event.joinURL != nil ? loc("Rejoindre") : loc("Ouvrir")
         snapshot.secondaryAction = loc("Voir la journée")
         let delay = event.start.timeIntervalSince(now)
         snapshot.needsAttention = delay <= soon && delay > -120

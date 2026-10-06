@@ -4,6 +4,24 @@
     "" : {
 
     },
+    " (ou cette session)" : {
+
+    },
+    " C'est fait : bienvenue.txt t'attend." : {
+
+    },
+    " Un autre attend." : {
+
+    },
+    " dans le projet %@" : {
+
+    },
+    " le lendemain" : {
+
+    },
+    " à " : {
+
+    },
     " ▍" : {
 
     },
@@ -27,12 +45,317 @@
         }
       }
     },
+    "%@ %@ aujourd'hui%@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@ aujourd'hui%3$@."
+          }
+        }
+      }
+    },
+    "%@ : la limite du jour est atteinte. Elle revient à minuit, heure du Pacifique (9 h à Paris)." : {
+
+    },
+    "%@ : trop de demandes cette minute. " : {
+
+    },
+    "%@ J'ai bien dormi. Toi aussi, j'espère." : {
+
+    },
+    "%@ Je n'ai pas oublié : %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ Je n'ai pas oublié : %2$@."
+          }
+        }
+      }
+    },
+    "%@ Je n'ai rien fait." : {
+
+    },
+    "%@ Rien de prévu aujourd'hui. Je garde la maison." : {
+
+    },
+    "%@ a commencé." : {
+
+    },
+    "%@ a forké %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ a forké %2$@."
+          }
+        }
+      }
+    },
+    "%@ a forké %@. Ton code voyage." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ a forké %2$@. Ton code voyage."
+          }
+        }
+      }
+    },
+    "%@ a un double chez %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ a un double chez %2$@."
+          }
+        }
+      }
+    },
+    "%@ d'affilée. Une pause ?" : {
+
+    },
+    "%@ d'un coup sur %@. Ça brille." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ d'un coup sur %2$@. Ça brille."
+          }
+        }
+      }
+    },
+    "%@ dans %@, et Claude attend ta réponse." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ dans %2$@, et Claude attend ta réponse."
+          }
+        }
+      }
+    },
+    "%@ de %@, %@ de pause." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ de %2$@, %3$@ de pause."
+          }
+        }
+      }
+    },
+    "%@ de plus pour %@. Je les ai comptées." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ de plus pour %2$@. Je les ai comptées."
+          }
+        }
+      }
+    },
+    "%@ en %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ en %2$@."
+          }
+        }
+      }
+    },
+    "%@ en pause" : {
+
+    },
+    "%@ est devenu un lien, je n'y touche pas" : {
+
+    },
+    "%@ est en lecture seule" : {
+
+    },
+    "%@ est en ligne%@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ est en ligne%2$@."
+          }
+        }
+      }
+    },
+    "%@ est là" : {
+
+    },
+    "%@ est partie. Je m'incline." : {
+
+    },
+    "%@ est plus court que prévu" : {
+
+    },
+    "%@ est sortie." : {
+
+    },
+    "%@ est sortie. C'est dehors." : {
+
+    },
+    "%@ est trop gros pour que j'y ajoute quelque chose" : {
+
+    },
+    "%@ est un lien, je n'y touche pas" : {
+
+    },
+    "%@ existe déjà, et je ne remplace jamais un fichier" : {
+
+    },
+    "%@ fichiers touchés" : {
+
+    },
+    "%@ n'est pas installé dans Ollama." : {
+
+    },
+    "%@ n'est pas prêt. Configure-le dans les réglages, section Moteurs, ou choisis « Automatique »." : {
+
+    },
+    "%@ n'est pas un fichier" : {
+
+    },
+    "%@ n'est pas un fichier texte" : {
+
+    },
+    "%@ n'est plus dans Téléchargements, sur le Bureau ou dans Documents" : {
+
+    },
+    "%@ n'existe plus" : {
+
+    },
+    "%@ n'existe plus à cet endroit" : {
+
+    },
+    "%@ ne connaît pas ce modèle pour ta clé. Change le modèle dans les réglages, section Moteurs (ou laisse le champ vide)." : {
+
+    },
+    "%@ ne donne pas de quota gratuit pour ce modèle à ta clé. Choisis un autre modèle dans les réglages, ou un autre moteur." : {
+
+    },
+    "%@ ne m'a pas répondu (%@)." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ ne m'a pas répondu (%2$@)."
+          }
+        }
+      }
+    },
+    "%@ personnes de plus te suivent." : {
+
+    },
+    "%@ plaît à %@. Une étoile de plus." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ plaît à %2$@. Une étoile de plus."
+          }
+        }
+      }
+    },
+    "%@ plus tard, c'est terminé sur %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ plus tard, c'est terminé sur %2$@."
+          }
+        }
+      }
+    },
+    "%@ pour cent et pas de chargeur. Je m'inquiète un peu." : {
+
+    },
+    "%@ pour cent. Je dis ça, je dis rien." : {
+
+    },
+    "%@ refuse la clé. Vérifie-la dans les réglages, section Moteurs." : {
+
+    },
+    "%@ refuse pour l'instant (quota ou trop de demandes). Réessaie plus tard." : {
+
+    },
+    "%@ sans souffler. Je te garde ta place cinq minutes ?" : {
+
+    },
+    "%@ vient d'étoiler %@. Je l'ai attrapée au vol." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ vient d'étoiler %2$@. Je l'ai attrapée au vol."
+          }
+        }
+      }
+    },
+    "%@ vient de prendre %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ vient de prendre %2$@."
+          }
+        }
+      }
+    },
     "%@ · %@%@" : {
       "localizations" : {
         "fr" : {
           "stringUnit" : {
             "state" : "new",
             "value" : "%1$@ · %2$@%3$@"
+          }
+        }
+      }
+    },
+    "%@ à %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ à %2$@"
+          }
+        }
+      }
+    },
+    "%@ à %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ à %2$@."
+          }
+        }
+      }
+    },
+    "%@ étoiles" : {
+
+    },
+    "%@ étoiles de plus sur %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ étoiles de plus sur %2$@."
+          }
+        }
+      }
+    },
+    "%@, %@ rendez-vous, le premier c'est %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@ rendez-vous, le premier c'est %3$@"
           }
         }
       }
@@ -46,6 +369,25 @@
           }
         }
       }
+    },
+    "%@, c'est déjà passé" : {
+
+    },
+    "%@, en cours" : {
+
+    },
+    "%@, un rendez-vous : %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, un rendez-vous : %2$@"
+          }
+        }
+      }
+    },
+    "%@. C'est fait." : {
+
     },
     "%lld %%" : {
 
@@ -63,7 +405,87 @@
         }
       }
     },
+    "%lldh %@m" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lldh %2$@m"
+          }
+        }
+      }
+    },
+    "%lldm %@s" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lldm %2$@s"
+          }
+        }
+      }
+    },
+    ", dans la liste %@" : {
+
+    },
+    ", dans le calendrier %@" : {
+
+    },
+    ", le premier à %@" : {
+
+    },
+    ", une t'attend" : {
+
+    },
+    ", à %@" : {
+
+    },
+    ". Je surveille." : {
+
+    },
+    "14:30 Point produit" : {
+
+    },
+    "14:30 à 15:00, en visio" : {
+
+    },
+    "19° et des éclaircies" : {
+
+    },
+    "2 sessions" : {
+
+    },
+    "2 sessions ouvertes, 1 attend ta réponse" : {
+
+    },
+    "3 sessions · accord sur api" : {
+
+    },
+    "A atteint sa limite." : {
+
+    },
+    "Absent" : {
+
+    },
+    "Accessibilité" : {
+
+    },
+    "Accès donné" : {
+
+    },
+    "Activer les rappels" : {
+
+    },
     "Actualiser les modèles" : {
+
+    },
+    "Add a reminder" : {
+
+    },
+    "Add an event" : {
+
+    },
+    "Add to a file" : {
 
     },
     "Afficher les outils de développeur" : {
@@ -72,7 +494,34 @@
     "Agent" : {
 
     },
+    "Ah, te voilà. Claude a une question pour toi." : {
+
+    },
+    "Ah, te voilà. Je commençais à somnoler." : {
+
+    },
+    "Aléatoire" : {
+
+    },
     "Annuler" : {
+
+    },
+    "Anthropic (clé API)" : {
+
+    },
+    "Arrêter" : {
+
+    },
+    "Atelier client" : {
+
+    },
+    "Atelier, dernière session il y a une heure" : {
+
+    },
+    "Attend ton message." : {
+
+    },
+    "Aucun modèle installé dans Ollama." : {
 
     },
     "Aucune décision." : {
@@ -81,7 +530,47 @@
     "Automatique" : {
 
     },
+    "Autoriser" : {
+
+    },
     "Autoriser…" : {
+
+    },
+    "Autorisé" : {
+
+    },
+    "Avance." : {
+
+    },
+    "Avec %@" : {
+
+    },
+    "Bien reçu" : {
+
+    },
+    "Bienvenue." : {
+
+    },
+    "Bon retour%@. J'ai gardé ta place." : {
+
+    },
+    "Bon retour. C'est passé pendant ton absence." : {
+
+    },
+    "Bonjour%@. J'ai regardé ta journée : %@%@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Bonjour%1$@. J'ai regardé ta journée : %2$@%3$@."
+          }
+        }
+      }
+    },
+    "Bonjour%@. Je suis réveillé, tu peux y aller." : {
+
+    },
+    "Bonjour%@. Journée libre, à ce que je vois." : {
 
     },
     "Brancher" : {
@@ -89,6 +578,112 @@
     },
     "Branché" : {
 
+    },
+    "C'est ajouté à la fin de %@." : {
+
+    },
+    "C'est annulé, je n'ai rien fait." : {
+
+    },
+    "C'est dans ton calendrier : %@, %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "C'est dans ton calendrier : %1$@, %2$@."
+          }
+        }
+      }
+    },
+    "C'est fait en partie%@ : %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "C'est fait en partie%1$@ : %2$@."
+          }
+        }
+      }
+    },
+    "C'est fait, et j'ai vérifié%@." : {
+
+    },
+    "C'est fusionné %@." : {
+
+    },
+    "C'est fusionné : %@" : {
+
+    },
+    "C'est fusionné sur %@." : {
+
+    },
+    "C'est noté dans tes Rappels : %@%@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "C'est noté dans tes Rappels : %1$@%2$@."
+          }
+        }
+      }
+    },
+    "C'est parti pour %@. Je me tais." : {
+
+    },
+    "C'est passé sur %@." : {
+
+    },
+    "C'est passé sur api." : {
+
+    },
+    "C'est passé, après %@. Bien joué." : {
+
+    },
+    "C'est passé." : {
+
+    },
+    "C'est pour %@." : {
+
+    },
+    "C'est pour aujourd'hui." : {
+
+    },
+    "C'est trop risqué : je ne le fais pas." : {
+
+    },
+    "C'est écrit. Relance tes sessions Claude Code pour que je les voie." : {
+
+    },
+    "C'était pour %@." : {
+
+    },
+    "C'était prévu avant aujourd'hui." : {
+
+    },
+    "CE QUE TU M'AS PERMIS" : {
+
+    },
+    "CI en cours" : {
+
+    },
+    "CI rouge : %@" : {
+
+    },
+    "Café" : {
+
+    },
+    "Café d'abord" : {
+
+    },
+    "Calendrier n'a pas enregistré l'événement (%@ %lld)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Calendrier n'a pas enregistré l'événement (%1$@ %2$lld)"
+          }
+        }
+      }
     },
     "Cancel" : {
 
@@ -105,34 +700,250 @@
     "Ce que je vais écrire" : {
 
     },
+    "Ces accès se donnent dans les Réglages Système. Je ne les demande que quand un module en a besoin." : {
+
+    },
     "Changer…" : {
 
     },
     "Check tools" : {
 
     },
+    "Cherche" : {
+
+    },
     "Choisir…" : {
+
+    },
+    "Choisis mes modules dans les réglages de l'app." : {
+
+    },
+    "Choisis ton dossier .claude pour que %@ y ajoute ses hooks" : {
+
+    },
+    "Choisis un modèle." : {
+
+    },
+    "Claude %@" : {
+
+    },
+    "Claude %@ %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude %1$@ %2$@"
+          }
+        }
+      }
+    },
+    "Claude %@ sur %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude %1$@ sur %2$@."
+          }
+        }
+      }
+    },
+    "Claude Code n'est pas connecté. Lance « claude » dans le Terminal, tape /login, et on reprend." : {
+
+    },
+    "Claude Code n'est pas installé ou pas connecté (claude, puis /login)." : {
+
+    },
+    "Claude a atteint sa limite sur %@. On attend." : {
+
+    },
+    "Claude a fini sur %@, en %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude a fini sur %1$@, en %2$@."
+          }
+        }
+      }
+    },
+    "Claude a une question pour toi sur %@." : {
+
+    },
+    "Claude a une question pour toi." : {
+
+    },
+    "Claude attend ton message sur %@." : {
+
+    },
+    "Claude avance sur %@. Je surveille." : {
+
+    },
+    "Claude cherche" : {
+
+    },
+    "Claude modifie Accueil.swift sur atelier." : {
+
+    },
+    "Claude réfléchit" : {
+
+    },
+    "Claude réfléchit sur %@." : {
+
+    },
+    "Claude t'attend sur %@" : {
+
+    },
+    "Claude t'attend sur %@." : {
+
+    },
+    "Claude t'attend, et %@ commence dans %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Claude t'attend, et %1$@ commence dans %2$@."
+          }
+        }
+      }
+    },
+    "Claude travaille" : {
+
+    },
+    "Claude veut lancer ça. Je laisse passer ?" : {
+
+    },
+    "Claude veut ton accord sur %@" : {
+
+    },
+    "Claude veut ton accord sur %@. Je laisse passer ?" : {
+
+    },
+    "Claude veut ton accord sur api. Je laisse passer ?" : {
+
+    },
+    "Claude veut utiliser %@. Je laisse passer ?" : {
 
     },
     "Clé API" : {
 
     },
+    "Clé enregistrée." : {
+
+    },
+    "Clé retirée." : {
+
+    },
     "Colle ton jeton d'accès" : {
+
+    },
+    "Combien de temps libre j'ai demain pour avancer sur Yumi ?" : {
+
+    },
+    "Conséquence : on ne pourra pas revenir en arrière" : {
+
+    },
+    "Conséquence : réversible" : {
+
+    },
+    "Contenu" : {
 
     },
     "Contexte" : {
 
     },
+    "Copie un texte, je le garde en note." : {
+
+    },
+    "Create a file" : {
+
+    },
+    "Current context" : {
+
+    },
+    "Current time" : {
+
+    },
+    "D'accord, je n'y touche pas." : {
+
+    },
+    "Dans ~/.claude/settings.json, « %@ » n'a pas la forme attendue. Je n'y ai pas touché." : {
+
+    },
+    "Dehors, %lld° et %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Dehors, %1$lld° et %2$@."
+          }
+        }
+      }
+    },
+    "Demande Bash : npm test" : {
+
+    },
     "Demande-moi quelque chose" : {
+
+    },
+    "Dernière note" : {
+
+    },
+    "Deux choses : Claude attend, et %@ est dans %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Deux choses : Claude attend, et %1$@ est dans %2$@."
+          }
+        }
+      }
+    },
+    "Deux heures d'affilée. Une pause ?" : {
+
+    },
+    "Dis-le-moi, je te donne le ciel d'ici." : {
+
+    },
+    "Donne, je m'en occupe." : {
+
+    },
+    "Donne-m'en un neuf, je reprends ma garde." : {
+
+    },
+    "Donne-moi un jeton, je surveille tes dépôts." : {
 
     },
     "Dossier .claude" : {
 
     },
+    "Du code est parti sur %@." : {
+
+    },
+    "Du code poussé" : {
+
+    },
+    "Démarrer" : {
+
+    },
+    "Détail" : {
+
+    },
+    "Développeur" : {
+
+    },
+    "EEEE d MMMM" : {
+
+    },
     "Effacer" : {
 
     },
+    "En pause. Je garde ta place." : {
+
+    },
     "Enregistrer" : {
+
+    },
+    "Envoyer" : {
 
     },
     "Envoyer un retour" : {
@@ -144,16 +955,124 @@
     "Essayer plus tôt" : {
 
     },
+    "Exécute" : {
+
+    },
+    "Exécute · swift test" : {
+
+    },
     "Fermer" : {
+
+    },
+    "Focus en cours" : {
+
+    },
+    "Fusion faite sur %@. Deux gouttes, une seule." : {
+
+    },
+    "Garder" : {
 
     },
     "GitHub" : {
 
     },
+    "Google Gemini (clé API)" : {
+
+    },
+    "Général" : {
+
+    },
+    "Halo Nord" : {
+
+    },
+    "Halo Nord, Premières heures" : {
+
+    },
     "Hooks" : {
 
     },
+    "Hooks retirés." : {
+
+    },
+    "Ici, on prend le temps de bien faire." : {
+
+    },
+    "Idée : mode nuit pour Yumi" : {
+
+    },
+    "Idée : une page d'accueil plus calme" : {
+
+    },
+    "Il bosse dur" : {
+
+    },
+    "Il est tard. Je reste là, mais toi tu peux aller dormir." : {
+
+    },
+    "Il kiffe" : {
+
+    },
+    "Il me manque la clé API. Ouvre les réglages." : {
+
+    },
+    "Il neige. Couvre-toi." : {
+
+    },
+    "Il pleut. Prends un parapluie." : {
+
+    },
+    "Il se fait tard%@. Ça attendra demain, non ?" : {
+
+    },
+    "Il t'attend dans la session." : {
+
+    },
+    "Il vient de s'y mettre. Je surveille." : {
+
+    },
+    "Indisponible dans cette version." : {
+
+    },
+    "Installe-toi, regarde autour de toi," : {
+
+    },
     "Installer" : {
+
+    },
+    "Installé. La connexion se vérifie avec « Tester »." : {
+
+    },
+    "Installés" : {
+
+    },
+    "J'ai cherché sur le web : %@" : {
+
+    },
+    "J'ai créé %@." : {
+
+    },
+    "J'ai essayé, mais le résultat n'est pas celui attendu : %@." : {
+
+    },
+    "J'ai lancé : %@" : {
+
+    },
+    "J'ai lu %@." : {
+
+    },
+    "J'ai modifié %@." : {
+
+    },
+    "J'ai perdu l'accès au dossier .claude. Choisis-le à nouveau." : {
+
+    },
+    "J'attends ton accord" : {
+
+    },
+    "J'en fais quoi ? Je résume, j'envoie ou je range." : {
+
+    },
+    "J'en peux plus" : {
 
     },
     "J'oublie tout, ton prénom aussi ?" : {
@@ -162,34 +1081,338 @@
     "J'oublierai tout ce que tu m'as dit. Ça ne se rattrape pas." : {
 
     },
+    "J'écris" : {
+
+    },
+    "J'écris dans ~/.claude/settings.json, après t'avoir montré le changement. Une copie de l'ancien fichier est gardée à côté." : {
+
+    },
+    "J'écris un fichier" : {
+
+    },
     "Jamais" : {
+
+    },
+    "Je bâille. Toi aussi, je parie." : {
+
+    },
+    "Je cherche" : {
+
+    },
+    "Je cherche dans le dossier" : {
+
+    },
+    "Je cherche sur le web" : {
+
+    },
+    "Je cherche sur le web :" : {
+
+    },
+    "Je dois %@ %@%@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Je dois %1$@ %2$@%3$@."
+          }
+        }
+      }
+    },
+    "Je délègue :" : {
+
+    },
+    "Je délègue une tâche" : {
+
+    },
+    "Je lance" : {
+
+    },
+    "Je lance une commande" : {
+
+    },
+    "Je lis" : {
 
     },
     "Je lis l'heure et mon propre contexte sans te demander. Pour modifier, envoyer ou supprimer, je te demande d'abord. Rien d'ici ne remplace les autorisations de macOS." : {
 
     },
+    "Je lis un fichier" : {
+
+    },
+    "Je lis une page" : {
+
+    },
+    "Je m'en occupe : %@. Je te demande avant de toucher à quoi que ce soit." : {
+
+    },
+    "Je m'en occupe. Quelques lignes simples, puis je range le fichier dans Téléchargements." : {
+
+    },
+    "Je m'organise" : {
+
+    },
+    "Je me replie après" : {
+
+    },
+    "Je modifie" : {
+
+    },
+    "Je modifie un fichier" : {
+
+    },
+    "Je n'ai aucun moteur pour réfléchir : installe Claude Code et connecte-toi (claude, puis /login), ou ajoute une clé Anthropic, OpenAI ou Gemini, ou lance Ollama : réglages, section Moteurs." : {
+
+    },
+    "Je n'ai aucun moteur pour réfléchir. Installe Claude Code (puis « claude » et /login), ou ajoute une clé Anthropic, OpenAI ou Gemini, ou lance Ollama : réglages, section Moteurs." : {
+
+    },
+    "Je n'ai pas compris la réponse. Redemande-moi." : {
+
+    },
+    "Je n'ai pas le détail. Il est dans la session." : {
+
+    },
+    "Je n'ai pas pu : %@." : {
+
+    },
+    "Je n'ai pas pu garder l'accès : %@" : {
+
+    },
+    "Je n'ai pas pu les retirer : %@" : {
+
+    },
+    "Je n'ai pas pu lire les réglages de Claude Code : %@" : {
+
+    },
+    "Je n'ai pas pu écrire %@." : {
+
+    },
+    "Je n'ai pas réussi à lire ça. Pour ton agenda, tes rappels et ton temps libre, demande-moi un jour précis, d'aujourd'hui à dans quatorze jours, par exemple « qu'est-ce que j'ai demain ? » ou « combien de temps libre jeudi ? »." : {
+
+    },
+    "Je n'ai rien trouvé à dire. Redemande-moi." : {
+
+    },
+    "Je n'arrive pas à créer le dossier où travailler." : {
+
+    },
+    "Je n'arrive pas à joindre GitHub." : {
+
+    },
+    "Je n'arrive pas à joindre le réseau." : {
+
+    },
+    "Je n'arrive pas à voir le ciel." : {
+
+    },
+    "Je n'en ai pas le droit, alors je n'ai rien fait." : {
+
+    },
+    "Je ne garde que ce que tu m'as dit, sur ce Mac. Tu peux tout relire, corriger ou effacer dans l'île." : {
+
+    },
+    "Je ne le connais pas encore" : {
+
+    },
+    "Je ne peux pas : %@." : {
+
+    },
+    "Je ne peux pas le faire, alors je ne t'ai rien demandé : %@." : {
+
+    },
+    "Je ne peux pas lire %@. Je n'y ai pas touché." : {
+
+    },
+    "Je ne peux pas te demander ton accord maintenant." : {
+
+    },
+    "Je ne sais encore rien de toi." : {
+
+    },
+    "Je ne sais pas encore faire ça, alors je n'ai rien touché. Pour l'instant je sais créer un fichier (dans Téléchargements, sur ton Bureau ou dans Documents) et ajouter du texte à ceux que j'ai créés, ajouter un rappel ou un événement à ton calendrier, lancer un Focus et te dire ce que tu as aujourd'hui." : {
+
+    },
+    "Je ne sais pas encore faire ça. Rien n'a été fait." : {
+
+    },
+    "Je ne sais pas exactement ce que cette action toucherait." : {
+
+    },
+    "Je ne sais pas faire ça dans cette version, alors je n'ai rien touché." : {
+
+    },
+    "Je ne sais pas où tu es." : {
+
+    },
+    "Je ne surveille rien pour l'instant." : {
+
+    },
+    "Je ne vois ni ton agenda, ni tes rappels, ni la météo. Active-les dans mes réglages et je te dirai." : {
+
+    },
+    "Je ne vois pas ton GitHub." : {
+
+    },
+    "Je ne vois pas ton agenda." : {
+
+    },
     "Je parle de moi-même" : {
+
+    },
+    "Je regarde le ciel." : {
+
+    },
+    "Je regarde tes dépôts." : {
+
+    },
+    "Je regarde une fois par jour sur GitHub. Je ne télécharge et n'installe jamais rien tout seul." : {
+
+    },
+    "Je réessaie dans un moment." : {
+
+    },
+    "Je réfléchis" : {
+
+    },
+    "Je réponds" : {
+
+    },
+    "Je résume, j'envoie ou je range. Tu choisis." : {
+
+    },
+    "Je suis déjà sur une autre tâche. Redemande-moi juste après." : {
+
+    },
+    "Je te rappelle dans %@." : {
+
+    },
+    "Je vois quelle app et quelle fenêtre tu utilises, pour parler à propos. Ça reste sur ce Mac, en mémoire : pas de capture d'écran, pas de frappe." : {
 
     },
     "Jeton d'accès" : {
 
     },
+    "Juste ton prénom. Je le garde pour moi." : {
+
+    },
+    "L'installation d'Apple s'ouvre. Reviens ici quand elle est finie." : {
+
+    },
+    "L'écriture a échoué : %@" : {
+
+    },
+    "La CI ne passe plus : %@" : {
+
+    },
+    "La la la" : {
+
+    },
+    "La pause attend aussi." : {
+
+    },
+    "La pull request « Accueil plus calme » est fusionnée." : {
+
+    },
+    "La semaine est finie%@. Je garde tout au chaud jusqu'à lundi." : {
+
+    },
+    "La session est terminée." : {
+
+    },
+    "Lance Claude Code, je regarderai." : {
+
+    },
+    "Lance un morceau, j'écoute avec toi." : {
+
+    },
+    "Le fil" : {
+
+    },
+    "Le modèle ne m'a pas répondu. Rien n'a été fait." : {
+
+    },
+    "Le moteur pense pour moi : il discute dans le chat et propose les plans. Quel qu'il soit, chaque plan est vérifié, et rien ne touche ton Mac sans ton accord. En automatique, je prends le premier prêt, dans l'ordre ci-dessous." : {
+
+    },
+    "Le retour s'ouvre sur GitHub avec la version de Yumi, de macOS et le modèle de ton Mac déjà remplis. Rien d'autre." : {
+
+    },
+    "Lecture" : {
+
+    },
+    "Les hooks me disent ce que font tes sessions Claude Code. Claude Code marche pareil sans eux, je ne vois juste rien." : {
+
+    },
     "Licences" : {
+
+    },
+    "Liste" : {
+
+    },
+    "Lit" : {
+
+    },
+    "Lueur" : {
+
+    },
+    "Lueur · Halo Nord" : {
+
+    },
+    "Masquer les détails" : {
 
     },
     "Me prévenir des nouvelles versions" : {
 
     },
+    "Mes sons" : {
+
+    },
     "Mettre à jour" : {
+
+    },
+    "Modifie" : {
+
+    },
+    "Modifie Accueil.swift" : {
 
     },
     "Modèle" : {
 
     },
+    "Modèle %@." : {
+
+    },
+    "Moi, c'est Yumi. Et toi ?" : {
+
+    },
     "Moteur" : {
 
     },
+    "Musique" : {
+
+    },
+    "Mémoire" : {
+
+    },
+    "Météo" : {
+
+    },
+    "Non, garde" : {
+
+    },
+    "Notebook" : {
+
+    },
+    "Nouvelle note" : {
+
+    },
     "Nouvelle version" : {
+
+    },
+    "Nouvelles versions" : {
+
+    },
+    "OK" : {
 
     },
     "Observe the front application and window" : {
@@ -201,25 +1424,203 @@
     "Off." : {
 
     },
+    "Ollama (sur ce Mac)" : {
+
+    },
+    "Ollama ne répond pas." : {
+
+    },
+    "On s'y met ?" : {
+
+    },
     "Open System Settings" : {
+
+    },
+    "OpenAI (clé API)" : {
+
+    },
+    "Oui, oublie" : {
+
+    },
+    "Ouvrir" : {
+
+    },
+    "Ouvrir Musique" : {
 
     },
     "Ouvrir Yumi au démarrage du Mac" : {
 
     },
+    "Ouvrir l'éditeur" : {
+
+    },
     "Ouvrir l'île avec un raccourci" : {
+
+    },
+    "Ouvrir la session" : {
+
+    },
+    "Ouvrir le terminal" : {
+
+    },
+    "Ouvrir les réglages" : {
+
+    },
+    "Parler" : {
+
+    },
+    "Parler à Yumi" : {
+
+    },
+    "Pas configuré." : {
+
+    },
+    "Pas d'accès" : {
+
+    },
+    "Pas de clé." : {
+
+    },
+    "Pas de jeton" : {
+
+    },
+    "Pas de musique." : {
+
+    },
+    "Pas de pluie en vue aujourd'hui." : {
+
+    },
+    "Pas demandé" : {
+
+    },
+    "Pas installé." : {
+
+    },
+    "Pas installés" : {
+
+    },
+    "Passer" : {
+
+    },
+    "Pause" : {
+
+    },
+    "Pause %@" : {
+
+    },
+    "Pause matcha" : {
+
+    },
+    "Pause. Souffle un peu." : {
 
     },
     "Pendant qu'un agent bosse" : {
 
     },
+    "Personne ne code en ce moment." : {
+
+    },
+    "Pluie vers %@. Prends une veste." : {
+
+    },
+    "Pluie vers 18 h, prends une veste" : {
+
+    },
+    "Plus que %@ pour cent de batterie. Le chargeur n'est pas loin ?" : {
+
+    },
+    "Plus rien aujourd'hui" : {
+
+    },
+    "Plus tard" : {
+
+    },
+    "Point produit" : {
+
+    },
+    "Point produit dans 12 min" : {
+
+    },
+    "Point produit dans douze minutes" : {
+
+    },
+    "Portée : %@" : {
+
+    },
+    "Pour cette session" : {
+
+    },
+    "Poussé sur %@" : {
+
+    },
+    "Précédent" : {
+
+    },
+    "Préviens-moi des nouvelles versions" : {
+
+    },
+    "Prêt pour une session" : {
+
+    },
+    "Quand un agent bosse" : {
+
+    },
+    "Quand un agent bosse, je prends" : {
+
+    },
     "Quand ça compte" : {
+
+    },
+    "Quelqu'un a copié Atelier pour y travailler." : {
+
+    },
+    "Quelqu'un de plus te suit." : {
 
     },
     "Raccourci" : {
 
     },
+    "Raison donnée par l'agent : %@" : {
+
+    },
+    "Ranger" : {
+
+    },
+    "Rappel : %@" : {
+
+    },
+    "Rappels n'a pas enregistré le rappel (%@ %lld)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Rappels n'a pas enregistré le rappel (%1$@ %2$lld)"
+          }
+        }
+      }
+    },
+    "Recherche" : {
+
+    },
+    "Recherche web" : {
+
+    },
+    "Refuser" : {
+
+    },
+    "Refusé" : {
+
+    },
     "Regarder l'app au premier plan" : {
+
+    },
+    "Rejoindre" : {
+
+    },
+    "Relire" : {
+
+    },
+    "Reprendre" : {
 
     },
     "Retirer" : {
@@ -228,19 +1629,73 @@
     "Retirer le jeton" : {
 
     },
+    "Rien de neuf. Je surveille." : {
+
+    },
+    "Rien de prévu." : {
+
+    },
+    "Rien en cours" : {
+
+    },
+    "Rien ne quitte ton Mac : le modèle tourne en local. Gratuit." : {
+
+    },
     "Rien pour l'instant." : {
+
+    },
+    "Rien à garder pour l'instant." : {
 
     },
     "Run" : {
 
     },
+    "RÈGLES" : {
+
+    },
+    "Récupère" : {
+
+    },
+    "Réessaie dans %lld secondes." : {
+
+    },
+    "Réessaie dans une minute." : {
+
+    },
+    "Réessayer" : {
+
+    },
+    "Réfléchit." : {
+
+    },
     "Réglages" : {
+
+    },
+    "Réglages de %@" : {
 
     },
     "Réglages…" : {
 
     },
     "Réinstaller" : {
+
+    },
+    "Résume-moi %@ en trois points" : {
+
+    },
+    "Résume-moi cette fenêtre en trois points" : {
+
+    },
+    "Résumer" : {
+
+    },
+    "Sale journée" : {
+
+    },
+    "Sans python3, je ne vois pas tes sessions (Claude Code marche normalement). « Installer » ouvre l'installation des outils de ligne de commande d'Apple." : {
+
+    },
+    "Sans réponse, je n'ai rien fait." : {
 
     },
     "Script" : {
@@ -250,6 +1705,38 @@
 
     },
     "Se replier après" : {
+
+    },
+    "Session %lld sur %lld dans %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Session %1$lld sur %2$lld dans %3$@."
+          }
+        }
+      }
+    },
+    "Session %lld sur %lld, encore %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Session %1$lld sur %2$lld, encore %3$@."
+          }
+        }
+      }
+    },
+    "Session 2 sur 4, reste 18 min 42" : {
+
+    },
+    "Session ended after %@" : {
+
+    },
+    "Session fermée." : {
+
+    },
+    "Session started" : {
 
     },
     "Show the model what is on screen (application, window, document name)" : {
@@ -264,7 +1751,74 @@
     "Souvenirs" : {
 
     },
+    "Start a focus session" : {
+
+    },
+    "Started a %lld-minute focus session." : {
+
+    },
     "Stays on this Mac, in memory only. No screen capture, no keystrokes, nothing sent to a model." : {
+
+    },
+    "Suivant" : {
+
+    },
+    "Sum up a day" : {
+
+    },
+    "Ta clé n'a pas de quota gratuit Gemini. Vérifie-la sur aistudio.google.com, ou choisis un autre moteur dans les réglages." : {
+
+    },
+    "Ta dernière note" : {
+
+    },
+    "Ta journée est à toi." : {
+
+    },
+    "Ta position m'est fermée. Ça se rouvre dans Réglages Système." : {
+
+    },
+    "Te revoilà. Claude a fini pendant que tu étais parti." : {
+
+    },
+    "Te revoilà. Claude attend ta réponse." : {
+
+    },
+    "Te revoilà. On reprend %@ ?" : {
+
+    },
+    "Te revoilà. Rien n'a bougé ici." : {
+
+    },
+    "Te voilà%@. %@ au programme%@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Te voilà%1$@. %2$@ au programme%3$@."
+          }
+        }
+      }
+    },
+    "Te voilà%@. Je prends mon poste." : {
+
+    },
+    "Terminé" : {
+
+    },
+    "Tes messages et les demandes de plan partent chez Anthropic par ton Claude Code, sous ton compte (abonnement ou facturation de ce compte)." : {
+
+    },
+    "Tes messages et les demandes de plan partent chez Anthropic. Facturé par Anthropic à l'usage." : {
+
+    },
+    "Tes messages et les demandes de plan partent chez Google. Le palier gratuit suffit pour essayer ; au-delà, facturé par Google." : {
+
+    },
+    "Tes messages et les demandes de plan partent chez OpenAI. Facturé par OpenAI à l'usage." : {
+
+    },
+    "Tes projets" : {
 
     },
     "Test en cours…" : {
@@ -273,7 +1827,28 @@
     "Tester" : {
 
     },
+    "Texte ajouté" : {
+
+    },
+    "Toi" : {
+
+    },
+    "Ton agenda m'est fermé." : {
+
+    },
+    "Ton jeton GitHub ne passe plus." : {
+
+    },
     "Ton prénom" : {
+
+    },
+    "Toujours autoriser" : {
+
+    },
+    "Tous" : {
+
+    },
+    "Tous les modules" : {
 
     },
     "Tout effacer" : {
@@ -285,13 +1860,157 @@
     "Tout effacer…" : {
 
     },
+    "Tout oublier" : {
+
+    },
+    "Tout voir" : {
+
+    },
+    "Trois sessions ouvertes, une t'attend." : {
+
+    },
+    "Trois sessions ouvertes." : {
+
+    },
+    "Tu as dit non : %@" : {
+
+    },
+    "Tu as dit non pour %@." : {
+
+    },
+    "Tu as raté la fin : Claude a terminé sans toi." : {
+
+    },
+    "Tu as refusé." : {
+
+    },
+    "Tu es dedans. Je me tais." : {
+
+    },
+    "Tu me l'ouvres ?" : {
+
+    },
+    "Tu n'as pas levé le nez depuis %@ %@. Cinq minutes ?" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Tu n'as pas levé le nez depuis %1$@ %2$@. Cinq minutes ?"
+          }
+        }
+      }
+    },
+    "Tu tombes bien. Claude t'attend depuis un moment." : {
+
+    },
+    "Tâches" : {
+
+    },
     "Un bug, une idée" : {
+
+    },
+    "Un fork" : {
+
+    },
+    "Un fork de %@, par %@. Quelqu'un s'y met." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Un fork de %1$@, par %2$@. Quelqu'un s'y met."
+          }
+        }
+      }
+    },
+    "Un instant." : {
+
+    },
+    "Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien." : {
+
+    },
+    "Un sous-agent a fini" : {
+
+    },
+    "Un sous-agent démarre" : {
+
+    },
+    "Une issue s'ouvre : %@" : {
+
+    },
+    "Une issue s'ouvre sur %@." : {
+
+    },
+    "Une nouvelle version de Yumi est là" : {
+
+    },
+    "Une pull request arrive : %@" : {
+
+    },
+    "Une pull request arrive sur %@." : {
+
+    },
+    "Une pull request de moins sur %@. C'est dans la branche." : {
+
+    },
+    "Une pull request t'attend : %@" : {
+
+    },
+    "Une pull request t'attend." : {
+
+    },
+    "Une règle de tes réglages l'interdit." : {
+
+    },
+    "Une session ouverte." : {
+
+    },
+    "Une version de %@ est sortie." : {
+
+    },
+    "Une étoile" : {
+
+    },
+    "Une étoile de plus sur %@, de la part de %@." : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Une étoile de plus sur %1$@, de la part de %2$@."
+          }
+        }
+      }
+    },
+    "Une étoile de plus sur Atelier." : {
+
+    },
+    "Une étoile de plus, de la part de %@." : {
+
+    },
+    "Va prendre l'air, je garde la maison." : {
+
+    },
+    "Valider" : {
+
+    },
+    "Vendredi soir. %@ attendra lundi." : {
+
+    },
+    "Vendredi soir. Tu as bien bossé cette semaine." : {
+
+    },
+    "Vendredi soir. Va voir dehors, je surveille." : {
 
     },
     "Voir" : {
 
     },
     "Voir et modifier dans l'île" : {
+
+    },
+    "Voir la journée" : {
+
+    },
+    "Voir les détails" : {
 
     },
     "Volontiers" : {
@@ -309,46 +2028,611 @@
     "Works only when asked. Plans with Claude Code (no tools, your Claude Code login) or else the Anthropic key above; creating a file always asks first. What is on screen stays on the Mac unless you tick the box." : {
 
     },
+    "Yumi : planche du personnage" : {
+
+    },
+    "abonné" : {
+
+    },
     "activé" : {
 
+    },
+    "alex/atelier" : {
+
+    },
+    "après-demain" : {
+
+    },
+    "attend ta réponse" : {
+
+    },
+    "attend un accord" : {
+
+    },
+    "au repos" : {
+
+    },
+    "aucun rappel à vérifier" : {
+
+    },
+    "aucun rappel%@" : {
+
+    },
+    "aucun rendez-vous %@" : {
+
+    },
+    "aucun événement à vérifier" : {
+
+    },
+    "aucune durée à vérifier" : {
+
+    },
+    "bloqué" : {
+
+    },
+    "c'est un jour déjà passé, je ne regarde que les jours à venir" : {
+
+    },
+    "ces fichiers" : {
+
+    },
+    "cet outil, cette session" : {
+
+    },
+    "cette session" : {
+
+    },
+    "cherche" : {
+
+    },
+    "cherche sur le web" : {
+
+    },
+    "créer" : {
+
+    },
+    "d MMM HH:mm" : {
+
+    },
+    "de l'orage" : {
+
+    },
+    "de la bruine" : {
+
+    },
+    "de la neige" : {
+
+    },
+    "de la pluie" : {
+
+    },
+    "des averses" : {
+
+    },
+    "des averses de neige" : {
+
+    },
+    "des éclaircies" : {
+
+    },
+    "du brouillard" : {
+
+    },
+    "du temps libre %@ : %@, le plus long créneau de %@ à %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "du temps libre %1$@ : %2$@, le plus long créneau de %3$@ à %4$@"
+          }
+        }
+      }
     },
     "désactivé" : {
 
     },
-    "et" : {
+    "en cours" : {
+
+    },
+    "en erreur" : {
+
+    },
+    "en visio" : {
+
+    },
+    "encore %@ rendez-vous aujourd'hui, le prochain c'est %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "encore %1$@ rendez-vous aujourd'hui, le prochain c'est %2$@"
+          }
+        }
+      }
+    },
+    "encore un rendez-vous aujourd'hui : %@" : {
+
+    },
+    "entre %lld h et %lld h" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "entre %1$lld h et %2$lld h"
+          }
+        }
+      }
+    },
+    "et écris-nous si tu as une question." : {
 
     },
     "ghp_…" : {
 
     },
-    "heure" : {
+    "hier" : {
 
     },
-    "heures" : {
+    "il manque l'emplacement ou le contenu" : {
+
+    },
+    "il me faut l'heure de début de l'événement" : {
+
+    },
+    "il me faut le fichier et le texte à ajouter" : {
+
+    },
+    "il me faut le jour exact de l'événement" : {
+
+    },
+    "il me faut un titre d'une ligne" : {
+
+    },
+    "il me faut un titre d'une ligne, de %lld caractères au plus" : {
+
+    },
+    "je n'ai pas accès %@, autorise Yumi dans Réglages Système, Confidentialité et sécurité" : {
+
+    },
+    "je n'ai pas le droit d'écrire dans %@" : {
+
+    },
+    "je n'ajoute qu'aux fichiers que j'ai créés moi-même, et %@ n'en fait pas partie" : {
+
+    },
+    "je ne crée des fichiers que dans Téléchargements, sur le Bureau ou dans Documents, pas dans %@" : {
+
+    },
+    "je ne peux pas lire %@" : {
+
+    },
+    "je ne peux pas écrire dans %@" : {
+
+    },
+    "je ne regarde pas plus loin que %@ jours" : {
+
+    },
+    "je ne sais pas de quel fichier il s'agit" : {
+
+    },
+    "je ne trouve pas de calendrier par défaut" : {
+
+    },
+    "je ne trouve pas de liste par défaut dans Rappels" : {
+
+    },
+    "l'ajout dans %@ a échoué" : {
+
+    },
+    "l'emplacement doit être dans Téléchargements, sur le Bureau ou dans Documents" : {
+
+    },
+    "l'heure doit s'écrire HH:mm" : {
+
+    },
+    "l'écriture de %@ a échoué (%@ %lld)" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "l'écriture de %1$@ a échoué (%2$@ %3$lld)"
+          }
+        }
+      }
+    },
+    "l'événement enregistré s'appelle « %@ », pas « %@ »" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "l'événement enregistré s'appelle « %1$@ », pas « %2$@ »"
+          }
+        }
+      }
+    },
+    "l'événement « %@ »" : {
+
+    },
+    "l'événement « %@ » a des invités" : {
+
+    },
+    "l'événement « %@ » n'a pas les heures demandées" : {
+
+    },
+    "l'événement « %@ » n'est pas dans ton calendrier" : {
+
+    },
+    "la date doit s'écrire AAAA-MM-JJ" : {
+
+    },
+    "la durée doit être entre 5 minutes et 12 heures" : {
+
+    },
+    "la fin de %@ ne contient pas le texte ajouté" : {
+
+    },
+    "la réponse est une liste" : {
+
+    },
+    "la réponse est vide" : {
+
+    },
+    "lance" : {
+
+    },
+    "lance un agent" : {
+
+    },
+    "le Focus dure %lld minutes, pas %lld" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "le Focus dure %1$lld minutes, pas %2$lld"
+          }
+        }
+      }
+    },
+    "le Focus n'a pas démarré" : {
+
+    },
+    "le Focus n'est pas au début de sa session" : {
+
+    },
+    "le Focus ne tourne pas" : {
+
+    },
+    "le contenu dépasse %lld Ko" : {
+
+    },
+    "le disque est plein" : {
+
+    },
+    "le dossier %@ n'existe pas" : {
+
+    },
+    "le début de %@ a changé" : {
+
+    },
+    "le lieu doit tenir sur une ligne de %lld caractères au plus" : {
+
+    },
+    "le module Focus est coupé. Active-le dans mes réglages et redemande-moi" : {
+
+    },
+    "le projet" : {
+
+    },
+    "le rappel enregistré s'appelle « %@ », pas « %@ »" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "le rappel enregistré s'appelle « %1$@ », pas « %2$@ »"
+          }
+        }
+      }
+    },
+    "le rappel « %@ »" : {
+
+    },
+    "le rappel « %@ » n'a pas la date demandée" : {
+
+    },
+    "le rappel « %@ » n'est pas dans Rappels" : {
+
+    },
+    "le texte dépasse %lld caractères" : {
+
+    },
+    "le texte à ajouter est vide" : {
+
+    },
+    "limite atteinte" : {
+
+    },
+    "lit" : {
 
     },
     "macOS" : {
 
     },
-    "minute" : {
+    "macOS a refusé : %@" : {
 
     },
-    "minutes" : {
+    "macOS ne m'a pas encore donné accès à tes Rappels. Réponds « Autoriser » à sa question, ou autorise Yumi dans Réglages Système, Confidentialité et sécurité, Rappels, puis redemande-moi" : {
+
+    },
+    "macOS ne m'a pas encore donné accès à ton calendrier. Réponds « Autoriser » à sa question, ou autorise Yumi dans Réglages Système, Confidentialité et sécurité, Calendriers, puis redemande-moi" : {
+
+    },
+    "macOS ne me laisse pas accéder à %@. Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Fichiers et dossiers" : {
+
+    },
+    "macOS ne me laisse pas accéder à tes Rappels. Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Rappels" : {
+
+    },
+    "macOS ne me laisse pas accéder à ton calendrier. Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Calendriers" : {
+
+    },
+    "macOS ne me laisse pas lire %@. Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Fichiers et dossiers" : {
+
+    },
+    "met à jour ses tâches" : {
+
+    },
+    "modifie" : {
+
+    },
+    "modifie un notebook" : {
+
+    },
+    "moins d'une minute" : {
+
+    },
+    "où ?" : {
+
+    },
+    "plus aucun rendez-vous aujourd'hui" : {
+
+    },
+    "plus de temps libre %@" : {
+
+    },
+    "prêt" : {
+
+    },
+    "pull requests ouvertes" : {
 
     },
     "python3" : {
 
     },
+    "python3 manque : les sessions Claude Code ne s'afficheront pas dans l'encoche (Claude Code fonctionne normalement). Installe les outils de ligne de commande avec « xcode-select --install » dans le Terminal." : {
+
+    },
+    "quelque chose avec %@" : {
+
+    },
+    "refusé" : {
+
+    },
+    "regarde" : {
+
+    },
+    "rien à vérifier" : {
+
+    },
+    "récupère" : {
+
+    },
+    "session ouverte" : {
+
+    },
+    "sessions ouvertes" : {
+
+    },
+    "ta review" : {
+
+    },
+    "terminée" : {
+
+    },
+    "ton calendrier par défaut n'accepte pas de nouvel événement" : {
+
+    },
+    "ton calendrier par défaut, %@, n'accepte pas de nouvel événement" : {
+
+    },
+    "tu as refusé une étape, je l'ai laissée" : {
+
+    },
+    "un Focus tourne déjà, encore %@. Je ne le remplace pas" : {
+
+    },
+    "un ciel changeant" : {
+
+    },
+    "un ciel couvert" : {
+
+    },
+    "un ciel dégagé" : {
+
+    },
+    "un fichier touché" : {
+
+    },
+    "un grand soleil" : {
+
+    },
+    "un rappel%@ : %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "un rappel%1$@ : %2$@"
+          }
+        }
+      }
+    },
+    "une fois" : {
+
+    },
+    "une session dure entre %lld et %lld minutes" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "une session dure entre %1$lld et %2$lld minutes"
+          }
+        }
+      }
+    },
+    "une étape facultative a été laissée" : {
+
+    },
+    "vingt-cinq minutes" : {
+
+    },
+    "yumi : écrit les tests" : {
+
+    },
+    "~/.claude/settings.json n'est pas un JSON valide. Corrige-le (ou supprime-le s'il est vide), puis réessaie : je n'y ai pas touché." : {
+
+    },
+    "~/.claude/settings.json ne contient pas un objet JSON. Je n'y ai pas touché." : {
+
+    },
+    "« %@ » n'est pas un nom de fichier utilisable" : {
+
+    },
+    "« %@ » n'est pas une date (AAAA-MM-JJ)" : {
+
+    },
+    "« %@ » n'est pas une date précise (AAAA-MM-JJ)" : {
+
+    },
+    "« %@ » n'est pas une date que je comprends" : {
+
+    },
+    "« %@ » n'est pas une heure (HH:mm)" : {
+
+    },
+    "« %@ » n'existe pas dans le calendrier" : {
+
+    },
+    "« Quand ça compte » : quelques fois par jour au plus. « Volontiers » : aussi pour dire bonjour." : {
+
+    },
+    "À mettre à jour" : {
+
+    },
+    "À propos" : {
+
+    },
+    "À tout à l'heure" : {
+
+    },
+    "À tout à l'heure, %@" : {
+
+    },
+    "Ça a planté : %@" : {
+
+    },
+    "Ça a planté sur %@. Tu veux voir où ?" : {
+
+    },
+    "Ça a planté." : {
+
+    },
+    "Ça a planté. Tu veux voir où ?" : {
+
+    },
+    "Ça a pris trop de temps. Je ne sais pas si c'est fait : regarde avant de me redemander." : {
+
+    },
+    "Ça a échoué : %@" : {
+
+    },
+    "Ça n'a pas marché." : {
+
+    },
+    "Ça retire aussi %lld anciens hooks de Coucou." : {
+
+    },
+    "Ça retire aussi un ancien hook de Coucou." : {
+
+    },
+    "Ça s'est arrêté avant que je réponde. On réessaie ?" : {
+
+    },
+    "Ça se rouvre dans Réglages Système." : {
+
+    },
+    "Ça viendra en parlant. Je retiens ce qui compte, rien d'autre." : {
+
+    },
+    "Échec" : {
+
+    },
     "Écrire" : {
+
+    },
+    "Écris-moi un petit mot de bienvenue pour le site, et enregistre-le." : {
+
+    },
+    "Écrit" : {
+
+    },
+    "Écrit bienvenue.txt" : {
 
     },
     "État" : {
 
     },
+    "Événement" : {
+
+    },
     "Île" : {
 
     },
+    "à brancher" : {
+
+    },
+    "à l'instant" : {
+
+    },
+    "à tes rappels" : {
+
+    },
+    "à ton agenda" : {
+
+    },
+    "écrit" : {
+
+    },
+    "élevé" : {
+
+    },
+    "étoiles" : {
+
+    },
+    "… et %lld ligne%@ de plus" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "… et %1$lld ligne%2$@ de plus"
+          }
+        }
+      }
+    },
     "▍" : {
+
+    },
+    "✓ Répond." : {
+
+    },
+    "✗ Pas de réponse." : {
 
     }
   },

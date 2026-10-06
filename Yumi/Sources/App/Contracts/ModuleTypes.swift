@@ -127,7 +127,7 @@ enum ModuleCatalog {
               live: ModuleLive(text: loc("14:30 Point produit"), priority: ModuleLivePriority.ambient)),
         .init(id: "notes", name: "Notes", colorHex: "#F2C744", status: "3", title: loc("Dernière note"), subtitle: loc("Idée : mode nuit pour Yumi"), primaryAction: loc("Nouvelle note"), secondaryAction: loc("Tout voir")),
         .init(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "18:42", title: loc("Focus en cours"), subtitle: loc("Session 2 sur 4, reste 18 min 42"), primaryAction: loc("Pause"), secondaryAction: loc("Arrêter")),
-        .init(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: "lecture", title: loc("Lueur"), subtitle: loc("Halo Nord, Premières heures"), primaryAction: loc("Pause"), secondaryAction: loc("Suivant"),
+        .init(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: loc("lecture"), title: loc("Lueur"), subtitle: loc("Halo Nord, Premières heures"), primaryAction: loc("Pause"), secondaryAction: loc("Suivant"),
               live: ModuleLive(text: loc("Lueur · Halo Nord"), priority: ModuleLivePriority.activity, controls: [
                   ModuleControl(id: "primary", symbol: "pause.fill", label: loc("Pause")),
                   ModuleControl(id: "secondary", symbol: "forward.fill", label: loc("Suivant")),

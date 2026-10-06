@@ -66,8 +66,8 @@ struct AgentEvent: Identifiable, Equatable, Codable, Sendable {
         case .approvalExpired(let id): "\(id) not answered in time"
         case .verificationStarted: "Verification started"
         case .agentCompleted: "Agent completed"
-        case .agentFailed(let error): "Agent failed: \(error.message)"
-        case .agentCancelled(let reason): "Agent cancelled: \(reason.message)"
+        case .agentFailed(let error): loc("Agent failed: \(error.message)")
+        case .agentCancelled(let reason): loc("Agent cancelled: \(reason.message)")
         }
     }
 

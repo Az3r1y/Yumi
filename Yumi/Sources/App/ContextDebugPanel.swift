@@ -64,7 +64,7 @@ struct ContextDebugPanel: View {
         case .notGranted: return "Not readable"
         case .granted:
             guard let window = context.activeWindow else { return "None" }
-            return window.title.isEmpty ? (window.documentPath.map { ($0 as NSString).lastPathComponent } ?? "Untitled") : window.title
+            return window.title.isEmpty ? (window.documentPath.map { ($0 as NSString).lastPathComponent } ?? loc("Untitled")) : window.title
         }
     }
 

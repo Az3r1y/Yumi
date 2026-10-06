@@ -57,7 +57,7 @@ enum ClaudeSessions {
         snapshot.title = phrase(featured)
         snapshot.subtitle = FrenchText.sentenceStart(FrenchText.spelledCount(sessions.count, loc("session ouverte"), loc("sessions ouvertes"), feminine: true))
         if waiting == 1 { snapshot.subtitle += loc(", une t'attend") }
-        if waiting > 1 { snapshot.subtitle += ", \(FrenchText.spelled(waiting)) t'attendent" }
+        if waiting > 1 { snapshot.subtitle += loc(", \(FrenchText.spelled(waiting)) t'attendent") }
         snapshot.subtitle += "."
         switch SessionHost.kind(of: featured.origin) {
         case .editor:   snapshot.secondaryAction = loc("Ouvrir l'éditeur")
@@ -86,7 +86,7 @@ enum ClaudeSessions {
         if case .requestingPermission = session.activity { approval = true } else { approval = false }
         let text: String
         if let count {
-            text = approval ? "\(count) · accord sur \(name)" : "\(count) · \(name) t'attend"
+            text = approval ? "\(count) · accord sur \(name)" : loc("\(count) · \(name) t'attend")
         } else {
             text = approval ? loc("Claude veut ton accord sur \(name)") : loc("Claude t'attend sur \(name)")
         }
@@ -272,28 +272,28 @@ struct SessionBoard: Equatable, Sendable {
         case .requestingPermission(let request):
             row.state = .waiting
             row.label = loc("attend un accord")
-            row.detail = request.command.isEmpty ? "Demande \(request.tool)." : "Demande \(request.tool) : \(request.command)"
+            row.detail = request.command.isEmpty ? loc("Demande \(request.tool).") : loc("Demande \(request.tool) : \(request.command)")
         case .asking(let question):
             row.state = .waiting
             row.label = loc("attend ta réponse")
-            row.detail = question.text.isEmpty ? "A une question pour toi." : question.text
+            row.detail = question.text.isEmpty ? loc("A une question pour toi.") : question.text
         case .working(let tool):
             row.state = .busy
-            row.label = "travaille"
+            row.label = loc("travaille")
             row.detail = FrenchText.sentenceStart(ClaudeToolPhrase.sentence(tool))
         case .thinking:
             row.state = .busy
-            row.label = "travaille"
+            row.label = loc("travaille")
             row.detail = loc("Réfléchit.")
         case .idle:
             switch session.status {
             case .waitingForUser:
                 row.state = .waiting
                 row.label = loc("attend ta réponse")
-                row.detail = "T'attend."
+                row.detail = loc("T'attend.")
             case .running:
                 row.state = session.isTurnActive ? .busy : .neutral
-                row.label = session.isTurnActive ? "travaille" : "ouverte"
+                row.label = session.isTurnActive ? loc("travaille") : loc("ouverte")
                 row.detail = session.isTurnActive ? loc("Avance.") : loc("Attend ton message.")
             case .errored:
                 row.state = .failure

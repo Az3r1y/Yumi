@@ -116,7 +116,7 @@ enum TodayPhrase {
 
     static func reply(_ facts: TodayFacts, day: Date, now: Date, freeTime: Bool, calendar: Calendar = .current) -> String {
         let isToday = calendar.isDate(day, inSameDayAs: now)
-        let label = isToday ? "aujourd'hui" : dayLabel(day, now: now, calendar: calendar)
+        let label = isToday ? loc("aujourd'hui") : dayLabel(day, now: now, calendar: calendar)
         let first = [agenda(facts.events, label: label, isToday: isToday, calendar: calendar),
                      reminders(facts.reminders, label: isToday ? nil : label)].compactMap { $0 }
         var sentences: [String] = []
@@ -194,7 +194,7 @@ enum TodayPhrase {
     }
 
     private static func oneLine(_ text: String) -> String {
-        ApprovalRequest.oneLine(text, limit: 60) ?? "sans titre"
+        ApprovalRequest.oneLine(text, limit: 60) ?? loc("sans titre")
     }
 }
 

@@ -53,7 +53,7 @@ enum IslandStudio {
     static let name = "Alex"
 
     static func modules(musicPlaying: Bool = true) -> [ModuleSnapshot] {
-        var music = ModuleSnapshot(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: "lecture",
+        var music = ModuleSnapshot(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: loc("lecture"),
                                    title: loc("Lueur"), subtitle: loc("Halo Nord"), primaryAction: loc("Pause"), secondaryAction: loc("Suivant"))
         music.symbol = "music.note"
         music.primarySymbol = "pause.fill"
@@ -118,37 +118,37 @@ enum IslandStudio {
         guard let index = all.firstIndex(where: { $0.id == "claude-code" }) else { return all }
         let now = Date.now
         var claude = all[index]
-        let atelier = ModuleRow(id: "s2", title: "atelier", detail: loc("Modifie Accueil.swift"), state: .busy,
-                                label: "travaille", date: now.addingTimeInterval(-720), action: "s2")
+        let atelier = ModuleRow(id: "s2", title: loc("atelier"), detail: loc("Modifie Accueil.swift"), state: .busy,
+                                label: loc("travaille"), date: now.addingTimeInterval(-720), action: "s2")
         switch moment {
         case .working:
-            claude.status = "1 session"
+            claude.status = loc("1 session")
             claude.title = loc("Claude modifie Accueil.swift sur atelier.")
             claude.subtitle = loc("Une session ouverte.")
             claude.rows = [atelier]
         case .waiting:
-            claude.status = "3 sessions"
+            claude.status = loc("3 sessions")
             claude.title = loc("Claude veut ton accord sur api. Je laisse passer ?")
             claude.subtitle = loc("Trois sessions ouvertes, une t'attend.")
             claude.needsAttention = true
             claude.live = ModuleLive(text: loc("3 sessions · accord sur api"), priority: ModuleLivePriority.attention,
                                      controls: [ModuleControl(id: "primary", symbol: "eye.fill", label: loc("Voir"))])
             claude.rows = [
-                ModuleRow(id: "s1", title: "api", detail: loc("Demande Bash : npm test"), state: .waiting,
+                ModuleRow(id: "s1", title: loc("api"), detail: loc("Demande Bash : npm test"), state: .waiting,
                           label: loc("attend un accord"), date: now.addingTimeInterval(-40), action: "s1"),
                 atelier,
-                ModuleRow(id: "s3", title: "site", detail: loc("C'est passé."), state: .success,
+                ModuleRow(id: "s3", title: loc("site"), detail: loc("C'est passé."), state: .success,
                           label: loc("terminée"), date: now.addingTimeInterval(-120), action: "s3"),
             ]
         case .answered:
-            claude.status = "3 sessions"
+            claude.status = loc("3 sessions")
             claude.title = loc("C'est passé sur api.")
             claude.subtitle = loc("Trois sessions ouvertes.")
             claude.rows = [
-                ModuleRow(id: "s1", title: "api", detail: loc("C'est passé."), state: .success,
+                ModuleRow(id: "s1", title: loc("api"), detail: loc("C'est passé."), state: .success,
                           label: loc("terminée"), date: now, action: "s1"),
                 atelier,
-                ModuleRow(id: "s3", title: "site", detail: loc("C'est passé."), state: .success,
+                ModuleRow(id: "s3", title: loc("site"), detail: loc("C'est passé."), state: .success,
                           label: loc("terminée"), date: now.addingTimeInterval(-120), action: "s3"),
             ]
         }
@@ -222,7 +222,7 @@ enum IslandStudio {
         state.isPinned = false
         state.stateOverride = .idle
         if let i = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) {
-            state.tasks[i].name = "atelier"
+            state.tasks[i].name = loc("atelier")
             state.tasks[i].steps = ["Lit · README.md", "Modifie · Accueil.swift", loc("Exécute · swift test")]
         }
         IslandModel.shared.studioPress = false
@@ -433,7 +433,7 @@ enum IslandStudio {
             after(4.5) {
                 // The approval is the one of the api session
                 if let i = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) {
-                    state.tasks[i].name = "api"
+                    state.tasks[i].name = loc("api")
                     state.tasks[i].steps = ["Exécute · npm test"]
                 }
                 state.stateOverride = .approval

@@ -66,7 +66,7 @@ enum RemarkAction: String, Codable, Sendable {
     /// Bring forward the application the agent's session runs in.
     case openSession
 
-    var label: String { self == .takeBreak ? "Pause" : "Voir" }
+    var label: String { self == .takeBreak ? loc("Pause") : loc("Voir") }
 }
 
 /// Everything around the moment, given by the caller so that nothing here reads a clock or the Mac.
@@ -321,14 +321,14 @@ enum InitiativePhrases {
                     Variant(key: "gh.fork.3", text: loc("Un fork de \(repo), par \(event.actor). Quelqu'un s'y met."), mood: .happy),
                 ]
             case .release:
-                let name = event.detail.isEmpty ? "Une version de \(repo)" : event.detail
+                let name = event.detail.isEmpty ? loc("Une version de \(repo)") : event.detail
                 return [
                     Variant(key: "gh.release.1", text: loc("\(name) est sortie. C'est dehors."), mood: .happy),
                     Variant(key: "gh.release.2", text: loc("\(name) est en ligne\(comma)."), mood: .happy),
                     Variant(key: "gh.release.3", text: loc("\(name) est partie. Je m'incline."), mood: .wink),
                 ]
             default:
-                let what = event.detail.isEmpty ? "sur \(repo)" : ": \(event.detail)"
+                let what = event.detail.isEmpty ? loc("sur \(repo)") : loc(": \(event.detail)")
                 return [
                     Variant(key: "gh.merge.1", text: loc("C'est fusionné \(what)."), mood: .happy),
                     Variant(key: "gh.merge.2", text: loc("Une pull request de moins sur \(repo). C'est dans la branche."), mood: .happy),

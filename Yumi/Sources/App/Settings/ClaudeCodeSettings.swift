@@ -19,7 +19,7 @@ struct ClaudeCodeSettings: View {
             Section {
                 LabeledContent("python3") {
                     HStack {
-                        SettingsStatus(text: python ? "Présent" : loc("Absent"), tone: python ? .ok : .warning)
+                        SettingsStatus(text: python ? loc("Présent") : loc("Absent"), tone: python ? .ok : .warning)
                         if !python {
                             Button("Installer") { installTools() }
                         }

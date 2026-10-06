@@ -11,4 +11,4 @@ done
 objroot=$(xcodebuild -scheme Yumi -configuration Debug -showBuildSettings 2>/dev/null | awk '/ OBJROOT /{print $3}')
 files=(${(f)"$(find "$objroot" -name '*.stringsdata' -path '*Debug*' | grep -v '/YumiTests.build/')"})
 xcrun xcstringstool sync Sources/App/Localization/Localizable.xcstrings --stringsdata $files
-echo "$(xcrun xcstringstool print Sources/App/Localization/Localizable.xcstrings | grep -c '^Key') keys"
+python3 -c "import json;print(len(json.load(open(\"Sources/App/Localization/Localizable.xcstrings\"))[\"strings\"]), \"keys\")"

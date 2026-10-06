@@ -154,17 +154,17 @@ enum WeatherSummary {
                 snapshot.primaryAction = loc("Ouvrir les réglages")
             } else {
                 snapshot.subtitle = loc("Dis-le-moi, je te donne le ciel d'ici.")
-                snapshot.primaryAction = "Autoriser"
+                snapshot.primaryAction = loc("Autoriser")
             }
         case .unavailable:
-            snapshot.status = "hors ligne"
+            snapshot.status = loc("hors ligne")
             snapshot.title = loc("Je n'arrive pas à voir le ciel.")
             snapshot.subtitle = loc("Je réessaie dans un moment.")
             snapshot.primaryAction = loc("Réessayer")
         case .ready(let report):
             let degrees = "\(Int(report.temperature.rounded()))°"
             snapshot.status = degrees
-            snapshot.title = "\(degrees) et \(sky(report.code))."
+            snapshot.title = loc("\(degrees) et \(sky(report.code)).")
             snapshot.subtitle = advice(report, now: now, calendar: calendar)
         }
         return snapshot

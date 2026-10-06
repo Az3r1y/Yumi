@@ -151,20 +151,20 @@ enum MusicSummary {
     }
 
     private static func plainSnapshot(_ playing: NowPlaying?, canControl: Bool, pausedFor: TimeInterval?) -> ModuleSnapshot {
-        var snapshot = ModuleSnapshot(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: "silence",
+        var snapshot = ModuleSnapshot(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: loc("silence"),
                                       title: loc("Pas de musique."), subtitle: loc("Lance un morceau, j'écoute avec toi."),
                                       primaryAction: loc("Ouvrir Musique"), secondaryAction: nil)
         guard let playing else { return snapshot }
 
-        snapshot.status = playing.isPlaying ? "lecture" : "pause"
+        snapshot.status = playing.isPlaying ? loc("lecture") : loc("pause")
         snapshot.title = playing.title
         let credits = [playing.artist, playing.album].filter { !$0.isEmpty }
         snapshot.subtitle = credits.isEmpty ? playing.player.name : credits.joined(separator: ", ")
         if canControl {
-            snapshot.primaryAction = playing.isPlaying ? "Pause" : "Lecture"
-            snapshot.secondaryAction = "Suivant"
+            snapshot.primaryAction = playing.isPlaying ? loc("Pause") : loc("Lecture")
+            snapshot.secondaryAction = loc("Suivant")
         } else {
-            snapshot.primaryAction = "Ouvrir \(playing.player.name)"
+            snapshot.primaryAction = loc("Ouvrir \(playing.player.name)")
         }
         snapshot.live = live(playing, canControl: canControl, pausedFor: pausedFor)
         return snapshot

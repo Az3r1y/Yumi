@@ -100,7 +100,7 @@ struct SettingsActivity: View {
             }
             .riseIn(4)
             row(loc("Ce que je sais de toi")) {
-                TextButton(label: state.memory.isEmpty ? "Voir" : "Voir (\(state.memory.count))") { IslandActions.go(.memory) }
+                TextButton(label: state.memory.isEmpty ? loc("Voir") : loc("Voir (\(state.memory.count))")) { IslandActions.go(.memory) }
             }
             .riseIn(3)
             row("Yumi \(YumiUpdates.installed)") {

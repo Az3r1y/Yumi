@@ -46,11 +46,11 @@ struct ContextEvent: Identifiable, Equatable, Codable, Sendable {
         case .sessionStarted: loc("Session started")
         case .sessionEnded(let duration): loc("Session ended after \(ContextFormat.duration(duration))")
         case .applicationChanged(_, let to): "→ \(to.name)"
-        case .windowChanged(_, let to): "Window: \(to.map { $0.title.isEmpty ? "untitled" : $0.title } ?? "none")"
+        case .windowChanged(_, let to): loc("Window: \(to.map { $0.title.isEmpty ? "untitled" : $0.title } ?? "none")")
         case .applicationLaunched(let app): "Launched \(app.name)"
         case .applicationQuit(let app): "Quit \(app.name)"
         case .system(let signal): signal.rawValue
-        case .permissionChanged(let status): "Accessibility \(status.rawValue)"
+        case .permissionChanged(let status): loc("Accessibility \(status.rawValue)")
         case .facetChanged(let kind): "\(kind.rawValue) changed"
         }
     }

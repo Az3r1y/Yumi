@@ -53,7 +53,7 @@ struct ContextActivityShare: Equatable, Codable, Sendable {
     /// 0 to 1.
     var share: Double
 
-    var label: String { category?.label ?? "Other" }
+    var label: String { category?.label ?? loc("Other") }
 }
 
 /// What Yumi does with the context, as far as the character is concerned. He only looks:
