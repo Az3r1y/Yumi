@@ -249,3 +249,45 @@ private func providers(answering text: String, wire: Wire) -> [any LLMProvider] 
         #expect(Engine.openai.disclosure.contains("Facturé par OpenAI"))
     }
 }
+
+@Suite struct GeminiModelTests {
+    /// Answers by path: 404 for the retired model, the list, then an answer for the new one.
+    private func google(wire: Wire) -> HTTPTransport {
+        { request in
+            wire.add(request)
+            let path = request.url?.absoluteString ?? ""
+            let (status, body): (Int, String)
+            if path.contains("gemini-2.5-flash:generateContent") {
+                (status, body) = (404, #"{"error": {"code": 404, "status": "NOT_FOUND"}}"#)
+            } else if path.contains("/models?") {
+                (status, body) = (200, #"{"models": [{"name": "models/text-embedding-004", "supportedGenerationMethods": ["embedContent"]}, {"name": "models/gemini-3-flash", "supportedGenerationMethods": ["generateContent"]}, {"name": "models/gemini-3-pro", "supportedGenerationMethods": ["generateContent"]}]}"#)
+            } else if path.contains("gemini-3-flash:generateContent") {
+                (status, body) = (200, geminiAnswer("hello"))
+            } else {
+                (status, body) = (500, "")
+            }
+            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!)
+        }
+    }
+
+    @Test func aRetiredModelIsReplacedByOneTheKeyCanUse() async throws {
+        let wire = Wire()
+        let provider = GeminiLLMProvider(apiKey: { "gm-key" }, transport: google(wire: wire))
+        #expect(try await provider.complete(request).text == "hello")
+        #expect(wire.all.count == 3)
+        #expect(wire.all.allSatisfy { !($0.url?.absoluteString.contains("gm-key") ?? true) })
+    }
+
+    @Test func anInvalidKeyIsSaidAsSuch() async {
+        let body = #"{"error": {"code": 400, "status": "INVALID_ARGUMENT", "details": [{"reason": "API_KEY_INVALID"}]}}"#
+        let provider = GeminiLLMProvider(apiKey: { "bad" }, transport: reply(400, body, wire: Wire()))
+        await #expect(throws: LLMProviderError.failed("key refused (HTTP 400)")) { try await provider.complete(request) }
+    }
+
+    @Test func theChoiceIsAStableFlash() {
+        #expect(GeminiLLMProvider.pick(from: ["gemini-3-pro", "gemini-3-flash", "gemini-3-flash-lite", "gemini-3.5-flash-preview"], excluding: "gemini-2.5-flash") == "gemini-3-flash")
+        #expect(GeminiLLMProvider.pick(from: ["gemini-3-pro"], excluding: "x") == "gemini-3-pro")
+        #expect(GeminiLLMProvider.pick(from: [], excluding: "x") == nil)
+        #expect(ChatPhrases.engineFailed("Gemini", reason: "model not found (HTTP 404)").contains("Change le modèle"))
+    }
+}
