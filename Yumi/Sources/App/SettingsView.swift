@@ -5,7 +5,6 @@ import AppKit
 struct SettingsView: View {
     @ObservedObject private var state = AppState.shared
     @AppStorage(IslandPrefs.workHabitKey) private var workHabit = YumiWorkHabit.current().rawValue
-    @State private var apiKey: String = KeychainStore.shared.get("anthropic-api-key") ?? ""
     @State private var launchAtStartup: Bool = (SMAppService.mainApp.status == .enabled)
     @State private var statusMessage: String = ""
     @State private var showDiff: Bool = false
@@ -51,18 +50,9 @@ struct SettingsView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
 
-                // MARK: API
-                GroupBox("Anthropic API") {
-                    VStack(alignment: .leading, spacing: 8) {
-                        SecureField("API key (sk-ant-…)", text: $apiKey)
-                            .textFieldStyle(.roundedBorder)
-                        Button("Save") {
-                            KeychainStore.shared.set("anthropic-api-key", value: apiKey)
-                            statusMessage = "✓ Key saved."
-                        }
-                        .buttonStyle(.borderedProminent)
-                    }
-                    .padding(6)
+                // MARK: Engines
+                GroupBox("Moteurs") {
+                    EnginesSettingsView()
                 }
 
                 // MARK: Hooks

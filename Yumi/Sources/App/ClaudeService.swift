@@ -116,7 +116,8 @@ final class ClaudeService {
 
     private let endpoint = URL(string: "https://api.anthropic.com/v1/messages")!
     private let anthropicVersion = "2023-06-01"
-    private let model = "claude-sonnet-4-6"
+    /// The Anthropic model of the settings (section Moteurs).
+    private var model: String { EngineSettings.load().model(.anthropic) ?? "claude-sonnet-4-6" }
 
     var apiKey: String? { KeychainStore.shared.get("anthropic-api-key") }
 
@@ -149,6 +150,7 @@ final class ClaudeService {
     func clearConversation(remember: Bool = true) {
         guard LaunchPlan.current.chat else { return }
         conversationMessages = []
+        providerConversation = []
         unseenTurns = []
         #if !APPSTORE
         if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.find() {
@@ -179,17 +181,70 @@ final class ClaudeService {
         // While filming the chat is the island's to stage: nothing is launched, nothing is sent.
         guard LaunchPlan.current.chat else { return }
         if await runAsAgent(query: query, state: state) { return }
-        #if APPSTORE
-        await chatWithAPI(query: query, context: context, state: state)
-        #else
-        if let binary = ClaudeCLI.find() {
-            await chatWithClaudeCode(binary: binary, query: query, context: context, state: state)
-        } else if let key = apiKey, !key.isEmpty {
-            await chatWithAPI(query: query, context: context, state: state)
-        } else {
-            await showError(ChatPhrases.notInstalled, state: state)
+        // The engine of the settings, or the first available in their order (EngineSettings).
+        // Whichever answers, the chat has no tool that changes the Mac.
+        let settings = EngineSettings.load()
+        for engine in settings.sequence {
+            switch engine {
+            case .claudeCode:
+                #if !APPSTORE
+                if let binary = ClaudeCLI.find() {
+                    await chatWithClaudeCode(binary: binary, query: query, context: context, state: state)
+                    return
+                }
+                #endif
+            case .anthropic:
+                if let key = apiKey, !key.isEmpty {
+                    await chatWithAPI(query: query, context: context, state: state)
+                    return
+                }
+            case .openai, .gemini, .ollama:
+                if let provider = EngineFactory.provider(engine, settings),
+                   await chatWithProvider(provider, engine: engine, query: query, context: context, state: state) {
+                    return
+                }
+            }
         }
-        #endif
+        await showError(settings.choice == nil ? ChatPhrases.noEngine : ChatPhrases.chosenEngineMissing(settings.choice!.label), state: state)
+    }
+
+    // MARK: - Chat through another engine
+
+    /// The conversation with OpenAI, Gemini or Ollama: text only, no tool of any kind.
+    private var providerConversation: [LLMMessage] = []
+
+    /// One turn with a provider. False when it is not configured (the next engine is tried);
+    /// any other failure is said to the person.
+    private func chatWithProvider(_ provider: any LLMProvider, engine: Engine, query: String,
+                                  context: PromptContext?, state: AppState) async -> Bool {
+        let attached = providerConversation.isEmpty ? Self.chatContext(from: context) : nil
+        let message = LLMMessage(role: .user, content: ChatPhrases.message(query: query, context: attached))
+        let system = ChatPhrases.engineSystemPrompt(characterName: AppIdentity.characterName)
+            + (memory.map { "\n\n" + MemoryPrompt.knowledge($0.book) + "\n\n" + MemoryNotes.instructions } ?? "")
+        let request = LLMRequest(system: system, messages: providerConversation + [message], expectsJSON: false, maxOutputTokens: 1500)
+        do {
+            let answer = try await provider.complete(request)
+            let (visible, learnt) = MemoryNotes.extract(from: answer.text)
+            if !learnt.isEmpty { memory?.change { MemoryNotes.apply(learnt, to: &$0) } }
+            guard !visible.isEmpty else {
+                await showError(ChatPhrases.noAnswer, state: state)
+                return true
+            }
+            providerConversation += [message, LLMMessage(role: .assistant, content: visible)]
+            state.chatHistory.append(ChatMessage(role: .assistant, content: visible))
+            state.stateOverride = nil
+            state.view = .prompt
+            NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
+            return true
+        } catch LLMProviderError.unavailable {
+            return false
+        } catch LLMProviderError.failed(let reason) {
+            await showError(ChatPhrases.engineFailed(engine.label, reason: reason), state: state)
+            return true
+        } catch {
+            await showError(ChatPhrases.network, state: state)
+            return true
+        }
     }
 
     // MARK: - Chat through the agent runtime
@@ -250,6 +305,7 @@ final class ClaudeService {
     /// An exchange the runtime answered joins the conversation the chat model keeps.
     private func remember(_ query: String, answeredWith text: String) {
         unseenTurns.append((query, text))
+        providerConversation += [LLMMessage(role: .user, content: query), LLMMessage(role: .assistant, content: text)]
         // The API conversation alternates user and assistant: the pair goes in whole.
         if (conversationMessages.last?["role"] as? String) != "user" {
             conversationMessages.append(["role": "user", "content": [["type": "text", "text": query]]])
@@ -539,6 +595,8 @@ final class ClaudeService {
         return .answered
     }
 
+    #endif
+
     private static func chatContext(from context: PromptContext?) -> ChatContext? {
         switch context {
         case .window(let app, let title, let url): return .window(app: app, title: title, url: url)
@@ -546,7 +604,6 @@ final class ClaudeService {
         case nil:                                  return nil
         }
     }
-    #endif
 
     // MARK: - Chat through the API (natural text + web search)
 
