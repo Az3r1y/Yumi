@@ -18,26 +18,28 @@ enum IslandAgent {
     /// "Claude modifie IslandRootView.swift": the current step, said the way Yumi says it.
     static func doing(_ state: AppState) -> String {
         switch state.effectiveState {
-        case .thinking:  return "Claude réfléchit"
-        case .searching: return "Claude cherche"
+        case .thinking:  return loc("Claude réfléchit")
+        case .searching: return loc("Claude cherche")
         default:
-            return state.focusTask?.steps.last.flatMap(sentence(forStep:)) ?? "Claude travaille"
+            return state.focusTask?.steps.last.flatMap(sentence(forStep:)) ?? loc("Claude travaille")
         }
     }
 
     /// "Modifie · IslandRootView.swift" → "Claude modifie IslandRootView.swift".
     /// The labels are the ones of HookServer.frenchStep.
     private static func sentence(forStep step: String) -> String? {
+        // The labels are localized the same way (ClaudeToolPhrase), so the step is read back in
+        // the language it was written in.
         let verbs: [String: String] = [
-            "Exécute": "lance", "Lit": "lit", "Écrit": "écrit", "Modifie": "modifie",
-            "Cherche": "cherche", "Recherche": "cherche", "Recherche web": "cherche sur le web",
-            "Récupère": "récupère", "Liste": "regarde", "Tâches": "met à jour ses tâches",
-            "Agent": "lance un agent", "Notebook": "modifie un notebook",
+            loc("Exécute"): loc("lance"), loc("Lit"): loc("lit"), loc("Écrit"): loc("écrit"), loc("Modifie"): loc("modifie"),
+            loc("Cherche"): loc("cherche"), loc("Recherche"): loc("cherche"), loc("Recherche web"): loc("cherche sur le web"),
+            loc("Récupère"): loc("récupère"), loc("Liste"): loc("regarde"), loc("Tâches"): loc("met à jour ses tâches"),
+            loc("Agent"): loc("lance un agent"), loc("Notebook"): loc("modifie un notebook"),
         ]
         let parts = step.components(separatedBy: " · ")
         guard let verb = verbs[parts[0]] else { return nil }
         let detail = parts.dropFirst().joined(separator: " · ")
-        return detail.isEmpty ? "Claude \(verb)" : "Claude \(verb) \(detail)"
+        return detail.isEmpty ? loc("Claude \(verb)") : loc("Claude \(verb) \(detail)")
     }
 
     /// "Depuis douze minutes, trois fichiers touchés. Je surveille."
@@ -45,8 +47,8 @@ enum IslandAgent {
         var parts: [String] = []
         if let start = model.workStart { parts.append("depuis \(Voice.duration(Date.now.timeIntervalSince(start)))") }
         if let files = Voice.files(model.filesTouched.count) { parts.append(files) }
-        if parts.isEmpty { return "Il vient de s'y mettre. Je surveille." }
-        return Voice.sentence(parts.joined(separator: ", ")) + ". Je surveille."
+        if parts.isEmpty { return loc("Il vient de s'y mettre. Je surveille.") }
+        return Voice.sentence(parts.joined(separator: ", ")) + loc(". Je surveille.")
     }
 
     /// "12 min": the key figure, read at a glance.
@@ -61,9 +63,9 @@ enum IslandAgent {
     /// "Trois fichiers touchés en douze minutes." He only says what he saw.
     static func finishedLine(_ state: AppState, _ model: IslandModel) -> String {
         if let files = Voice.files(model.filesTouched.count), let start = model.workStart {
-            return Voice.sentence("\(files) en \(Voice.duration((model.workEnd ?? .now).timeIntervalSince(start))).")
+            return Voice.sentence(loc("\(files) en \(Voice.duration((model.workEnd ?? .now).timeIntervalSince(start)))."))
         }
-        return state.focusTask?.steps.last ?? "La session est terminée."
+        return state.focusTask?.steps.last ?? loc("La session est terminée.")
     }
 }
 
@@ -252,14 +254,14 @@ enum IslandActions {
     /// "Résumer": the file he was given, or failing that the window the user was in.
     static func summarize() {
         if let file = state.droppedFile {
-            send("Résume-moi \(file.name) en trois points")
+            send(loc("Résume-moi \(file.name) en trois points"))
             return
         }
         #if !APPSTORE
         if let context = WindowContextCapture.captureActive(from: state.lastExternalApp) {
             newConversation()
             state.promptContext = context
-            send("Résume-moi cette fenêtre en trois points")
+            send(loc("Résume-moi cette fenêtre en trois points"))
             return
         }
         #endif

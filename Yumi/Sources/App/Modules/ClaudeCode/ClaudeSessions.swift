@@ -25,18 +25,18 @@ enum ClaudeSessions {
     static func phrase(_ session: Session) -> String {
         let project = projectName(session)
         switch session.activity {
-        case .requestingPermission: return "Claude veut ton accord sur \(project). Je laisse passer ?"
-        case .asking:               return "Claude a une question pour toi sur \(project)."
-        case .working(let tool):    return "Claude \(ClaudeToolPhrase.sentence(tool)) sur \(project)."
-        case .thinking:             return "Claude réfléchit sur \(project)."
+        case .requestingPermission: return loc("Claude veut ton accord sur \(project). Je laisse passer ?")
+        case .asking:               return loc("Claude a une question pour toi sur \(project).")
+        case .working(let tool):    return loc("Claude \(ClaudeToolPhrase.sentence(tool)) sur \(project).")
+        case .thinking:             return loc("Claude réfléchit sur \(project).")
         case .idle:
             switch session.status {
-            case .rateLimited:    return "Claude a atteint sa limite sur \(project). On attend."
-            case .errored:        return "Ça a planté sur \(project). Tu veux voir où ?"
-            case .completed:      return "C'est passé sur \(project)."
-            case .waitingForUser: return "Claude t'attend sur \(project)."
-            case .running:        return session.isTurnActive ? "Claude avance sur \(project). Je surveille."
-                                                              : "Claude attend ton message sur \(project)."
+            case .rateLimited:    return loc("Claude a atteint sa limite sur \(project). On attend.")
+            case .errored:        return loc("Ça a planté sur \(project). Tu veux voir où ?")
+            case .completed:      return loc("C'est passé sur \(project).")
+            case .waitingForUser: return loc("Claude t'attend sur \(project).")
+            case .running:        return session.isTurnActive ? loc("Claude avance sur \(project). Je surveille.")
+                                                              : loc("Claude attend ton message sur \(project).")
             }
         }
     }
@@ -47,22 +47,22 @@ enum ClaudeSessions {
 
     private static func plainSnapshot(_ sessions: [Session]) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "claude-code", name: "Claude Code", colorHex: "#FFB547",
-                                      status: "au repos", title: "Personne ne code en ce moment.",
-                                      subtitle: "Lance Claude Code, je regarderai.",
-                                      primaryAction: "Voir", secondaryAction: nil)
+                                      status: loc("au repos"), title: loc("Personne ne code en ce moment."),
+                                      subtitle: loc("Lance Claude Code, je regarderai."),
+                                      primaryAction: loc("Voir"), secondaryAction: nil)
         guard let featured = sessions.first else { return snapshot }
 
         let waiting = sessions.filter { $0.status == .waitingForUser }.count
         snapshot.status = FrenchText.count(sessions.count, "session", "sessions")
         snapshot.title = phrase(featured)
-        snapshot.subtitle = FrenchText.sentenceStart(FrenchText.spelledCount(sessions.count, "session ouverte", "sessions ouvertes", feminine: true))
-        if waiting == 1 { snapshot.subtitle += ", une t'attend" }
+        snapshot.subtitle = FrenchText.sentenceStart(FrenchText.spelledCount(sessions.count, loc("session ouverte"), loc("sessions ouvertes"), feminine: true))
+        if waiting == 1 { snapshot.subtitle += loc(", une t'attend") }
         if waiting > 1 { snapshot.subtitle += ", \(FrenchText.spelled(waiting)) t'attendent" }
         snapshot.subtitle += "."
         switch SessionHost.kind(of: featured.origin) {
-        case .editor:   snapshot.secondaryAction = "Ouvrir l'éditeur"
-        case .terminal: snapshot.secondaryAction = "Ouvrir le terminal"
-        case .other:    snapshot.secondaryAction = "Ouvrir la session"
+        case .editor:   snapshot.secondaryAction = loc("Ouvrir l'éditeur")
+        case .terminal: snapshot.secondaryAction = loc("Ouvrir le terminal")
+        case .other:    snapshot.secondaryAction = loc("Ouvrir la session")
         case nil:       break
         }
         snapshot.needsAttention = waiting > 0
@@ -79,7 +79,7 @@ enum ClaudeSessions {
         guard let session = sessions.first, session.status == .waitingForUser else {
             guard let count else { return nil }
             return ModuleLive(text: count, priority: ModuleLivePriority.ambient,
-                              controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])
+                              controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Voir"))])
         }
         let name = projectName(session)
         let approval: Bool
@@ -88,10 +88,10 @@ enum ClaudeSessions {
         if let count {
             text = approval ? "\(count) · accord sur \(name)" : "\(count) · \(name) t'attend"
         } else {
-            text = approval ? "Claude veut ton accord sur \(name)" : "Claude t'attend sur \(name)"
+            text = approval ? loc("Claude veut ton accord sur \(name)") : loc("Claude t'attend sur \(name)")
         }
         return ModuleLive(text: text, priority: ModuleLivePriority.attention,
-                          controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])
+                          controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Voir"))])
     }
 }
 
@@ -264,18 +264,18 @@ struct SessionBoard: Equatable, Sendable {
                             action: SessionHost.kind(of: session.origin) == nil ? nil : session.id.value)
         if entry.closed {
             row.state = .success
-            row.label = "terminée"
-            row.detail = "Session fermée."
+            row.label = loc("terminée")
+            row.detail = loc("Session fermée.")
             return row
         }
         switch session.activity {
         case .requestingPermission(let request):
             row.state = .waiting
-            row.label = "attend un accord"
+            row.label = loc("attend un accord")
             row.detail = request.command.isEmpty ? "Demande \(request.tool)." : "Demande \(request.tool) : \(request.command)"
         case .asking(let question):
             row.state = .waiting
-            row.label = "attend ta réponse"
+            row.label = loc("attend ta réponse")
             row.detail = question.text.isEmpty ? "A une question pour toi." : question.text
         case .working(let tool):
             row.state = .busy
@@ -284,29 +284,29 @@ struct SessionBoard: Equatable, Sendable {
         case .thinking:
             row.state = .busy
             row.label = "travaille"
-            row.detail = "Réfléchit."
+            row.detail = loc("Réfléchit.")
         case .idle:
             switch session.status {
             case .waitingForUser:
                 row.state = .waiting
-                row.label = "attend ta réponse"
+                row.label = loc("attend ta réponse")
                 row.detail = "T'attend."
             case .running:
                 row.state = session.isTurnActive ? .busy : .neutral
                 row.label = session.isTurnActive ? "travaille" : "ouverte"
-                row.detail = session.isTurnActive ? "Avance." : "Attend ton message."
+                row.detail = session.isTurnActive ? loc("Avance.") : loc("Attend ton message.")
             case .errored:
                 row.state = .failure
-                row.label = "en erreur"
-                row.detail = "Ça a planté."
+                row.label = loc("en erreur")
+                row.detail = loc("Ça a planté.")
             case .rateLimited:
                 row.state = .failure
-                row.label = "limite atteinte"
-                row.detail = "A atteint sa limite."
+                row.label = loc("limite atteinte")
+                row.detail = loc("A atteint sa limite.")
             case .completed:
                 row.state = .success
-                row.label = "terminée"
-                row.detail = "C'est passé."
+                row.label = loc("terminée")
+                row.detail = loc("C'est passé.")
             }
         }
         return row

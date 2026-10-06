@@ -9,10 +9,10 @@ enum Engine: String, CaseIterable, Codable, Sendable {
     var label: String {
         switch self {
         case .claudeCode: "Claude Code"
-        case .anthropic: "Anthropic (clé API)"
-        case .openai: "OpenAI (clé API)"
-        case .gemini: "Google Gemini (clé API)"
-        case .ollama: "Ollama (sur ce Mac)"
+        case .anthropic: loc("Anthropic (clé API)")
+        case .openai: loc("OpenAI (clé API)")
+        case .gemini: loc("Google Gemini (clé API)")
+        case .ollama: loc("Ollama (sur ce Mac)")
         }
     }
 
@@ -39,11 +39,11 @@ enum Engine: String, CaseIterable, Codable, Sendable {
     /// What leaves the Mac, and who bills it. Shown in the settings, as written in the README.
     var disclosure: String {
         switch self {
-        case .claudeCode: "Tes messages et les demandes de plan partent chez Anthropic par ton Claude Code, sous ton compte (abonnement ou facturation de ce compte)."
-        case .anthropic: "Tes messages et les demandes de plan partent chez Anthropic. Facturé par Anthropic à l'usage."
-        case .openai: "Tes messages et les demandes de plan partent chez OpenAI. Facturé par OpenAI à l'usage."
-        case .gemini: "Tes messages et les demandes de plan partent chez Google. Le palier gratuit suffit pour essayer ; au-delà, facturé par Google."
-        case .ollama: "Rien ne quitte ton Mac : le modèle tourne en local. Gratuit."
+        case .claudeCode: loc("Tes messages et les demandes de plan partent chez Anthropic par ton Claude Code, sous ton compte (abonnement ou facturation de ce compte).")
+        case .anthropic: loc("Tes messages et les demandes de plan partent chez Anthropic. Facturé par Anthropic à l'usage.")
+        case .openai: loc("Tes messages et les demandes de plan partent chez OpenAI. Facturé par OpenAI à l'usage.")
+        case .gemini: loc("Tes messages et les demandes de plan partent chez Google. Le palier gratuit suffit pour essayer ; au-delà, facturé par Google.")
+        case .ollama: loc("Rien ne quitte ton Mac : le modèle tourne en local. Gratuit.")
         }
     }
 }
@@ -105,19 +105,19 @@ enum EngineDetector {
         switch engine {
         case .claudeCode:
             return claudeCodeInstalled
-                ? EngineStatus(engine: engine, ready: true, detail: "Installé. La connexion se vérifie avec « Tester ».")
-                : EngineStatus(engine: engine, ready: false, detail: "Pas installé.")
+                ? EngineStatus(engine: engine, ready: true, detail: loc("Installé. La connexion se vérifie avec « Tester »."))
+                : EngineStatus(engine: engine, ready: false, detail: loc("Pas installé."))
         case .anthropic, .openai, .gemini:
             return hasKey(engine)
-                ? EngineStatus(engine: engine, ready: true, detail: "Clé enregistrée.")
-                : EngineStatus(engine: engine, ready: false, detail: "Pas de clé.")
+                ? EngineStatus(engine: engine, ready: true, detail: loc("Clé enregistrée."))
+                : EngineStatus(engine: engine, ready: false, detail: loc("Pas de clé."))
         case .ollama:
-            guard let models = ollamaModels else { return EngineStatus(engine: engine, ready: false, detail: "Ollama ne répond pas.") }
-            guard !models.isEmpty else { return EngineStatus(engine: engine, ready: false, detail: "Aucun modèle installé dans Ollama.") }
-            guard let chosen = ollamaModel?.nonEmptyTrimmed else { return EngineStatus(engine: engine, ready: false, detail: "Choisis un modèle.") }
+            guard let models = ollamaModels else { return EngineStatus(engine: engine, ready: false, detail: loc("Ollama ne répond pas.")) }
+            guard !models.isEmpty else { return EngineStatus(engine: engine, ready: false, detail: loc("Aucun modèle installé dans Ollama.")) }
+            guard let chosen = ollamaModel?.nonEmptyTrimmed else { return EngineStatus(engine: engine, ready: false, detail: loc("Choisis un modèle.")) }
             return models.contains(chosen)
-                ? EngineStatus(engine: engine, ready: true, detail: "Modèle \(chosen).")
-                : EngineStatus(engine: engine, ready: false, detail: "\(chosen) n'est pas installé dans Ollama.")
+                ? EngineStatus(engine: engine, ready: true, detail: loc("Modèle \(chosen)."))
+                : EngineStatus(engine: engine, ready: false, detail: loc("\(chosen) n'est pas installé dans Ollama."))
         }
     }
 

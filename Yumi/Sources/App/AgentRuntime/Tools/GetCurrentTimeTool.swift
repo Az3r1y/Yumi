@@ -7,7 +7,7 @@ struct GetCurrentTimeTool: Tool {
     var descriptor: ToolDescriptor {
         ToolDescriptor(
             id: "get_current_time",
-            name: "Current time",
+            name: loc("Current time"),
             description: "Returns the current date and time, with the time zone of this Mac.",
             inputSchema: .empty,
             risk: .none,

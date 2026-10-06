@@ -219,7 +219,7 @@ enum BotDemo {
         let host = NSHostingView(rootView: YumiGalleryView(model: model))
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 850),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
-        window.title = "Yumi : planche du personnage"
+        window.title = loc("Yumi : planche du personnage")
         window.contentView = host
         window.isReleasedWhenClosed = false
         window.center()

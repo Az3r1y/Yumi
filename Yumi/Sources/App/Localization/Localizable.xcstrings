@@ -1,0 +1,356 @@
+{
+  "sourceLanguage" : "fr",
+  "strings" : {
+    "" : {
+
+    },
+    " ▍" : {
+
+    },
+    "%@  %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@  %2$@"
+          }
+        }
+      }
+    },
+    "%@ %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ %2$@"
+          }
+        }
+      }
+    },
+    "%@ · %@%@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ · %2$@%3$@"
+          }
+        }
+      }
+    },
+    "%@, %@, %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@, %2$@, %3$@"
+          }
+        }
+      }
+    },
+    "%lld %%" : {
+
+    },
+    "%lld min" : {
+
+    },
+    "%lld. %@" : {
+      "localizations" : {
+        "fr" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld. %2$@"
+          }
+        }
+      }
+    },
+    "Actualiser les modèles" : {
+
+    },
+    "Afficher les outils de développeur" : {
+
+    },
+    "Agent" : {
+
+    },
+    "Annuler" : {
+
+    },
+    "Aucune décision." : {
+
+    },
+    "Automatique" : {
+
+    },
+    "Autoriser…" : {
+
+    },
+    "Brancher" : {
+
+    },
+    "Branché" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "Caractère" : {
+
+    },
+    "Ce que je fais sans te demander" : {
+
+    },
+    "Ce que je sais de toi" : {
+
+    },
+    "Ce que je vais écrire" : {
+
+    },
+    "Changer…" : {
+
+    },
+    "Check tools" : {
+
+    },
+    "Choisir…" : {
+
+    },
+    "Clé API" : {
+
+    },
+    "Colle ton jeton d'accès" : {
+
+    },
+    "Contexte" : {
+
+    },
+    "Demande-moi quelque chose" : {
+
+    },
+    "Dossier .claude" : {
+
+    },
+    "Effacer" : {
+
+    },
+    "Enregistrer" : {
+
+    },
+    "Envoyer un retour" : {
+
+    },
+    "Essayer plus tard" : {
+
+    },
+    "Essayer plus tôt" : {
+
+    },
+    "Fermer" : {
+
+    },
+    "GitHub" : {
+
+    },
+    "Hooks" : {
+
+    },
+    "Installer" : {
+
+    },
+    "J'oublie tout, ton prénom aussi ?" : {
+
+    },
+    "J'oublierai tout ce que tu m'as dit. Ça ne se rattrape pas." : {
+
+    },
+    "Jamais" : {
+
+    },
+    "Je lis l'heure et mon propre contexte sans te demander. Pour modifier, envoyer ou supprimer, je te demande d'abord. Rien d'ici ne remplace les autorisations de macOS." : {
+
+    },
+    "Je parle de moi-même" : {
+
+    },
+    "Jeton d'accès" : {
+
+    },
+    "Licences" : {
+
+    },
+    "Me prévenir des nouvelles versions" : {
+
+    },
+    "Mettre à jour" : {
+
+    },
+    "Modèle" : {
+
+    },
+    "Moteur" : {
+
+    },
+    "Nouvelle version" : {
+
+    },
+    "Observe the front application and window" : {
+
+    },
+    "Off while filming." : {
+
+    },
+    "Off." : {
+
+    },
+    "Open System Settings" : {
+
+    },
+    "Ouvrir Yumi au démarrage du Mac" : {
+
+    },
+    "Ouvrir l'île avec un raccourci" : {
+
+    },
+    "Pendant qu'un agent bosse" : {
+
+    },
+    "Quand ça compte" : {
+
+    },
+    "Raccourci" : {
+
+    },
+    "Regarder l'app au premier plan" : {
+
+    },
+    "Retirer" : {
+
+    },
+    "Retirer le jeton" : {
+
+    },
+    "Rien pour l'instant." : {
+
+    },
+    "Run" : {
+
+    },
+    "Réglages" : {
+
+    },
+    "Réglages…" : {
+
+    },
+    "Réinstaller" : {
+
+    },
+    "Script" : {
+
+    },
+    "Se cacher sans mouvement après" : {
+
+    },
+    "Se replier après" : {
+
+    },
+    "Show the model what is on screen (application, window, document name)" : {
+
+    },
+    "Son" : {
+
+    },
+    "Sons" : {
+
+    },
+    "Souvenirs" : {
+
+    },
+    "Stays on this Mac, in memory only. No screen capture, no keystrokes, nothing sent to a model." : {
+
+    },
+    "Test en cours…" : {
+
+    },
+    "Tester" : {
+
+    },
+    "Ton prénom" : {
+
+    },
+    "Tout effacer" : {
+
+    },
+    "Tout effacer de ma mémoire ?" : {
+
+    },
+    "Tout effacer…" : {
+
+    },
+    "Un bug, une idée" : {
+
+    },
+    "Voir" : {
+
+    },
+    "Voir et modifier dans l'île" : {
+
+    },
+    "Volontiers" : {
+
+    },
+    "Volume" : {
+
+    },
+    "What should Yumi do?" : {
+
+    },
+    "Window titles need the Accessibility permission." : {
+
+    },
+    "Works only when asked. Plans with Claude Code (no tools, your Claude Code login) or else the Anthropic key above; creating a file always asks first. What is on screen stays on the Mac unless you tick the box." : {
+
+    },
+    "activé" : {
+
+    },
+    "désactivé" : {
+
+    },
+    "et" : {
+
+    },
+    "ghp_…" : {
+
+    },
+    "heure" : {
+
+    },
+    "heures" : {
+
+    },
+    "macOS" : {
+
+    },
+    "minute" : {
+
+    },
+    "minutes" : {
+
+    },
+    "python3" : {
+
+    },
+    "Écrire" : {
+
+    },
+    "État" : {
+
+    },
+    "Île" : {
+
+    },
+    "▍" : {
+
+    }
+  },
+  "version" : "1.0"
+}

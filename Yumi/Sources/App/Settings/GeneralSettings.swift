@@ -45,7 +45,7 @@ struct GeneralSettings: View {
             } header: {
                 Text("Contexte")
             } footer: {
-                SettingsHelp("Je vois quelle app et quelle fenêtre tu utilises, pour parler à propos. Ça reste sur ce Mac, en mémoire : pas de capture d'écran, pas de frappe.")
+                SettingsHelp(loc("Je vois quelle app et quelle fenêtre tu utilises, pour parler à propos. Ça reste sur ce Mac, en mémoire : pas de capture d'écran, pas de frappe."))
             }
         }
     }
@@ -66,7 +66,7 @@ struct GeneralSettings: View {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             startupError = nil
         } catch {
-            startupError = "macOS a refusé : \(error.localizedDescription)"
+            startupError = loc("macOS a refusé : \(error.localizedDescription)")
             launchAtStartup = !on
         }
     }
@@ -109,7 +109,7 @@ struct YumiSettings: View {
             } header: {
                 Text("Caractère")
             } footer: {
-                SettingsHelp("« Quand ça compte » : quelques fois par jour au plus. « Volontiers » : aussi pour dire bonjour.")
+                SettingsHelp(loc("« Quand ça compte » : quelques fois par jour au plus. « Volontiers » : aussi pour dire bonjour."))
             }
         }
     }

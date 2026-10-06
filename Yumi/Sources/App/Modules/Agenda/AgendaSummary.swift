@@ -49,20 +49,20 @@ enum AgendaSummary {
     private static func plainSnapshot(events: [AgendaEvent], access: PermissionState, now: Date,
                                       calendar: Calendar) -> ModuleSnapshot {
         var snapshot = ModuleSnapshot(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "libre",
-                                      title: "Rien de prévu.", subtitle: "Ta journée est à toi.",
-                                      primaryAction: "Voir la journée", secondaryAction: nil)
+                                      title: loc("Rien de prévu."), subtitle: loc("Ta journée est à toi."),
+                                      primaryAction: loc("Voir la journée"), secondaryAction: nil)
         switch access {
         case .notDetermined:
-            snapshot.status = "à brancher"
-            snapshot.title = "Je ne vois pas ton agenda."
-            snapshot.subtitle = "Tu me l'ouvres ?"
+            snapshot.status = loc("à brancher")
+            snapshot.title = loc("Je ne vois pas ton agenda.")
+            snapshot.subtitle = loc("Tu me l'ouvres ?")
             snapshot.primaryAction = "Autoriser"
             return snapshot
         case .denied:
-            snapshot.status = "bloqué"
-            snapshot.title = "Ton agenda m'est fermé."
-            snapshot.subtitle = "Ça se rouvre dans Réglages Système."
-            snapshot.primaryAction = "Ouvrir les réglages"
+            snapshot.status = loc("bloqué")
+            snapshot.title = loc("Ton agenda m'est fermé.")
+            snapshot.subtitle = loc("Ça se rouvre dans Réglages Système.")
+            snapshot.primaryAction = loc("Ouvrir les réglages")
             return snapshot
         case .granted:
             break
@@ -73,21 +73,21 @@ enum AgendaSummary {
         let startsToday = calendar.isDate(event.start, inSameDayAs: now)
         let clock = FrenchText.clock(event.start, calendar: calendar)
         if event.start <= now {
-            snapshot.status = "en cours"
-            snapshot.title = "\(event.title) a commencé."
+            snapshot.status = loc("en cours")
+            snapshot.title = loc("\(event.title) a commencé.")
         } else if !startsToday {
             snapshot.title = "Demain, \(event.title)."
-            snapshot.subtitle = "Plus rien aujourd'hui"
+            snapshot.subtitle = loc("Plus rien aujourd'hui")
         } else if event.start.timeIntervalSince(now) < 3600 {
             snapshot.status = clock
             snapshot.title = "\(event.title) dans \(FrenchText.spokenMinutes(event.start.timeIntervalSince(now)))."
         } else {
             snapshot.status = clock
-            snapshot.title = "\(event.title) à \(clock)."
+            snapshot.title = loc("\(event.title) à \(clock).")
         }
 
         var details = ["\(clock) à \(FrenchText.clock(event.end, calendar: calendar))"]
-        if event.joinURL != nil { details.append("en visio") }
+        if event.joinURL != nil { details.append(loc("en visio")) }
         if !event.location.isEmpty && joinURL(in: [event.location]) == nil {
             details.append(event.location.split(whereSeparator: \.isNewline).first.map(String.init) ?? event.location)
         }
@@ -103,15 +103,15 @@ enum AgendaSummary {
             let upcoming = events.filter { !$0.isAllDay && $0.start > now && calendar.isDate($0.start, inSameDayAs: now) }
                 .min { $0.start < $1.start }
             let announced = upcoming ?? event
-            let join = ModuleControl(id: ModuleAction.primary.rawValue, symbol: "video.fill", label: "Rejoindre")
-            let text = announced.start <= now ? "\(announced.title), en cours"
+            let join = ModuleControl(id: ModuleAction.primary.rawValue, symbol: "video.fill", label: loc("Rejoindre"))
+            let text = announced.start <= now ? loc("\(announced.title), en cours")
                                               : "\(FrenchText.clock(announced.start, calendar: calendar)) \(announced.title)"
             snapshot.live = ModuleLive(text: text, priority: ModuleLivePriority.ambient,
                                        controls: announced == event && event.joinURL != nil ? [join] : [])
         }
 
         snapshot.primaryAction = event.joinURL != nil ? "Rejoindre" : "Ouvrir"
-        snapshot.secondaryAction = "Voir la journée"
+        snapshot.secondaryAction = loc("Voir la journée")
         let delay = event.start.timeIntervalSince(now)
         snapshot.needsAttention = delay <= soon && delay > -120
         return snapshot

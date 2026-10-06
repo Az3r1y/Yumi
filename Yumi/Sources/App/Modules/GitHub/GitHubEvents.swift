@@ -245,15 +245,15 @@ enum GitHubSummary {
         let repo = event.repoName
         switch event.kind {
         case .star:
-            return count > 1 ? "\(FrenchText.sentenceStart(FrenchText.spelled(count, feminine: true))) étoiles de plus sur \(repo)."
-                             : "Une étoile de plus, de la part de \(event.actor)."
-        case .fork:        return "\(event.actor) a forké \(repo)."
-        case .pullRequest: return event.detail.isEmpty ? "Une pull request arrive sur \(repo)." : "Une pull request arrive : \(event.detail)"
-        case .merge:       return event.detail.isEmpty ? "C'est fusionné sur \(repo)." : "C'est fusionné : \(event.detail)"
-        case .push:        return event.detail.isEmpty ? "Du code est parti sur \(repo)." : "Du code est parti sur \(event.detail)."
-        case .issue:       return event.detail.isEmpty ? "Une issue s'ouvre sur \(repo)." : "Une issue s'ouvre : \(event.detail)"
-        case .release:     return event.detail.isEmpty ? "Une version de \(repo) est sortie." : "\(event.detail) est sortie."
-        case .follower:    return count > 1 ? "\(FrenchText.sentenceStart(FrenchText.spelled(count))) personnes de plus te suivent." : "Quelqu'un de plus te suit."
+            return count > 1 ? loc("\(FrenchText.sentenceStart(FrenchText.spelled(count, feminine: true))) étoiles de plus sur \(repo).")
+                             : loc("Une étoile de plus, de la part de \(event.actor).")
+        case .fork:        return loc("\(event.actor) a forké \(repo).")
+        case .pullRequest: return event.detail.isEmpty ? loc("Une pull request arrive sur \(repo).") : loc("Une pull request arrive : \(event.detail)")
+        case .merge:       return event.detail.isEmpty ? loc("C'est fusionné sur \(repo).") : loc("C'est fusionné : \(event.detail)")
+        case .push:        return event.detail.isEmpty ? loc("Du code est parti sur \(repo).") : loc("Du code est parti sur \(event.detail).")
+        case .issue:       return event.detail.isEmpty ? loc("Une issue s'ouvre sur \(repo).") : loc("Une issue s'ouvre : \(event.detail)")
+        case .release:     return event.detail.isEmpty ? loc("Une version de \(repo) est sortie.") : loc("\(event.detail) est sortie.")
+        case .follower:    return count > 1 ? loc("\(FrenchText.sentenceStart(FrenchText.spelled(count))) personnes de plus te suivent.") : loc("Quelqu'un de plus te suit.")
         }
     }
 
@@ -266,21 +266,21 @@ enum GitHubSummary {
     static func snapshot(connection: Connection, repo: GitHubRepo?, openPulls: Int?, last: (event: GitHubEvent, count: Int)?,
                          review: GitHubReview?, pulls: [GitHubPull] = [], recent: [GitHubEvent] = [],
                          red: GitHubPull? = nil) -> ModuleSnapshot {
-        var snapshot = ModuleSnapshot(id: "github", name: "GitHub", colorHex: "#A371F7", status: "à brancher",
-                                      title: "Je ne vois pas ton GitHub.", subtitle: "Donne-moi un jeton, je surveille tes dépôts.",
-                                      primaryAction: "Brancher", secondaryAction: nil)
+        var snapshot = ModuleSnapshot(id: "github", name: "GitHub", colorHex: "#A371F7", status: loc("à brancher"),
+                                      title: loc("Je ne vois pas ton GitHub."), subtitle: loc("Donne-moi un jeton, je surveille tes dépôts."),
+                                      primaryAction: loc("Brancher"), secondaryAction: nil)
         switch connection {
         case .noToken:
             return snapshot.withSymbols("arrow.triangle.branch")
         case .refused:
-            snapshot.status = "refusé"
-            snapshot.title = "Ton jeton GitHub ne passe plus."
-            snapshot.subtitle = "Donne-m'en un neuf, je reprends ma garde."
+            snapshot.status = loc("refusé")
+            snapshot.title = loc("Ton jeton GitHub ne passe plus.")
+            snapshot.subtitle = loc("Donne-m'en un neuf, je reprends ma garde.")
             return snapshot.withSymbols("arrow.triangle.branch")
         case .offline:
             snapshot.status = "hors ligne"
-            snapshot.title = "Je n'arrive pas à joindre GitHub."
-            snapshot.subtitle = "Je réessaie dans un moment."
+            snapshot.title = loc("Je n'arrive pas à joindre GitHub.")
+            snapshot.subtitle = loc("Je réessaie dans un moment.")
             snapshot.primaryAction = "Ouvrir"
             return snapshot.withSymbols("arrow.triangle.branch")
         case .connected:
@@ -293,26 +293,26 @@ enum GitHubSummary {
             snapshot.subtitle = repo.fullName
         } else {
             snapshot.status = "…"
-            snapshot.subtitle = "Je regarde tes dépôts."
+            snapshot.subtitle = loc("Je regarde tes dépôts.")
         }
-        snapshot.title = last.map { sentence(for: $0.event, count: $0.count) } ?? "Rien de neuf. Je surveille."
+        snapshot.title = last.map { sentence(for: $0.event, count: $0.count) } ?? loc("Rien de neuf. Je surveille.")
         snapshot.primaryAction = "Ouvrir"
 
         if let review {
-            snapshot.title = review.title.isEmpty ? "Une pull request t'attend." : "Une pull request t'attend : \(review.title)"
+            snapshot.title = review.title.isEmpty ? loc("Une pull request t'attend.") : loc("Une pull request t'attend : \(review.title)")
             snapshot.primaryAction = "Relire"
             snapshot.needsAttention = true
             snapshot.live = ModuleLive(text: review.title.isEmpty ? "Une relecture t'attend" : "Relecture : \(review.title)",
                                        priority: ModuleLivePriority.attention,
-                                       controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Relire")])
+                                       controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Relire"))])
         }
         // Checks gone red come before everything: something is broken now.
         if let red {
-            snapshot.title = "La CI ne passe plus : \(red.title)"
+            snapshot.title = loc("La CI ne passe plus : \(red.title)")
             snapshot.primaryAction = "Voir"
             snapshot.needsAttention = true
-            snapshot.live = ModuleLive(text: "CI rouge : \(red.title)", priority: ModuleLivePriority.attention,
-                                       controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: "Voir")])
+            snapshot.live = ModuleLive(text: loc("CI rouge : \(red.title)"), priority: ModuleLivePriority.attention,
+                                       controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Voir"))])
         }
         snapshot.rows = GitHubBoard.rows(pulls: pulls, recent: recent)
         return snapshot.withSymbols("arrow.triangle.branch")
@@ -362,23 +362,23 @@ enum GitHubBoard {
                             date: pull.updated, section: section, action: pull.url?.absoluteString)
         switch pull.checks {
         case .failed:  row.state = .failure; row.label = "CI rouge"
-        case .running: row.state = .busy;    row.label = "CI en cours"
+        case .running: row.state = .busy;    row.label = loc("CI en cours")
         case .passed:  row.state = .success; row.label = "CI verte"
         case nil:      break
         }
         if pull.asksMyReview {
             row.state = .waiting
-            row.label = "ta review"
+            row.label = loc("ta review")
         }
         return row
     }
 
     private static func title(_ event: GitHubEvent) -> String {
         switch event.kind {
-        case .star:        return "Une étoile"
-        case .fork:        return "Un fork"
+        case .star:        return loc("Une étoile")
+        case .fork:        return loc("Un fork")
         case .follower:    return "Quelqu'un te suit"
-        case .push:        return event.detail.isEmpty ? "Du code poussé" : "Poussé sur \(event.detail)"
+        case .push:        return event.detail.isEmpty ? loc("Du code poussé") : loc("Poussé sur \(event.detail)")
         default:           return event.detail.isEmpty ? event.repoName : event.detail
         }
     }
@@ -392,7 +392,7 @@ enum GitHubBoard {
         case .push: return "push"
         case .issue: return "issue"
         case .release: return "version"
-        case .follower: return "abonné"
+        case .follower: return loc("abonné")
         }
     }
 

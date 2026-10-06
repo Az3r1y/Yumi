@@ -17,7 +17,7 @@ struct MemoryActivity: View {
 
     /// The groups, in the order of design/yumi/voix.md, each with its most recent line first.
     static func sections(_ entries: [MemoryEntry]) -> [(kind: MemoryEntry.Kind, title: String, entries: [MemoryEntry])] {
-        let titles: [(MemoryEntry.Kind, String)] = [(.person, "Toi"), (.project, "Tes projets"), (.thread, "Le fil")]
+        let titles: [(MemoryEntry.Kind, String)] = [(.person, loc("Toi")), (.project, loc("Tes projets")), (.thread, loc("Le fil"))]
         return titles.compactMap { kind, title in
             let lines = entries.filter { $0.kind == kind }.sorted { $0.date > $1.date }
             return lines.isEmpty ? nil : (kind, title, lines)
@@ -33,15 +33,15 @@ struct MemoryActivity: View {
 
             if knowsNothing {
                 VStack(alignment: .leading, spacing: 3) {
-                    ActTitle(text: "Je ne sais encore rien de toi.")
-                    ActSub(text: "Ça viendra en parlant. Je retiens ce qui compte, rien d'autre.")
+                    ActTitle(text: loc("Je ne sais encore rien de toi."))
+                    ActSub(text: loc("Ça viendra en parlant. Je retiens ce qui compte, rien d'autre."))
                 }
                 .riseIn(1)
             } else {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 8) {
                         if let name {
-                            group("Ton prénom") {
+                            group(loc("Ton prénom")) {
                                 Text(name)
                                     .font(IslandTheme.text(12.5, .medium))
                                     .foregroundStyle(IslandTheme.fg)
@@ -95,8 +95,8 @@ struct MemoryActivity: View {
                     .foregroundStyle(IslandTheme.fg)
                     .lineLimit(1)
                 Spacer(minLength: 0)
-                TextButton(label: "Non, garde") { confirming = false }
-                TextButton(label: "Oui, oublie") {
+                TextButton(label: loc("Non, garde")) { confirming = false }
+                TextButton(label: loc("Oui, oublie")) {
                     confirming = false
                     editing = nil
                     IslandActions.forgetEverything()
@@ -108,7 +108,7 @@ struct MemoryActivity: View {
                     .lineLimit(1)
                 Spacer(minLength: 0)
                 if !knowsNothing {
-                    TextButton(label: "Tout oublier") { confirming = true }
+                    TextButton(label: loc("Tout oublier")) { confirming = true }
                 }
             }
         }
@@ -134,7 +134,7 @@ struct MemoryActivity: View {
                 .focused($focused)
                 .onSubmit { keep(entry) }
                 .onExitCommand { editing = nil }
-            RoundButton(style: .white, symbol: "checkmark", label: "Garder", small: true) { keep(entry) }
+            RoundButton(style: .white, symbol: "checkmark", label: loc("Garder"), small: true) { keep(entry) }
         }
         .padding(.leading, 10)
         .padding(.trailing, 3)

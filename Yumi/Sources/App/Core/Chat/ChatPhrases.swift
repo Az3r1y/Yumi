@@ -58,19 +58,19 @@ enum ChatPhrases {
         let file = (tool.detail as NSString).lastPathComponent
         let command = short(tool.detail)
         switch (tool.name, outcome) {
-        case ("Write", .done):                     return "J'ai créé \(file)."
+        case ("Write", .done):                     return loc("J'ai créé \(file).")
         case ("Edit", .done), ("MultiEdit", .done), ("NotebookEdit", .done):
-                                                   return "J'ai modifié \(file)."
-        case ("Bash", .done):                      return "J'ai lancé : \(command)"
-        case ("WebSearch", .done):                 return "J'ai cherché sur le web : \(command)"
-        case ("WebFetch", .done):                  return "J'ai lu \(URL(string: tool.detail)?.host ?? command)."
-        case ("Bash", .failed):                    return "Ça a échoué : \(command)"
+                                                   return loc("J'ai modifié \(file).")
+        case ("Bash", .done):                      return loc("J'ai lancé : \(command)")
+        case ("WebSearch", .done):                 return loc("J'ai cherché sur le web : \(command)")
+        case ("WebFetch", .done):                  return loc("J'ai lu \(URL(string: tool.detail)?.host ?? command).")
+        case ("Bash", .failed):                    return loc("Ça a échoué : \(command)")
         case ("Write", .failed), ("Edit", .failed), ("MultiEdit", .failed), ("NotebookEdit", .failed):
-                                                   return "Je n'ai pas pu écrire \(file)."
-        case ("Bash", .refused):                   return "Tu as dit non : \(command)"
+                                                   return loc("Je n'ai pas pu écrire \(file).")
+        case ("Bash", .refused):                   return loc("Tu as dit non : \(command)")
         case ("Write", .refused), ("Edit", .refused), ("MultiEdit", .refused), ("NotebookEdit", .refused):
-                                                   return "Tu as dit non pour \(file)."
-        case (_, .refused):                        return "Tu as dit non : \(tool.name)"
+                                                   return loc("Tu as dit non pour \(file).")
+        case (_, .refused):                        return loc("Tu as dit non : \(tool.name)")
         default:                                   return nil
         }
     }
@@ -83,24 +83,24 @@ enum ChatPhrases {
     // MARK: Errors
 
     static let notInstalled = "Je ne trouve pas Claude Code. Installe-le avec « curl -fsSL https://claude.ai/install.sh | bash » dans le Terminal, puis lance « claude » une fois pour te connecter."
-    static let notLoggedIn = "Claude Code n'est pas connecté. Lance « claude » dans le Terminal, tape /login, et on reprend."
-    static let stopped = "Ça s'est arrêté avant que je réponde. On réessaie ?"
-    static let noAnswer = "Je n'ai rien trouvé à dire. Redemande-moi."
+    static let notLoggedIn = loc("Claude Code n'est pas connecté. Lance « claude » dans le Terminal, tape /login, et on reprend.")
+    static let stopped = loc("Ça s'est arrêté avant que je réponde. On réessaie ?")
+    static let noAnswer = loc("Je n'ai rien trouvé à dire. Redemande-moi.")
     static let refusedInNotch = "L'utilisateur a refusé cette action dans l'encoche. N'insiste pas."
-    static let noFolder = "Je n'arrive pas à créer le dossier où travailler."
-    static let noEngine = "Je n'ai aucun moteur pour réfléchir. Installe Claude Code (puis « claude » et /login), ou ajoute une clé Anthropic, OpenAI ou Gemini, ou lance Ollama : réglages, section Moteurs."
+    static let noFolder = loc("Je n'arrive pas à créer le dossier où travailler.")
+    static let noEngine = loc("Je n'ai aucun moteur pour réfléchir. Installe Claude Code (puis « claude » et /login), ou ajoute une clé Anthropic, OpenAI ou Gemini, ou lance Ollama : réglages, section Moteurs.")
     static func chosenEngineMissing(_ engine: String) -> String {
-        "\(engine) n'est pas prêt. Configure-le dans les réglages, section Moteurs, ou choisis « Automatique »."
+        loc("\(engine) n'est pas prêt. Configure-le dans les réglages, section Moteurs, ou choisis « Automatique ».")
     }
     static func engineFailed(_ engine: String, reason: String) -> String {
-        reason.hasPrefix("key refused") ? "\(engine) refuse la clé. Vérifie-la dans les réglages, section Moteurs."
-            : reason.hasPrefix("model not found") ? "\(engine) ne connaît pas ce modèle pour ta clé. Change le modèle dans les réglages, section Moteurs (ou laisse le champ vide)."
-            : reason == GeminiQuota.noFreeModel ? "Ta clé n'a pas de quota gratuit Gemini. Vérifie-la sur aistudio.google.com, ou choisis un autre moteur dans les réglages."
-            : reason == GeminiQuota.freeTierZero.reason ? "\(engine) ne donne pas de quota gratuit pour ce modèle à ta clé. Choisis un autre modèle dans les réglages, ou un autre moteur."
-            : reason == GeminiQuota.perDay.reason ? "\(engine) : la limite du jour est atteinte. Elle revient à minuit, heure du Pacifique (9 h à Paris)."
-            : reason.hasPrefix("quota per-minute") ? "\(engine) : trop de demandes cette minute. " + (Int(reason.split(separator: " ").last ?? "").map { "Réessaie dans \($0) secondes." } ?? "Réessaie dans une minute.")
-            : reason.hasPrefix("quota") ? "\(engine) refuse pour l'instant (quota ou trop de demandes). Réessaie plus tard."
-            : "\(engine) ne m'a pas répondu (\(reason))."
+        reason.hasPrefix("key refused") ? loc("\(engine) refuse la clé. Vérifie-la dans les réglages, section Moteurs.")
+            : reason.hasPrefix("model not found") ? loc("\(engine) ne connaît pas ce modèle pour ta clé. Change le modèle dans les réglages, section Moteurs (ou laisse le champ vide).")
+            : reason == GeminiQuota.noFreeModel ? loc("Ta clé n'a pas de quota gratuit Gemini. Vérifie-la sur aistudio.google.com, ou choisis un autre moteur dans les réglages.")
+            : reason == GeminiQuota.freeTierZero.reason ? loc("\(engine) ne donne pas de quota gratuit pour ce modèle à ta clé. Choisis un autre modèle dans les réglages, ou un autre moteur.")
+            : reason == GeminiQuota.perDay.reason ? loc("\(engine) : la limite du jour est atteinte. Elle revient à minuit, heure du Pacifique (9 h à Paris).")
+            : reason.hasPrefix("quota per-minute") ? loc("\(engine) : trop de demandes cette minute. ") + (Int(reason.split(separator: " ").last ?? "").map { loc("Réessaie dans \($0) secondes.") } ?? loc("Réessaie dans une minute."))
+            : reason.hasPrefix("quota") ? loc("\(engine) refuse pour l'instant (quota ou trop de demandes). Réessaie plus tard.")
+            : loc("\(engine) ne m'a pas répondu (\(reason)).")
     }
 
     /// The chat through OpenAI, Gemini or Ollama: the same voice, and it says plainly that it
@@ -110,9 +110,9 @@ enum ChatPhrases {
             + "\n\nIci tu n'as aucun outil : tu ne lis aucun fichier, tu ne cherches pas sur le web, tu ne modifies rien. Réponds avec ce que tu sais et ce que la personne te dit."
     }
 
-    static let noKey = "Il me manque la clé API. Ouvre les réglages."
-    static let network = "Je n'arrive pas à joindre le réseau."
-    static let unreadable = "Je n'ai pas compris la réponse. Redemande-moi."
+    static let noKey = loc("Il me manque la clé API. Ouvre les réglages.")
+    static let network = loc("Je n'arrive pas à joindre le réseau.")
+    static let unreadable = loc("Je n'ai pas compris la réponse. Redemande-moi.")
     static let unansweredInNotch = "L'utilisateur n'a pas répondu à la demande de permission dans l'encoche. Arrête-toi là et dis-lui ce qui reste à faire."
 
     /// The sentence shown for a turn that ended in error.
@@ -120,7 +120,7 @@ enum ChatPhrases {
         let text = ([result.text] + result.errors).joined(separator: " ")
         if isLoginProblem(text) { return notLoggedIn }
         let detail = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        return detail.isEmpty ? stopped : "Ça a planté : \(short(detail))"
+        return detail.isEmpty ? stopped : loc("Ça a planté : \(short(detail))")
     }
 
     static func isLoginProblem(_ text: String) -> Bool {

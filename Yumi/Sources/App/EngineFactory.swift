@@ -49,18 +49,18 @@ enum EngineFactory {
 
     /// Asks the engine one short question: "OK" when it answers, otherwise why not.
     static func test(_ engine: Engine) async -> String {
-        guard let provider = provider(engine, EngineSettings.load()) else { return "Indisponible dans cette version." }
+        guard let provider = provider(engine, EngineSettings.load()) else { return loc("Indisponible dans cette version.") }
         let request = LLMRequest(system: "Answer with the single word OK.", messages: [LLMMessage(role: .user, content: "Test")],
                                  expectsJSON: false, maxOutputTokens: 20)
         do {
             _ = try await provider.complete(request)
-            return "✓ Répond."
+            return loc("✓ Répond.")
         } catch LLMProviderError.unavailable {
-            return engine == .claudeCode ? "Claude Code n'est pas installé ou pas connecté (claude, puis /login)." : "Pas configuré."
+            return engine == .claudeCode ? loc("Claude Code n'est pas installé ou pas connecté (claude, puis /login).") : loc("Pas configuré.")
         } catch LLMProviderError.failed(let reason) {
             return "✗ " + ChatPhrases.engineFailed(engine.label, reason: reason)
         } catch {
-            return "✗ Pas de réponse."
+            return loc("✗ Pas de réponse.")
         }
     }
 }

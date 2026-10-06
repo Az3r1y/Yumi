@@ -13,7 +13,7 @@ struct IslandRail: View {
 
     var body: some View {
         HStack(spacing: 1) {
-            RailButton(symbol: "square.grid.2x2.fill", name: "Tous", label: "Tous les modules",
+            RailButton(symbol: "square.grid.2x2.fill", name: loc("Tous"), label: loc("Tous les modules"),
                        color: .white, on: screen == .home) {
                 IslandActions.go(.overview)
             }
@@ -27,11 +27,11 @@ struct IslandRail: View {
                 .fill(Color.white.opacity(0.14))
                 .frame(width: 1, height: 14)
                 .padding(.horizontal, 3)
-            RailButton(symbol: "bubble.left", name: "Parler", label: "Parler à Yumi",
+            RailButton(symbol: "bubble.left", name: loc("Parler"), label: loc("Parler à Yumi"),
                        color: IslandTheme.violet, on: screen == .talk, bright: true) {
                 IslandActions.go(.prompt)
             }
-            RailButton(symbol: "gearshape", name: "Réglages", label: "Réglages",
+            RailButton(symbol: "gearshape", name: loc("Réglages"), label: loc("Réglages"),
                        color: .white, on: screen == .settings) {
                 IslandActions.go(.settings)
             }
@@ -119,8 +119,8 @@ struct OverviewActivity: View {
         let modules = Array(state.modules.prefix(ModuleCatalog.selectionLimit))
         if modules.isEmpty {
             VStack(alignment: .leading, spacing: 3) {
-                ActTitle(text: "Je ne surveille rien pour l'instant.")
-                ActSub(text: "Choisis mes modules dans les réglages de l'app.")
+                ActTitle(text: loc("Je ne surveille rien pour l'instant."))
+                ActSub(text: loc("Choisis mes modules dans les réglages de l'app."))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         } else {

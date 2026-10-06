@@ -4,6 +4,7 @@ options:
   deploymentTarget:
     macOS: "15.0"
   createIntermediateGroups: true
+  developmentLanguage: fr
 
 settings:
   base:
@@ -11,6 +12,11 @@ settings:
     ENABLE_HARDENED_RUNTIME: YES
     CODE_SIGN_STYLE: Manual
     OTHER_SWIFT_FLAGS: "-strict-concurrency=complete"
+    # French is the language the code is written in; English comes from the String Catalogs
+    # (Sources/App/Localization)
+    DEVELOPMENT_LANGUAGE: fr
+    SWIFT_EMIT_LOC_STRINGS: YES
+    LOCALIZATION_PREFERS_STRING_CATALOGS: YES
   configs:
     Debug:
       CODE_SIGNING_REQUIRED: NO
@@ -175,6 +181,10 @@ targets:
         group: Tests/UnderTest
       - path: Sources/App/AppIdentity.swift
         group: Tests/UnderTest
+      # The tests read the translations too, in French and in English
+      - path: Sources/App/Localization/Localizable.xcstrings
+        group: Tests/UnderTest
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.yumi.tests

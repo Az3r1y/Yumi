@@ -34,7 +34,7 @@ enum RiskLevel: String, Codable, Sendable, CaseIterable, Comparable {
         case .safe: "aucun"
         case .low: "faible"
         case .medium: "moyen"
-        case .high: "élevé"
+        case .high: loc("élevé")
         case .critical: "critique"
         }
     }

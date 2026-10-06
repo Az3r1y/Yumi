@@ -92,26 +92,26 @@ enum NotesSummary {
         let total = notes.count + due.count
         var snapshot = ModuleSnapshot(id: "notes", name: "Notes", colorHex: "#F2C744",
                                       status: total == 0 ? "vide" : "\(total)",
-                                      title: "Rien à garder pour l'instant.",
-                                      subtitle: "Copie un texte, je le garde en note.",
-                                      primaryAction: "Nouvelle note",
-                                      secondaryAction: remindersAccess == .notDetermined ? "Activer les rappels" : "Tout voir")
+                                      title: loc("Rien à garder pour l'instant."),
+                                      subtitle: loc("Copie un texte, je le garde en note."),
+                                      primaryAction: loc("Nouvelle note"),
+                                      secondaryAction: remindersAccess == .notDetermined ? loc("Activer les rappels") : loc("Tout voir"))
 
         if let reminder = due.first {
             snapshot.title = "Rappel : \(reminder.title)"
             snapshot.subtitle = when(reminder, now: now, calendar: calendar)
-            if due.count == 2 { snapshot.subtitle += " Un autre attend." }
+            if due.count == 2 { snapshot.subtitle += loc(" Un autre attend.") }
             if due.count > 2 { snapshot.subtitle += " \(FrenchText.sentenceStart(FrenchText.spelled(due.count - 1))) autres attendent." }
-            snapshot.primaryAction = "Terminé"
-            snapshot.secondaryAction = "Tout voir"
+            snapshot.primaryAction = loc("Terminé")
+            snapshot.secondaryAction = loc("Tout voir")
             snapshot.needsAttention = isLate(reminder, now: now, calendar: calendar)
             // A late reminder is the one thing worth the folded island: it can be ticked off from there.
             if snapshot.needsAttention {
-                snapshot.live = ModuleLive(text: "Rappel : \(reminder.title)", priority: ModuleLivePriority.ambient,
-                                           controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "checkmark", label: "Terminé")])
+                snapshot.live = ModuleLive(text: loc("Rappel : \(reminder.title)"), priority: ModuleLivePriority.ambient,
+                                           controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "checkmark", label: loc("Terminé"))])
             }
         } else if let note = notes.last {
-            snapshot.title = "Ta dernière note"
+            snapshot.title = loc("Ta dernière note")
             snapshot.subtitle = note
         }
         return snapshot
@@ -124,9 +124,9 @@ enum NotesSummary {
 
     private static func when(_ reminder: ReminderItem, now: Date, calendar: Calendar) -> String {
         guard let due = reminder.due else { return "Sans date." }
-        if due < calendar.startOfDay(for: now) { return "C'était prévu avant aujourd'hui." }
-        guard reminder.hasTime else { return "C'est pour aujourd'hui." }
-        return due <= now ? "C'était pour \(FrenchText.clock(due, calendar: calendar))."
-                          : "C'est pour \(FrenchText.clock(due, calendar: calendar))."
+        if due < calendar.startOfDay(for: now) { return loc("C'était prévu avant aujourd'hui.") }
+        guard reminder.hasTime else { return loc("C'est pour aujourd'hui.") }
+        return due <= now ? loc("C'était pour \(FrenchText.clock(due, calendar: calendar)).")
+                          : loc("C'est pour \(FrenchText.clock(due, calendar: calendar)).")
     }
 }

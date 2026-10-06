@@ -22,7 +22,7 @@ private struct PermissionsContent: View {
 
     private static let time: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.dateFormat = "d MMM HH:mm"
+        formatter.dateFormat = loc("d MMM HH:mm")
         return formatter
     }()
 
@@ -33,7 +33,7 @@ private struct PermissionsContent: View {
                 .foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
 
-            caption("CE QUE TU M'AS PERMIS")
+            caption(loc("CE QUE TU M'AS PERMIS"))
             let granted = permissions.sessionPermissions + permissions.rememberedPermissions
             if granted.isEmpty {
                 Text("Rien pour l'instant.").font(.system(size: 12)).foregroundColor(.secondary)
@@ -46,7 +46,7 @@ private struct PermissionsContent: View {
                 }
             }
             if !permissions.policy.rules.isEmpty {
-                caption("RÈGLES")
+                caption(loc("RÈGLES"))
                 ForEach(permissions.policy.rules) { rule in
                     HStack {
                         Text("\(rule.effect.rawValue) · \(rule.toolID)\(rule.kind.map { " · \($0.rawValue)" } ?? "")")

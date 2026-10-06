@@ -84,18 +84,18 @@ enum WeatherSummary {
     /// The sky, as the end of "19° et …". Codes are the WMO ones Open-Meteo returns.
     static func sky(_ code: Int) -> String {
         switch code {
-        case 0:          return "un grand soleil"
-        case 1:          return "un ciel dégagé"
-        case 2:          return "des éclaircies"
-        case 3:          return "un ciel couvert"
-        case 45, 48:     return "du brouillard"
-        case 51...57:    return "de la bruine"
-        case 61...67:    return "de la pluie"
-        case 71...77:    return "de la neige"
-        case 80...82:    return "des averses"
-        case 85, 86:     return "des averses de neige"
-        case 95...99:    return "de l'orage"
-        default:         return "un ciel changeant"
+        case 0:          return loc("un grand soleil")
+        case 1:          return loc("un ciel dégagé")
+        case 2:          return loc("des éclaircies")
+        case 3:          return loc("un ciel couvert")
+        case 45, 48:     return loc("du brouillard")
+        case 51...57:    return loc("de la bruine")
+        case 61...67:    return loc("de la pluie")
+        case 71...77:    return loc("de la neige")
+        case 80...82:    return loc("des averses")
+        case 85, 86:     return loc("des averses de neige")
+        case 95...99:    return loc("de l'orage")
+        default:         return loc("un ciel changeant")
         }
     }
 
@@ -126,13 +126,13 @@ enum WeatherSummary {
 
     /// One piece of advice for the rest of the day.
     static func advice(_ report: WeatherReport, now: Date, calendar: Calendar = .current) -> String {
-        if isRain(report.code) { return "Il pleut. Prends un parapluie." }
-        if isSnow(report.code) { return "Il neige. Couvre-toi." }
+        if isRain(report.code) { return loc("Il pleut. Prends un parapluie.") }
+        if isSnow(report.code) { return loc("Il neige. Couvre-toi.") }
         let later = report.hours.first {
             $0.time > now && calendar.isDate($0.time, inSameDayAs: now) && $0.rainChance >= likely
         }
-        guard let later else { return "Pas de pluie en vue aujourd'hui." }
-        return "Pluie vers \(FrenchText.spokenHour(later.time, calendar: calendar)). Prends une veste."
+        guard let later else { return loc("Pas de pluie en vue aujourd'hui.") }
+        return loc("Pluie vers \(FrenchText.spokenHour(later.time, calendar: calendar)). Prends une veste.")
     }
 
     static func snapshot(_ state: WeatherState, now: Date, calendar: Calendar = .current) -> ModuleSnapshot {
@@ -140,27 +140,27 @@ enum WeatherSummary {
     }
 
     private static func plainSnapshot(_ state: WeatherState, now: Date, calendar: Calendar) -> ModuleSnapshot {
-        var snapshot = ModuleSnapshot(id: "weather", name: "Météo", colorHex: "#7FD0FF", status: "…",
-                                      title: "Je regarde le ciel.", subtitle: "Un instant.",
-                                      primaryAction: "Détail", secondaryAction: nil)
+        var snapshot = ModuleSnapshot(id: "weather", name: loc("Météo"), colorHex: "#7FD0FF", status: "…",
+                                      title: loc("Je regarde le ciel."), subtitle: loc("Un instant."),
+                                      primaryAction: loc("Détail"), secondaryAction: nil)
         switch state {
         case .loading:
             break
         case .needsLocation(let permission):
-            snapshot.status = "où ?"
-            snapshot.title = "Je ne sais pas où tu es."
+            snapshot.status = loc("où ?")
+            snapshot.title = loc("Je ne sais pas où tu es.")
             if permission == .denied {
-                snapshot.subtitle = "Ta position m'est fermée. Ça se rouvre dans Réglages Système."
-                snapshot.primaryAction = "Ouvrir les réglages"
+                snapshot.subtitle = loc("Ta position m'est fermée. Ça se rouvre dans Réglages Système.")
+                snapshot.primaryAction = loc("Ouvrir les réglages")
             } else {
-                snapshot.subtitle = "Dis-le-moi, je te donne le ciel d'ici."
+                snapshot.subtitle = loc("Dis-le-moi, je te donne le ciel d'ici.")
                 snapshot.primaryAction = "Autoriser"
             }
         case .unavailable:
             snapshot.status = "hors ligne"
-            snapshot.title = "Je n'arrive pas à voir le ciel."
-            snapshot.subtitle = "Je réessaie dans un moment."
-            snapshot.primaryAction = "Réessayer"
+            snapshot.title = loc("Je n'arrive pas à voir le ciel.")
+            snapshot.subtitle = loc("Je réessaie dans un moment.")
+            snapshot.primaryAction = loc("Réessayer")
         case .ready(let report):
             let degrees = "\(Int(report.temperature.rounded()))°"
             snapshot.status = degrees

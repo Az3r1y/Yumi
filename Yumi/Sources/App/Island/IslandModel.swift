@@ -177,7 +177,7 @@ final class IslandModel: ObservableObject {
     /// Steps look like "Modifie · IslandRootView.swift" (HookServer.frenchStep).
     func track(step: String?) {
         guard let step else { return }
-        for verb in ["Modifie · ", "Écrit · "] where step.hasPrefix(verb) {
+        for verb in [loc("Modifie") + " · ", loc("Écrit") + " · "] where step.hasPrefix(verb) {
             filesTouched.insert(String(step.dropFirst(verb.count)))
         }
     }
@@ -406,15 +406,15 @@ final class IslandModel: ObservableObject {
     /// The few words under Yumi (`cap`). A habit says it its own way.
     static func caption(for habit: YumiHabit) -> String {
         switch habit {
-        case .smoke:      return "Il bosse dur"
-        case .exhausted:  return "J'en peux plus"
-        case .coffee:     return "Café d'abord"
-        case .headphones: return "Il kiffe"
+        case .smoke:      return loc("Il bosse dur")
+        case .exhausted:  return loc("J'en peux plus")
+        case .coffee:     return loc("Café d'abord")
+        case .headphones: return loc("Il kiffe")
         case .sunglasses: return "Trop facile"
-        case .cloud:      return "Sale journée"
-        case .whistle:    return "La la la"
+        case .cloud:      return loc("Sale journée")
+        case .whistle:    return loc("La la la")
         case .sleep:      return "Chut"
-        case .matcha:     return "Pause matcha"
+        case .matcha:     return loc("Pause matcha")
         }
     }
 }

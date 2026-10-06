@@ -11,7 +11,7 @@ struct ModulesSettings: View {
         Form {
             Section {
                 LabeledContent("État") {
-                    SettingsStatus(text: githubConnected ? "Branché" : "Pas de jeton", tone: githubConnected ? .ok : .off)
+                    SettingsStatus(text: githubConnected ? loc("Branché") : loc("Pas de jeton"), tone: githubConnected ? .ok : .off)
                 }
                 if githubConnected {
                     Button("Retirer le jeton") {
@@ -34,7 +34,7 @@ struct ModulesSettings: View {
             } header: {
                 Text("GitHub")
             } footer: {
-                SettingsHelp("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien.")
+                SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
             }
         }
     }

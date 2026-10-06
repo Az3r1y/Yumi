@@ -80,7 +80,7 @@ final class LocalPermissionManager: PermissionManager {
         switch assessor.assess(request) {
         case .failure(.invalidResource):
             record(request, nil, .blocked, by: .system, scope: nil)
-            return .deny(reason: "Je ne sais pas exactement ce que cette action toucherait.")
+            return .deny(reason: loc("Je ne sais pas exactement ce que cette action toucherait."))
         case .success(let value):
             assessment = value
         }
@@ -96,7 +96,7 @@ final class LocalPermissionManager: PermissionManager {
         case .ask:
             guard let presenter else {
                 record(request, assessment, .blocked, by: .system, scope: nil)
-                return .deny(reason: "Je ne peux pas te demander ton accord maintenant.")
+                return .deny(reason: loc("Je ne peux pas te demander ton accord maintenant."))
             }
             let approval = makeApproval(for: request, assessment, upcoming: upcoming, now: now)
             approvals.add(approval)
@@ -120,7 +120,7 @@ final class LocalPermissionManager: PermissionManager {
         }
         switch status {
         case .approved: return .granted
-        case .denied: return .denied(reason: "Tu as refusé.")
+        case .denied: return .denied(reason: loc("Tu as refusé."))
         case .expired: return .expired
         case .cancelled, .pending: return .cancelled
         }
@@ -200,7 +200,7 @@ final class LocalPermissionManager: PermissionManager {
         let rule = policy.verdict(for: request, assessment)
         if case .deny(let reason) = rule { return .deny(reason, .rule) }
         if assessment.risk == .critical {
-            return rule == .ask ? .ask : .deny("C'est trop risqué : je ne le fais pas.", .defaults)
+            return rule == .ask ? .ask : .deny(loc("C'est trop risqué : je ne le fais pas."), .defaults)
         }
         if let permission = runPermissions.first(where: { $0.covers(request, assessment, now: now) }) {
             return .allow(.permission, permission)
