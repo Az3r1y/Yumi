@@ -875,3 +875,34 @@ import Foundation
         #expect(Feedback.fields(version: "1", macOS: "2", model: "Mac14,2", notch: false).last?.1 == "Mac14,2, notch : non")
     }
 }
+
+@Suite struct SettingsPageTests {
+    @Test func theDeveloperPageIsHiddenUntilAskedFor() {
+        #expect(!SettingsPage.sidebar(developer: false).contains(.developer))
+        #expect(SettingsPage.sidebar(developer: true).last == .developer)
+        #expect(SettingsPage.sidebar(developer: false).first == .general)
+        #expect(SettingsPage.shown(.developer, developer: false) == .general)
+        #expect(SettingsPage.shown(.developer, developer: true) == .developer)
+        #expect(SettingsPage.shown(nil, developer: true) == .general)
+    }
+
+    @Test func everySettingOfTheOldWindowHasOnePage() {
+        let old = ["soundEnabled", "soundVolume", "autoCloseInterval", "absenceInterval", "hotkeyEnabled", "hotkeyFlags",
+                   "hotkeyCode", "vercelProjectFilter", "n8nWorkflowFilter", "activeIntegrations", "contextEngineEnabled",
+                   "workHabit", "claudeDirectoryBookmark", "resend-api-key", "resend-from", "n8n-url", "n8n-api-key",
+                   "vercel-token", "github-token", "stripe-api-key", "calcom-api-key", "notion-api-key", "launchAtStartup",
+                   "hooks", "engineSettings", "engineKeys", "yumiPermissions", "contextPanel", "agentPanel",
+                   // Until now only in the island
+                   "yumiTalk", "updateCheckEnabled", "feedback", "memory"]
+        let placed = SettingsPage.allCases.flatMap { SettingsPage.settings[$0] ?? [] }
+        for key in old { #expect(placed.filter { $0 == key }.count == 1, "\(key)") }
+        #expect(Set(placed).count == placed.count)
+    }
+
+    @Test func everyPageHasANameAndASymbol() {
+        for page in SettingsPage.allCases {
+            #expect(!page.title.isEmpty)
+            #expect(!page.symbol.isEmpty)
+        }
+    }
+}

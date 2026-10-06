@@ -91,9 +91,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openSettings() {
         if let w = settingsWindow, w.isVisible { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
-        let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 480, height: 540),
-                           styleMask: [.titled, .closable], backing: .buffered, defer: false)
-        win.title = "\(AppIdentity.productName) Settings"
+        let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600),
+                           styleMask: [.titled, .closable, .miniaturizable, .resizable],
+                           backing: .buffered, defer: false)
+        win.title = "Réglages de \(AppIdentity.productName)"
+        win.contentMinSize = NSSize(width: 700, height: 480)
         win.contentView = NSHostingView(rootView: SettingsView())
         win.center()
         win.isReleasedWhenClosed = false

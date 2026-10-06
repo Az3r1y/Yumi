@@ -479,3 +479,71 @@ enum Feedback {
         return parts?.url
     }
 }
+
+// MARK: - The settings window
+
+/// The pages of the settings window, in the order of its sidebar.
+enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
+    case general, yumi, modules, engines, claudeCode, permissions, memory, about, developer
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .general:     return "Général"
+        case .yumi:        return "Yumi"
+        case .modules:     return "Modules"
+        case .engines:     return "Moteurs"
+        case .claudeCode:  return "Claude Code"
+        case .permissions: return "Autorisations"
+        case .memory:      return "Mémoire"
+        case .about:       return "À propos"
+        case .developer:   return "Développeur"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .general:     return "gearshape"
+        case .yumi:        return "face.smiling"
+        case .modules:     return "square.grid.2x2"
+        case .engines:     return "cpu"
+        case .claudeCode:  return "terminal"
+        case .permissions: return "hand.raised"
+        case .memory:      return "brain"
+        case .about:       return "info.circle"
+        case .developer:   return "hammer"
+        }
+    }
+
+    /// The sidebar: the developer page only once it was asked for.
+    static func sidebar(developer: Bool) -> [SettingsPage] {
+        allCases.filter { $0 != .developer || developer }
+    }
+
+    /// The page to show: one hidden from the sidebar falls back to the first page.
+    static func shown(_ page: SettingsPage?, developer: Bool) -> SettingsPage {
+        guard let page, sidebar(developer: developer).contains(page) else { return .general }
+        return page
+    }
+
+    /// Where each stored setting lives: the same UserDefaults and Keychain keys as before the
+    /// window was redone, so nothing set earlier is lost.
+    static let settings: [SettingsPage: [String]] = [
+        .general:     ["launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
+                       "absenceInterval", "contextEngineEnabled"],
+        .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
+        .modules:     ["github-token", "resend-api-key", "resend-from", "n8n-url", "n8n-api-key", "n8nWorkflowFilter",
+                       "vercel-token", "vercelProjectFilter", "stripe-api-key", "calcom-api-key", "notion-api-key",
+                       "activeIntegrations"],
+        .engines:     ["engineSettings", "engineKeys"],
+        .claudeCode:  ["hooks", "claudeDirectoryBookmark"],
+        .permissions: ["macOSPermissions", "yumiPermissions"],
+        .memory:      ["userName", "memory"],
+        .about:       ["updateCheckEnabled", "feedback", "settingsDeveloper"],
+        .developer:   ["contextPanel", "agentPanel"],
+    ]
+
+    /// Shows the developer page in the sidebar.
+    static let developerKey = "settingsDeveloper"
+}
