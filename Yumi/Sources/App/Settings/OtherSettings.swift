@@ -105,6 +105,7 @@ enum MacPermission: String, CaseIterable, Identifiable {
 /// Mémoire: what Yumi knows of the person. The list itself is read and edited in the island.
 struct MemorySettings: View {
     @ObservedObject private var state = AppState.shared
+    @State private var confirmClear = false
 
     var body: some View {
         Form {
@@ -114,6 +115,16 @@ struct MemorySettings: View {
                 Button("Voir et modifier dans l'île") {
                     NotificationCenter.default.post(name: .hookExpand, object: IslandView.memory)
                 }
+                Button("Tout effacer…", role: .destructive) { confirmClear = true }
+                    .disabled(state.memory.isEmpty)
+                    .confirmationDialog("Tout effacer de ma mémoire ?", isPresented: $confirmClear) {
+                        Button("Tout effacer", role: .destructive) {
+                            IslandActions.forgetEverything()
+                        }
+                        Button("Annuler", role: .cancel) {}
+                    } message: {
+                        Text("J'oublierai tout ce que tu m'as dit. Ça ne se rattrape pas.")
+                    }
             } footer: {
                 SettingsHelp("Je ne garde que ce que tu m'as dit, sur ce Mac. Tu peux tout relire, corriger ou effacer dans l'île.")
             }
@@ -177,6 +188,12 @@ struct DeveloperSettings: View {
             Section("Agent") {
                 AgentDebugPanel(state: state)
             }
+            Section {
+                SettingsHelp("Héritées de Coucou, en attente d'une décision. Leurs clés restent dans le trousseau.")
+            } header: {
+                Text("Intégrations héritées")
+            }
+            LegacyIntegrations()
         }
     }
 }
