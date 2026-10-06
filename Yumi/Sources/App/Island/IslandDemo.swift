@@ -13,6 +13,10 @@ enum IslandDemo {
 
     static func startIfRequested(controller: IslandWindowController) {
         let env = ProcessInfo.processInfo.environment
+        if let folder = env["YUMI_SETTINGS_SHOTS"] {
+            Task { await settingsShots(into: folder) }
+            return
+        }
         guard !started, env["YUMI_ISLAND_SHOTS"] != nil || env["YUMI_ISLAND_VIEW"] != nil || env["YUMI_ISLAND_ASK"] != nil || env["YUMI_ISLAND_ACTION"] != nil else { return }
         started = true
         // Nothing folds the island while it is being looked at
@@ -65,6 +69,37 @@ enum IslandDemo {
                 await walk(controller)
             }
         }
+    }
+
+    /// `YUMI_SETTINGS_SHOTS=<folder>`: every page of the settings window, light then dark,
+    /// saved as PNG, then the app quits.
+    private static func settingsShots(into folder: String) async {
+        await pause(2)
+        let developer = UserDefaults.standard.bool(forKey: SettingsPage.developerKey)
+        UserDefaults.standard.set(true, forKey: SettingsPage.developerKey)
+        defer { UserDefaults.standard.set(developer, forKey: SettingsPage.developerKey) }
+        for dark in [false, true] {
+            for page in SettingsPage.allCases {
+                let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600),
+                                      styleMask: [.titled, .closable, .resizable], backing: .buffered, defer: false)
+                window.title = "Réglages de \(AppIdentity.productName)"
+                window.isReleasedWhenClosed = false
+                window.appearance = NSAppearance(named: dark ? .darkAqua : .aqua)
+                window.contentView = NSHostingView(rootView: SettingsView(page: page))
+                window.setContentSize(NSSize(width: 760, height: 600))
+                window.center()
+                window.makeKeyAndOrderFront(nil)
+                NSApp.activate(ignoringOtherApps: true)
+                await pause(1.5)
+                // The shell takes the picture of this window (screencapture -l), then removes the file
+                let name = "\(SettingsPage.allCases.firstIndex(of: page)!)-\(page.rawValue)-\(dark ? "sombre" : "clair")"
+                let ready = URL(fileURLWithPath: "\(folder)/ready")
+                try? "\(window.windowNumber) \(name)".write(to: ready, atomically: true, encoding: .utf8)
+                while FileManager.default.fileExists(atPath: ready.path) { await pause(0.2) }
+                window.close()
+            }
+        }
+        NSApp.terminate(nil)
     }
 
     private static func pause(_ seconds: Double) async {

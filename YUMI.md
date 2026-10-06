@@ -475,3 +475,11 @@ But : que l'on puisse essayer le chat et l'agent sans Claude Code.
 | Chat | Même ordre. Claude Code garde son chemin (outils de lecture seulement) ; la clé Anthropic garde le sien ; OpenAI, Gemini et Ollama répondent en conversation pure (`ChatPhrases.engineSystemPrompt`), sans aucun outil. Les demandes d'action passent toujours d'abord par le Runtime. |
 | Erreurs | Clé refusée (401, 403), quota (429), réseau : dits en une phrase, sans la clé ni le corps de la réponse. Aucun moteur : message qui renvoie à la section Moteurs. Ollama arrêté compte comme absent. |
 | Réglages | Section Moteurs : choix, ordre (flèches), clé et modèle par moteur, état détecté (installé, clé présente, Ollama qui répond), bouton « Tester », et ce qui part chez chaque fournisseur avec qui le facture. |
+
+## Île : la fenêtre des réglages refaite (branche `yumi/ile`)
+
+- Une barre latérale (`SettingsPage`, testée) : Général, Yumi, Modules, Moteurs, Claude Code, Autorisations, Mémoire, À propos, et Développeur, cachée tant que « Afficher les outils de développeur » (À propos, clé `settingsDeveloper`) n'est pas coché ou qu'on n'a pas cliqué sur À propos avec Option.
+- Chaque page est un `Form` groupé (`Sources/App/Settings/`). Les clés UserDefaults et Trousseau sont celles d'avant (`SettingsPage.settings` les range par page, un test vérifie que chaque ancien réglage a sa place).
+- Moteurs : nouvelle présentation dans `Settings/EnginesSettings.swift`, même logique (`EngineSettings`, `EngineDetector`, `EngineFactory`). `EnginesSettingsView.swift` n'est plus affiché ; à supprimer quand yumi/moteurs ne s'en sert plus.
+- Restent en anglais : les panneaux Contexte et Agent (page Développeur) et les mots de l'historique des autorisations (`allowed`, `approved`), qui viennent de fichiers du cœur.
+- Captures : `YUMI_SETTINGS_SHOTS=<dossier>` (Debug) ouvre chaque page en clair puis en sombre et écrit `ready` avec le numéro de fenêtre pour `screencapture -l`.
