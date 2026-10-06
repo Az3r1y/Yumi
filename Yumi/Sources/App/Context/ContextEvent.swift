@@ -43,14 +43,14 @@ struct ContextEvent: Identifiable, Equatable, Codable, Sendable {
     /// A line for the debug panel.
     var summary: String {
         switch kind {
-        case .sessionStarted: "Session started"
-        case .sessionEnded(let duration): "Session ended after \(ContextFormat.duration(duration))"
+        case .sessionStarted: loc("Session started")
+        case .sessionEnded(let duration): loc("Session ended after \(ContextFormat.duration(duration))")
         case .applicationChanged(_, let to): "→ \(to.name)"
-        case .windowChanged(_, let to): "Window: \(to.map { $0.title.isEmpty ? "untitled" : $0.title } ?? "none")"
+        case .windowChanged(_, let to): loc("Window: \(to.map { $0.title.isEmpty ? "untitled" : $0.title } ?? "none")")
         case .applicationLaunched(let app): "Launched \(app.name)"
         case .applicationQuit(let app): "Quit \(app.name)"
         case .system(let signal): signal.rawValue
-        case .permissionChanged(let status): "Accessibility \(status.rawValue)"
+        case .permissionChanged(let status): loc("Accessibility \(status.rawValue)")
         case .facetChanged(let kind): "\(kind.rawValue) changed"
         }
     }
@@ -87,8 +87,8 @@ enum ContextFormat {
     static func duration(_ seconds: TimeInterval) -> String {
         let total = max(0, Int(seconds))
         let hours = total / 3600, minutes = total % 3600 / 60, rest = total % 60
-        if hours > 0 { return "\(hours)h \(String(format: "%02d", minutes))m" }
-        if minutes > 0 { return "\(minutes)m \(String(format: "%02d", rest))s" }
+        if hours > 0 { return loc("\(hours)h \(String(format: "%02d", minutes))m") }
+        if minutes > 0 { return loc("\(minutes)m \(String(format: "%02d", rest))s") }
         return "\(rest)s"
     }
 }

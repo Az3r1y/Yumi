@@ -26,11 +26,11 @@ enum PermissionScope: String, Codable, Sendable, CaseIterable {
     /// Words for the details and the history.
     var label: String {
         switch self {
-        case .oneTime: "une fois"
-        case .session: "cette session"
-        case .project: "le projet"
-        case .resource: "ces fichiers"
-        case .tool: "cet outil, cette session"
+        case .oneTime: loc("une fois")
+        case .session: loc("cette session")
+        case .project: loc("le projet")
+        case .resource: loc("ces fichiers")
+        case .tool: loc("cet outil, cette session")
         }
     }
 }

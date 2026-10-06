@@ -291,7 +291,7 @@ private func kinds(_ events: [ContextEvent]) -> [String] { events.map(\.name) }
         _ = state.apply(.applicationActivated(bare), at: at(0))
         let activity = state.snapshot(at: at(30), presence: .observing).activity
         #expect(activity.first?.category == nil)
-        #expect(activity.first?.label == "Other")
+        #expect(activity.first?.label == "Autre")
         #expect(bare.identity == "tool")
     }
 }

@@ -339,13 +339,13 @@ struct ModuleActivity: View {
                 ActProgress(progress: progress).riseIn(2)
             }
         } trail: {
-            RoundButton(style: .bare, symbol: "backward.end.fill", label: "Précédent") {
+            RoundButton(style: .bare, symbol: "backward.end.fill", label: loc("Précédent")) {
                 IslandActions.module(module.id, "previous")
             }
             RoundButton(style: .white, symbol: module.primarySymbol ?? (playing ? "pause.fill" : "play.fill"),
                         label: module.primaryAction, action: primary)
             RoundButton(style: .bare, symbol: module.secondarySymbol ?? "forward.end.fill",
-                        label: module.secondaryAction ?? "Suivant", action: secondary)
+                        label: module.secondaryAction ?? loc("Suivant"), action: secondary)
         }
     }
 
@@ -412,9 +412,9 @@ struct ModuleActivity: View {
             ActTitle(text: module.title, lines: waiting ? 2 : 1).riseIn(1)
             if let figures = GitHubFigures.parse(module.status) {
                 HStack(spacing: 12) {
-                    GitHubFigure(symbol: "star.fill", value: figures.stars, label: "étoiles")
-                    GitHubFigure(symbol: "arrow.triangle.branch", value: figures.forks, label: "forks")
-                    GitHubFigure(symbol: "arrow.triangle.pull", value: figures.pulls, label: "pull requests ouvertes")
+                    GitHubFigure(symbol: "star.fill", value: figures.stars, label: loc("étoiles"))
+                    GitHubFigure(symbol: "arrow.triangle.branch", value: figures.forks, label: loc("forks"))
+                    GitHubFigure(symbol: "arrow.triangle.pull", value: figures.pulls, label: loc("pull requests ouvertes"))
                 }
                 .padding(.top, 2)
                 .riseIn(2)
@@ -471,7 +471,7 @@ struct WorkingActivity: View {
             TimelineView(.periodic(from: .now, by: 20)) { _ in
                 ActTime(text: IslandAgent.elapsed(model) ?? "", color: IslandTheme.blue)
             }
-            RoundButton(symbol: "arrow.up.forward", label: "Voir") { IslandActions.openAgent(state.focusTask) }
+            RoundButton(symbol: "arrow.up.forward", label: loc("Voir")) { IslandActions.openAgent(state.focusTask) }
         }
     }
 }
@@ -487,14 +487,14 @@ struct AlertActivity: View {
         } else if let approval = state.pendingApproval {
             ActRow {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
-                ActTitle(text: approval.tool == "Bash" ? "Claude veut lancer ça. Je laisse passer ?" : "Claude veut utiliser \(approval.tool). Je laisse passer ?").riseIn(1)
+                ActTitle(text: approval.tool == "Bash" ? loc("Claude veut lancer ça. Je laisse passer ?") : loc("Claude veut utiliser \(approval.tool). Je laisse passer ?")).riseIn(1)
                 ActMono(prompt: approval.tool == "Bash" ? "$" : nil, text: approval.command, color: IslandTheme.amber).riseIn(2)
-                TextButton(label: "Toujours autoriser") { HookServer.shared.sendApprovalDecision("always", for: approval.requestID) }.riseIn(3)
+                TextButton(label: loc("Toujours autoriser")) { HookServer.shared.sendApprovalDecision("always", for: approval.requestID) }.riseIn(3)
             } trail: {
-                RoundButton(style: .fill, symbol: "xmark", label: "Refuser", color: IslandTheme.red) {
+                RoundButton(style: .fill, symbol: "xmark", label: loc("Refuser"), color: IslandTheme.red) {
                     HookServer.shared.sendApprovalDecision("deny", for: approval.requestID)
                 }
-                RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
+                RoundButton(style: .fill, symbol: "checkmark", label: loc("Autoriser"), color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
                     HookServer.shared.sendApprovalDecision("allow", for: approval.requestID)
                 }
             }
@@ -502,10 +502,10 @@ struct AlertActivity: View {
             // A question asked in the session: it can only be answered there
             ActRow {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
-                ActTitle(text: state.focusTask?.steps.last ?? "Claude a une question pour toi.", lines: 2).riseIn(1)
-                ActSub(text: "Il t'attend dans la session.").riseIn(2)
+                ActTitle(text: state.focusTask?.steps.last ?? loc("Claude a une question pour toi."), lines: 2).riseIn(1)
+                ActSub(text: loc("Il t'attend dans la session.")).riseIn(2)
             } trail: {
-                RoundButton(style: .tint, symbol: "arrow.up.forward", label: "Voir", color: IslandTheme.amber) {
+                RoundButton(style: .tint, symbol: "arrow.up.forward", label: loc("Voir"), color: IslandTheme.amber) {
                     IslandActions.openAgent(state.focusTask)
                 }
             }
@@ -542,16 +542,16 @@ private struct AgentApprovalCard: View {
                 ActMono(prompt: "$", text: subject, color: color).riseIn(2)
             }
             HStack(spacing: 14) {
-                TextButton(label: showsDetails ? "Masquer les détails" : "Voir les détails") { showsDetails.toggle() }
+                TextButton(label: showsDetails ? loc("Masquer les détails") : loc("Voir les détails")) { showsDetails.toggle() }
                 if request.offersSession {
-                    TextButton(label: "Pour cette session") { HookServer.shared.sendApprovalDecision("always", for: answering) }
+                    TextButton(label: loc("Pour cette session")) { HookServer.shared.sendApprovalDecision("always", for: answering) }
                 }
             }.riseIn(3)
         } trail: {
-            RoundButton(style: .fill, symbol: "xmark", label: "Refuser", color: IslandTheme.red) {
+            RoundButton(style: .fill, symbol: "xmark", label: loc("Refuser"), color: IslandTheme.red) {
                 HookServer.shared.sendApprovalDecision("deny", for: answering)
             }
-            RoundButton(style: .fill, symbol: "checkmark", label: "Autoriser", color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
+            RoundButton(style: .fill, symbol: "checkmark", label: loc("Autoriser"), color: IslandTheme.green, drawsCheck: true, pressed: model.studioPress) {
                 HookServer.shared.sendApprovalDecision("allow", for: answering)
             }
         }
@@ -566,10 +566,10 @@ struct FinishedActivity: View {
     var body: some View {
         ActRow {
             ActMeta(color: IslandTheme.green, text: IslandAgent.name(state.focusTask)).riseIn(0)
-            ActTitle(text: "C'est passé.").riseIn(1)
+            ActTitle(text: loc("C'est passé.")).riseIn(1)
             ActSub(text: IslandAgent.finishedLine(state, model)).riseIn(2)
         } trail: {
-            RoundButton(style: .fill, symbol: "checkmark", label: "OK", color: IslandTheme.green, drawsCheck: true) {
+            RoundButton(style: .fill, symbol: "checkmark", label: loc("OK"), color: IslandTheme.green, drawsCheck: true) {
                 IslandActions.fold()
             }
         }
@@ -583,14 +583,14 @@ struct ErrorActivity: View {
     var body: some View {
         ActRow {
             ActMeta(color: IslandTheme.red, text: IslandAgent.name(state.focusTask)).riseIn(0)
-            ActTitle(text: "Ça a planté. Tu veux voir où ?").riseIn(1)
+            ActTitle(text: loc("Ça a planté. Tu veux voir où ?")).riseIn(1)
             if let last = state.focusTask?.steps.last {
                 ActMono(text: last).riseIn(2)
             } else {
-                ActSub(text: "Je n'ai pas le détail. Il est dans la session.").riseIn(2)
+                ActSub(text: loc("Je n'ai pas le détail. Il est dans la session.")).riseIn(2)
             }
         } trail: {
-            RoundButton(style: .tint, symbol: "arrow.up.forward", label: "Voir", color: IslandTheme.red) {
+            RoundButton(style: .tint, symbol: "arrow.up.forward", label: loc("Voir"), color: IslandTheme.red) {
                 IslandActions.openAgent(state.focusTask)
             }
         }
@@ -606,18 +606,18 @@ struct DropActivity: View {
     var body: some View {
         if let file {
             ActRow(trailGap: 8) {
-                ActMeta(color: IslandTheme.blue, text: "Bien reçu").riseIn(0)
+                ActMeta(color: IslandTheme.blue, text: loc("Bien reçu")).riseIn(0)
                 ActTitle(text: file.name).riseIn(1)
-                ActSub(text: "J'en fais quoi ? Je résume, j'envoie ou je range.").riseIn(2)
+                ActSub(text: loc("J'en fais quoi ? Je résume, j'envoie ou je range.")).riseIn(2)
             } trail: {
-                RoundButton(style: .tint, symbol: "text.alignleft", label: "Résumer", color: IslandTheme.blue) { IslandActions.summarize() }
-                RoundButton(symbol: "paperplane.fill", label: "Envoyer") { IslandActions.sendByMail() }
-                RoundButton(symbol: "tray.and.arrow.down.fill", label: "Ranger") { IslandActions.putAway() }
+                RoundButton(style: .tint, symbol: "text.alignleft", label: loc("Résumer"), color: IslandTheme.blue) { IslandActions.summarize() }
+                RoundButton(symbol: "paperplane.fill", label: loc("Envoyer")) { IslandActions.sendByMail() }
+                RoundButton(symbol: "tray.and.arrow.down.fill", label: loc("Ranger")) { IslandActions.putAway() }
             }
         } else {
             VStack(alignment: .leading, spacing: 3) {
-                ActTitle(text: "Donne, je m'en occupe.")
-                ActSub(text: "Je résume, j'envoie ou je range. Tu choisis.")
+                ActTitle(text: loc("Donne, je m'en occupe."))
+                ActSub(text: loc("Je résume, j'envoie ou je range. Tu choisis."))
             }
             .padding(.horizontal, 18)
             .padding(.vertical, 16)

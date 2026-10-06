@@ -311,7 +311,7 @@ enum Voice {
     /// "moins d'une minute", "une minute", "douze minutes", "une heure", "deux heures dix".
     static func duration(_ seconds: TimeInterval) -> String {
         let minutes = Int(max(0, seconds) / 60)
-        if minutes < 1 { return "moins d'une minute" }
+        if minutes < 1 { return loc("moins d'une minute") }
         if minutes < 60 { return "\(feminine(minutes)) \(minutes == 1 ? "minute" : "minutes")" }
         let hours = minutes / 60, rest = minutes % 60
         let head = "\(feminine(hours)) \(hours == 1 ? "heure" : "heures")"
@@ -321,7 +321,7 @@ enum Voice {
     /// "un fichier touché", "trois fichiers touchés"; nil for none.
     static func files(_ count: Int) -> String? {
         guard count > 0 else { return nil }
-        return count == 1 ? "un fichier touché" : "\(number(count)) fichiers touchés"
+        return count == 1 ? loc("un fichier touché") : loc("\(number(count)) fichiers touchés")
     }
 
     /// A sentence starts with a capital.
@@ -332,8 +332,8 @@ enum Voice {
 
     /// The first name, when it is worth saying: he uses it rarely.
     static func goodbye(name: String?) -> String {
-        guard let name = FirstName.clean(name ?? "") else { return "À tout à l'heure" }
-        return "À tout à l'heure, \(name)"
+        guard let name = FirstName.clean(name ?? "") else { return loc("À tout à l'heure") }
+        return loc("À tout à l'heure, \(name)")
     }
 }
 
@@ -404,23 +404,30 @@ enum RowTime {
     /// Since when, for a session: "à l'instant", "4 min", "1 h 05".
     static func elapsed(since date: Date, now: Date) -> String {
         let minutes = Int(max(0, now.timeIntervalSince(date)) / 60)
-        if minutes < 1 { return "à l'instant" }
+        if minutes < 1 { return loc("à l'instant") }
         if minutes < 60 { return "\(minutes) min" }
         return "\(minutes / 60) h \(String(format: "%02d", minutes % 60))"
     }
 
     /// When, for an event: "14:05" today, "hier", or "3 oct." before.
     static func clock(_ date: Date, now: Date, calendar: Calendar = .current) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = AppLanguage.locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
         if calendar.isDate(date, inSameDayAs: now) {
+            if AppLanguage.isEnglish {
+                formatter.setLocalizedDateFormatFromTemplate("jmm")
+                return formatter.string(from: date)
+            }
             let parts = calendar.dateComponents([.hour, .minute], from: date)
             return String(format: "%02d:%02d", parts.hour ?? 0, parts.minute ?? 0)
         }
         if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(date, inSameDayAs: yesterday) {
-            return "hier"
+            return loc("hier")
         }
-        let parts = calendar.dateComponents([.day, .month], from: date)
-        let months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
-        return "\(parts.day ?? 1) \(months[max(0, min(11, (parts.month ?? 1) - 1))])"
+        formatter.setLocalizedDateFormatFromTemplate("dMMM")
+        return formatter.string(from: date)
     }
 }
 
@@ -469,7 +476,7 @@ enum Feedback {
 
     /// The fields of `.github/ISSUE_TEMPLATE/bug.yml`, by their `id`.
     static func fields(version: String, macOS: String, model: String, notch: Bool) -> [(String, String)] {
-        [("version-yumi", version), ("version-macos", macOS), ("mac", "\(model), notch : \(notch ? "oui" : "non")")]
+        [("version-yumi", version), ("version-macos", macOS), ("mac", "\(model), notch : \(notch ? loc("oui") : loc("non"))")]
     }
 
     static func url(version: String, macOS: String, model: String, notch: Bool) -> URL? {
@@ -490,15 +497,15 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
 
     var title: String {
         switch self {
-        case .general:     return "Général"
+        case .general:     return loc("Général")
         case .yumi:        return "Yumi"
         case .modules:     return "Modules"
         case .engines:     return "Moteurs"
         case .claudeCode:  return "Claude Code"
         case .permissions: return "Autorisations"
-        case .memory:      return "Mémoire"
-        case .about:       return "À propos"
-        case .developer:   return "Développeur"
+        case .memory:      return loc("Mémoire")
+        case .about:       return loc("À propos")
+        case .developer:   return loc("Développeur")
         }
     }
 
@@ -530,7 +537,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
     /// Where each stored setting lives: the same UserDefaults and Keychain keys as before the
     /// window was redone, so nothing set earlier is lost.
     static let settings: [SettingsPage: [String]] = [
-        .general:     ["launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
+        .general:     ["yumiLanguage", "launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
                        "absenceInterval", "contextEngineEnabled"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
         .modules:     ["github-token"],

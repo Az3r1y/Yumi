@@ -1,0 +1,159 @@
+{
+  "sourceLanguage": "fr",
+  "version": "1.0",
+  "strings": {
+    "NSAccessibilityUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je lis le titre de la fenêtre que tu me montres, et j'écoute la touche Échap et ton raccourci."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I read the title of the window you show me, and I listen for the Escape key and your shortcut."
+          }
+        }
+      }
+    },
+    "NSAppleEventsUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je lis l'adresse de la page ouverte dans ton navigateur quand tu me la montres, j'envoie par Mail ce que tu confirmes, et je mets ta musique en pause ou au morceau suivant quand tu me le demandes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I read the address of the page open in your browser when you show it to me, I send with Mail what you confirm, and I pause your music or skip to the next track when you ask."
+          }
+        }
+      }
+    },
+    "NSCalendarsFullAccessUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je lis ton calendrier pour t'annoncer ton prochain rendez-vous. Rien ne quitte ton Mac."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I read your calendar to tell you about your next appointment. Nothing leaves your Mac."
+          }
+        }
+      }
+    },
+    "NSDesktopFolderUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je crée sur ton Bureau les fichiers que tu me demandes d'y mettre."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I create on your Desktop the files you ask me to put there."
+          }
+        }
+      }
+    },
+    "NSDocumentsFolderUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je crée dans Documents les fichiers que tu me demandes d'y mettre, et j'y travaille si tu y as placé mon dossier."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I create in Documents the files you ask me to put there, and I work there if you placed my folder in it."
+          }
+        }
+      }
+    },
+    "NSDownloadsFolderUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je dépose dans Téléchargements les fichiers que tu me demandes de créer."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I put in Downloads the files you ask me to create."
+          }
+        }
+      }
+    },
+    "NSLocationUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I look at where you are, to the nearest kilometre, to tell you about the sky here."
+          }
+        }
+      }
+    },
+    "NSLocationWhenInUseUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je regarde où tu es, au kilomètre près, pour te donner le ciel d'ici."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I look at where you are, to the nearest kilometre, to tell you about the sky here."
+          }
+        }
+      }
+    },
+    "NSRemindersFullAccessUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je te montre tes rappels du jour, je coche ceux que tu termines, et j'en ajoute quand tu me le demandes."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I show you today's reminders, tick the ones you finish, and add some when you ask."
+          }
+        }
+      }
+    }
+  }
+}

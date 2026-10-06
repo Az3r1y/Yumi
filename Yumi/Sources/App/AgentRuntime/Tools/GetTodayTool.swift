@@ -45,7 +45,7 @@ struct GetTodayTool: Tool {
     var descriptor: ToolDescriptor {
         ToolDescriptor(
             id: "get_today",
-            name: "Sum up a day",
+            name: loc("Sum up a day"),
             description: "Sums up one day of the person in one or two sentences: its appointments, the reminders due that day, the weather for today, and the free time between 8:00 and 20:00 when asked. Use it for every question about the person's calendar, reminders or free time, today or up to 14 days ahead.",
             inputSchema: ToolInputSchema(fields: [
                 .init(name: "date", type: .string, required: false,
@@ -75,11 +75,11 @@ struct GetTodayTool: Tool {
         guard parts.count == 3, let year = parts[0], let month = parts[1], let dayNumber = parts[2],
               let date = calendar.date(from: DateComponents(year: year, month: month, day: dayNumber)),
               calendar.dateComponents([.year, .month, .day], from: date) == DateComponents(year: year, month: month, day: dayNumber) else {
-            throw .invalidInput("« \(text) » n'est pas une date que je comprends")
+            throw .invalidInput(loc("« \(text) » n'est pas une date que je comprends"))
         }
         let offset = calendar.dateComponents([.day], from: today, to: date).day ?? 0
-        if offset < 0 { throw .invalidInput("c'est un jour déjà passé, je ne regarde que les jours à venir") }
-        if offset > Self.maxDaysAhead { throw .invalidInput("je ne regarde pas plus loin que \(FrenchText.spelled(Self.maxDaysAhead)) jours") }
+        if offset < 0 { throw .invalidInput(loc("c'est un jour déjà passé, je ne regarde que les jours à venir")) }
+        if offset > Self.maxDaysAhead { throw .invalidInput(loc("je ne regarde pas plus loin que \(FrenchText.spelled(Self.maxDaysAhead)) jours")) }
         return date
     }
 
@@ -100,11 +100,11 @@ struct GetTodayTool: Tool {
 
     /// The answer is said, not listed: one or two sentences on one line.
     func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String? {
-        guard case .string(let reply)? = output.values["reply"], !reply.isEmpty else { return "la réponse est vide" }
-        if reply.contains(where: \.isNewline) || reply.hasPrefix("-") || reply.contains("•") { return "la réponse est une liste" }
+        guard case .string(let reply)? = output.values["reply"], !reply.isEmpty else { return loc("la réponse est vide") }
+        if reply.contains(where: \.isNewline) || reply.hasPrefix("-") || reply.contains("•") { return loc("la réponse est une liste") }
         // A sentence ends with a stop followed by a space or the end: "v1.2" is not two.
         let ends = reply.matches(of: /[.!?](\s|$)/).count
-        return ends > 2 ? "la réponse fait plus de deux phrases" : nil
+        return ends > 2 ? loc("la réponse fait plus de deux phrases") : nil
     }
 }
 
@@ -116,67 +116,67 @@ enum TodayPhrase {
 
     static func reply(_ facts: TodayFacts, day: Date, now: Date, freeTime: Bool, calendar: Calendar = .current) -> String {
         let isToday = calendar.isDate(day, inSameDayAs: now)
-        let label = isToday ? "aujourd'hui" : dayLabel(day, now: now, calendar: calendar)
+        let label = isToday ? loc("aujourd'hui") : dayLabel(day, now: now, calendar: calendar)
         let first = [agenda(facts.events, label: label, isToday: isToday, calendar: calendar),
                      reminders(facts.reminders, label: isToday ? nil : label)].compactMap { $0 }
         var sentences: [String] = []
-        if !first.isEmpty { sentences.append(FrenchText.sentenceStart(first.joined(separator: ", et ")) + ".") }
+        if !first.isEmpty { sentences.append(FrenchText.sentenceStart(first.joined(separator: loc(", et "))) + ".") }
         if freeTime, let free = free(facts.dayEvents ?? facts.events, day: day, now: now, calendar: calendar) {
             sentences.append(FrenchText.sentenceStart(free) + ".")
         } else if isToday, let weather = facts.weather {
-            sentences.append("Dehors, \(Int(weather.temperature.rounded()))° et \(WeatherSummary.sky(weather.code)).")
+            sentences.append(loc("Dehors, \(Int(weather.temperature.rounded()))° et \(WeatherSummary.sky(weather.code))."))
         }
         if let missing = missing(facts.noAccess) {
             // Still two sentences at most: the gap joins the last one when there are already two.
             if sentences.count < 2 {
                 sentences.append(FrenchText.sentenceStart(missing) + ".")
             } else {
-                sentences[sentences.count - 1] = String(sentences[sentences.count - 1].dropLast()) + ", mais " + missing + "."
+                sentences[sentences.count - 1] = String(sentences[sentences.count - 1].dropLast()) + loc(", mais ") + missing + "."
             }
         }
         if sentences.isEmpty {
-            return "Je ne vois ni ton agenda, ni tes rappels, ni la météo. Active-les dans mes réglages et je te dirai."
+            return loc("Je ne vois ni ton agenda, ni tes rappels, ni la météo. Active-les dans mes réglages et je te dirai.")
         }
         return sentences.joined(separator: " ")
     }
 
     /// "je n'ai pas accès à ton agenda ni à tes rappels (Réglages Système, Confidentialité et sécurité)".
     private static func missing(_ sources: [TodayFacts.Source]) -> String? {
-        let names = [TodayFacts.Source.agenda, .reminders].filter(sources.contains).map { $0 == .agenda ? "à ton agenda" : "à tes rappels" }
+        let names = [TodayFacts.Source.agenda, .reminders].filter(sources.contains).map { $0 == .agenda ? loc("à ton agenda") : loc("à tes rappels") }
         guard !names.isEmpty else { return nil }
-        return "je n'ai pas accès \(names.joined(separator: " ni ")), autorise Yumi dans Réglages Système, Confidentialité et sécurité"
+        return loc("je n'ai pas accès \(names.joined(separator: loc(" ni "))), autorise Yumi dans Réglages Système, Confidentialité et sécurité")
     }
 
     private static func agenda(_ events: [AgendaEvent]?, label: String, isToday: Bool, calendar: Calendar) -> String? {
         guard let events else { return nil }
-        guard let next = events.first else { return isToday ? "plus aucun rendez-vous aujourd'hui" : "aucun rendez-vous \(label)" }
-        let what = "\(oneLine(next.title)) à \(FrenchText.clock(next.start, calendar: calendar))"
+        guard let next = events.first else { return isToday ? loc("plus aucun rendez-vous aujourd'hui") : loc("aucun rendez-vous \(label)") }
+        let what = loc("\(oneLine(next.title)) à \(FrenchText.clock(next.start, calendar: calendar))")
         if isToday {
-            if events.count == 1 { return "encore un rendez-vous aujourd'hui : \(what)" }
-            return "encore \(FrenchText.spelled(events.count)) rendez-vous aujourd'hui, le prochain c'est \(what)"
+            if events.count == 1 { return loc("encore un rendez-vous aujourd'hui : \(what)") }
+            return loc("encore \(FrenchText.spelled(events.count)) rendez-vous aujourd'hui, le prochain c'est \(what)")
         }
-        if events.count == 1 { return "\(label), un rendez-vous : \(what)" }
-        return "\(label), \(FrenchText.spelled(events.count)) rendez-vous, le premier c'est \(what)"
+        if events.count == 1 { return loc("\(label), un rendez-vous : \(what)") }
+        return loc("\(label), \(FrenchText.spelled(events.count)) rendez-vous, le premier c'est \(what)")
     }
 
     private static func reminders(_ reminders: [ReminderItem]?, label: String?) -> String? {
         guard let reminders else { return nil }
-        let when = label.map { " pour \($0)" } ?? ""
-        guard let first = NotesSummary.ordered(reminders).first else { return "aucun rappel\(when)" }
-        if reminders.count == 1 { return "un rappel\(when) : \(oneLine(first.title))" }
-        return "\(FrenchText.spelledCount(reminders.count, "rappel", "rappels"))\(when), dont \(oneLine(first.title))"
+        let when = label.map { loc(" pour \($0)") } ?? ""
+        guard let first = NotesSummary.ordered(reminders).first else { return loc("aucun rappel\(when)") }
+        if reminders.count == 1 { return loc("un rappel\(when) : \(oneLine(first.title))") }
+        return loc("\(FrenchText.spelledCount(reminders.count, loc("rappel"), loc("rappels")))\(when), dont \(oneLine(first.title))")
     }
 
     /// "demain", "après-demain", "jeudi 9 octobre".
     static func dayLabel(_ day: Date, now: Date, calendar: Calendar) -> String {
         let offset = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: day)).day ?? 0
-        if offset == 1 { return "demain" }
-        if offset == 2 { return "après-demain" }
+        if offset == 1 { return loc("demain") }
+        if offset == 2 { return loc("après-demain") }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = AppLanguage.locale
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = "EEEE d MMMM"
+        formatter.setLocalizedDateFormatFromTemplate("EEEEdMMMM")
         return formatter.string(from: day)
     }
 
@@ -186,15 +186,15 @@ enum TodayPhrase {
         guard let events else { return nil }
         let slots = FreeTime.slots(events: events, day: day, now: now, calendar: calendar)
         let total = slots.reduce(0) { $0 + $1.end.timeIntervalSince($1.start) }
-        let window = "entre \(GetTodayTool.dayStartHour) h et \(GetTodayTool.dayEndHour) h"
+        let window = loc("entre \(GetTodayTool.dayStartHour) h et \(GetTodayTool.dayEndHour) h")
         guard total >= 15 * 60, let longest = slots.max(by: { $0.end.timeIntervalSince($0.start) < $1.end.timeIntervalSince($1.start) }) else {
-            return "plus de temps libre \(window)"
+            return loc("plus de temps libre \(window)")
         }
-        return "du temps libre \(window) : \(FreeTime.duration(total)), le plus long créneau de \(FreeTime.clock(longest.start, calendar)) à \(FreeTime.clock(longest.end, calendar))"
+        return loc("du temps libre \(window) : \(FreeTime.duration(total)), le plus long créneau de \(FreeTime.clock(longest.start, calendar)) à \(FreeTime.clock(longest.end, calendar))")
     }
 
     private static func oneLine(_ text: String) -> String {
-        ApprovalRequest.oneLine(text, limit: 60) ?? "sans titre"
+        ApprovalRequest.oneLine(text, limit: 60) ?? loc("sans titre")
     }
 }
 
@@ -224,13 +224,12 @@ enum FreeTime {
         let minutes = Int(seconds / 60)
         let hours = minutes / 60, rest = minutes % 60
         if hours == 0 { return "\(rest) min" }
+        if AppLanguage.isEnglish { return rest == 0 ? "\(hours) h" : "\(hours) h \(rest) min" }
         return rest == 0 ? "\(hours) h" : String(format: "%d h %02d", hours, rest)
     }
 
     /// "14 h", "14 h 30".
     static func clock(_ date: Date, _ calendar: Calendar) -> String {
-        let parts = calendar.dateComponents([.hour, .minute], from: date)
-        let minute = parts.minute ?? 0
-        return minute == 0 ? "\(parts.hour ?? 0) h" : String(format: "%d h %02d", parts.hour ?? 0, minute)
+        FrenchText.spokenHour(date, calendar: calendar)
     }
 }

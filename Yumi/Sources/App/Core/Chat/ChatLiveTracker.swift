@@ -51,7 +51,7 @@ struct ChatLiveTracker: Sendable {
             guard let index = running.firstIndex(where: { $0.id == request.toolUseID }) else { break }
             beforeWaiting[request.toolUseID] = running[index]
             running[index].kind = .waiting
-            running[index].label = "J'attends ton accord"
+            running[index].label = loc("J'attends ton accord")
             running[index].detail = Self.preview(request.summary, last: false)
 
         case .toolFinished(let id, let failed, let output):
@@ -105,29 +105,29 @@ struct ChatLiveTracker: Sendable {
         switch tool.name {
         case "Read", "NotebookRead":
             kind = .reading
-            text = label("Je lis", file, alone: "Je lis un fichier")
+            text = label(loc("Je lis"), file, alone: loc("Je lis un fichier"))
         case "Write":
             kind = .writing
-            text = label("J'écris", file, alone: "J'écris un fichier")
+            text = label(loc("J'écris"), file, alone: loc("J'écris un fichier"))
             detail = preview(tool.content, last: false)
         case "Edit", "MultiEdit", "NotebookEdit":
             kind = .editing
-            text = label("Je modifie", file, alone: "Je modifie un fichier")
+            text = label(loc("Je modifie"), file, alone: loc("Je modifie un fichier"))
             detail = preview(tool.content, last: false)
         case "Bash":
-            text = label("Je lance", short, alone: "Je lance une commande")
+            text = label(loc("Je lance"), short, alone: loc("Je lance une commande"))
         case "Grep", "Glob", "LS", "ToolSearch":
             kind = .searching
-            text = label("Je cherche", short, alone: "Je cherche dans le dossier")
+            text = label(loc("Je cherche"), short, alone: loc("Je cherche dans le dossier"))
         case "WebSearch":
             kind = .searching
-            text = label("Je cherche sur le web :", short, alone: "Je cherche sur le web")
+            text = label(loc("Je cherche sur le web :"), short, alone: loc("Je cherche sur le web"))
         case "WebFetch":
             kind = .reading
-            text = label("Je lis", URL(string: tool.detail)?.host ?? short, alone: "Je lis une page")
+            text = label(loc("Je lis"), URL(string: tool.detail)?.host ?? short, alone: loc("Je lis une page"))
         case "Task", "Agent", "TodoWrite":
             kind = .thinking
-            text = tool.name == "TodoWrite" ? "Je m'organise" : label("Je délègue :", short, alone: "Je délègue une tâche")
+            text = tool.name == "TodoWrite" ? loc("Je m'organise") : label(loc("Je délègue :"), short, alone: loc("Je délègue une tâche"))
         default:
             text = "J'utilise \(tool.name)"
         }
@@ -153,7 +153,7 @@ struct ChatLiveTracker: Sendable {
     /// What the folded island says about the answer in progress.
     static func headline(_ live: ChatLive) -> String {
         if let activity = live.activity { return activity.label }
-        return live.text.isEmpty ? "Je réfléchis" : "Je réponds"
+        return live.text.isEmpty ? loc("Je réfléchis") : loc("Je réponds")
     }
 }
 

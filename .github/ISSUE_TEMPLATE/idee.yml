@@ -1,14 +1,17 @@
-name: Une idée
-description: Quelque chose que Yumi pourrait faire, ou faire mieux.
+name: Une idée / An idea
+description: Quelque chose que Yumi pourrait faire, ou faire mieux. Something Yumi could do, or do better.
 labels: [idée]
 body:
+  - type: markdown
+    attributes:
+      value: Écris en français ou en anglais. Write in French or in English.
   - type: textarea
     id: idee
     attributes:
-      label: L'idée
+      label: L'idée / The idea
     validations:
       required: true
   - type: textarea
     id: pourquoi
     attributes:
-      label: Pourquoi elle t'aiderait
+      label: Pourquoi elle t'aiderait / Why it would help you

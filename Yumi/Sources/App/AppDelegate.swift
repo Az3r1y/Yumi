@@ -96,7 +96,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600),
                            styleMask: [.titled, .closable, .miniaturizable, .resizable],
                            backing: .buffered, defer: false)
-        win.title = "Réglages de \(AppIdentity.productName)"
+        win.title = loc("Réglages de \(AppIdentity.productName)")
         win.contentMinSize = NSSize(width: 700, height: 480)
         win.contentView = NSHostingView(rootView: SettingsView())
         win.center()

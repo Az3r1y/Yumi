@@ -108,7 +108,7 @@ final class YumiUpdates: ObservableObject {
     private func announce(_ tag: String) {
         guard defaults.string(forKey: Self.announcedKey) != tag, AppState.shared.remark == nil else { return }
         defaults.set(tag, forKey: Self.announcedKey)
-        AppState.shared.remark = YumiRemark(id: Self.remarkPrefix + tag, text: "Une nouvelle version de Yumi est là",
+        AppState.shared.remark = YumiRemark(id: Self.remarkPrefix + tag, text: loc("Une nouvelle version de Yumi est là"),
                                             mood: .happy, action: "Voir", duration: 12)
     }
 

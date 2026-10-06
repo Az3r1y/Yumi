@@ -53,43 +53,43 @@ enum IslandStudio {
     static let name = "Alex"
 
     static func modules(musicPlaying: Bool = true) -> [ModuleSnapshot] {
-        var music = ModuleSnapshot(id: "music", name: "Musique", colorHex: "#F58AD9", status: "lecture",
-                                   title: "Lueur", subtitle: "Halo Nord", primaryAction: "Pause", secondaryAction: "Suivant")
+        var music = ModuleSnapshot(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: loc("lecture"),
+                                   title: loc("Lueur"), subtitle: loc("Halo Nord"), primaryAction: loc("Pause"), secondaryAction: loc("Suivant"))
         music.symbol = "music.note"
         music.primarySymbol = "pause.fill"
         music.secondarySymbol = "forward.end.fill"
         music.progress = ModuleProgress(fraction: 0.58, leading: "1:52", trailing: "3:14")
         if musicPlaying {
-            music.live = ModuleLive(text: "Lueur · Halo Nord", priority: ModuleLivePriority.activity, controls: [
-                ModuleControl(id: "primary", symbol: "pause.fill", label: "Pause"),
-                ModuleControl(id: "secondary", symbol: "forward.fill", label: "Suivant"),
+            music.live = ModuleLive(text: loc("Lueur · Halo Nord"), priority: ModuleLivePriority.activity, controls: [
+                ModuleControl(id: "primary", symbol: "pause.fill", label: loc("Pause")),
+                ModuleControl(id: "secondary", symbol: "forward.fill", label: loc("Suivant")),
             ])
         }
-        var claude = ModuleSnapshot(id: "claude-code", name: "Claude Code", colorHex: "#FFB547", status: "au repos",
-                                    title: "Rien en cours", subtitle: "Atelier, dernière session il y a une heure",
-                                    primaryAction: "Voir", secondaryAction: nil)
+        var claude = ModuleSnapshot(id: "claude-code", name: "Claude Code", colorHex: "#FFB547", status: loc("au repos"),
+                                    title: loc("Rien en cours"), subtitle: loc("Atelier, dernière session il y a une heure"),
+                                    primaryAction: loc("Voir"), secondaryAction: nil)
         claude.symbol = "terminal.fill"
         var agenda = ModuleSnapshot(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "14:30",
-                                    title: "Point produit dans douze minutes", subtitle: "14:30 à 15:00, en visio",
-                                    primaryAction: "Rejoindre", secondaryAction: nil)
+                                    title: loc("Point produit dans douze minutes"), subtitle: loc("14:30 à 15:00, en visio"),
+                                    primaryAction: loc("Rejoindre"), secondaryAction: nil)
         agenda.symbol = "calendar"
         agenda.primarySymbol = "video.fill"
         var notes = ModuleSnapshot(id: "notes", name: "Notes", colorHex: "#F2C744", status: "3",
-                                   title: "Dernière note", subtitle: "Idée : une page d'accueil plus calme",
-                                   primaryAction: "Nouvelle note", secondaryAction: nil)
+                                   title: loc("Dernière note"), subtitle: loc("Idée : une page d'accueil plus calme"),
+                                   primaryAction: loc("Nouvelle note"), secondaryAction: nil)
         notes.symbol = "note.text"
-        var focus = ModuleSnapshot(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "prêt",
-                                   title: "Prêt pour une session", subtitle: "vingt-cinq minutes",
-                                   primaryAction: "Démarrer", secondaryAction: nil)
+        var focus = ModuleSnapshot(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: loc("prêt"),
+                                   title: loc("Prêt pour une session"), subtitle: loc("vingt-cinq minutes"),
+                                   primaryAction: loc("Démarrer"), secondaryAction: nil)
         focus.symbol = "timer"
         focus.primarySymbol = "play.fill"
-        var weather = ModuleSnapshot(id: "weather", name: "Météo", colorHex: "#7FD0FF", status: "19°",
-                                     title: "19° et des éclaircies", subtitle: "Pluie vers 18 h, prends une veste",
-                                     primaryAction: "Détail", secondaryAction: nil)
+        var weather = ModuleSnapshot(id: "weather", name: loc("Météo"), colorHex: "#7FD0FF", status: "19°",
+                                     title: loc("19° et des éclaircies"), subtitle: loc("Pluie vers 18 h, prends une veste"),
+                                     primaryAction: loc("Détail"), secondaryAction: nil)
         weather.symbol = "cloud.sun.fill"
         var github = ModuleSnapshot(id: "github", name: "GitHub", colorHex: "#C9CCDA", status: "128 · 12 · 3",
-                                    title: "Une étoile de plus sur Atelier.", subtitle: "alex/atelier",
-                                    primaryAction: "Ouvrir", secondaryAction: nil)
+                                    title: loc("Une étoile de plus sur Atelier."), subtitle: loc("alex/atelier"),
+                                    primaryAction: loc("Ouvrir"), secondaryAction: nil)
         github.symbol = "arrow.triangle.branch"
         return [claude, agenda, notes, focus, music, weather, github]
     }
@@ -101,8 +101,8 @@ enum IslandStudio {
         let tomorrow = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: now)) ?? now
         func at(_ hour: Int) -> Date { calendar.date(bySettingHour: hour, minute: 0, second: 0, of: tomorrow) ?? tomorrow }
         let events = [
-            AgendaEvent(id: "studio-1", title: "Point produit", start: at(10), end: at(12), isAllDay: false, location: ""),
-            AgendaEvent(id: "studio-2", title: "Atelier client", start: at(17), end: at(20), isAllDay: false, location: ""),
+            AgendaEvent(id: "studio-1", title: loc("Point produit"), start: at(10), end: at(12), isAllDay: false, location: ""),
+            AgendaEvent(id: "studio-2", title: loc("Atelier client"), start: at(17), end: at(20), isAllDay: false, location: ""),
         ]
         let facts = TodayFacts(events: events, reminders: nil, weather: nil, dayEvents: events)
         return TodayPhrase.reply(facts, day: tomorrow, now: now, freeTime: true, calendar: calendar)
@@ -118,38 +118,38 @@ enum IslandStudio {
         guard let index = all.firstIndex(where: { $0.id == "claude-code" }) else { return all }
         let now = Date.now
         var claude = all[index]
-        let atelier = ModuleRow(id: "s2", title: "atelier", detail: "Modifie Accueil.swift", state: .busy,
-                                label: "travaille", date: now.addingTimeInterval(-720), action: "s2")
+        let atelier = ModuleRow(id: "s2", title: loc("atelier"), detail: loc("Modifie Accueil.swift"), state: .busy,
+                                label: loc("travaille"), date: now.addingTimeInterval(-720), action: "s2")
         switch moment {
         case .working:
-            claude.status = "1 session"
-            claude.title = "Claude modifie Accueil.swift sur atelier."
-            claude.subtitle = "Une session ouverte."
+            claude.status = loc("1 session")
+            claude.title = loc("Claude modifie Accueil.swift sur atelier.")
+            claude.subtitle = loc("Une session ouverte.")
             claude.rows = [atelier]
         case .waiting:
-            claude.status = "3 sessions"
-            claude.title = "Claude veut ton accord sur api. Je laisse passer ?"
-            claude.subtitle = "Trois sessions ouvertes, une t'attend."
+            claude.status = loc("3 sessions")
+            claude.title = loc("Claude veut ton accord sur api. Je laisse passer ?")
+            claude.subtitle = loc("Trois sessions ouvertes, une t'attend.")
             claude.needsAttention = true
-            claude.live = ModuleLive(text: "3 sessions · accord sur api", priority: ModuleLivePriority.attention,
-                                     controls: [ModuleControl(id: "primary", symbol: "eye.fill", label: "Voir")])
+            claude.live = ModuleLive(text: loc("3 sessions · accord sur api"), priority: ModuleLivePriority.attention,
+                                     controls: [ModuleControl(id: "primary", symbol: "eye.fill", label: loc("Voir"))])
             claude.rows = [
-                ModuleRow(id: "s1", title: "api", detail: "Demande Bash : npm test", state: .waiting,
-                          label: "attend un accord", date: now.addingTimeInterval(-40), action: "s1"),
+                ModuleRow(id: "s1", title: loc("api"), detail: loc("Demande Bash : npm test"), state: .waiting,
+                          label: loc("attend un accord"), date: now.addingTimeInterval(-40), action: "s1"),
                 atelier,
-                ModuleRow(id: "s3", title: "site", detail: "C'est passé.", state: .success,
-                          label: "terminée", date: now.addingTimeInterval(-120), action: "s3"),
+                ModuleRow(id: "s3", title: loc("site"), detail: loc("C'est passé."), state: .success,
+                          label: loc("terminée"), date: now.addingTimeInterval(-120), action: "s3"),
             ]
         case .answered:
-            claude.status = "3 sessions"
-            claude.title = "C'est passé sur api."
-            claude.subtitle = "Trois sessions ouvertes."
+            claude.status = loc("3 sessions")
+            claude.title = loc("C'est passé sur api.")
+            claude.subtitle = loc("Trois sessions ouvertes.")
             claude.rows = [
-                ModuleRow(id: "s1", title: "api", detail: "C'est passé.", state: .success,
-                          label: "terminée", date: now, action: "s1"),
+                ModuleRow(id: "s1", title: loc("api"), detail: loc("C'est passé."), state: .success,
+                          label: loc("terminée"), date: now, action: "s1"),
                 atelier,
-                ModuleRow(id: "s3", title: "site", detail: "C'est passé.", state: .success,
-                          label: "terminée", date: now.addingTimeInterval(-120), action: "s3"),
+                ModuleRow(id: "s3", title: loc("site"), detail: loc("C'est passé."), state: .success,
+                          label: loc("terminée"), date: now.addingTimeInterval(-120), action: "s3"),
             ]
         }
         all[index] = claude
@@ -222,8 +222,8 @@ enum IslandStudio {
         state.isPinned = false
         state.stateOverride = .idle
         if let i = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) {
-            state.tasks[i].name = "atelier"
-            state.tasks[i].steps = ["Lit · README.md", "Modifie · Accueil.swift", "Exécute · swift test"]
+            state.tasks[i].name = loc("atelier")
+            state.tasks[i].steps = ["Lit · README.md", "Modifie · Accueil.swift", loc("Exécute · swift test")]
         }
         IslandModel.shared.studioPress = false
     }
@@ -305,12 +305,12 @@ enum IslandStudio {
             // The chat writes itself, then a file is created
             after(0.6) {
                 state.stateOverride = .thinking
-                state.chatHistory = [ChatMessage(role: .user, content: "Écris-moi un petit mot de bienvenue pour le site, et enregistre-le.")]
+                state.chatHistory = [ChatMessage(role: .user, content: loc("Écris-moi un petit mot de bienvenue pour le site, et enregistre-le."))]
                 controller.expand(to: .prompt)
             }
             var live = ChatLive()
             var at = 1.8
-            for word in "Je m'en occupe. Quelques lignes simples, puis je range le fichier dans Téléchargements.".split(separator: " ") {
+            for word in loc("Je m'en occupe. Quelques lignes simples, puis je range le fichier dans Téléchargements.").split(separator: " ") {
                 at += 0.08
                 let text = String(word)
                 after(at) {
@@ -318,19 +318,19 @@ enum IslandStudio {
                     state.chatLive = live
                 }
             }
-            let lines = ["Bienvenue.", "", "Ici, on prend le temps de bien faire.", "Installe-toi, regarde autour de toi,", "et écris-nous si tu as une question."]
+            let lines = [loc("Bienvenue."), "", loc("Ici, on prend le temps de bien faire."), loc("Installe-toi, regarde autour de toi,"), loc("et écris-nous si tu as une question.")]
             for (index, _) in lines.enumerated() {
                 after(at + 0.5 + Double(index) * 0.35) {
-                    live.activity = ChatActivity(id: "w1", kind: .writing, label: "Écrit bienvenue.txt",
+                    live.activity = ChatActivity(id: "w1", kind: .writing, label: loc("Écrit bienvenue.txt"),
                                                  detail: lines[0...index].joined(separator: "\n"))
                     state.chatLive = live
                 }
             }
             let end = at + 0.5 + Double(lines.count) * 0.35 + 0.5
             after(end) {
-                live.done = [ChatActivity(id: "w1", kind: .writing, label: "Écrit bienvenue.txt")]
+                live.done = [ChatActivity(id: "w1", kind: .writing, label: loc("Écrit bienvenue.txt"))]
                 live.activity = nil
-                live.text += " C'est fait : bienvenue.txt t'attend."
+                live.text += loc(" C'est fait : bienvenue.txt t'attend.")
                 state.chatLive = live
             }
             after(end + 1.0) {
@@ -344,7 +344,7 @@ enum IslandStudio {
             // Folded, he speaks first
             after(0.8) {
                 state.remark = YumiRemark(id: "studio-\(Date.now.timeIntervalSince1970)",
-                                          text: "Deux heures d'affilée. Une pause ?", mood: .worried, duration: 6)
+                                          text: loc("Deux heures d'affilée. Une pause ?"), mood: .worried, duration: 6)
             }
             after(7.5) { state.remark = nil }
 
@@ -373,9 +373,9 @@ enum IslandStudio {
                 controller.expand(to: .module)
             }
             let scenes: [(YumiScene, String, String)] = [
-                (.star, "Une étoile de plus sur Atelier.", "129 · 12 · 3"),
-                (.fork, "Quelqu'un a copié Atelier pour y travailler.", "129 · 13 · 3"),
-                (.merge, "La pull request « Accueil plus calme » est fusionnée.", "129 · 13 · 2"),
+                (.star, loc("Une étoile de plus sur Atelier."), "129 · 12 · 3"),
+                (.fork, loc("Quelqu'un a copié Atelier pour y travailler."), "129 · 13 · 3"),
+                (.merge, loc("La pull request « Accueil plus calme » est fusionnée."), "129 · 13 · 2"),
             ]
             for (index, scene) in scenes.enumerated() {
                 after(1.8 + Double(index) * 3.2) {
@@ -400,7 +400,7 @@ enum IslandStudio {
             // the runtime's answers do
             after(0.6) {
                 state.stateOverride = .thinking
-                state.chatHistory = [ChatMessage(role: .user, content: "Combien de temps libre j'ai demain pour avancer sur Yumi ?")]
+                state.chatHistory = [ChatMessage(role: .user, content: loc("Combien de temps libre j'ai demain pour avancer sur Yumi ?"))]
                 controller.expand(to: .prompt)
             }
             after(2.6) {
@@ -433,7 +433,7 @@ enum IslandStudio {
             after(4.5) {
                 // The approval is the one of the api session
                 if let i = state.tasks.firstIndex(where: { $0.id == "integration_claude" }) {
-                    state.tasks[i].name = "api"
+                    state.tasks[i].name = loc("api")
                     state.tasks[i].steps = ["Exécute · npm test"]
                 }
                 state.stateOverride = .approval

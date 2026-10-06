@@ -8,6 +8,7 @@ struct GeneralSettings: View {
     @State private var startupError: String?
     @State private var hotkeyFlags = AppState.shared.hotkeyFlags
     @State private var hotkeyCode = AppState.shared.hotkeyCode
+    @State private var language = AppLanguage.stored()
 
     /// The same choices as the island's own settings; 0 is never.
     static let foldDelays: [(seconds: TimeInterval, label: String)] =
@@ -15,6 +16,20 @@ struct GeneralSettings: View {
 
     var body: some View {
         Form {
+            Section {
+                Picker("Langue", selection: Binding(get: { language }, set: { language = $0; AppLanguage.choose($0) })) {
+                    Text("Automatique").tag(AppLanguage.automatic)
+                    Text(verbatim: "Français").tag(AppLanguage.french)
+                    Text(verbatim: "English").tag(AppLanguage.english)
+                }
+            } footer: {
+                if languageChanges {
+                    SettingsHelp(loc("La nouvelle langue s'applique au prochain lancement de Yumi."))
+                } else {
+                    SettingsHelp(loc("En automatique, je parle la langue de ton Mac."))
+                }
+            }
+
             Section {
                 Toggle("Ouvrir Yumi au démarrage du Mac", isOn: $launchAtStartup)
                     .onChange(of: launchAtStartup) { _, on in setStartup(on) }
@@ -45,9 +60,15 @@ struct GeneralSettings: View {
             } header: {
                 Text("Contexte")
             } footer: {
-                SettingsHelp("Je vois quelle app et quelle fenêtre tu utilises, pour parler à propos. Ça reste sur ce Mac, en mémoire : pas de capture d'écran, pas de frappe.")
+                SettingsHelp(loc("Je vois quelle app et quelle fenêtre tu utilises, pour parler à propos. Ça reste sur ce Mac, en mémoire : pas de capture d'écran, pas de frappe."))
             }
         }
+    }
+
+    /// True when the language chosen is not the one this run speaks.
+    private var languageChanges: Bool {
+        let wanted = language.code ?? AppLanguage.resolve(Locale.preferredLanguages.first)
+        return wanted != AppLanguage.current
     }
 
     /// The stored delay, on the nearest choice when an older value is not one of them.
@@ -66,7 +87,7 @@ struct GeneralSettings: View {
             if on { try SMAppService.mainApp.register() } else { try SMAppService.mainApp.unregister() }
             startupError = nil
         } catch {
-            startupError = "macOS a refusé : \(error.localizedDescription)"
+            startupError = loc("macOS a refusé : \(error.localizedDescription)")
             launchAtStartup = !on
         }
     }
@@ -109,7 +130,7 @@ struct YumiSettings: View {
             } header: {
                 Text("Caractère")
             } footer: {
-                SettingsHelp("« Quand ça compte » : quelques fois par jour au plus. « Volontiers » : aussi pour dire bonjour.")
+                SettingsHelp(loc("« Quand ça compte » : quelques fois par jour au plus. « Volontiers » : aussi pour dire bonjour."))
             }
         }
     }

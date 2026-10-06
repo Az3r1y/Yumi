@@ -110,7 +110,7 @@ final class AgendaModule: YumiModule {
             .filter { $0.status != .canceled }
             .map { event in
                 AgendaEvent(id: event.eventIdentifier ?? UUID().uuidString,
-                            title: event.title ?? "Événement",
+                            title: event.title ?? loc("Événement"),
                             start: event.startDate, end: event.endDate, isAllDay: event.isAllDay,
                             location: event.location ?? "",
                             joinURL: AgendaSummary.joinURL(in: [event.url?.absoluteString, event.location, event.notes]))

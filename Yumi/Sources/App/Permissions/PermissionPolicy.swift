@@ -81,7 +81,7 @@ struct PermissionPolicy: Equatable, Codable, Sendable {
     /// it becomes an ask, for a critical one nothing (the default refusal stands).
     func verdict(for request: AgentPermissionRequest, _ assessment: ActionAssessment) -> PolicyVerdict? {
         let matching = rules.filter { $0.isValid && $0.matches(request, assessment) }
-        if matching.contains(where: { $0.effect == .deny }) { return .deny("Une règle de tes réglages l'interdit.") }
+        if matching.contains(where: { $0.effect == .deny }) { return .deny(loc("Une règle de tes réglages l'interdit.")) }
         if matching.contains(where: { $0.effect == .ask }) { return .ask }
         if matching.contains(where: { $0.effect == .allow }) {
             switch assessment.risk {

@@ -25,7 +25,7 @@ struct PermissionsSettings: View {
             } header: {
                 Text("macOS")
             } footer: {
-                SettingsHelp("Ces accès se donnent dans les Réglages Système. Je ne les demande que quand un module en a besoin.")
+                SettingsHelp(loc("Ces accès se donnent dans les Réglages Système. Je ne les demande que quand un module en a besoin."))
             }
 
             Section {
@@ -48,7 +48,7 @@ enum MacPermission: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .accessibility: return "Accessibilité"
+        case .accessibility: return loc("Accessibilité")
         case .calendars:     return "Calendrier"
         case .reminders:     return "Rappels"
         case .location:      return "Position"
@@ -94,9 +94,9 @@ enum MacPermission: String, CaseIterable, Identifiable {
 
     static func label(_ state: PermissionState?) -> String {
         switch state {
-        case .granted?:       return "Autorisé"
-        case .denied?:        return "Refusé"
-        case .notDetermined?: return "Pas demandé"
+        case .granted?:       return loc("Autorisé")
+        case .denied?:        return loc("Refusé")
+        case .notDetermined?: return loc("Pas demandé")
         case nil:             return "Inconnu"
         }
     }
@@ -110,7 +110,7 @@ struct MemorySettings: View {
     var body: some View {
         Form {
             Section {
-                LabeledContent("Ton prénom", value: state.userName ?? "Je ne le connais pas encore")
+                LabeledContent(loc("Ton prénom"), value: state.userName ?? loc("Je ne le connais pas encore"))
                 LabeledContent("Souvenirs", value: state.memory.isEmpty ? "Aucun" : "\(state.memory.count)")
                 Button("Voir et modifier dans l'île") {
                     NotificationCenter.default.post(name: .hookExpand, object: IslandView.memory)
@@ -126,7 +126,7 @@ struct MemorySettings: View {
                         Text("J'oublierai tout ce que tu m'as dit. Ça ne se rattrape pas.")
                     }
             } footer: {
-                SettingsHelp("Je ne garde que ce que tu m'as dit, sur ce Mac. Tu peux tout relire, corriger ou effacer dans l'île.")
+                SettingsHelp(loc("Je ne garde que ce que tu m'as dit, sur ce Mac. Tu peux tout relire, corriger ou effacer dans l'île."))
             }
         }
     }
@@ -145,13 +145,13 @@ struct AboutSettings: View {
                 if let newer = updates.newer {
                     LabeledContent("Nouvelle version") {
                         HStack {
-                            SettingsStatus(text: "\(newer.tag) est là", tone: .warning)
+                            SettingsStatus(text: loc("\(newer.tag) est là"), tone: .warning)
                             Button("Voir") { updates.openRelease() }
                         }
                     }
                 }
             } footer: {
-                SettingsHelp("Je regarde une fois par jour sur GitHub. Je ne télécharge et n'installe jamais rien tout seul.")
+                SettingsHelp(loc("Je regarde une fois par jour sur GitHub. Je ne télécharge et n'installe jamais rien tout seul."))
             }
 
             Section {
@@ -166,7 +166,7 @@ struct AboutSettings: View {
                     }
                 }
             } footer: {
-                SettingsHelp("Le retour s'ouvre sur GitHub avec la version de Yumi, de macOS et le modèle de ton Mac déjà remplis. Rien d'autre.")
+                SettingsHelp(loc("Le retour s'ouvre sur GitHub avec la version de Yumi, de macOS et le modèle de ton Mac déjà remplis. Rien d'autre."))
             }
 
             Section {

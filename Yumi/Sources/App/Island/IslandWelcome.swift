@@ -14,8 +14,8 @@ struct WelcomeActivity: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             VStack(alignment: .leading, spacing: 3) {
-                ActTitle(text: "Moi, c'est Yumi. Et toi ?").riseIn(0)
-                ActSub(text: "Juste ton prénom. Je le garde pour moi.").riseIn(1)
+                ActTitle(text: loc("Moi, c'est Yumi. Et toi ?")).riseIn(0)
+                ActSub(text: loc("Juste ton prénom. Je le garde pour moi.")).riseIn(1)
             }
             HStack(spacing: 6) {
                 TextField("", text: $text, prompt: Text("Ton prénom").foregroundStyle(IslandTheme.faint))
@@ -24,7 +24,7 @@ struct WelcomeActivity: View {
                     .foregroundStyle(IslandTheme.fg)
                     .focused($focused)
                     .onSubmit(answer)
-                RoundButton(style: .white, symbol: "arrow.up", label: "Valider", small: true, action: answer)
+                RoundButton(style: .white, symbol: "arrow.up", label: loc("Valider"), small: true, action: answer)
             }
             .padding(.leading, 14)
             .padding(.trailing, 4)
@@ -32,7 +32,7 @@ struct WelcomeActivity: View {
             .background(RoundedRectangle(cornerRadius: 19).fill(Color.white.opacity(0.1)))
             .riseIn(2)
             HStack(spacing: 8) {
-                ActSub(text: "Quand un agent bosse, je prends")
+                ActSub(text: loc("Quand un agent bosse, je prends"))
                 HStack(spacing: 0) {
                     ForEach(YumiWorkHabit.firstChoices, id: \.self) { choice in
                         SegmentButton(label: choice.label, on: held == choice.rawValue) { choose(choice) }
@@ -42,7 +42,7 @@ struct WelcomeActivity: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(3)
-            TextButton(label: "Plus tard") { IslandActions.skipName() }
+            TextButton(label: loc("Plus tard")) { IslandActions.skipName() }
                 .riseIn(4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

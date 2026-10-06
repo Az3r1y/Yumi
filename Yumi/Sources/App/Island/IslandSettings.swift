@@ -22,7 +22,7 @@ struct SettingsActivity: View {
 
     var body: some View {
         VStack(spacing: 9) {
-            row("Mes sons") {
+            row(loc("Mes sons")) {
                 Slider(value: $state.soundVolume, in: 0...0.2) { editing in
                     if !editing { SoundEngine.shared.play("pop") }
                 }
@@ -32,10 +32,10 @@ struct SettingsActivity: View {
                 .disabled(!state.soundEnabled)
                 .opacity(state.soundEnabled ? 1 : 0.35)
                 .accessibilityLabel("Volume")
-                IslandToggle(isOn: $state.soundEnabled, label: "Sons")
+                IslandToggle(isOn: $state.soundEnabled, label: loc("Sons"))
             }
             .riseIn(0)
-            row("Je me replie après") {
+            row(loc("Je me replie après")) {
                 HStack(spacing: 0) {
                     ForEach(Self.delays, id: \.seconds) { delay in
                         SegmentButton(label: delay.label, on: selected == delay.seconds) {
@@ -48,7 +48,7 @@ struct SettingsActivity: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(1)
-            row("Quand un agent bosse") {
+            row(loc("Quand un agent bosse")) {
                 HStack(spacing: 0) {
                     ForEach(YumiWorkHabit.allCases, id: \.self) { choice in
                         SegmentButton(label: choice.label, on: workHabit == choice.rawValue) {
@@ -79,7 +79,7 @@ struct SettingsActivity: View {
                     Text("Branché")
                         .font(IslandTheme.text(11.5, .medium))
                         .foregroundStyle(IslandTheme.green)
-                    TextButton(label: "Retirer") {
+                    TextButton(label: loc("Retirer")) {
                         IslandActions.connectGitHub(nil)
                         githubConnected = false
                     }
@@ -91,7 +91,7 @@ struct SettingsActivity: View {
                             .foregroundStyle(IslandTheme.fg)
                             .frame(width: 170)
                             .onSubmit(connectGitHub)
-                        RoundButton(style: .white, symbol: "checkmark", label: "Brancher", small: true, action: connectGitHub)
+                        RoundButton(style: .white, symbol: "checkmark", label: loc("Brancher"), small: true, action: connectGitHub)
                             .scaleEffect(0.8)
                     }
                     .padding(.leading, 10)
@@ -99,21 +99,21 @@ struct SettingsActivity: View {
                 }
             }
             .riseIn(4)
-            row("Ce que je sais de toi") {
-                TextButton(label: state.memory.isEmpty ? "Voir" : "Voir (\(state.memory.count))") { IslandActions.go(.memory) }
+            row(loc("Ce que je sais de toi")) {
+                TextButton(label: state.memory.isEmpty ? loc("Voir") : loc("Voir (\(state.memory.count))")) { IslandActions.go(.memory) }
             }
             .riseIn(3)
             row("Yumi \(YumiUpdates.installed)") {
                 if let newer = updates.newer {
-                    TextButton(label: "\(newer.tag) est là") { updates.openRelease() }
+                    TextButton(label: loc("\(newer.tag) est là")) { updates.openRelease() }
                 }
-                TextButton(label: "Envoyer un retour") {
+                TextButton(label: loc("Envoyer un retour")) {
                     if let url = YumiUpdates.feedbackURL() { NSWorkspace.shared.open(url) }
                 }
             }
             .riseIn(5)
-            row("Préviens-moi des nouvelles versions") {
-                IslandToggle(isOn: Binding(get: { updates.enabled }, set: { updates.enabled = $0 }), label: "Nouvelles versions")
+            row(loc("Préviens-moi des nouvelles versions")) {
+                IslandToggle(isOn: Binding(get: { updates.enabled }, set: { updates.enabled = $0 }), label: loc("Nouvelles versions"))
             }
             .riseIn(6)
         }
@@ -170,7 +170,7 @@ struct IslandToggle: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
-        .accessibilityValue(isOn ? "activé" : "désactivé")
+        .accessibilityValue(isOn ? loc("activé") : loc("désactivé"))
     }
 }
 

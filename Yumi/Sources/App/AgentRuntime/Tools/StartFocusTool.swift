@@ -27,7 +27,7 @@ struct StartFocusTool: Tool {
     var descriptor: ToolDescriptor {
         ToolDescriptor(
             id: "start_focus",
-            name: "Start a focus session",
+            name: loc("Start a focus session"),
             description: "Starts one focus session of the Focus module, 25 minutes unless the person says how long; never replaces a session already running.",
             inputSchema: ToolInputSchema(fields: [
                 .init(name: "minutes", type: .number, required: false, description: "length of the session, \(Self.minutes.lowerBound) to \(Self.minutes.upperBound); omit for 25"),
@@ -45,20 +45,20 @@ struct StartFocusTool: Tool {
         let minutes = try minutes(arguments)
         if let problem = busy(await focus.status()) { throw ToolError.failed(problem) }
         try Task.checkCancellation()
-        guard await focus.start(minutes: minutes) else { throw ToolError.failed("le Focus n'a pas démarré") }
-        return ToolOutput(summary: "Started a \(minutes)-minute focus session.",
+        guard await focus.start(minutes: minutes) else { throw ToolError.failed(loc("le Focus n'a pas démarré")) }
+        return ToolOutput(summary: loc("Started a \(minutes)-minute focus session."),
                           values: ["minutes": .number(Double(minutes)),
-                                   "reply": .string("C'est parti pour \(FrenchText.spokenMinutes(TimeInterval(minutes * 60))). Je me tais.")])
+                                   "reply": .string(loc("C'est parti pour \(FrenchText.spokenMinutes(TimeInterval(minutes * 60))). Je me tais."))])
     }
 
     /// The module runs a work session of the length asked, just started.
     func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String? {
-        guard case .number(let asked)? = output.values["minutes"] else { return "aucune durée à vérifier" }
+        guard case .number(let asked)? = output.values["minutes"] else { return loc("aucune durée à vérifier") }
         guard case .busy(let remaining, let length, let focusing) = await focus.status(), focusing else {
-            return "le Focus ne tourne pas"
+            return loc("le Focus ne tourne pas")
         }
-        if length != asked * 60 { return "le Focus dure \(Int(length / 60)) minutes, pas \(Int(asked))" }
-        if remaining <= 0 || remaining > length { return "le Focus n'est pas au début de sa session" }
+        if length != asked * 60 { return loc("le Focus dure \(Int(length / 60)) minutes, pas \(Int(asked))") }
+        if remaining <= 0 || remaining > length { return loc("le Focus n'est pas au début de sa session") }
         return nil
     }
 
@@ -67,16 +67,16 @@ struct StartFocusTool: Tool {
     private func minutes(_ arguments: ToolArguments) throws(ToolError) -> Int {
         guard let value = arguments["minutes"] else { return Self.defaultMinutes }
         guard case .number(let number) = value, number.rounded() == number, Self.minutes.contains(Int(number)) else {
-            throw .invalidInput("une session dure entre \(Self.minutes.lowerBound) et \(Self.minutes.upperBound) minutes")
+            throw .invalidInput(loc("une session dure entre \(Self.minutes.lowerBound) et \(Self.minutes.upperBound) minutes"))
         }
         return Int(number)
     }
 
     private func busy(_ status: FocusStatus) -> String? {
         switch status {
-        case .off: "le module Focus est coupé. Active-le dans mes réglages et redemande-moi"
+        case .off: loc("le module Focus est coupé. Active-le dans mes réglages et redemande-moi")
         case .idle: nil
-        case .busy(let remaining, _, _): "un Focus tourne déjà, encore \(FrenchText.spokenMinutes(remaining)). Je ne le remplace pas"
+        case .busy(let remaining, _, _): loc("un Focus tourne déjà, encore \(FrenchText.spokenMinutes(remaining)). Je ne le remplace pas")
         }
     }
 }

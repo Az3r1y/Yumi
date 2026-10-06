@@ -14,9 +14,9 @@ enum HookSettings {
 
         var errorDescription: String? {
             switch self {
-            case .notJSON: "~/.claude/settings.json n'est pas un JSON valide. Corrige-le (ou supprime-le s'il est vide), puis réessaie : je n'y ai pas touché."
-            case .notAnObject: "~/.claude/settings.json ne contient pas un objet JSON. Je n'y ai pas touché."
-            case .unexpectedHooks(let key): "Dans ~/.claude/settings.json, « \(key) » n'a pas la forme attendue. Je n'y ai pas touché."
+            case .notJSON: loc("~/.claude/settings.json n'est pas un JSON valide. Corrige-le (ou supprime-le s'il est vide), puis réessaie : je n'y ai pas touché.")
+            case .notAnObject: loc("~/.claude/settings.json ne contient pas un objet JSON. Je n'y ai pas touché.")
+            case .unexpectedHooks(let key): loc("Dans ~/.claude/settings.json, « \(key) » n'a pas la forme attendue. Je n'y ai pas touché.")
             }
         }
     }

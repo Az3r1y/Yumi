@@ -18,9 +18,9 @@ enum YumiWorkHabit: String, CaseIterable, Sendable {
     var label: String {
         switch self {
         case .smoke:  return "Cigarette"
-        case .coffee: return "Café"
+        case .coffee: return loc("Café")
         case .matcha: return "Matcha"
-        case .random: return "Aléatoire"
+        case .random: return loc("Aléatoire")
         }
     }
 

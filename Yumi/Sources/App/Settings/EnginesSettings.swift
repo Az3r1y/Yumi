@@ -30,7 +30,7 @@ struct EnginesSettings: View {
                     ForEach(engines, id: \.rawValue) { Text($0.label).tag($0.rawValue) }
                 }
             } footer: {
-                SettingsHelp("Le moteur pense pour moi : il discute dans le chat et propose les plans. Quel qu'il soit, chaque plan est vérifié, et rien ne touche ton Mac sans ton accord. En automatique, je prends le premier prêt, dans l'ordre ci-dessous.")
+                SettingsHelp(loc("Le moteur pense pour moi : il discute dans le chat et propose les plans. Quel qu'il soit, chaque plan est vérifié, et rien ne touche ton Mac sans ton accord. En automatique, je prends le premier prêt, dans l'ordre ci-dessous."))
             }
 
             ForEach(Array(order.enumerated()), id: \.element) { index, engine in
@@ -59,7 +59,7 @@ struct EnginesSettings: View {
                         Button("Enregistrer") {
                             let value = (keys[engine] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                             if value.isEmpty { KeychainStore.shared.remove(key) } else { KeychainStore.shared.set(key, value: value) }
-                            results[engine] = value.isEmpty ? "Clé retirée." : "Clé enregistrée."
+                            results[engine] = value.isEmpty ? loc("Clé retirée.") : loc("Clé enregistrée.")
                         }
                     }
                 }

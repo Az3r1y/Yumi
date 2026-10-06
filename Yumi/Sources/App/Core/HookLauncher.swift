@@ -51,5 +51,5 @@ enum HookLauncher {
         return process.terminationStatus == 0
     }
 
-    static let missingPython = "python3 manque : les sessions Claude Code ne s'afficheront pas dans l'encoche (Claude Code fonctionne normalement). Installe les outils de ligne de commande avec « xcode-select --install » dans le Terminal."
+    static let missingPython = loc("python3 manque : les sessions Claude Code ne s'afficheront pas dans l'encoche (Claude Code fonctionne normalement). Installe les outils de ligne de commande avec « xcode-select --install » dans le Terminal.")
 }

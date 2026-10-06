@@ -106,10 +106,10 @@ extension FocusTimer {
     }
 
     private func plainSnapshot(now: Date) -> ModuleSnapshot {
-        var snapshot = ModuleSnapshot(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "prêt",
-                                      title: "On s'y met ?",
-                                      subtitle: "\(FrenchText.sentenceStart(FrenchText.spelledCount(plan.rounds, "session", "sessions", feminine: true))) de \(FrenchText.spokenMinutes(plan.focus)), \(FrenchText.spelled(Int(plan.rest / 60))) de pause.",
-                                      primaryAction: "Démarrer", secondaryAction: nil)
+        var snapshot = ModuleSnapshot(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: loc("prêt"),
+                                      title: loc("On s'y met ?"),
+                                      subtitle: loc("\(FrenchText.sentenceStart(FrenchText.spelledCount(plan.rounds, "session", "sessions", feminine: true))) de \(FrenchText.spokenMinutes(plan.focus)), \(FrenchText.spelled(Int(plan.rest / 60))) de pause."),
+                                      primaryAction: loc("Démarrer"), secondaryAction: nil)
         switch state {
         case .idle:
             break
@@ -117,35 +117,35 @@ extension FocusTimer {
         case .running(.focus, let round, let endsAt):
             let left = max(0, endsAt.timeIntervalSince(now))
             snapshot.status = FrenchText.countdown(left)
-            snapshot.title = "Tu es dedans. Je me tais."
-            snapshot.subtitle = "Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(left))."
-            snapshot.primaryAction = "Pause"
-            snapshot.secondaryAction = "Arrêter"
+            snapshot.title = loc("Tu es dedans. Je me tais.")
+            snapshot.subtitle = loc("Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(left)).")
+            snapshot.primaryAction = loc("Pause")
+            snapshot.secondaryAction = loc("Arrêter")
             // The first round was started by hand; the next ones start by themselves.
             snapshot.needsAttention = round > 1 && plan.focus - left < Self.attentionSpan
 
         case .running(.rest, let round, let endsAt):
             let left = max(0, endsAt.timeIntervalSince(now))
             snapshot.status = FrenchText.countdown(left)
-            snapshot.title = "Pause. Souffle un peu."
-            snapshot.subtitle = round == 0 ? "Je te rappelle dans \(FrenchText.duration(left))." : "Session \(round + 1) sur \(plan.rounds) dans \(FrenchText.duration(left))."
-            snapshot.primaryAction = "Passer"
-            snapshot.secondaryAction = "Arrêter"
+            snapshot.title = loc("Pause. Souffle un peu.")
+            snapshot.subtitle = round == 0 ? loc("Je te rappelle dans \(FrenchText.duration(left)).") : loc("Session \(round + 1) sur \(plan.rounds) dans \(FrenchText.duration(left)).")
+            snapshot.primaryAction = loc("Passer")
+            snapshot.secondaryAction = loc("Arrêter")
             snapshot.needsAttention = plan.rest - left < Self.attentionSpan
 
         case .paused(let phase, let round, let remaining):
-            snapshot.status = "pause"
-            snapshot.title = phase == .focus ? "En pause. Je garde ta place." : "La pause attend aussi."
-            snapshot.subtitle = "Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(remaining))."
-            snapshot.primaryAction = "Reprendre"
-            snapshot.secondaryAction = "Arrêter"
+            snapshot.status = loc("pause")
+            snapshot.title = phase == .focus ? loc("En pause. Je garde ta place.") : loc("La pause attend aussi.")
+            snapshot.subtitle = loc("Session \(round) sur \(plan.rounds), encore \(FrenchText.duration(remaining)).")
+            snapshot.primaryAction = loc("Reprendre")
+            snapshot.secondaryAction = loc("Arrêter")
 
         case .finished(let at):
-            snapshot.status = "fini"
-            snapshot.title = "\(FrenchText.sentenceStart(FrenchText.spelledCount(plan.rounds, "session", "sessions", feminine: true))). C'est fait."
-            snapshot.subtitle = "Va prendre l'air, je garde la maison."
-            snapshot.primaryAction = "Recommencer"
-            snapshot.secondaryAction = "Fermer"
+            snapshot.status = loc("fini")
+            snapshot.title = loc("\(FrenchText.sentenceStart(FrenchText.spelledCount(plan.rounds, "session", "sessions", feminine: true))). C'est fait.")
+            snapshot.subtitle = loc("Va prendre l'air, je garde la maison.")
+            snapshot.primaryAction = loc("Recommencer")
+            snapshot.secondaryAction = loc("Fermer")
             snapshot.needsAttention = now.timeIntervalSince(at) < Self.attentionSpan
         }
         snapshot.live = live(now: now)
@@ -176,15 +176,15 @@ extension FocusTimer {
         case .running(.focus, _, let endsAt):
             return ModuleLive(text: FrenchText.countdown(endsAt.timeIntervalSince(now)),
                               priority: ModuleLivePriority.activity,
-                              controls: [ModuleControl(id: primary, symbol: "pause.fill", label: "Pause")])
+                              controls: [ModuleControl(id: primary, symbol: "pause.fill", label: loc("Pause"))])
         case .running(.rest, _, let endsAt):
-            return ModuleLive(text: "Pause \(FrenchText.countdown(endsAt.timeIntervalSince(now)))",
+            return ModuleLive(text: loc("Pause \(FrenchText.countdown(endsAt.timeIntervalSince(now)))"),
                               priority: ModuleLivePriority.activity,
-                              controls: [ModuleControl(id: primary, symbol: "forward.fill", label: "Passer")])
+                              controls: [ModuleControl(id: primary, symbol: "forward.fill", label: loc("Passer"))])
         case .paused(_, _, let remaining):
-            return ModuleLive(text: "\(FrenchText.countdown(remaining)) en pause",
+            return ModuleLive(text: loc("\(FrenchText.countdown(remaining)) en pause"),
                               priority: ModuleLivePriority.ambient,
-                              controls: [ModuleControl(id: primary, symbol: "play.fill", label: "Reprendre")])
+                              controls: [ModuleControl(id: primary, symbol: "play.fill", label: loc("Reprendre"))])
         }
     }
 

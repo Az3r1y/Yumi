@@ -36,7 +36,9 @@ enum ModuleSymbols {
     static func button(_ label: String?) -> String? {
         guard let label else { return nil }
         if let symbol = buttons[label] { return symbol }
-        return label.hasPrefix("Ouvrir ") ? "arrow.up.forward.app.fill" : nil
+        // The label is shown in the language Yumi speaks: find the French it comes from
+        if let symbol = buttons.first(where: { locKey($0.key) == label })?.value { return symbol }
+        return label.hasPrefix("Ouvrir ") || label.hasPrefix(locKey("Ouvrir") + " ") ? "arrow.up.forward.app.fill" : nil
     }
 }
 

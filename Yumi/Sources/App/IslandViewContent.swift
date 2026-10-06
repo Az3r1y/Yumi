@@ -139,7 +139,7 @@ struct IslandTalkView: View {
         let lines = lines
         VStack(alignment: .leading, spacing: 8) {
             if let contextName {
-                ActMeta(color: IslandTheme.violet, text: "Avec \(contextName)").riseIn(0)
+                ActMeta(color: IslandTheme.violet, text: loc("Avec \(contextName)")).riseIn(0)
             }
 
             if !lines.isEmpty || live != nil || state.stateOverride == .thinking {
@@ -190,7 +190,7 @@ struct IslandTalkView: View {
                     .foregroundStyle(IslandTheme.fg)
                     .focused($focused)
                     .onSubmit(send)
-                RoundButton(style: .white, symbol: "arrow.up", label: "Envoyer", small: true, action: send)
+                RoundButton(style: .white, symbol: "arrow.up", label: loc("Envoyer"), small: true, action: send)
             }
             .padding(.leading, 14)
             .padding(.trailing, 4)

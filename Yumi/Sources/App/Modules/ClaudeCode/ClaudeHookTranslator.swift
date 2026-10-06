@@ -28,7 +28,7 @@ enum ClaudeHookTranslator {
             specific = [.toolFinished(id, tool(from: payload))]
 
         case "PostToolUseFailure":
-            specific = [.toolFinished(id, tool(from: payload)), .activityNoted(id, "Échec")]
+            specific = [.toolFinished(id, tool(from: payload)), .activityNoted(id, loc("Échec"))]
 
         case "PermissionRequest":
             let tool = payload["tool_name"] as? String ?? "Tool"
@@ -55,10 +55,10 @@ enum ClaudeHookTranslator {
             specific = [.sessionErrored(id, YumiError(message: payload["message"] as? String ?? ""))]
 
         case "SubagentStart":
-            specific = [.activityNoted(id, "Un sous-agent démarre")]
+            specific = [.activityNoted(id, loc("Un sous-agent démarre"))]
 
         case "SubagentStop":
-            specific = [.activityNoted(id, "Un sous-agent a fini")]
+            specific = [.activityNoted(id, loc("Un sous-agent a fini"))]
 
         default:
             return []
@@ -106,23 +106,26 @@ enum ClaudeHookTranslator {
     }
 }
 
-/// French wording for the tools Claude Code runs.
+/// The wording for the tools Claude Code runs, in the language Yumi speaks.
 enum ClaudeToolPhrase {
-    private static let labels: [String: String] = [
-        "Bash":       "Exécute",
-        "Read":       "Lit",
-        "Write":      "Écrit",
-        "Edit":       "Modifie",
-        "Glob":       "Cherche",
-        "Grep":       "Recherche",
-        "WebSearch":  "Recherche web",
-        "WebFetch":   "Récupère",
-        "TodoWrite":  "Tâches",
-        "Task":       "Agent",
-        "LS":         "Liste",
-        "MultiEdit":  "Modifie",
-        "NotebookEdit": "Notebook",
-    ]
+    /// Computed each time: the words follow the language Yumi speaks.
+    private static var labels: [String: String] {
+        [
+            "Bash":       loc("Exécute"),
+            "Read":       loc("Lit"),
+            "Write":      loc("Écrit"),
+            "Edit":       loc("Modifie"),
+            "Glob":       loc("Cherche"),
+            "Grep":       loc("Recherche"),
+            "WebSearch":  loc("Recherche web"),
+            "WebFetch":   loc("Récupère"),
+            "TodoWrite":  loc("Tâches"),
+            "Task":       loc("Agent"),
+            "LS":         loc("Liste"),
+            "MultiEdit":  loc("Modifie"),
+            "NotebookEdit": loc("Notebook"),
+        ]
+    }
 
     static func label(for tool: String) -> String { labels[tool] ?? tool }
 

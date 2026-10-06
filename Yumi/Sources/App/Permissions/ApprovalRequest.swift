@@ -75,7 +75,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
     var headline: String {
         let verb = switch action {
         case .read: "lire"
-        case .create: "créer"
+        case .create: loc("créer")
         case .modify: "modifier"
         case .delete: "supprimer"
         case .run: "lancer"
@@ -88,12 +88,12 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
         if resources.count == 1 {
             object = resources[0].kind == .command ? "une commande" : Self.displayName(resources[0], in: container)
         } else if resources.isEmpty {
-            object = action == nil || action == .other ? toolName : "quelque chose avec \(toolName)"
+            object = action == nil || action == .other ? toolName : loc("quelque chose avec \(toolName)")
         } else {
             let files = resources.allSatisfy { $0.kind == .file }
             object = "\(resources.count) \(files ? "fichiers" : "éléments")"
         }
-        return "Je dois \(verb) \(object)\(place)."
+        return loc("Je dois \(verb) \(object)\(place).")
     }
 
     /// What will be touched, on one line, when there is a single thing to show: the command, a
@@ -118,7 +118,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
         var shown = lines.prefix(Self.previewLines).map { $0.isEmpty ? " " : $0 }
         if lines.count > Self.previewLines {
             let more = lines.count - Self.previewLines
-            shown.append("… et \(more) ligne\(more > 1 ? "s" : "") de plus")
+            shown.append(loc("… et \(more) ligne\(more > 1 ? "s" : "") de plus"))
         }
         return shown
     }
@@ -144,20 +144,20 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
         }
         if let content {
             let count = Self.lines(of: content).count
-            let label = action == .create ? "Contenu" : "Texte ajouté"
-            lines.append(count > 1 ? "\(label) : \(count) lignes, \(content.count) caractères" : "\(label) : « \(content.trimmingCharacters(in: .newlines)) »")
+            let label = action == .create ? loc("Contenu") : loc("Texte ajouté")
+            lines.append(count > 1 ? loc("\(label) : \(count) lignes, \(content.count) caractères") : loc("\(label) : « \(content.trimmingCharacters(in: .newlines)) »"))
         }
-        lines.append("Portée : \(scope.label)" + (offersSession ? " (ou cette session)" : ""))
+        lines.append(loc("Portée : \(scope.label)") + (offersSession ? loc(" (ou cette session)") : ""))
         lines.append("Risque : \(riskLevel.label)")
-        if let why = Self.oneLine(reason, limit: 120) { lines.append("Raison donnée par l'agent : \(why)") }
-        lines.append(reversible ? "Conséquence : réversible" : "Conséquence : on ne pourra pas revenir en arrière")
+        if let why = Self.oneLine(reason, limit: 120) { lines.append(loc("Raison donnée par l'agent : \(why)")) }
+        lines.append(reversible ? loc("Conséquence : réversible") : loc("Conséquence : on ne pourra pas revenir en arrière"))
         return lines
     }
 
     private var place: String {
         guard let container else { return "" }
         if resources.contains(where: { $0.kind == .file }) {
-            return " dans le projet \((container as NSString).lastPathComponent)"
+            return loc(" dans le projet \((container as NSString).lastPathComponent)")
         }
         if resources.count == 1, resources[0].identifier == container { return "" }
         return " sur \(container)"

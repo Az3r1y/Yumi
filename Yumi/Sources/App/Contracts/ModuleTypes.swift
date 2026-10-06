@@ -122,17 +122,17 @@ enum ModuleCatalog {
     /// Example data so the island can be built before the real modules exist.
     /// The core replaces `AppState.modules` with live snapshots.
     static let placeholders: [ModuleSnapshot] = [
-        .init(id: "claude-code", name: "Claude Code", colorHex: "#FFB547", status: "2 sessions", title: "yumi : écrit les tests", subtitle: "2 sessions ouvertes, 1 attend ta réponse", primaryAction: "Voir", secondaryAction: "Ouvrir le terminal"),
-        .init(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "14:30", title: "Point produit dans 12 min", subtitle: "14:30 à 15:00, en visio", primaryAction: "Rejoindre", secondaryAction: "Voir la journée",
-              live: ModuleLive(text: "14:30 Point produit", priority: ModuleLivePriority.ambient)),
-        .init(id: "notes", name: "Notes", colorHex: "#F2C744", status: "3", title: "Dernière note", subtitle: "Idée : mode nuit pour Yumi", primaryAction: "Nouvelle note", secondaryAction: "Tout voir"),
-        .init(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "18:42", title: "Focus en cours", subtitle: "Session 2 sur 4, reste 18 min 42", primaryAction: "Pause", secondaryAction: "Arrêter"),
-        .init(id: "music", name: "Musique", colorHex: "#F58AD9", status: "lecture", title: "Lueur", subtitle: "Halo Nord, Premières heures", primaryAction: "Pause", secondaryAction: "Suivant",
-              live: ModuleLive(text: "Lueur · Halo Nord", priority: ModuleLivePriority.activity, controls: [
-                  ModuleControl(id: "primary", symbol: "pause.fill", label: "Pause"),
-                  ModuleControl(id: "secondary", symbol: "forward.fill", label: "Suivant"),
+        .init(id: "claude-code", name: "Claude Code", colorHex: "#FFB547", status: loc("2 sessions"), title: loc("yumi : écrit les tests"), subtitle: loc("2 sessions ouvertes, 1 attend ta réponse"), primaryAction: loc("Voir"), secondaryAction: loc("Ouvrir le terminal")),
+        .init(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: "14:30", title: loc("Point produit dans 12 min"), subtitle: loc("14:30 à 15:00, en visio"), primaryAction: loc("Rejoindre"), secondaryAction: loc("Voir la journée"),
+              live: ModuleLive(text: loc("14:30 Point produit"), priority: ModuleLivePriority.ambient)),
+        .init(id: "notes", name: "Notes", colorHex: "#F2C744", status: "3", title: loc("Dernière note"), subtitle: loc("Idée : mode nuit pour Yumi"), primaryAction: loc("Nouvelle note"), secondaryAction: loc("Tout voir")),
+        .init(id: "focus", name: "Focus", colorHex: "#8B6CFF", status: "18:42", title: loc("Focus en cours"), subtitle: loc("Session 2 sur 4, reste 18 min 42"), primaryAction: loc("Pause"), secondaryAction: loc("Arrêter")),
+        .init(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: loc("lecture"), title: loc("Lueur"), subtitle: loc("Halo Nord, Premières heures"), primaryAction: loc("Pause"), secondaryAction: loc("Suivant"),
+              live: ModuleLive(text: loc("Lueur · Halo Nord"), priority: ModuleLivePriority.activity, controls: [
+                  ModuleControl(id: "primary", symbol: "pause.fill", label: loc("Pause")),
+                  ModuleControl(id: "secondary", symbol: "forward.fill", label: loc("Suivant")),
               ])),
-        .init(id: "weather", name: "Météo", colorHex: "#7FD0FF", status: "19°", title: "19° et des éclaircies", subtitle: "Pluie vers 18 h, prends une veste", primaryAction: "Détail", secondaryAction: nil),
+        .init(id: "weather", name: loc("Météo"), colorHex: "#7FD0FF", status: "19°", title: loc("19° et des éclaircies"), subtitle: loc("Pluie vers 18 h, prends une veste"), primaryAction: loc("Détail"), secondaryAction: nil),
     ]
 }
 

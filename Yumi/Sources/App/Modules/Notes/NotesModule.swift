@@ -130,7 +130,7 @@ final class NotesModule: YumiModule {
             eventStore.fetchReminders(matching: predicate) { @Sendable found in
                 let items = (found ?? []).map { reminder in
                     let components = reminder.dueDateComponents
-                    return ReminderItem(id: reminder.calendarItemIdentifier, title: reminder.title ?? "Rappel",
+                    return ReminderItem(id: reminder.calendarItemIdentifier, title: reminder.title ?? loc("Rappel"),
                                         due: components.flatMap { calendar.date(from: $0) }, hasTime: components?.hour != nil)
                 }
                 continuation.resume(returning: items)
@@ -153,7 +153,7 @@ final class NotesModule: YumiModule {
             let items = (found ?? []).map { reminder in
                 let components = reminder.dueDateComponents
                 return ReminderItem(id: reminder.calendarItemIdentifier,
-                                    title: reminder.title ?? "Rappel",
+                                    title: reminder.title ?? loc("Rappel"),
                                     due: components.flatMap { calendar.date(from: $0) },
                                     hasTime: components?.hour != nil)
             }

@@ -592,7 +592,7 @@ final class HookServer: @unchecked Sendable {
 /// settings.json exists but cannot be read (permissions): nothing is written.
 struct HookSettingsReadError: LocalizedError {
     var path: String
-    var errorDescription: String? { "Je ne peux pas lire \((path as NSString).abbreviatingWithTildeInPath). Je n'y ai pas touché." }
+    var errorDescription: String? { loc("Je ne peux pas lire \((path as NSString).abbreviatingWithTildeInPath). Je n'y ai pas touché.") }
 }
 
 // MARK: - Socket helpers

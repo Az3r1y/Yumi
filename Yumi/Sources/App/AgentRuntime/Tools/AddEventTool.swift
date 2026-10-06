@@ -51,7 +51,7 @@ struct AddEventTool: Tool {
     var descriptor: ToolDescriptor {
         ToolDescriptor(
             id: "add_event",
-            name: "Add an event",
+            name: loc("Add an event"),
             description: "Adds one event to the person's default calendar, without inviting anyone; never changes an existing event. Needs a day and a start time.",
             inputSchema: ToolInputSchema(fields: [
                 .init(name: "title", type: .string, required: true, description: "what it is, as the person said it (Réunion client)"),
@@ -67,10 +67,10 @@ struct AddEventTool: Tool {
     /// The approval shows the event itself: title, day and hours in words, calendar.
     func action(for arguments: ToolArguments) -> ToolAction? {
         guard let title = line(arguments["title"], limit: Self.maxTitleLength) else { return nil }
-        var text = "l'événement « \(title) »"
+        var text = loc("l'événement « \(title) »")
         if let (start, end) = try? moment(arguments, allowingPast: true) { text += ", \(spoken(start, end))" }
-        if let place = line(arguments["location"], limit: Self.maxLocationLength) { text += ", à \(place)" }
-        text += ", dans le calendrier \(store.defaultCalendar()?.title ?? "par défaut")"
+        if let place = line(arguments["location"], limit: Self.maxLocationLength) { text += loc(", à \(place)") }
+        text += loc(", dans le calendrier \(store.defaultCalendar()?.title ?? "par défaut")")
         return ToolAction(kind: .create, resources: [ResourceRef(.unknown, text)], reversible: true)
     }
 
@@ -78,8 +78,8 @@ struct AddEventTool: Tool {
         if store.access == .notDetermined { _ = await store.requestAccess() }
         if let problem = accessProblem() { return problem }
         do { _ = try fields(arguments) } catch { return error.reason }
-        guard let target = store.defaultCalendar() else { return "je ne trouve pas de calendrier par défaut" }
-        if !target.acceptsNewEvents { return "ton calendrier par défaut, \(target.title), n'accepte pas de nouvel événement" }
+        guard let target = store.defaultCalendar() else { return loc("je ne trouve pas de calendrier par défaut") }
+        if !target.acceptsNewEvents { return loc("ton calendrier par défaut, \(target.title), n'accepte pas de nouvel événement") }
         return nil
     }
 
@@ -87,31 +87,31 @@ struct AddEventTool: Tool {
         if let problem = accessProblem() { throw ToolError.failed(problem) }
         let (title, start, end, location) = try fields(arguments)
         guard let target = store.defaultCalendar(), target.acceptsNewEvents else {
-            throw ToolError.failed("ton calendrier par défaut n'accepte pas de nouvel événement")
+            throw ToolError.failed(loc("ton calendrier par défaut n'accepte pas de nouvel événement"))
         }
         try Task.checkCancellation()
         let id: String
         do {
             id = try store.add(title: title, start: start, end: end, location: location)
         } catch {
-            throw ToolError.failed("Calendrier n'a pas enregistré l'événement (\((error as NSError).domain) \((error as NSError).code))")
+            throw ToolError.failed(loc("Calendrier n'a pas enregistré l'événement (\((error as NSError).domain) \((error as NSError).code))"))
         }
         return ToolOutput(summary: "Added the event \(title).",
                           values: ["id": .string(id), "title": .string(title),
-                                   "reply": .string("C'est dans ton calendrier : \(title), \(spoken(start, end)).")])
+                                   "reply": .string(loc("C'est dans ton calendrier : \(title), \(spoken(start, end))."))])
     }
 
     /// The event exists with this title and these hours, and nobody is invited.
     func verify(_ arguments: ToolArguments, output: ToolOutput) async -> String? {
         guard case .string(let id)? = output.values["id"], let (title, start, end, _) = try? fields(arguments, allowingPast: true) else {
-            return "aucun événement à vérifier"
+            return loc("aucun événement à vérifier")
         }
-        guard let saved = store.event(id: id) else { return "l'événement « \(title) » n'est pas dans ton calendrier" }
-        if saved.title != title { return "l'événement enregistré s'appelle « \(saved.title) », pas « \(title) »" }
+        guard let saved = store.event(id: id) else { return loc("l'événement « \(title) » n'est pas dans ton calendrier") }
+        if saved.title != title { return loc("l'événement enregistré s'appelle « \(saved.title) », pas « \(title) »") }
         if abs(saved.start.timeIntervalSince(start)) > 1 || abs(saved.end.timeIntervalSince(end)) > 1 {
-            return "l'événement « \(title) » n'a pas les heures demandées"
+            return loc("l'événement « \(title) » n'a pas les heures demandées")
         }
-        if saved.hasAttendees { return "l'événement « \(title) » a des invités" }
+        if saved.hasAttendees { return loc("l'événement « \(title) » a des invités") }
         return nil
     }
 
@@ -120,20 +120,20 @@ struct AddEventTool: Tool {
     private func accessProblem() -> String? {
         switch store.access {
         case .granted: nil
-        case .notDetermined: "macOS ne m'a pas encore donné accès à ton calendrier. Réponds « Autoriser » à sa question, ou autorise Yumi dans Réglages Système, Confidentialité et sécurité, Calendriers, puis redemande-moi"
-        case .denied: "macOS ne me laisse pas accéder à ton calendrier. Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Calendriers"
+        case .notDetermined: loc("macOS ne m'a pas encore donné accès à ton calendrier. Réponds « Autoriser » à sa question, ou autorise Yumi dans Réglages Système, Confidentialité et sécurité, Calendriers, puis redemande-moi")
+        case .denied: loc("macOS ne me laisse pas accéder à ton calendrier. Autorise Yumi dans Réglages Système, Confidentialité et sécurité, Calendriers")
         }
     }
 
     private func fields(_ arguments: ToolArguments, allowingPast: Bool = false) throws(ToolError) -> (String, Date, Date, String?) {
         guard let title = line(arguments["title"], limit: Self.maxTitleLength) else {
-            throw .invalidInput("il me faut un titre d'une ligne, de \(Self.maxTitleLength) caractères au plus")
+            throw .invalidInput(loc("il me faut un titre d'une ligne, de \(Self.maxTitleLength) caractères au plus"))
         }
         let (start, end) = try moment(arguments, allowingPast: allowingPast)
         var location: String?
         if arguments["location"] != nil {
             guard let place = line(arguments["location"], limit: Self.maxLocationLength) else {
-                throw .invalidInput("le lieu doit tenir sur une ligne de \(Self.maxLocationLength) caractères au plus")
+                throw .invalidInput(loc("le lieu doit tenir sur une ligne de \(Self.maxLocationLength) caractères au plus"))
             }
             location = place
         }
@@ -143,32 +143,32 @@ struct AddEventTool: Tool {
     /// Start and end. The day and the time are both required: "jeudi" alone or "14 h" alone is ambiguous.
     func moment(_ arguments: ToolArguments, allowingPast: Bool = false) throws(ToolError) -> (Date, Date) {
         guard case .string(let date)? = arguments["date"], let day = date.nonEmptyTrimmed else {
-            throw .invalidInput("il me faut le jour exact de l'événement")
+            throw .invalidInput(loc("il me faut le jour exact de l'événement"))
         }
         guard case .string(let time)? = arguments["time"], let hour = time.nonEmptyTrimmed else {
-            throw .invalidInput("il me faut l'heure de début de l'événement")
+            throw .invalidInput(loc("il me faut l'heure de début de l'événement"))
         }
         let dayParts = day.split(separator: "-").map { Int($0) }
         guard dayParts.count == 3, let year = dayParts[0], let month = dayParts[1], let dayNumber = dayParts[2] else {
-            throw .invalidInput("« \(day) » n'est pas une date précise (AAAA-MM-JJ)")
+            throw .invalidInput(loc("« \(day) » n'est pas une date précise (AAAA-MM-JJ)"))
         }
         let timeParts = hour.split(separator: ":").map { Int($0) }
         guard timeParts.count == 2, let h = timeParts[0], let m = timeParts[1], (0...23).contains(h), (0...59).contains(m) else {
-            throw .invalidInput("« \(hour) » n'est pas une heure (HH:mm)")
+            throw .invalidInput(loc("« \(hour) » n'est pas une heure (HH:mm)"))
         }
         let wanted = DateComponents(year: year, month: month, day: dayNumber, hour: h, minute: m)
         guard let start = calendar.date(from: wanted),
               calendar.dateComponents([.year, .month, .day], from: start) == DateComponents(year: year, month: month, day: dayNumber) else {
-            throw .invalidInput("« \(day) » n'existe pas dans le calendrier")
+            throw .invalidInput(loc("« \(day) » n'existe pas dans le calendrier"))
         }
         var minutes = Self.defaultMinutes
         if let value = arguments["duration_minutes"] {
             guard case .number(let number) = value, number.rounded() == number, Self.minutes.contains(Int(number)) else {
-                throw .invalidInput("la durée doit être entre 5 minutes et 12 heures")
+                throw .invalidInput(loc("la durée doit être entre 5 minutes et 12 heures"))
             }
             minutes = Int(number)
         }
-        if start <= now() && !allowingPast { throw .invalidInput("\(spoken(start, start)), c'est déjà passé") }
+        if start <= now() && !allowingPast { throw .invalidInput(loc("\(spoken(start, start)), c'est déjà passé")) }
         return (start, start.addingTimeInterval(Double(minutes) * 60))
     }
 
@@ -185,11 +185,11 @@ struct AddEventTool: Tool {
         formatter.locale = Locale(identifier: "fr_FR")
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = "EEEE d MMMM"
+        formatter.dateFormat = loc("EEEE d MMMM")
         var text = formatter.string(from: start) + ", " + clock(start)
         if end > start {
-            text += " à " + clock(end)
-            if !calendar.isDate(end, inSameDayAs: start) { text += " le lendemain" }
+            text += loc(" à ") + clock(end)
+            if !calendar.isDate(end, inSameDayAs: start) { text += loc(" le lendemain") }
         }
         return text
     }

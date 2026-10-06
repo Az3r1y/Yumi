@@ -19,7 +19,7 @@ struct ClaudeCodeSettings: View {
             Section {
                 LabeledContent("python3") {
                     HStack {
-                        SettingsStatus(text: python ? "Présent" : "Absent", tone: python ? .ok : .warning)
+                        SettingsStatus(text: python ? loc("Présent") : loc("Absent"), tone: python ? .ok : .warning)
                         if !python {
                             Button("Installer") { installTools() }
                         }
@@ -31,7 +31,7 @@ struct ClaudeCodeSettings: View {
                 #if APPSTORE
                 LabeledContent("Dossier .claude") {
                     HStack {
-                        SettingsStatus(text: folderGranted ? "Accès donné" : "Pas d'accès", tone: folderGranted ? .ok : .off)
+                        SettingsStatus(text: folderGranted ? loc("Accès donné") : loc("Pas d'accès"), tone: folderGranted ? .ok : .off)
                         Button(folderGranted ? "Changer…" : "Choisir…") { chooseFolder() }
                     }
                 }
@@ -40,13 +40,13 @@ struct ClaudeCodeSettings: View {
                 Text("État")
             } footer: {
                 SettingsHelp(python
-                             ? "Les hooks me disent ce que font tes sessions Claude Code. Claude Code marche pareil sans eux, je ne vois juste rien."
-                             : "Sans python3, je ne vois pas tes sessions (Claude Code marche normalement). « Installer » ouvre l'installation des outils de ligne de commande d'Apple.")
+                             ? loc("Les hooks me disent ce que font tes sessions Claude Code. Claude Code marche pareil sans eux, je ne vois juste rien.")
+                             : loc("Sans python3, je ne vois pas tes sessions (Claude Code marche normalement). « Installer » ouvre l'installation des outils de ligne de commande d'Apple."))
             }
 
             Section {
                 HStack {
-                    Button(installed ? (outdated ? "Mettre à jour" : "Réinstaller") : "Installer", action: prepare)
+                    Button(installed ? (outdated ? loc("Mettre à jour") : loc("Réinstaller")) : loc("Installer"), action: prepare)
                         .buttonStyle(.borderedProminent)
                         .disabled(!canWrite)
                     Button("Retirer", action: uninstall)
@@ -67,7 +67,7 @@ struct ClaudeCodeSettings: View {
             } header: {
                 Text("Hooks")
             } footer: {
-                SettingsHelp("J'écris dans ~/.claude/settings.json, après t'avoir montré le changement. Une copie de l'ancien fichier est gardée à côté.")
+                SettingsHelp(loc("J'écris dans ~/.claude/settings.json, après t'avoir montré le changement. Une copie de l'ancien fichier est gardée à côté."))
             }
 
             if let preview {
@@ -93,8 +93,8 @@ struct ClaudeCodeSettings: View {
     }
 
     private var hookState: (text: String, tone: SettingsStatus.Tone) {
-        if outdated { return ("À mettre à jour", .warning) }
-        return installed ? ("Installés", .ok) : ("Pas installés", .off)
+        if outdated { return (loc("À mettre à jour"), .warning) }
+        return installed ? (loc("Installés"), .ok) : (loc("Pas installés"), .off)
     }
 
     private var canWrite: Bool {
@@ -114,7 +114,7 @@ struct ClaudeCodeSettings: View {
     private func legacyNote() -> String? {
         let legacy = HookServer.shared.pendingLegacyHookCount
         guard legacy > 0 else { return nil }
-        return legacy == 1 ? "Ça retire aussi un ancien hook de Coucou." : "Ça retire aussi \(legacy) anciens hooks de Coucou."
+        return legacy == 1 ? loc("Ça retire aussi un ancien hook de Coucou.") : loc("Ça retire aussi \(legacy) anciens hooks de Coucou.")
     }
 
     private func installTools() {
@@ -122,7 +122,7 @@ struct ClaudeCodeSettings: View {
         process.executableURL = URL(fileURLWithPath: "/usr/bin/xcode-select")
         process.arguments = ["--install"]
         try? process.run()
-        message = "L'installation d'Apple s'ouvre. Reviens ici quand elle est finie."
+        message = loc("L'installation d'Apple s'ouvre. Reviens ici quand elle est finie.")
     }
 
     #if APPSTORE
@@ -133,7 +133,7 @@ struct ClaudeCodeSettings: View {
                                  bookmarkDataIsStale: &stale), !stale else {
             UserDefaults.standard.removeObject(forKey: Self.bookmarkKey)
             folderGranted = false
-            message = "J'ai perdu l'accès au dossier .claude. Choisis-le à nouveau."
+            message = loc("J'ai perdu l'accès au dossier .claude. Choisis-le à nouveau.")
             return nil
         }
         return url
@@ -148,7 +148,7 @@ struct ClaudeCodeSettings: View {
 
     private func chooseFolder() {
         let panel = NSOpenPanel()
-        panel.message = "Choisis ton dossier .claude pour que \(AppIdentity.productName) y ajoute ses hooks"
+        panel.message = loc("Choisis ton dossier .claude pour que \(AppIdentity.productName) y ajoute ses hooks")
         panel.prompt = "Choisir"
         panel.canChooseFiles = false
         panel.canChooseDirectories = true
@@ -161,7 +161,7 @@ struct ClaudeCodeSettings: View {
             folderGranted = true
             message = nil
         } catch {
-            message = "Je n'ai pas pu garder l'accès : \(error.localizedDescription)"
+            message = loc("Je n'ai pas pu garder l'accès : \(error.localizedDescription)")
         }
     }
     #endif
@@ -175,7 +175,7 @@ struct ClaudeCodeSettings: View {
             #endif
             message = ["Relis le changement avant de l'écrire.", legacyNote()].compactMap { $0 }.joined(separator: " ")
         } catch {
-            message = "Je n'ai pas pu lire les réglages de Claude Code : \(error.localizedDescription)"
+            message = loc("Je n'ai pas pu lire les réglages de Claude Code : \(error.localizedDescription)")
         }
     }
 
@@ -187,10 +187,10 @@ struct ClaudeCodeSettings: View {
             try HookServer.shared.writeClaudeHooks()
             #endif
             preview = nil
-            message = "C'est écrit. Relance tes sessions Claude Code pour que je les voie."
+            message = loc("C'est écrit. Relance tes sessions Claude Code pour que je les voie.")
             refresh()
         } catch {
-            message = "L'écriture a échoué : \(error.localizedDescription)"
+            message = loc("L'écriture a échoué : \(error.localizedDescription)")
         }
     }
 
@@ -201,10 +201,10 @@ struct ClaudeCodeSettings: View {
             #else
             try HookServer.shared.uninstallClaudeHooks()
             #endif
-            message = "Hooks retirés."
+            message = loc("Hooks retirés.")
             refresh()
         } catch {
-            message = "Je n'ai pas pu les retirer : \(error.localizedDescription)"
+            message = loc("Je n'ai pas pu les retirer : \(error.localizedDescription)")
         }
     }
 }

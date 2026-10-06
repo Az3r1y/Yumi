@@ -126,9 +126,9 @@ enum MusicSummary {
         let text = playing.artist.isEmpty ? playing.title : "\(playing.title) · \(playing.artist)"
         let controls = [
             playing.isPlaying
-                ? ModuleControl(id: ModuleAction.primary.rawValue, symbol: "pause.fill", label: "Pause")
-                : ModuleControl(id: ModuleAction.primary.rawValue, symbol: "play.fill", label: "Lecture"),
-            ModuleControl(id: ModuleAction.secondary.rawValue, symbol: "forward.fill", label: "Suivant"),
+                ? ModuleControl(id: ModuleAction.primary.rawValue, symbol: "pause.fill", label: loc("Pause"))
+                : ModuleControl(id: ModuleAction.primary.rawValue, symbol: "play.fill", label: loc("Lecture")),
+            ModuleControl(id: ModuleAction.secondary.rawValue, symbol: "forward.fill", label: loc("Suivant")),
         ]
         return ModuleLive(text: text,
                           priority: playing.isPlaying ? ModuleLivePriority.activity : ModuleLivePriority.ambient,
@@ -151,20 +151,20 @@ enum MusicSummary {
     }
 
     private static func plainSnapshot(_ playing: NowPlaying?, canControl: Bool, pausedFor: TimeInterval?) -> ModuleSnapshot {
-        var snapshot = ModuleSnapshot(id: "music", name: "Musique", colorHex: "#F58AD9", status: "silence",
-                                      title: "Pas de musique.", subtitle: "Lance un morceau, j'écoute avec toi.",
-                                      primaryAction: "Ouvrir Musique", secondaryAction: nil)
+        var snapshot = ModuleSnapshot(id: "music", name: loc("Musique"), colorHex: "#F58AD9", status: loc("silence"),
+                                      title: loc("Pas de musique."), subtitle: loc("Lance un morceau, j'écoute avec toi."),
+                                      primaryAction: loc("Ouvrir Musique"), secondaryAction: nil)
         guard let playing else { return snapshot }
 
-        snapshot.status = playing.isPlaying ? "lecture" : "pause"
+        snapshot.status = playing.isPlaying ? loc("lecture") : loc("pause")
         snapshot.title = playing.title
         let credits = [playing.artist, playing.album].filter { !$0.isEmpty }
         snapshot.subtitle = credits.isEmpty ? playing.player.name : credits.joined(separator: ", ")
         if canControl {
-            snapshot.primaryAction = playing.isPlaying ? "Pause" : "Lecture"
-            snapshot.secondaryAction = "Suivant"
+            snapshot.primaryAction = playing.isPlaying ? loc("Pause") : loc("Lecture")
+            snapshot.secondaryAction = loc("Suivant")
         } else {
-            snapshot.primaryAction = "Ouvrir \(playing.player.name)"
+            snapshot.primaryAction = loc("Ouvrir \(playing.player.name)")
         }
         snapshot.live = live(playing, canControl: canControl, pausedFor: pausedFor)
         return snapshot
