@@ -400,14 +400,11 @@ final class YumiCore {
     /// day need no question. The App Store build may not launch programs nor write outside its
     /// container: it plans with the key only, and only reads.
     private static func makeAgent(permissions: LocalPermissionManager, modules: ModuleBridge) -> RuntimeAgent {
-        let api = AnthropicLLMProvider(model: "claude-sonnet-4-6", apiKey: { KeychainStore.shared.get("anthropic-api-key") })
+        // The engines of the settings, in their order (EngineFactory): read again at each request.
+        let provider = EngineFactory.planner
         #if APPSTORE
-        return RuntimeAgent(planner: LLMAgentPlanner(provider: api), permissions: permissions)
+        return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), permissions: permissions)
         #else
-        let claudeCode = ClaudeCodeLLMProvider(
-            binary: { ClaudeCLI.find() },
-            folder: AppIdentity.supportDirectory.appendingPathComponent("planner").path)
-        let provider = FallbackLLMProvider(providers: [claudeCode, api])
         var tools = ToolRegistry.standard
         // The files Yumi created: the only ones it may add to later.
         let created = FileCreatedFilesLog(url: AppIdentity.supportDirectory.appendingPathComponent("created-files.json"))

@@ -88,6 +88,23 @@ enum ChatPhrases {
     static let noAnswer = "Je n'ai rien trouvé à dire. Redemande-moi."
     static let refusedInNotch = "L'utilisateur a refusé cette action dans l'encoche. N'insiste pas."
     static let noFolder = "Je n'arrive pas à créer le dossier où travailler."
+    static let noEngine = "Je n'ai aucun moteur pour réfléchir. Installe Claude Code (puis « claude » et /login), ou ajoute une clé Anthropic, OpenAI ou Gemini, ou lance Ollama : réglages, section Moteurs."
+    static func chosenEngineMissing(_ engine: String) -> String {
+        "\(engine) n'est pas prêt. Configure-le dans les réglages, section Moteurs, ou choisis « Automatique »."
+    }
+    static func engineFailed(_ engine: String, reason: String) -> String {
+        reason.hasPrefix("key refused") ? "\(engine) refuse la clé. Vérifie-la dans les réglages, section Moteurs."
+            : reason.hasPrefix("quota") ? "\(engine) refuse pour l'instant (quota ou trop de demandes). Réessaie plus tard."
+            : "\(engine) ne m'a pas répondu (\(reason))."
+    }
+
+    /// The chat through OpenAI, Gemini or Ollama: the same voice, and it says plainly that it
+    /// has no tool, as it has none.
+    static func engineSystemPrompt(characterName: String) -> String {
+        systemPrompt(characterName: characterName, folder: "aucun")
+            + "\n\nIci tu n'as aucun outil : tu ne lis aucun fichier, tu ne cherches pas sur le web, tu ne modifies rien. Réponds avec ce que tu sais et ce que la personne te dit."
+    }
+
     static let noKey = "Il me manque la clé API. Ouvre les réglages."
     static let network = "Je n'arrive pas à joindre le réseau."
     static let unreadable = "Je n'ai pas compris la réponse. Redemande-moi."

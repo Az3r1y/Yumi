@@ -45,14 +45,21 @@ Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependen
 
 He never deletes, sends, runs a command or edits a file he did not create. A request he cannot do is refused and passed to nobody. If a step that writes takes too long, he does not try it a second time and tells you to check.
 
-### Which model plans the actions
+### Which model Yumi thinks with
 
-Yumi needs a model to turn a request into a plan. It tries, in order:
+The engine chats with you and proposes the plans. Whichever it is, every plan is checked by Yumi (known tools only, valid arguments, risk set by Yumi's code), every change asks you first, and the result is verified. In the chat, no engine has a tool that changes your Mac. What is on your screen is sent only if you tick it.
 
-1. **Claude Code**, if it is installed and you are logged in (`claude`, then `/login`). It is used as a model only: no tool, no shell, no file, no web, no MCP server, none of your Claude Code settings or hooks. It only answers a JSON plan, which Yumi checks like any other. It runs under your Claude Code account, so it counts against your subscription or whatever billing that account has; it is not free.
-2. **The Anthropic API**, if you saved a key in the settings. Billed by Anthropic per use.
+By default (« Automatique ») Yumi takes the first one ready, in this order; the settings, section Moteurs, let you pick one, change the order, enter keys and models, and test each engine.
 
-With neither, Yumi says so and does nothing. The App Store build can only use the API key.
+| Engine | What you need | What leaves your Mac, and who bills it |
+|---|---|---|
+| **Claude Code** | Installed and logged in (`claude`, then `/login`). Used without any tool, shell, file, web, MCP server, settings or hooks. | Your messages and plan requests go to Anthropic through your Claude Code account (your subscription or that account's billing). Not free. |
+| **Anthropic API** | A key in the settings. | Your messages and plan requests go to Anthropic. Billed by Anthropic per use. |
+| **OpenAI API** | A key in the settings (default model `gpt-4o-mini`, editable). | Your messages and plan requests go to OpenAI. Billed by OpenAI per use. |
+| **Google Gemini API** | A key in the settings (default model `gemini-2.5-flash`, editable). | Your messages and plan requests go to Google. Its free tier is enough to try; beyond it, billed by Google. |
+| **Ollama** | [Ollama](https://ollama.com) running on your Mac, with a model installed (chosen in the settings). | Nothing leaves your Mac. Free. |
+
+Keys are stored in the macOS Keychain, never in a log or the permission history. Yumi does not use other command-line agents (Codex, Gemini CLI): it cannot prove they run without tools. With no engine ready, Yumi says so and does nothing. The App Store build cannot use Claude Code.
 
 <p align="center">
   <img src="docs/parler.png" alt="The chat in the island" width="720">
@@ -134,8 +141,8 @@ Yumi works without any of these. Each one unlocks a feature, and is asked for wh
 
 - No telemetry, no account, no server of ours.
 - The calendar, the reminders and the memory never leave your Mac.
-- Network calls go only to the services behind the modules you turned on: Open-Meteo for the weather, GitHub with your own token.
-- The chat goes through your own Claude Code, under your own account.
+- Network calls go only to the services behind the modules you turned on (Open-Meteo for the weather, GitHub with your own token) and to the engine you use (see « Which model Yumi thinks with »).
+- The chat goes through that engine: your own Claude Code under your account, the API whose key you saved, or Ollama on your Mac.
 - A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. What is on your screen is never sent from the chat; only the Agent section of the settings can send it, when you tick it for that request.
 - Tokens are stored in the macOS Keychain, never on disk and never in git.
 - Yumi never approves a Claude Code permission without an explicit click.

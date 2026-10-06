@@ -86,7 +86,7 @@ struct AgentLook: Equatable, Sendable {
     private static func failure(_ error: AgentError?) -> String {
         switch error {
         case .busy?: "Je suis déjà sur une autre tâche. Redemande-moi juste après."
-        case .noProvider?: "Je n'ai pas de modèle pour réfléchir : installe Claude Code et connecte-toi (claude, puis /login), ou ajoute une clé Anthropic dans les réglages."
+        case .noProvider?: "Je n'ai aucun moteur pour réfléchir : installe Claude Code et connecte-toi (claude, puis /login), ou ajoute une clé Anthropic, OpenAI ou Gemini, ou lance Ollama : réglages, section Moteurs."
         case .providerFailed?: "Le modèle ne m'a pas répondu. Rien n'a été fait."
         case .unsupportedAction?: unsupported
         case .cannotPlan?, .invalidPlan?: "Je ne sais pas encore faire ça. Rien n'a été fait."

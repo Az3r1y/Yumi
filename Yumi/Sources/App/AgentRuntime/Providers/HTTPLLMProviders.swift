@@ -1,0 +1,198 @@
+import Foundation
+
+// OpenAI, Google Gemini and Ollama as `LLMProvider`s. Like `AnthropicLLMProvider`, each one only
+// carries the request the runtime built: no tools, no context, no memory are added. A key is read
+// from whoever created the provider (the app reads the Keychain) when a request is sent, and never
+// appears in a log, an error or the audit.
+
+typealias HTTPTransport = @Sendable (URLRequest) async throws -> (Data, URLResponse)
+
+/// What every HTTP provider does with an answer: the status says whether the key was refused,
+/// the body is read only when it went through.
+enum HTTPProviderSupport {
+    static let session: HTTPTransport = { try await URLSession.shared.data(for: $0) }
+
+    static func send(_ request: URLRequest, with transport: HTTPTransport) async throws -> Data {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await transport(request)
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch let error as URLError where error.code == .cancelled {
+            throw CancellationError()
+        } catch let error as URLError where [.cannotConnectToHost, .cannotFindHost].contains(error.code) && request.url?.host == "127.0.0.1" {
+            // Ollama not started: as if it were not installed.
+            throw LLMProviderError.unavailable
+        } catch {
+            throw LLMProviderError.failed("network: \((error as? URLError)?.code.rawValue.description ?? "unreachable")")
+        }
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        switch status {
+        case 200..<300: return data
+        // The body can echo the request: only the status is kept.
+        case 401, 403: throw LLMProviderError.failed("key refused (HTTP \(status))")
+        case 429: throw LLMProviderError.failed("quota or rate limit (HTTP 429)")
+        default: throw LLMProviderError.failed("HTTP \(status)")
+        }
+    }
+
+    static func text(_ value: String?) throws -> LLMResponse {
+        guard let text = value?.nonEmptyTrimmed else { throw LLMProviderError.failed("empty answer") }
+        return LLMResponse(text: text)
+    }
+}
+
+/// OpenAI's Chat Completions API. Billed by OpenAI per use.
+struct OpenAILLMProvider: LLMProvider {
+    static let endpoint = URL(string: "https://api.openai.com/v1/chat/completions")!
+    static let defaultModel = "gpt-4o-mini"
+
+    var model: String = OpenAILLMProvider.defaultModel
+    var apiKey: @Sendable () -> String?
+    var timeout: TimeInterval = 60
+    var transport: HTTPTransport = HTTPProviderSupport.session
+
+    var name: String { "openai:\(model)" }
+
+    func complete(_ request: LLMRequest) async throws -> LLMResponse {
+        guard let key = apiKey()?.nonEmptyTrimmed else { throw LLMProviderError.unavailable }
+        let data = try await HTTPProviderSupport.send(try urlRequest(for: request, key: key), with: transport)
+        guard let body = try? JSONDecoder().decode(Answer.self, from: data) else { throw LLMProviderError.failed("unreadable answer") }
+        return try HTTPProviderSupport.text(body.choices.first?.message.content)
+    }
+
+    func urlRequest(for request: LLMRequest, key: String) throws -> URLRequest {
+        var urlRequest = URLRequest(url: Self.endpoint, timeoutInterval: timeout)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "content-type")
+        urlRequest.setValue("Bearer \(key)", forHTTPHeaderField: "authorization")
+        let messages = [Body.Message(role: "system", content: request.system)]
+            + request.messages.map { Body.Message(role: $0.role.rawValue, content: $0.content) }
+        urlRequest.httpBody = try JSONEncoder().encode(Body(
+            model: model, messages: messages, max_completion_tokens: request.maxOutputTokens,
+            response_format: request.expectsJSON ? .init(type: "json_object") : nil))
+        return urlRequest
+    }
+
+    private struct Body: Encodable {
+        struct Message: Encodable { var role: String; var content: String }
+        struct Format: Encodable { var type: String }
+        var model: String
+        var messages: [Message]
+        var max_completion_tokens: Int
+        var response_format: Format?
+    }
+
+    private struct Answer: Decodable {
+        struct Choice: Decodable { struct Message: Decodable { var content: String? }; var message: Message }
+        var choices: [Choice]
+    }
+}
+
+/// Google's Gemini API (generateContent). Its free tier is enough to try Yumi.
+struct GeminiLLMProvider: LLMProvider {
+    static let defaultModel = "gemini-2.5-flash"
+
+    var model: String = GeminiLLMProvider.defaultModel
+    var apiKey: @Sendable () -> String?
+    var timeout: TimeInterval = 60
+    var transport: HTTPTransport = HTTPProviderSupport.session
+
+    var name: String { "gemini:\(model)" }
+
+    func complete(_ request: LLMRequest) async throws -> LLMResponse {
+        guard let key = apiKey()?.nonEmptyTrimmed else { throw LLMProviderError.unavailable }
+        let data = try await HTTPProviderSupport.send(try urlRequest(for: request, key: key), with: transport)
+        guard let body = try? JSONDecoder().decode(Answer.self, from: data) else { throw LLMProviderError.failed("unreadable answer") }
+        let text = body.candidates?.first?.content?.parts?.compactMap(\.text).joined()
+        return try HTTPProviderSupport.text(text)
+    }
+
+    func urlRequest(for request: LLMRequest, key: String) throws -> URLRequest {
+        let path = "https://generativelanguage.googleapis.com/v1beta/models/\(model.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? model):generateContent"
+        guard let url = URL(string: path) else { throw LLMProviderError.failed("invalid model name") }
+        var urlRequest = URLRequest(url: url, timeoutInterval: timeout)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "content-type")
+        // In a header, never in the URL: a URL can end up in a log.
+        urlRequest.setValue(key, forHTTPHeaderField: "x-goog-api-key")
+        urlRequest.httpBody = try JSONEncoder().encode(Body(
+            systemInstruction: .init(parts: [.init(text: request.system)]),
+            contents: request.messages.map { .init(role: $0.role == .user ? "user" : "model", parts: [.init(text: $0.content)]) },
+            generationConfig: .init(maxOutputTokens: request.maxOutputTokens,
+                                    responseMimeType: request.expectsJSON ? "application/json" : nil)))
+        return urlRequest
+    }
+
+    private struct Body: Encodable {
+        struct Part: Codable { var text: String? }
+        struct System: Encodable { var parts: [Part] }
+        struct Content: Encodable { var role: String; var parts: [Part] }
+        struct Config: Encodable { var maxOutputTokens: Int; var responseMimeType: String? }
+        var systemInstruction: System
+        var contents: [Content]
+        var generationConfig: Config
+    }
+
+    private struct Answer: Decodable {
+        struct Candidate: Decodable { struct Content: Decodable { var parts: [Body.Part]? }; var content: Content? }
+        var candidates: [Candidate]?
+    }
+}
+
+/// A model run by Ollama on this Mac. Nothing leaves the Mac; free.
+struct OllamaLLMProvider: LLMProvider {
+    static let base = URL(string: "http://127.0.0.1:11434")!
+
+    /// nil or empty: no model chosen, the provider answers `unavailable`.
+    var model: @Sendable () -> String?
+    var timeout: TimeInterval = 180
+    var transport: HTTPTransport = HTTPProviderSupport.session
+
+    var name: String { "ollama:\(model() ?? "none")" }
+
+    func complete(_ request: LLMRequest) async throws -> LLMResponse {
+        guard let model = model()?.nonEmptyTrimmed else { throw LLMProviderError.unavailable }
+        var urlRequest = URLRequest(url: Self.base.appendingPathComponent("api/chat"), timeoutInterval: timeout)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "content-type")
+        let messages = [Body.Message(role: "system", content: request.system)]
+            + request.messages.map { Body.Message(role: $0.role.rawValue, content: $0.content) }
+        urlRequest.httpBody = try JSONEncoder().encode(Body(model: model, messages: messages, stream: false,
+                                                            format: request.expectsJSON ? "json" : nil,
+                                                            options: .init(num_predict: request.maxOutputTokens)))
+        let data = try await HTTPProviderSupport.send(urlRequest, with: transport)
+        guard let body = try? JSONDecoder().decode(Answer.self, from: data) else { throw LLMProviderError.failed("unreadable answer") }
+        return try HTTPProviderSupport.text(body.message?.content)
+    }
+
+    /// The models installed in Ollama, or nil when it does not answer.
+    static func installedModels(transport: HTTPTransport = HTTPProviderSupport.session) async -> [String]? {
+        let request = URLRequest(url: base.appendingPathComponent("api/tags"), timeoutInterval: 2)
+        guard let (data, response) = try? await transport(request),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let tags = try? JSONDecoder().decode(Tags.self, from: data) else { return nil }
+        return tags.models.map(\.name)
+    }
+
+    private struct Body: Encodable {
+        struct Message: Encodable { var role: String; var content: String }
+        struct Options: Encodable { var num_predict: Int }
+        var model: String
+        var messages: [Message]
+        var stream: Bool
+        var format: String?
+        var options: Options
+    }
+
+    private struct Answer: Decodable {
+        struct Message: Decodable { var content: String? }
+        var message: Message?
+    }
+
+    private struct Tags: Decodable {
+        struct Model: Decodable { var name: String }
+        var models: [Model]
+    }
+}

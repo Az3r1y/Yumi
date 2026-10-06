@@ -1,0 +1,148 @@
+import Foundation
+
+/// The models Yumi can think with. Each one is only a `LLMProvider`: whichever plans, the plan
+/// goes through `PlanValidator`, the registry, `PermissionManager`, the executor and the
+/// verification, and whichever chats, the chat has no tool that changes the Mac.
+enum Engine: String, CaseIterable, Codable, Sendable {
+    case claudeCode, anthropic, openai, gemini, ollama
+
+    var label: String {
+        switch self {
+        case .claudeCode: "Claude Code"
+        case .anthropic: "Anthropic (clé API)"
+        case .openai: "OpenAI (clé API)"
+        case .gemini: "Google Gemini (clé API)"
+        case .ollama: "Ollama (sur ce Mac)"
+        }
+    }
+
+    /// Where its key lives in the Keychain, for the engines that need one.
+    var keychainKey: String? {
+        switch self {
+        case .anthropic: "anthropic-api-key"
+        case .openai: "openai-api-key"
+        case .gemini: "gemini-api-key"
+        case .claudeCode, .ollama: nil
+        }
+    }
+
+    /// The model used when the person did not choose one. Ollama has none: it uses one installed.
+    var defaultModel: String? {
+        switch self {
+        case .anthropic: "claude-sonnet-4-6"
+        case .openai: OpenAILLMProvider.defaultModel
+        case .gemini: GeminiLLMProvider.defaultModel
+        case .claudeCode, .ollama: nil
+        }
+    }
+
+    /// What leaves the Mac, and who bills it. Shown in the settings, as written in the README.
+    var disclosure: String {
+        switch self {
+        case .claudeCode: "Tes messages et les demandes de plan partent chez Anthropic par ton Claude Code, sous ton compte (abonnement ou facturation de ce compte)."
+        case .anthropic: "Tes messages et les demandes de plan partent chez Anthropic. Facturé par Anthropic à l'usage."
+        case .openai: "Tes messages et les demandes de plan partent chez OpenAI. Facturé par OpenAI à l'usage."
+        case .gemini: "Tes messages et les demandes de plan partent chez Google. Le palier gratuit suffit pour essayer ; au-delà, facturé par Google."
+        case .ollama: "Rien ne quitte ton Mac : le modèle tourne en local. Gratuit."
+        }
+    }
+}
+
+/// Which engine Yumi uses, and in which order it tries the others. Stored in the defaults; the
+/// keys are in the Keychain.
+struct EngineSettings: Equatable, Sendable {
+    static let choiceKey = "engine.choice"
+    static let orderKey = "engine.order"
+    static let modelKeyPrefix = "engine.model."
+
+    /// nil: automatic, the first that answers in `order`.
+    var choice: Engine?
+    var order: [Engine] = Engine.allCases
+    var models: [Engine: String] = [:]
+
+    /// The engines to try, in order: the chosen one alone, or the whole order.
+    var sequence: [Engine] { choice.map { [$0] } ?? Self.normalised(order) }
+
+    func model(_ engine: Engine) -> String? { models[engine]?.nonEmptyTrimmed ?? engine.defaultModel }
+
+    /// Every engine once, those missing at the end in the default order.
+    static func normalised(_ order: [Engine]) -> [Engine] {
+        var seen: [Engine] = []
+        for engine in order + Engine.allCases where !seen.contains(engine) { seen.append(engine) }
+        return seen
+    }
+
+    static func load(from defaults: UserDefaults = .standard) -> EngineSettings {
+        var settings = EngineSettings()
+        settings.choice = defaults.string(forKey: choiceKey).flatMap(Engine.init(rawValue:))
+        if let raw = defaults.stringArray(forKey: orderKey) { settings.order = normalised(raw.compactMap(Engine.init(rawValue:))) }
+        for engine in Engine.allCases {
+            if let model = defaults.string(forKey: modelKeyPrefix + engine.rawValue) { settings.models[engine] = model }
+        }
+        return settings
+    }
+
+    func save(to defaults: UserDefaults = .standard) {
+        defaults.set(choice?.rawValue, forKey: Self.choiceKey)
+        defaults.set(Self.normalised(order).map(\.rawValue), forKey: Self.orderKey)
+        for engine in Engine.allCases {
+            defaults.set(models[engine]?.nonEmptyTrimmed, forKey: Self.modelKeyPrefix + engine.rawValue)
+        }
+    }
+}
+
+/// What can be known about an engine without spending anything: installed, a key present,
+/// Ollama answering with a model. Whether a key is accepted is what the « Tester » button checks.
+struct EngineStatus: Equatable, Sendable {
+    var engine: Engine
+    var ready: Bool
+    var detail: String
+}
+
+enum EngineDetector {
+    static func status(of engine: Engine, claudeCodeInstalled: Bool, hasKey: (Engine) -> Bool,
+                       ollamaModels: [String]?, ollamaModel: String?) -> EngineStatus {
+        switch engine {
+        case .claudeCode:
+            return claudeCodeInstalled
+                ? EngineStatus(engine: engine, ready: true, detail: "Installé. La connexion se vérifie avec « Tester ».")
+                : EngineStatus(engine: engine, ready: false, detail: "Pas installé.")
+        case .anthropic, .openai, .gemini:
+            return hasKey(engine)
+                ? EngineStatus(engine: engine, ready: true, detail: "Clé enregistrée.")
+                : EngineStatus(engine: engine, ready: false, detail: "Pas de clé.")
+        case .ollama:
+            guard let models = ollamaModels else { return EngineStatus(engine: engine, ready: false, detail: "Ollama ne répond pas.") }
+            guard !models.isEmpty else { return EngineStatus(engine: engine, ready: false, detail: "Aucun modèle installé dans Ollama.") }
+            guard let chosen = ollamaModel?.nonEmptyTrimmed else { return EngineStatus(engine: engine, ready: false, detail: "Choisis un modèle.") }
+            return models.contains(chosen)
+                ? EngineStatus(engine: engine, ready: true, detail: "Modèle \(chosen).")
+                : EngineStatus(engine: engine, ready: false, detail: "\(chosen) n'est pas installé dans Ollama.")
+        }
+    }
+
+    /// The model to preselect for Ollama: the one chosen if still installed, otherwise the first.
+    static func ollamaModel(chosen: String?, installed: [String]) -> String? {
+        if let chosen = chosen?.nonEmptyTrimmed, installed.contains(chosen) { return chosen }
+        return installed.first
+    }
+}
+
+/// The provider the runtime holds for its whole life. At each request it reads the settings and
+/// asks the engines in order, so a change in the settings applies to the next request.
+struct EngineLLMProvider: LLMProvider {
+    var settings: @Sendable () -> EngineSettings
+    /// The provider of an engine, nil when this build cannot use it (Claude Code on the App Store).
+    var make: @Sendable (Engine, EngineSettings) -> (any LLMProvider)?
+
+    var name: String {
+        let current = settings()
+        return current.choice.map { "engine:\($0.rawValue)" } ?? "engine:auto"
+    }
+
+    func complete(_ request: LLMRequest) async throws -> LLMResponse {
+        let current = settings()
+        let providers = current.sequence.compactMap { make($0, current) }
+        return try await FallbackLLMProvider(providers: providers).complete(request)
+    }
+}

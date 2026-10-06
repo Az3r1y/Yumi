@@ -462,3 +462,16 @@ Fait par la session Île sur décision de la coordination, qui l'a autorisée à
 - « Envoyer un retour » (réglages de l'île) ouvre le formulaire de bug du dépôt (`issues/new?template=bug.yml`) avec la version de Yumi, la version de macOS, le modèle du Mac et la présence d'une notch déjà remplis. Rien d'autre. La page de choix `issues/new/choose` ne garde pas ce qu'on lui passe : le lien va donc au formulaire, qui permet de revenir aux autres modèles.
 - Modèles d'issue en français : `.github/ISSUE_TEMPLATE/bug.yml` et `idee.yml`.
 - Nouvelles versions (`Island/IslandUpdates.swift`) : au lancement puis une fois par jour au plus, sans jeton, `releases?per_page=1` (pré-versions comprises). Une version plus récente (comparaison `YumiVersion`, semver) donne une ligne dans les réglages et, une seule fois par version, la remarque « Une nouvelle version de Yumi est là » dans l'île repliée ; « Voir » ouvre la page de la release. Jamais de téléchargement. Désactivable (« Préviens-moi des nouvelles versions »). Aucun appel en mode tournage.
+
+## Cœur : plusieurs moteurs (branche `yumi/moteurs`)
+
+But : que l'on puisse essayer le chat et l'agent sans Claude Code.
+
+| Sujet | Décision |
+|---|---|
+| Moteurs | `Engine` : Claude Code, Anthropic, OpenAI (Chat Completions, `gpt-4o-mini` par défaut), Google Gemini (`generateContent`, `gemini-2.5-flash` par défaut, clé en en-tête, jamais dans l'URL), Ollama (`127.0.0.1:11434`, modèle choisi parmi ceux installés). Tous derrière `LLMProvider` (AgentRuntime/Providers). Aucun CLI tiers : on ne peut pas prouver qu'ils tournent sans outil. |
+| Choix | `EngineSettings` (défauts) : « Automatique » ou un moteur, ordre de repli (Claude Code, Anthropic, OpenAI, Gemini, Ollama par défaut), modèle par moteur. Clés dans le trousseau (`openai-api-key`, `gemini-api-key`, `anthropic-api-key`). |
+| Agent | `EngineLLMProvider` relit les réglages à chaque demande et essaie les moteurs dans l'ordre ; un moteur non configuré (`unavailable`) passe la main, un moteur joint qui échoue arrête la demande. Le plan passe ensuite par `PlanValidator`, le registre, `PermissionManager`, l'exécution et la vérification, quel que soit le moteur. |
+| Chat | Même ordre. Claude Code garde son chemin (outils de lecture seulement) ; la clé Anthropic garde le sien ; OpenAI, Gemini et Ollama répondent en conversation pure (`ChatPhrases.engineSystemPrompt`), sans aucun outil. Les demandes d'action passent toujours d'abord par le Runtime. |
+| Erreurs | Clé refusée (401, 403), quota (429), réseau : dits en une phrase, sans la clé ni le corps de la réponse. Aucun moteur : message qui renvoie à la section Moteurs. Ollama arrêté compte comme absent. |
+| Réglages | Section Moteurs : choix, ordre (flèches), clé et modèle par moteur, état détecté (installé, clé présente, Ollama qui répond), bouton « Tester », et ce qui part chez chaque fournisseur avec qui le facture. |
