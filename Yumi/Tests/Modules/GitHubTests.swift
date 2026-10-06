@@ -66,7 +66,6 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         // The most active repository is the person's own, not a fork of someone else's work.
         #expect(GitHubFeed.mostActiveRepo(from: Data(repos.utf8)) == GitHubRepo(fullName: "estebanbaigts/Yumi", stars: 128, forks: 12,
                                                                                url: URL(string: "https://github.com/estebanbaigts/Yumi")))
-        #expect(GitHubFeed.totals(from: Data(repos.utf8)).stars == 1032)
         #expect(GitHubFeed.search(from: Data(openPulls.utf8)).count == 3)
         #expect(GitHubFeed.search(from: Data(reviewRequested.utf8)).first == GitHubReview(title: "Fix du repli", repo: "louis/coucou",
                                                                                          url: URL(string: "https://github.com/louis/coucou/pull/9")))

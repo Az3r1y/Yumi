@@ -888,14 +888,17 @@ import Foundation
 
     @Test func everySettingOfTheOldWindowHasOnePage() {
         let old = ["soundEnabled", "soundVolume", "autoCloseInterval", "absenceInterval", "hotkeyEnabled", "hotkeyFlags",
-                   "hotkeyCode", "vercelProjectFilter", "n8nWorkflowFilter", "activeIntegrations", "contextEngineEnabled",
-                   "workHabit", "claudeDirectoryBookmark", "resend-api-key", "resend-from", "n8n-url", "n8n-api-key",
-                   "vercel-token", "github-token", "stripe-api-key", "calcom-api-key", "notion-api-key", "launchAtStartup",
+                   "hotkeyCode", "contextEngineEnabled",
+                   "workHabit", "claudeDirectoryBookmark", "github-token", "launchAtStartup",
                    "hooks", "engineSettings", "engineKeys", "yumiPermissions", "contextPanel", "agentPanel",
                    // Until now only in the island
                    "yumiTalk", "updateCheckEnabled", "feedback", "memory"]
         let placed = SettingsPage.allCases.flatMap { SettingsPage.settings[$0] ?? [] }
         for key in old { #expect(placed.filter { $0 == key }.count == 1, "\(key)") }
+        // The integrations inherited from Coucou are gone: none of their settings is shown anywhere.
+        let retired = ["vercelProjectFilter", "n8nWorkflowFilter", "activeIntegrations", "resend-api-key", "resend-from", "n8n-url",
+                       "n8n-api-key", "vercel-token", "stripe-api-key", "calcom-api-key", "notion-api-key"]
+        for key in retired { #expect(!placed.contains(key), "\(key)") }
         #expect(Set(placed).count == placed.count)
     }
 

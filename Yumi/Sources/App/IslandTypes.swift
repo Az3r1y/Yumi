@@ -10,7 +10,7 @@ enum IslandMode: String, CaseIterable {
 
 enum IslandView: String, CaseIterable {
     case overview, empty, approval, question, error, finished
-    case confused, upload, uploading, choose, mail, prompt
+    case confused, upload, choose, prompt
     case searching, result, note, settings, greeting
     /// Detail of one module (the one in `IslandModel.selectedModuleID`).
     case module
@@ -36,7 +36,7 @@ enum IslandScreen: String, CaseIterable {
         case .finished:                                 return .finished
         case .error:                                    return .error
         case .prompt, .searching, .result, .note:       return .talk
-        case .upload, .uploading, .choose, .mail:       return .drop
+        case .upload, .choose:                          return .drop
         case .module:                                   return .module
         case .settings:                                 return .settings
         case .welcome:                                  return .welcome
@@ -183,16 +183,14 @@ struct AgentTask: Identifiable, Equatable {
     var stepIndex: Int = 0
     var steps: [String]
     var source: AgentSource
-    var isIntegration: Bool = false  // true for persistent integration pills
+    var isIntegration: Bool = false  // true for the permanent Claude Code task
     var emote: BotEmote? = nil
-    var miniEye: EyeShape? = nil
     var pillBadge: PillBadge? = nil  // alert badge shown on pill when not focused
     var sessionCwd: String?  = nil  // last known working directory (Claude Code sessions)
 }
 
 enum AgentSource: Equatable {
     case claudeCode
-    case n8n
 }
 
 // MARK: - Constants (sizes of design/yumi/maquette/reference.html)

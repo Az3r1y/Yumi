@@ -62,14 +62,14 @@ final class KeychainStore: @unchecked Sendable {
 
     private static let allKeys = [
         "anthropic-api-key",
-        "resend-api-key", "resend-from",
-        "n8n-url", "n8n-api-key",
-        "vercel-token",
+        "openai-api-key",
+        "gemini-api-key",
         "github-token",
-        "stripe-api-key",
-        "calcom-api-key",
-        "notion-api-key",
     ]
+
+    /// Keys of the integrations inherited from Coucou, removed from Yumi: erased once.
+    static let retiredKeys = ["resend-api-key", "resend-from", "n8n-url", "n8n-api-key",
+                              "vercel-token", "stripe-api-key", "calcom-api-key", "notion-api-key"]
 
     private init() {
         // Called once, on main thread (AppDelegate triggers shared at launch).
@@ -91,6 +91,15 @@ final class KeychainStore: @unchecked Sendable {
         // While filming the value only lives for the run: the Keychain is not touched.
         guard LaunchPlan.current.keychain else { return }
         Keychain.save(key: key, value: value)
+    }
+
+    /// Erases the retired keys from the Keychain, once (a flag in the defaults remembers it).
+    func eraseRetiredKeys(defaults: UserDefaults = .standard) {
+        let done = "retiredKeysErased"
+        guard LaunchPlan.current.keychain, !defaults.bool(forKey: done) else { return }
+        for key in Self.retiredKeys { Keychain.delete(key: key) }
+        for key in ["vercelProjectFilter", "n8nWorkflowFilter", "activeIntegrations"] { defaults.removeObject(forKey: key) }
+        defaults.set(true, forKey: done)
     }
 
     /// Removes from cache + Keychain only if the key was previously set.
@@ -651,58 +660,6 @@ final class ClaudeService {
         }
     }
 
-    // MARK: - Structured search (M8 — window attach + web search)
-
-    func search(query: String, context: PromptContext?, state: AppState) async {
-        guard LaunchPlan.current.chat else { return }
-        guard let key = apiKey, !key.isEmpty else {
-            await showError(ChatPhrases.noKey, state: state)
-            return
-        }
-
-        var userContent: [[String: Any]] = []
-        switch context {
-        case .window(let appName, let title, let url):
-            var text = "App: \(appName)\nWindow title: \(title)"
-            if let url = url { text += "\nURL: \(url)" }
-            text += "\n\nRequest: \(query)"
-            userContent.append(["type": "text", "text": text])
-        case .file(let name, let fileURL):
-            if let fileURL = fileURL, let fileBlock = readFileAsBlock(url: fileURL) {
-                userContent.append(fileBlock)
-            }
-            userContent.append(["type": "text", "text": "File: \(name)\n\nRequest: \(query)"])
-        case nil:
-            userContent.append(["type": "text", "text": query])
-        }
-
-        let system = """
-        You are an assistant built into the notch of a Mac. Reply in English, short and precise.
-        Reply ONLY with valid JSON in this exact format:
-        {"title":"...","items":[{"label":"...","detail":"...","url":"..."}],"note":"..."}
-        Maximum 3 items. "url" is optional. "note" is optional.
-        """
-
-        let tools: [[String: Any]] = [
-            ["type": "web_search_20250305", "name": "web_search", "max_uses": 3]
-        ]
-
-        let body: [String: Any] = [
-            "model": model,
-            "max_tokens": 1024,
-            "tools": tools,
-            "system": system,
-            "messages": [["role": "user", "content": userContent]],
-        ]
-
-        do {
-            let result = try await callAPI(body: body, key: key, beta: "web-search-2025-03-05")
-            await handleResult(result, state: state)
-        } catch {
-            await showError(ChatPhrases.network, state: state)
-        }
-    }
-
     // MARK: - API call
 
     private func callAPI(body: [String: Any], key: String, beta: String? = nil) async throws -> Data {
@@ -756,57 +713,6 @@ final class ClaudeService {
         state.stateOverride = nil
         state.view = .prompt
         NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
-    }
-
-    // MARK: - Structured result handler
-
-    private func handleResult(_ data: Data, state: AppState) async {
-        // Extract text from Anthropic response (may contain tool_use / web_search_tool_result blocks)
-        guard let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let content = json["content"] as? [[String: Any]],
-              let textBlock = content.first(where: { $0["type"] as? String == "text" }),
-              let text = textBlock["text"] as? String else {
-            await showError(ChatPhrases.unreadable, state: state)
-            return
-        }
-
-        // Strip markdown code fences if present, then extract JSON object
-        let cleanText: String
-        if let start = text.firstIndex(of: "{"), let end = text.lastIndex(of: "}") {
-            cleanText = String(text[start...end])
-        } else {
-            cleanText = text
-        }
-
-        // Try to parse as our JSON format
-        if let resultData = cleanText.data(using: .utf8),
-           let parsed = try? JSONSerialization.jsonObject(with: resultData) as? [String: Any] {
-            let title  = parsed["title"] as? String ?? "Result"
-            let note   = parsed["note"] as? String
-            var items: [ResultItem] = []
-            if let rawItems = parsed["items"] as? [[String: Any]] {
-                for item in rawItems.prefix(3) {
-                    items.append(ResultItem(
-                        label:  item["label"]  as? String ?? "",
-                        detail: item["detail"] as? String ?? "",
-                        url:    item["url"]    as? String
-                    ))
-                }
-            }
-            state.searchResult = SearchResult(title: title, items: items, note: note)
-        } else {
-            // Fallback: show raw text in 3-line chunks
-            let lines = cleanText.components(separatedBy: "\n").filter { !$0.isEmpty }.prefix(3)
-            state.searchResult = SearchResult(
-                title: "Claude's response",
-                items: lines.map { ResultItem(label: $0, detail: "", url: nil) },
-                note: nil
-            )
-        }
-
-        state.stateOverride = nil
-        state.view = .result
-        NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.proud)
     }
 
     private func showError(_ message: String, state: AppState) async {

@@ -2,13 +2,6 @@ import Foundation
 import CoreGraphics
 import SwiftUI
 
-// MARK: - Eye shapes of the mini characters (IslandTypes.AgentTask.miniEye)
-
-enum EyeShape: String {
-    case pill, wide, dot, line, flat, happy, closed, spiral, heart, star, tired, wink, cup
-    case focused, thoughtful, curious, panicked, content
-}
-
 // The block below is the first Yumi drawing (CoreGraphics). The greeting and the file-drop
 // canvases still use it, and so does the icon generator. The character of the island itself
 // is drawn by Character/YumiRenderer.swift, ported from design/yumi/maquette/reference.html.
@@ -82,70 +75,6 @@ struct YumiEyes: Equatable, Sendable {
 
     func mix(_ o: YumiEyes, _ t: CGFloat) -> YumiEyes {
         YumiEyes(left: left.mix(o.left, t), right: right.mix(o.right, t), gaze: gaze + (o.gaze - gaze) * t)
-    }
-}
-
-/// The expressions of the concept sheet, plus the few the app needs on top.
-enum YumiExpression: Sendable {
-    case neutral, happy, curious, focused, thoughtful, asleep, drowsy
-    case worried, confused, annoyed, surprised, panicked, wink
-    case love, proud, eager, content
-
-    /// `t` (seconds) only matters for the expressions that move on their own.
-    func eyes(at t: CGFloat = 0) -> YumiEyes {
-        var e = YumiEyes()
-        func both(_ edit: (inout YumiEye) -> Void) { edit(&e.left); edit(&e.right) }
-        switch self {
-        case .neutral:
-            break
-        case .happy:
-            both { $0.lidBottom = 0.30; $0.pupil = 1.06; $0.py = -0.30 }
-        case .curious:
-            e.left.scale = 0.90; e.left.lidTop = 0.10
-            e.right.scale = 1.14
-            both { $0.py = -0.22 }
-        case .focused:
-            both { $0.lidTop = 0.40; $0.lidBottom = 0.14; $0.pupil = 0.92; $0.py = 0.22 }
-        case .thoughtful:
-            e.left.lidTop = 0.24; e.right.lidTop = 0.08
-            both { $0.pupil = 0.94 }
-        case .asleep:
-            both { $0.arc = -1 }
-        case .drowsy:
-            both { $0.lidTop = 0.56; $0.py = 0.35; $0.pupil = 0.92 }
-            e.gaze = 0.3
-        case .worried:
-            both { $0.lidTop = 0.20; $0.slant = -0.75; $0.pupil = 0.80; $0.py = 0.20 }
-            e.gaze = 0.6
-        case .confused:
-            e.left.scale = 1.10; e.right.scale = 0.88
-            e.left.px = cos(t * 9) * 0.85;  e.left.py = sin(t * 9) * 0.85
-            e.right.px = cos(-t * 7 + 2) * 0.85; e.right.py = sin(-t * 7 + 2) * 0.85
-            both { $0.pupil = 0.82 }
-            e.gaze = 0
-        case .annoyed:
-            both { $0.lidTop = 0.36; $0.slant = 0.85; $0.lidBottom = 0.12; $0.pupil = 0.90 }
-        case .surprised:
-            both { $0.scale = 1.16; $0.pupil = 0.66 }
-        case .panicked:
-            both { $0.scale = 1.20; $0.pupil = 0.50 }
-            e.left.px = sin(t * 47) * 0.30;  e.left.py = cos(t * 39) * 0.24
-            e.right.px = sin(t * 43 + 1) * 0.30; e.right.py = cos(t * 51 + 2) * 0.24
-            e.gaze = 0.35
-        case .wink:
-            e.right.arc = 1
-            e.left.lidBottom = 0.18
-        case .love:
-            both { $0.scale = 1.08; $0.heart = 1 }
-            e.gaze = 0.5
-        case .proud:
-            both { $0.lidBottom = 0.26; $0.pupil = 1.12; $0.sparkle = 1; $0.py = -0.25 }
-        case .eager:
-            both { $0.scale = 1.12; $0.pupil = 1.10 }
-        case .content:
-            both { $0.arc = 1 }
-        }
-        return e
     }
 }
 

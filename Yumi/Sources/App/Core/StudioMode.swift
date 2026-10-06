@@ -30,8 +30,6 @@ struct LaunchPlan: Equatable, Sendable {
     var chat: Bool
     /// The secrets of the Keychain.
     var keychain: Bool
-    /// The pollers of the old integrations.
-    var integrationPollers: Bool
     /// The Context Engine: which application and window are in front.
     var context: Bool
 
@@ -43,7 +41,6 @@ struct LaunchPlan: Equatable, Sendable {
         initiative = real
         chat = real
         keychain = real
-        integrationPollers = real
         context = real
     }
 
@@ -52,6 +49,6 @@ struct LaunchPlan: Equatable, Sendable {
 
     /// True when nothing at all starts.
     var startsNothing: Bool {
-        !(hookServer || modules || memory || initiative || chat || keychain || integrationPollers || context)
+        !(hookServer || modules || memory || initiative || chat || keychain || context)
     }
 }

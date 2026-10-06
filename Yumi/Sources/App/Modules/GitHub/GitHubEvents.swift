@@ -180,12 +180,6 @@ enum GitHubFeed {
                           url: (repo["html_url"] as? String).flatMap(URL.init(string:)))
     }
 
-    /// Total stars and number of repositories, for the old integration card.
-    static func totals(from data: Data) -> (repos: Int, stars: Int) {
-        let items = (try? JSONSerialization.jsonObject(with: data) as? [[String: Any]]) ?? []
-        return (items.count, items.reduce(0) { $0 + ($1["stargazers_count"] as? Int ?? 0) })
-    }
-
     /// The answer of a search of issues: how many, and the first one.
     static func search(from data: Data) -> (count: Int, first: GitHubReview?) {
         guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return (0, nil) }

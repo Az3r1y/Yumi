@@ -78,55 +78,6 @@ extension Color {
     }
 }
 
-// MARK: - Glyphs of the mock-up (18 × 18 box, stroked)
-
-enum IslandGlyph {
-    case home, chat, plus, add
-
-    /// The `d` attribute of the mock-up, drawn in an 18 × 18 box.
-    fileprivate func path() -> Path {
-        var p = Path()
-        switch self {
-        case .home:   // M3 8.2 9 3l6 5.2V15H3z
-            p.move(to: CGPoint(x: 3, y: 8.2))
-            p.addLine(to: CGPoint(x: 9, y: 3))
-            p.addLine(to: CGPoint(x: 15, y: 8.2))
-            p.addLine(to: CGPoint(x: 15, y: 15))
-            p.addLine(to: CGPoint(x: 3, y: 15))
-            p.closeSubpath()
-        case .chat:   // M3 4h12v8H8l-3 3v-3H3z
-            p.move(to: CGPoint(x: 3, y: 4))
-            p.addLine(to: CGPoint(x: 15, y: 4))
-            p.addLine(to: CGPoint(x: 15, y: 12))
-            p.addLine(to: CGPoint(x: 8, y: 12))
-            p.addLine(to: CGPoint(x: 5, y: 15))
-            p.addLine(to: CGPoint(x: 5, y: 12))
-            p.addLine(to: CGPoint(x: 3, y: 12))
-            p.closeSubpath()
-        case .plus:   // M9 3v12M3 9h12
-            p.move(to: CGPoint(x: 9, y: 3));  p.addLine(to: CGPoint(x: 9, y: 15))
-            p.move(to: CGPoint(x: 3, y: 9));  p.addLine(to: CGPoint(x: 15, y: 9))
-        case .add:    // M9 4v10M4 9h10
-            p.move(to: CGPoint(x: 9, y: 4));  p.addLine(to: CGPoint(x: 9, y: 14))
-            p.move(to: CGPoint(x: 4, y: 9));  p.addLine(to: CGPoint(x: 14, y: 9))
-        }
-        return p
-    }
-}
-
-struct IslandGlyphView: View {
-    let glyph: IslandGlyph
-    var size: CGFloat = 14
-
-    var body: some View {
-        let k = size / 18
-        glyph.path()
-            .applying(CGAffineTransform(scaleX: k, y: k))
-            .stroke(style: StrokeStyle(lineWidth: 1.7 * k, lineCap: .round, lineJoin: .round))
-            .frame(width: size, height: size)
-    }
-}
-
 // MARK: - `rise`: how a block of content comes in
 
 /// `@keyframes rise { from { opacity: 0; transform: translateY(8px) scale(.98); filter: blur(5px) } }`,
@@ -158,61 +109,5 @@ struct RiseIn: ViewModifier {
 extension View {
     func riseIn(_ index: Int, duration: Double = 0.42, stagger: Double = 0.045) -> some View {
         modifier(RiseIn(index: index, duration: duration, stagger: stagger))
-    }
-}
-
-// MARK: - Wrapping row (`flex-wrap: wrap`)
-
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
-    var lineSpacing: CGFloat = 6
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = arrange(width: proposal.width ?? .infinity, subviews: subviews)
-        let width = rows.map(\.width).max() ?? 0
-        let height = rows.reduce(0) { $0 + $1.height } + lineSpacing * CGFloat(max(0, rows.count - 1))
-        return CGSize(width: width, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        var y = bounds.minY
-        for row in arrange(width: bounds.width, subviews: subviews) {
-            var x = bounds.minX
-            for index in row.items {
-                let size = subviews[index].sizeThatFits(.unspecified)
-                subviews[index].place(at: CGPoint(x: x, y: y + (row.height - size.height) / 2),
-                                      proposal: ProposedViewSize(size))
-                x += size.width + spacing
-            }
-            y += row.height + lineSpacing
-        }
-    }
-
-    private struct Row {
-        var items: [Int] = []
-        var width: CGFloat = 0
-        var height: CGFloat = 0
-    }
-
-    private func arrange(width: CGFloat, subviews: Subviews) -> [Row] {
-        var rows: [Row] = []
-        var row = Row()
-        for index in subviews.indices {
-            let size = subviews[index].sizeThatFits(.unspecified)
-            let needed = row.items.isEmpty ? size.width : row.width + spacing + size.width
-            if !row.items.isEmpty && needed > width {
-                rows.append(row)
-                row = Row()
-                row.items = [index]
-                row.width = size.width
-                row.height = size.height
-            } else {
-                row.items.append(index)
-                row.width = needed
-                row.height = max(row.height, size.height)
-            }
-        }
-        if !row.items.isEmpty { rows.append(row) }
-        return rows
     }
 }

@@ -188,12 +188,6 @@ struct DeveloperSettings: View {
             Section("Agent") {
                 AgentDebugPanel(state: state)
             }
-            Section {
-                SettingsHelp("Héritées de Coucou, en attente d'une décision. Leurs clés restent dans le trousseau.")
-            } header: {
-                Text("Intégrations héritées")
-            }
-            LegacyIntegrations()
         }
     }
 }

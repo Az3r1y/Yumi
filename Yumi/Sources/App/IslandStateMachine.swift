@@ -533,16 +533,13 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
         .general:     ["launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
                        "absenceInterval", "contextEngineEnabled"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
-        .modules:     ["github-token", "activeIntegrations"],
+        .modules:     ["github-token"],
         .engines:     ["engineSettings", "engineKeys"],
         .claudeCode:  ["hooks", "claudeDirectoryBookmark"],
         .permissions: ["macOSPermissions", "yumiPermissions"],
         .memory:      ["userName", "memory"],
         .about:       ["updateCheckEnabled", "feedback", "settingsDeveloper"],
-        .developer:   ["contextPanel", "agentPanel",
-                       // Inherited from Coucou, kept apart until their future is decided (docs/BACKLOG.md)
-                       "resend-api-key", "resend-from", "n8n-url", "n8n-api-key", "n8nWorkflowFilter",
-                       "vercel-token", "vercelProjectFilter", "stripe-api-key", "calcom-api-key", "notion-api-key"],
+        .developer:   ["contextPanel", "agentPanel"],
     ]
 
     /// Shows the developer page in the sidebar.

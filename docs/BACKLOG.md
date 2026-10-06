@@ -14,4 +14,3 @@ Idées classées P3 (expérimental) et P4 (futur), rangées ici pour ne pas inte
 | P4 | Missions longues et planifiées (événements, état persistant, pas de boucle). | Historique persistant des exécutions. |
 | P4 | Objective engine (« accomplis cet objectif »). | Skills et missions longues. |
 | P4 | Analytics minimaux, documentés, désactivables, sans contenu privé. | Retours qualitatifs insuffisants. |
-| P4 | Nettoyage des pollers hérités de Coucou (Resend, n8n, Vercel, Stripe, Cal.com, Notion). | Décision produit. |
