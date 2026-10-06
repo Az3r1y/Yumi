@@ -36,7 +36,10 @@ enum HTTPProviderSupport {
         case 400 where String(decoding: data, as: UTF8.self).contains("API_KEY_INVALID"):
             throw LLMProviderError.failed("key refused (HTTP 400)")
         case 404: throw LLMProviderError.failed("model not found (HTTP 404)")
-        case 429: throw LLMProviderError.failed("quota or rate limit (HTTP 429)")
+        case 429:
+            // Google says which quota blocks, and how long to wait; others only that it is a limit.
+            if let quota = GeminiQuota(errorBody: data) { throw LLMProviderError.failed(quota.reason) }
+            throw LLMProviderError.failed("quota or rate limit (HTTP 429)")
         default: throw LLMProviderError.failed("HTTP \(status)")
         }
     }
@@ -102,6 +105,9 @@ struct GeminiLLMProvider: LLMProvider {
     var apiKey: @Sendable () -> String?
     var timeout: TimeInterval = 60
     var transport: HTTPTransport = HTTPProviderSupport.session
+    /// Called with the model that worked when the one asked for did not (the app saves it in
+    /// the settings, where the person sees it).
+    var remember: @Sendable (String) -> Void = { _ in }
 
     var name: String { "gemini:\(model)" }
 
@@ -110,13 +116,22 @@ struct GeminiLLMProvider: LLMProvider {
         let data: Data
         do {
             data = try await HTTPProviderSupport.send(try urlRequest(for: request, key: key), with: transport)
-        } catch LLMProviderError.failed(let reason) where reason.hasPrefix("model not found") {
-            // Google renames and retires models: ask which ones this key can use, and take a
-            // Flash one (the free tier's), once.
-            guard let other = await Self.usableModel(key: key, transport: transport, excluding: model) else { throw LLMProviderError.failed(reason) }
+        } catch LLMProviderError.failed(let reason)
+                    where reason.hasPrefix("model not found") || reason == GeminiQuota.freeTierZero.reason {
+            // Google renames and retires models, and gives some no free quota: ask once which
+            // models this key can call, try one other (Flash-Lite, then Flash), and remember it.
+            let freeTier = reason == GeminiQuota.freeTierZero.reason
+            guard let other = await Self.usableModel(key: key, transport: transport, excluding: model, preferLite: freeTier) else {
+                throw LLMProviderError.failed(freeTier ? GeminiQuota.noFreeModel : reason)
+            }
             var retry = self
             retry.model = other
-            data = try await HTTPProviderSupport.send(try retry.urlRequest(for: request, key: key), with: transport)
+            do {
+                data = try await HTTPProviderSupport.send(try retry.urlRequest(for: request, key: key), with: transport)
+            } catch LLMProviderError.failed(let again) where again == GeminiQuota.freeTierZero.reason {
+                throw LLMProviderError.failed(GeminiQuota.noFreeModel)
+            }
+            remember(other)
         }
         guard let body = try? JSONDecoder().decode(Answer.self, from: data) else { throw LLMProviderError.failed("unreadable answer") }
         let text = body.candidates?.first?.content?.parts?.compactMap(\.text).joined()
@@ -155,16 +170,20 @@ struct GeminiLLMProvider: LLMProvider {
     }
 
     /// A model this key can call with generateContent, a Flash one first, the newest version first.
-    static func usableModel(key: String, transport: HTTPTransport, excluding: String) async -> String? {
+    static func usableModel(key: String, transport: HTTPTransport, excluding: String, preferLite: Bool = false) async -> String? {
         guard let models = await listModels(key: key, transport: transport) else { return nil }
-        return pick(from: models, excluding: excluding)
+        return pick(from: models, excluding: excluding, preferLite: preferLite)
     }
 
-    static func pick(from models: [String], excluding: String) -> String? {
+    /// A stable Flash model (Flash-Lite first when the free quota is the problem: it has the
+    /// most generous one), newest version first.
+    static func pick(from models: [String], excluding: String, preferLite: Bool = false) -> String? {
         let candidates = models.filter { $0 != excluding && !$0.contains("embedding") && !$0.contains("vision") }
         let stable = candidates.filter { !$0.contains("preview") && !$0.contains("exp") && !$0.contains("tts") && !$0.contains("image") }
+        let lite = stable.filter { $0.contains("flash-lite") }
         let flash = stable.filter { $0.contains("flash") && !$0.contains("lite") }
-        return (flash.isEmpty ? stable : flash).sorted(by: >).first ?? candidates.first
+        let order = preferLite ? [lite, flash, stable] : [flash, stable]
+        return order.first(where: { !$0.isEmpty })?.sorted(by: >).first ?? candidates.first
     }
 
     /// The names (without « models/ ») of the models that support generateContent for this key.
@@ -237,5 +256,48 @@ struct OllamaLLMProvider: LLMProvider {
     private struct Tags: Decodable {
         struct Model: Decodable { var name: String }
         var models: [Model]
+    }
+}
+
+/// What a Google 429 says, read from the standard error details (google.rpc.QuotaFailure and
+/// google.rpc.RetryInfo). Only the kind of limit and the delay are kept: never the message,
+/// which can quote the project.
+enum GeminiQuota: Equatable {
+    /// The free tier gives this model no requests at all for this project.
+    case freeTierZero
+    /// Too many requests this minute; wait `seconds` when Google says.
+    case perMinute(seconds: Int?)
+    /// The daily quota is used up (reset at midnight Pacific time).
+    case perDay
+
+    static let noFreeModel = "quota no-free-model"
+
+    var reason: String {
+        switch self {
+        case .freeTierZero: "quota free-tier-zero"
+        case .perMinute(let seconds): "quota per-minute" + (seconds.map { " \($0)" } ?? "")
+        case .perDay: "quota per-day"
+        }
+    }
+
+    init?(errorBody data: Data) {
+        guard let object = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let error = object["error"] as? [String: Any],
+              let details = error["details"] as? [[String: Any]] else { return nil }
+        var violations: [[String: Any]] = []
+        var delay: Int?
+        for detail in details {
+            let type = detail["@type"] as? String ?? ""
+            if type.hasSuffix("QuotaFailure") { violations += detail["violations"] as? [[String: Any]] ?? [] }
+            if type.hasSuffix("RetryInfo"), let text = detail["retryDelay"] as? String {
+                delay = Double(text.trimmingCharacters(in: CharacterSet(charactersIn: "s"))).map { Int($0.rounded(.up)) }
+            }
+        }
+        guard !violations.isEmpty else { return nil }
+        let ids = violations.map { (($0["quotaId"] as? String) ?? "") + " " + (($0["quotaMetric"] as? String) ?? "") }
+        let zero = violations.contains { ($0["quotaValue"] as? String) == "0" || ($0["quotaValue"] as? Int) == 0 }
+        if zero && ids.contains(where: { $0.lowercased().contains("free") }) { self = .freeTierZero }
+        else if ids.contains(where: { $0.contains("PerDay") }) { self = .perDay }
+        else { self = .perMinute(seconds: delay) }
     }
 }

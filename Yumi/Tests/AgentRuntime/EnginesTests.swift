@@ -291,3 +291,86 @@ private func providers(answering text: String, wire: Wire) -> [any LLMProvider] 
         #expect(ChatPhrases.engineFailed("Gemini", reason: "model not found (HTTP 404)").contains("Change le modèle"))
     }
 }
+
+@Suite struct GeminiQuotaTests {
+    /// A 429 as Google writes it (google.rpc.QuotaFailure and RetryInfo).
+    private func quota(_ quotaId: String, value: String? = nil, delay: String? = "28s") -> String {
+        var violation: [String: Any] = ["quotaMetric": "generativelanguage.googleapis.com/generate_content_free_tier_requests",
+                                        "quotaId": quotaId, "quotaDimensions": ["model": "gemini-2.5-flash", "location": "global"]]
+        if let value { violation["quotaValue"] = value }
+        var details: [[String: Any]] = [["@type": "type.googleapis.com/google.rpc.QuotaFailure", "violations": [violation]]]
+        if let delay { details.append(["@type": "type.googleapis.com/google.rpc.RetryInfo", "retryDelay": delay]) }
+        let object: [String: Any] = ["error": ["code": 429, "status": "RESOURCE_EXHAUSTED",
+                                               "message": "You exceeded your current quota, project 123456 key gm-key", "details": details]]
+        return String(decoding: try! JSONSerialization.data(withJSONObject: object), as: UTF8.self)
+    }
+
+    @Test func theThreeKindsOfLimitAreToldApart() {
+        #expect(GeminiQuota(errorBody: Data(quota("GenerateRequestsPerDayPerProjectPerModel-FreeTier", value: "0").utf8)) == .freeTierZero)
+        #expect(GeminiQuota(errorBody: Data(quota("GenerateRequestsPerMinutePerProjectPerModel-FreeTier", value: "10", delay: "27.4s").utf8)) == .perMinute(seconds: 28))
+        #expect(GeminiQuota(errorBody: Data(quota("GenerateRequestsPerDayPerProjectPerModel-FreeTier", value: "250", delay: nil).utf8)) == .perDay)
+        #expect(GeminiQuota(errorBody: Data(#"{"error": {"code": 429}}"#.utf8)) == nil)
+    }
+
+    @Test func whatThePersonReads() {
+        #expect(ChatPhrases.engineFailed("Gemini", reason: GeminiQuota.perMinute(seconds: 28).reason) == "Gemini : trop de demandes cette minute. Réessaie dans 28 secondes.")
+        #expect(ChatPhrases.engineFailed("Gemini", reason: GeminiQuota.perDay.reason).contains("minuit, heure du Pacifique"))
+        #expect(ChatPhrases.engineFailed("Gemini", reason: GeminiQuota.freeTierZero.reason).contains("pas de quota gratuit pour ce modèle"))
+        #expect(ChatPhrases.engineFailed("Gemini", reason: GeminiQuota.noFreeModel).contains("aistudio.google.com"))
+    }
+
+    @Test func aMinuteLimitIsSaidWithoutRetryingAndWithoutTheMessage() async {
+        let wire = Wire()
+        let provider = GeminiLLMProvider(apiKey: { "gm-key" }, transport: reply(429, quota("GenerateRequestsPerMinutePerProjectPerModel-FreeTier", value: "10"), wire: wire))
+        do {
+            _ = try await provider.complete(request)
+            Issue.record("expected a limit")
+        } catch {
+            #expect(error as? LLMProviderError == .failed("quota per-minute 28"))
+            #expect(!String(describing: error).contains("123456") && !String(describing: error).contains("gm-key"))
+        }
+        #expect(wire.all.count == 1)
+    }
+
+    /// The free quota is 0 for the default model: the list, then Flash-Lite once, remembered.
+    private func google(liteAnswers: Bool, wire: Wire) -> HTTPTransport {
+        let zero = quota("GenerateRequestsPerDayPerProjectPerModel-FreeTier", value: "0")
+        return { request in
+            wire.add(request)
+            let path = request.url?.absoluteString ?? ""
+            let (status, body): (Int, String)
+            if path.contains("/models?") {
+                (status, body) = (200, #"{"models": [{"name": "models/gemini-2.5-flash", "supportedGenerationMethods": ["generateContent"]}, {"name": "models/gemini-2.5-flash-lite", "supportedGenerationMethods": ["generateContent"]}, {"name": "models/gemini-2.5-pro", "supportedGenerationMethods": ["generateContent"]}]}"#)
+            } else if path.contains("gemini-2.5-flash-lite:generateContent") {
+                (status, body) = liteAnswers ? (200, geminiAnswer("OK")) : (429, zero)
+            } else {
+                (status, body) = (429, zero)
+            }
+            return (Data(body.utf8), HTTPURLResponse(url: request.url!, statusCode: status, httpVersion: nil, headerFields: nil)!)
+        }
+    }
+
+    @Test func noFreeQuotaForTheModelSwitchesOnceToFlashLiteAndRemembersIt() async throws {
+        let wire = Wire()
+        let remembered = Remembered()
+        let provider = GeminiLLMProvider(apiKey: { "gm-key" }, transport: google(liteAnswers: true, wire: wire), remember: { remembered.set($0) })
+        #expect(try await provider.complete(request).text == "OK")
+        #expect(wire.all.count == 3)
+        #expect(remembered.value == "gemini-2.5-flash-lite")
+    }
+
+    @Test func noModelWithFreeQuotaIsSaidClearly() async {
+        let wire = Wire()
+        let provider = GeminiLLMProvider(apiKey: { "gm-key" }, transport: google(liteAnswers: false, wire: wire))
+        await #expect(throws: LLMProviderError.failed(GeminiQuota.noFreeModel)) { try await provider.complete(request) }
+        #expect(wire.all.count == 3)
+        #expect(GeminiLLMProvider.pick(from: ["gemini-2.5-flash", "gemini-2.5-flash-lite"], excluding: "x", preferLite: true) == "gemini-2.5-flash-lite")
+    }
+}
+
+private final class Remembered: @unchecked Sendable {
+    private let lock = NSLock()
+    private var model: String?
+    func set(_ value: String) { lock.withLock { model = value } }
+    var value: String? { lock.withLock { model } }
+}
