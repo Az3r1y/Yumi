@@ -13,6 +13,7 @@ import { LinkedInFilm, LinkedInLancement, LinkedInPermission } from "./linkedin/
 import { MASTERCLASS_LENGTH, Masterclass } from "./linkedin/masterclass/Masterclass";
 import { JOURNEE_LENGTH, Journee } from "./linkedin/journee/Journee";
 import { JourneeEdito } from "./linkedin/journee/JourneeEdito";
+import { RECAP_LENGTH, Recap } from "./recap/Recap";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -48,6 +49,8 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="LinkedIn-Journee-9x16" component={Journee} durationInFrames={Math.round(JOURNEE_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="LinkedIn-Journee-Edito-4x5" component={JourneeEdito} durationInFrames={Math.round(JOURNEE_LENGTH * 60)} fps={60} width={1080} height={1350} />
         <Composition id="LinkedIn-Journee-Edito-9x16" component={JourneeEdito} durationInFrames={Math.round(JOURNEE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Recap-16x9" component={Recap} durationInFrames={Math.round(RECAP_LENGTH * 60)} fps={60} width={1920} height={1080} />
+        <Composition id="Recap-4x5" component={Recap} durationInFrames={Math.round(RECAP_LENGTH * 60)} fps={60} width={1080} height={1350} />
         <Composition id="Masterclass-16x9" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1920} height={1080} />
         <Composition id="Masterclass-9x16" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="LinkedIn-Film" component={LinkedInFilm} durationInFrames={1656} fps={60} width={1080} height={1350} />
