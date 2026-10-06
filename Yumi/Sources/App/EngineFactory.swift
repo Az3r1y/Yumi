@@ -17,7 +17,13 @@ enum EngineFactory {
         case .openai:
             return OpenAILLMProvider(model: settings.model(.openai) ?? OpenAILLMProvider.defaultModel, apiKey: key(.openai))
         case .gemini:
-            return GeminiLLMProvider(model: settings.model(.gemini) ?? GeminiLLMProvider.defaultModel, apiKey: key(.gemini))
+            return GeminiLLMProvider(model: settings.model(.gemini) ?? GeminiLLMProvider.defaultModel, apiKey: key(.gemini),
+                                     remember: { model in
+                                         // Shown in the settings, where the person can change it.
+                                         var saved = EngineSettings.load()
+                                         saved.models[.gemini] = model
+                                         saved.save()
+                                     })
         case .ollama:
             let model = settings.models[.ollama]
             return OllamaLLMProvider(model: { model })
@@ -52,7 +58,7 @@ enum EngineFactory {
         } catch LLMProviderError.unavailable {
             return engine == .claudeCode ? "Claude Code n'est pas installé ou pas connecté (claude, puis /login)." : "Pas configuré."
         } catch LLMProviderError.failed(let reason) {
-            return "✗ \(reason)"
+            return "✗ " + ChatPhrases.engineFailed(engine.label, reason: reason)
         } catch {
             return "✗ Pas de réponse."
         }

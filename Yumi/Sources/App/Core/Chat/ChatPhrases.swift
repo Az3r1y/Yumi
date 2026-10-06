@@ -95,6 +95,10 @@ enum ChatPhrases {
     static func engineFailed(_ engine: String, reason: String) -> String {
         reason.hasPrefix("key refused") ? "\(engine) refuse la clé. Vérifie-la dans les réglages, section Moteurs."
             : reason.hasPrefix("model not found") ? "\(engine) ne connaît pas ce modèle pour ta clé. Change le modèle dans les réglages, section Moteurs (ou laisse le champ vide)."
+            : reason == GeminiQuota.noFreeModel ? "Ta clé n'a pas de quota gratuit Gemini. Vérifie-la sur aistudio.google.com, ou choisis un autre moteur dans les réglages."
+            : reason == GeminiQuota.freeTierZero.reason ? "\(engine) ne donne pas de quota gratuit pour ce modèle à ta clé. Choisis un autre modèle dans les réglages, ou un autre moteur."
+            : reason == GeminiQuota.perDay.reason ? "\(engine) : la limite du jour est atteinte. Elle revient à minuit, heure du Pacifique (9 h à Paris)."
+            : reason.hasPrefix("quota per-minute") ? "\(engine) : trop de demandes cette minute. " + (Int(reason.split(separator: " ").last ?? "").map { "Réessaie dans \($0) secondes." } ?? "Réessaie dans une minute.")
             : reason.hasPrefix("quota") ? "\(engine) refuse pour l'instant (quota ou trop de demandes). Réessaie plus tard."
             : "\(engine) ne m'a pas répondu (\(reason))."
     }
