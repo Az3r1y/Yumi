@@ -17,12 +17,20 @@
 </p>
 
 <p align="center">
-  <img src="docs/approbation.png" alt="Yumi asking whether Claude Code may run a command" width="720">
+  <a href="https://github.com/estebanbaigts/Yumi/releases"><b>⬇ Download the free alpha</b></a>
+  ·
+  <a href="https://estebanbaigts.github.io/Yumi/">Website</a>
+  ·
+  <a href="https://github.com/estebanbaigts/Yumi/issues/new/choose">Give feedback</a>
+</p>
+
+<p align="center">
+  <img src="docs/demo.gif" alt="A Claude Code session asks to run npm test; the user approves it from the notch" width="420">
 </p>
 
 Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependency. The character is drawn in code, frame by frame.
 
-> **Status: work in progress.** The app builds and runs every day on its author's Mac. There is no packaged release yet: build it from source. The interface speaks French for now.
+> **Status: public alpha.** [Download the latest alpha](https://github.com/estebanbaigts/Yumi/releases) (macOS 15+). It is not notarized by Apple yet: the first time, open System Settings › Privacy & Security and click « Open Anyway ». The interface speaks French for now. Feedback is very welcome: it decides what comes next.
 
 ## What he does
 
