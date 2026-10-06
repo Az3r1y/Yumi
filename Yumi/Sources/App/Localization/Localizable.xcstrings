@@ -1597,6 +1597,16 @@
         }
       }
     },
+    "Autorisations": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Permissions"
+          }
+        }
+      }
+    },
     "Autoriser": {
       "localizations": {
         "en": {
@@ -4361,6 +4371,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Engine"
+          }
+        }
+      }
+    },
+    "Moteurs": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Engines"
           }
         }
       }

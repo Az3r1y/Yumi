@@ -500,9 +500,9 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
         case .general:     return loc("Général")
         case .yumi:        return "Yumi"
         case .modules:     return "Modules"
-        case .engines:     return "Moteurs"
+        case .engines:     return loc("Moteurs")
         case .claudeCode:  return "Claude Code"
-        case .permissions: return "Autorisations"
+        case .permissions: return loc("Autorisations")
         case .memory:      return loc("Mémoire")
         case .about:       return loc("À propos")
         case .developer:   return loc("Développeur")
