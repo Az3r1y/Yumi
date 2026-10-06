@@ -32,6 +32,10 @@ enum HTTPProviderSupport {
         case 200..<300: return data
         // The body can echo the request: only the status is kept.
         case 401, 403: throw LLMProviderError.failed("key refused (HTTP \(status))")
+        // Google answers an invalid key with 400 and the reason API_KEY_INVALID.
+        case 400 where String(decoding: data, as: UTF8.self).contains("API_KEY_INVALID"):
+            throw LLMProviderError.failed("key refused (HTTP 400)")
+        case 404: throw LLMProviderError.failed("model not found (HTTP 404)")
         case 429: throw LLMProviderError.failed("quota or rate limit (HTTP 429)")
         default: throw LLMProviderError.failed("HTTP \(status)")
         }
@@ -103,7 +107,17 @@ struct GeminiLLMProvider: LLMProvider {
 
     func complete(_ request: LLMRequest) async throws -> LLMResponse {
         guard let key = apiKey()?.nonEmptyTrimmed else { throw LLMProviderError.unavailable }
-        let data = try await HTTPProviderSupport.send(try urlRequest(for: request, key: key), with: transport)
+        let data: Data
+        do {
+            data = try await HTTPProviderSupport.send(try urlRequest(for: request, key: key), with: transport)
+        } catch LLMProviderError.failed(let reason) where reason.hasPrefix("model not found") {
+            // Google renames and retires models: ask which ones this key can use, and take a
+            // Flash one (the free tier's), once.
+            guard let other = await Self.usableModel(key: key, transport: transport, excluding: model) else { throw LLMProviderError.failed(reason) }
+            var retry = self
+            retry.model = other
+            data = try await HTTPProviderSupport.send(try retry.urlRequest(for: request, key: key), with: transport)
+        }
         guard let body = try? JSONDecoder().decode(Answer.self, from: data) else { throw LLMProviderError.failed("unreadable answer") }
         let text = body.candidates?.first?.content?.parts?.compactMap(\.text).joined()
         return try HTTPProviderSupport.text(text)
@@ -138,6 +152,35 @@ struct GeminiLLMProvider: LLMProvider {
     private struct Answer: Decodable {
         struct Candidate: Decodable { struct Content: Decodable { var parts: [Body.Part]? }; var content: Content? }
         var candidates: [Candidate]?
+    }
+
+    /// A model this key can call with generateContent, a Flash one first, the newest version first.
+    static func usableModel(key: String, transport: HTTPTransport, excluding: String) async -> String? {
+        guard let models = await listModels(key: key, transport: transport) else { return nil }
+        return pick(from: models, excluding: excluding)
+    }
+
+    static func pick(from models: [String], excluding: String) -> String? {
+        let candidates = models.filter { $0 != excluding && !$0.contains("embedding") && !$0.contains("vision") }
+        let stable = candidates.filter { !$0.contains("preview") && !$0.contains("exp") && !$0.contains("tts") && !$0.contains("image") }
+        let flash = stable.filter { $0.contains("flash") && !$0.contains("lite") }
+        return (flash.isEmpty ? stable : flash).sorted(by: >).first ?? candidates.first
+    }
+
+    /// The names (without « models/ ») of the models that support generateContent for this key.
+    static func listModels(key: String, transport: HTTPTransport) async -> [String]? {
+        guard let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200") else { return nil }
+        var request = URLRequest(url: url, timeoutInterval: 15)
+        request.setValue(key, forHTTPHeaderField: "x-goog-api-key")
+        guard let data = try? await HTTPProviderSupport.send(request, with: transport),
+              let list = try? JSONDecoder().decode(ModelList.self, from: data) else { return nil }
+        return list.models.filter { $0.supportedGenerationMethods?.contains("generateContent") ?? false }
+            .map { $0.name.hasPrefix("models/") ? String($0.name.dropFirst(7)) : $0.name }
+    }
+
+    private struct ModelList: Decodable {
+        struct Model: Decodable { var name: String; var supportedGenerationMethods: [String]? }
+        var models: [Model]
     }
 }
 

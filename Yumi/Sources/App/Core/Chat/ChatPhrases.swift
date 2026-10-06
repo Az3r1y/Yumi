@@ -94,6 +94,7 @@ enum ChatPhrases {
     }
     static func engineFailed(_ engine: String, reason: String) -> String {
         reason.hasPrefix("key refused") ? "\(engine) refuse la clé. Vérifie-la dans les réglages, section Moteurs."
+            : reason.hasPrefix("model not found") ? "\(engine) ne connaît pas ce modèle pour ta clé. Change le modèle dans les réglages, section Moteurs (ou laisse le champ vide)."
             : reason.hasPrefix("quota") ? "\(engine) refuse pour l'instant (quota ou trop de demandes). Réessaie plus tard."
             : "\(engine) ne m'a pas répondu (\(reason))."
     }
