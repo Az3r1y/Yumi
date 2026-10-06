@@ -1,9 +1,11 @@
 import Foundation
 
-/// Small French phrasings shared by the modules. Yumi speaks short.
+/// Small phrasings shared by the modules, in the language Yumi speaks (AppLanguage). The name
+/// stays from when he only spoke French. Yumi speaks short.
 enum FrenchText {
     /// "14:30"
     static func clock(_ date: Date, calendar: Calendar = .current) -> String {
+        if AppLanguage.isEnglish { return englishTime(date, calendar: calendar) }
         let parts = calendar.dateComponents([.hour, .minute], from: date)
         return String(format: "%d:%02d", parts.hour ?? 0, parts.minute ?? 0)
     }
@@ -12,7 +14,19 @@ enum FrenchText {
     static func spokenHour(_ date: Date, calendar: Calendar = .current) -> String {
         let parts = calendar.dateComponents([.hour, .minute], from: date)
         let minute = parts.minute ?? 0
+        if AppLanguage.isEnglish { return englishTime(date, calendar: calendar, dropZeroMinutes: minute == 0) }
         return minute == 0 ? "\(parts.hour ?? 0) h" : String(format: "%d h %02d", parts.hour ?? 0, minute)
+    }
+
+    /// "2:30 PM" or "14:30", as the Mac's region writes a time; "6 PM" for a round hour.
+    private static func englishTime(_ date: Date, calendar: Calendar, dropZeroMinutes: Bool = false) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = AppLanguage.locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        let twelveHours = (DateFormatter.dateFormat(fromTemplate: "j", options: 0, locale: AppLanguage.locale) ?? "").contains("a")
+        formatter.setLocalizedDateFormatFromTemplate(dropZeroMinutes && twelveHours ? "j" : "jmm")
+        return formatter.string(from: date)
     }
 
     /// "18:42" for a countdown. Seconds are rounded up so a timer never shows 00:00 while running.
@@ -49,6 +63,12 @@ enum FrenchText {
     /// Above 99 the figures are kept: nobody reads "cent quarante-trois" at a glance.
     static func spelled(_ value: Int, feminine: Bool = false) -> String {
         guard (0...99).contains(value) else { return "\(value)" }
+        if AppLanguage.isEnglish {
+            let formatter = NumberFormatter()
+            formatter.locale = Locale(identifier: "en")
+            formatter.numberStyle = .spellOut
+            return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        }
         let units = ["zéro", feminine ? "une" : "un", "deux", "trois", "quatre", "cinq", "six", "sept", "huit", "neuf", "dix",
                      "onze", "douze", "treize", "quatorze", "quinze", "seize", "dix-sept", "dix-huit", "dix-neuf"]
         if value < 20 { return units[value] }
@@ -64,10 +84,13 @@ enum FrenchText {
     /// "douze minutes", "une heure cinq": a delay said the way a person would.
     static func spokenMinutes(_ seconds: TimeInterval) -> String {
         let total = max(1, Int((seconds / 60).rounded(.up)))
-        if total < 60 { return "\(spelled(total, feminine: true)) \(total > 1 ? "minutes" : "minute")" }
+        if total < 60 { return "\(spelled(total, feminine: true)) \(total > 1 ? loc("minutes") : loc("minute"))" }
         let hours = total / 60, rest = total % 60
-        let hourText = "\(spelled(hours, feminine: true)) \(hours > 1 ? "heures" : "heure")"
-        return rest == 0 ? hourText : "\(hourText) \(spelled(rest))"
+        let hourText = "\(spelled(hours, feminine: true)) \(hours > 1 ? loc("heures") : loc("heure"))"
+        if rest == 0 { return hourText }
+        // "one hour and five minutes" in English, "une heure cinq" in French
+        guard AppLanguage.isEnglish else { return "\(hourText) \(spelled(rest))" }
+        return "\(hourText) and \(spelled(rest)) \(rest > 1 ? "minutes" : "minute")"
     }
 
     /// "une session", "deux sessions": a small count in letters.

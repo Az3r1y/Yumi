@@ -47,6 +47,19 @@ enum ChatRoute: Equatable, Sendable {
         let asks = ["qu'est-ce que j'ai", "qu'est ce que j'ai", "qu'ai-je", "j'ai quoi", "j ai quoi", "qu'est-ce qui m'attend"]
         let days = ["aujourd'hui", "demain", "lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche",
                     "ce soir", "ce matin", "cet apres-midi", "semaine", "week-end", "prevu"]
+        if asks.contains(where: text.contains) && days.contains(where: text.contains) { return true }
+        return isPersonalAgendaInEnglish(text)
+    }
+
+    /// "What do I have tomorrow?", "how much free time on Thursday", "my appointments on Monday".
+    private static func isPersonalAgendaInEnglish(_ text: String) -> Bool {
+        let topics = ["calendar", "agenda", "appointment", "meeting", "reminder", "free time", "schedule", "busy", "available",
+                      "slot", "plans "]
+        let personal = [" my ", " i ", " i'm ", " am i ", " me ", " do i ", " have i "]
+        if topics.contains(where: text.contains), personal.contains(where: text.contains) { return true }
+        let asks = ["what do i have", "what have i got", "what's on", "whats on", "what is on", "anything on", "what's planned"]
+        let days = ["today", "tomorrow", "tonight", "this morning", "this afternoon", "this evening", "monday", "tuesday",
+                    "wednesday", "thursday", "friday", "saturday", "sunday", "this week", "weekend", "next week"]
         return asks.contains(where: text.contains) && days.contains(where: text.contains)
     }
 }

@@ -104,7 +104,7 @@ struct GetTodayTool: Tool {
         if reply.contains(where: \.isNewline) || reply.hasPrefix("-") || reply.contains("•") { return loc("la réponse est une liste") }
         // A sentence ends with a stop followed by a space or the end: "v1.2" is not two.
         let ends = reply.matches(of: /[.!?](\s|$)/).count
-        return ends > 2 ? "la réponse fait plus de deux phrases" : nil
+        return ends > 2 ? loc("la réponse fait plus de deux phrases") : nil
     }
 }
 
@@ -120,7 +120,7 @@ enum TodayPhrase {
         let first = [agenda(facts.events, label: label, isToday: isToday, calendar: calendar),
                      reminders(facts.reminders, label: isToday ? nil : label)].compactMap { $0 }
         var sentences: [String] = []
-        if !first.isEmpty { sentences.append(FrenchText.sentenceStart(first.joined(separator: ", et ")) + ".") }
+        if !first.isEmpty { sentences.append(FrenchText.sentenceStart(first.joined(separator: loc(", et "))) + ".") }
         if freeTime, let free = free(facts.dayEvents ?? facts.events, day: day, now: now, calendar: calendar) {
             sentences.append(FrenchText.sentenceStart(free) + ".")
         } else if isToday, let weather = facts.weather {
@@ -131,7 +131,7 @@ enum TodayPhrase {
             if sentences.count < 2 {
                 sentences.append(FrenchText.sentenceStart(missing) + ".")
             } else {
-                sentences[sentences.count - 1] = String(sentences[sentences.count - 1].dropLast()) + ", mais " + missing + "."
+                sentences[sentences.count - 1] = String(sentences[sentences.count - 1].dropLast()) + loc(", mais ") + missing + "."
             }
         }
         if sentences.isEmpty {
@@ -144,7 +144,7 @@ enum TodayPhrase {
     private static func missing(_ sources: [TodayFacts.Source]) -> String? {
         let names = [TodayFacts.Source.agenda, .reminders].filter(sources.contains).map { $0 == .agenda ? loc("à ton agenda") : loc("à tes rappels") }
         guard !names.isEmpty else { return nil }
-        return loc("je n'ai pas accès \(names.joined(separator: " ni ")), autorise Yumi dans Réglages Système, Confidentialité et sécurité")
+        return loc("je n'ai pas accès \(names.joined(separator: loc(" ni "))), autorise Yumi dans Réglages Système, Confidentialité et sécurité")
     }
 
     private static func agenda(_ events: [AgendaEvent]?, label: String, isToday: Bool, calendar: Calendar) -> String? {
@@ -161,22 +161,22 @@ enum TodayPhrase {
 
     private static func reminders(_ reminders: [ReminderItem]?, label: String?) -> String? {
         guard let reminders else { return nil }
-        let when = label.map { " pour \($0)" } ?? ""
+        let when = label.map { loc(" pour \($0)") } ?? ""
         guard let first = NotesSummary.ordered(reminders).first else { return loc("aucun rappel\(when)") }
         if reminders.count == 1 { return loc("un rappel\(when) : \(oneLine(first.title))") }
-        return "\(FrenchText.spelledCount(reminders.count, "rappel", "rappels"))\(when), dont \(oneLine(first.title))"
+        return loc("\(FrenchText.spelledCount(reminders.count, loc("rappel"), loc("rappels")))\(when), dont \(oneLine(first.title))")
     }
 
     /// "demain", "après-demain", "jeudi 9 octobre".
     static func dayLabel(_ day: Date, now: Date, calendar: Calendar) -> String {
         let offset = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: day)).day ?? 0
-        if offset == 1 { return "demain" }
+        if offset == 1 { return loc("demain") }
         if offset == 2 { return loc("après-demain") }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = AppLanguage.locale
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
-        formatter.dateFormat = loc("EEEE d MMMM")
+        formatter.setLocalizedDateFormatFromTemplate("EEEEdMMMM")
         return formatter.string(from: day)
     }
 
@@ -224,13 +224,12 @@ enum FreeTime {
         let minutes = Int(seconds / 60)
         let hours = minutes / 60, rest = minutes % 60
         if hours == 0 { return "\(rest) min" }
+        if AppLanguage.isEnglish { return rest == 0 ? "\(hours) h" : "\(hours) h \(rest) min" }
         return rest == 0 ? "\(hours) h" : String(format: "%d h %02d", hours, rest)
     }
 
     /// "14 h", "14 h 30".
     static func clock(_ date: Date, _ calendar: Calendar) -> String {
-        let parts = calendar.dateComponents([.hour, .minute], from: date)
-        let minute = parts.minute ?? 0
-        return minute == 0 ? "\(parts.hour ?? 0) h" : String(format: "%d h %02d", parts.hour ?? 0, minute)
+        FrenchText.spokenHour(date, calendar: calendar)
     }
 }

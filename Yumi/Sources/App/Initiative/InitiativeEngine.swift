@@ -202,7 +202,7 @@ enum InitiativePhrases {
     }
 
     static func variants(for occasion: Occasion, _ around: Surroundings) -> [Variant] {
-        let hello = around.name.map { "Salut \($0)." } ?? "Salut."
+        let hello = around.name.map { loc("Salut \($0).") } ?? loc("Salut.")
         let comma = around.name.map { ", \($0)" } ?? ""
         let project = around.projects.first.flatMap(projectName)
         func n(_ value: Int, feminine: Bool = false) -> String { FrenchText.spelled(value, feminine: feminine) }
@@ -211,9 +211,9 @@ enum InitiativePhrases {
         switch occasion {
         case .firstWake(let events, let firstAt):
             if let events, events > 0 {
-                let count = FrenchText.spelledCount(events, "rendez-vous", "rendez-vous")
+                let count = FrenchText.spelledCount(events, loc("rendez-vous"), loc("rendez-vous (pluriel)"))
                 let first = firstAt.map { FrenchText.spokenHour($0, calendar: around.calendar) }
-                let when = first.map { events == 1 ? ", à \($0)" : loc(", le premier à \($0)") } ?? ""
+                let when = first.map { events == 1 ? loc(", à \($0)") : loc(", le premier à \($0)") } ?? ""
                 return [
                     Variant(key: "wake.events.1", text: loc("\(hello) \(cap(count)) aujourd'hui\(when)."), mood: .happy),
                     Variant(key: "wake.events.2", text: loc("Bonjour\(comma). J'ai regardé ta journée : \(count)\(when)."), mood: .happy),
@@ -261,10 +261,10 @@ enum InitiativePhrases {
             return plain
 
         case .longStretch(let hours):
-            let span = hours <= 1 ? "Une heure" : "\(cap(n(hours, feminine: true))) heures"
+            let span = hours <= 1 ? loc("Une heure") : loc("\(cap(n(hours, feminine: true))) heures")
             return [
                 Variant(key: "stretch.1", text: loc("\(span) d'affilée. Une pause ?"), mood: .worried, action: .takeBreak),
-                Variant(key: "stretch.2", text: loc("Tu n'as pas levé le nez depuis \(n(hours, feminine: true)) \(hours > 1 ? "heures" : "heure"). Cinq minutes ?"), mood: .worried, action: .takeBreak),
+                Variant(key: "stretch.2", text: loc("Tu n'as pas levé le nez depuis \(n(hours, feminine: true)) \(hours > 1 ? loc("heures") : loc("heure")). Cinq minutes ?"), mood: .worried, action: .takeBreak),
                 Variant(key: "stretch.3", text: loc("\(span) sans souffler. Je te garde ta place cinq minutes ?"), mood: .curious, action: .takeBreak),
             ]
 

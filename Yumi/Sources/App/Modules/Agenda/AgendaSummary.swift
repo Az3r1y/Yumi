@@ -48,7 +48,7 @@ enum AgendaSummary {
 
     private static func plainSnapshot(events: [AgendaEvent], access: PermissionState, now: Date,
                                       calendar: Calendar) -> ModuleSnapshot {
-        var snapshot = ModuleSnapshot(id: "agenda", name: "Agenda", colorHex: "#5B8CFF", status: loc("libre"),
+        var snapshot = ModuleSnapshot(id: "agenda", name: loc("Agenda"), colorHex: "#5B8CFF", status: loc("libre"),
                                       title: loc("Rien de prévu."), subtitle: loc("Ta journée est à toi."),
                                       primaryAction: loc("Voir la journée"), secondaryAction: nil)
         switch access {
@@ -86,7 +86,7 @@ enum AgendaSummary {
             snapshot.title = loc("\(event.title) à \(clock).")
         }
 
-        var details = ["\(clock) à \(FrenchText.clock(event.end, calendar: calendar))"]
+        var details = [loc("\(clock) à \(FrenchText.clock(event.end, calendar: calendar))")]
         if event.joinURL != nil { details.append(loc("en visio")) }
         if !event.location.isEmpty && joinURL(in: [event.location]) == nil {
             details.append(event.location.split(whereSeparator: \.isNewline).first.map(String.init) ?? event.location)

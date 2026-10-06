@@ -476,7 +476,7 @@ enum Feedback {
 
     /// The fields of `.github/ISSUE_TEMPLATE/bug.yml`, by their `id`.
     static func fields(version: String, macOS: String, model: String, notch: Bool) -> [(String, String)] {
-        [("version-yumi", version), ("version-macos", macOS), ("mac", "\(model), notch : \(notch ? "oui" : "non")")]
+        [("version-yumi", version), ("version-macos", macOS), ("mac", "\(model), notch : \(notch ? loc("oui") : loc("non"))")]
     }
 
     static func url(version: String, macOS: String, model: String, notch: Bool) -> URL? {
@@ -537,7 +537,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
     /// Where each stored setting lives: the same UserDefaults and Keychain keys as before the
     /// window was redone, so nothing set earlier is lost.
     static let settings: [SettingsPage: [String]] = [
-        .general:     ["launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
+        .general:     ["yumiLanguage", "launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
                        "absenceInterval", "contextEngineEnabled"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
         .modules:     ["github-token"],
