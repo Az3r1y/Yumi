@@ -279,6 +279,14 @@ final class YumiCore {
                                   openSettings: { NotificationCenter.default.post(name: .openFullSettings, object: nil) })
         agent = Self.makeAgent(permissions: permissions,
                                modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather, notion: notion))
+        #if !APPSTORE
+        // A task ticked in the island goes through the runtime: the approval, the write, the check.
+        let agent = agent
+        notion.complete = { task in
+            let (plan, request) = CompleteNotionTaskTool.plan(for: task)
+            _ = await agent.execute(plan, for: request)
+        }
+        #endif
         let memory = memory
         var initiativeDefaults = UserDefaults.standard
         #if DEBUG
@@ -426,6 +434,7 @@ final class YumiCore {
         try? tools.register(AppendToFileTool(log: created))
         try? tools.register(AddEventTool(store: EventKitEventStore()))
         try? tools.register(AddNotionTaskTool(store: NotionAgentStore(api: notionAPI)))
+        try? tools.register(CompleteNotionTaskTool(store: NotionAgentStore(api: notionAPI)))
         try? tools.register(AddReminderTool(store: EventKitReminderStore()))
         try? tools.register(StartFocusTool(focus: modules))
         try? tools.register(GetTodayTool(source: modules))

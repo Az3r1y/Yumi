@@ -37,7 +37,8 @@ struct ModuleRowsList: View {
                                 .padding(.top, row.id == module.rows.first?.id ? 0 : 6)
                                 .padding(.bottom, 1)
                         }
-                        ModuleRowLine(row: row, time: time(row, now: shown ? context.date : .now), unfolded: open.contains(row.id)) {
+                        ModuleRowLine(row: row, time: time(row, now: shown ? context.date : .now), unfolded: open.contains(row.id),
+                                      tick: row.check.map { check in { IslandActions.row(module.id, check) } }) {
                             if !row.details.isEmpty {
                                 withAnimation(.islandSpring(0.35)) {
                                     if open.contains(row.id) { open.remove(row.id) } else { open.insert(row.id) }
@@ -73,6 +74,8 @@ private struct ModuleRowLine: View {
     let row: ModuleRow
     let time: String
     var unfolded = false
+    /// Ticks the box of the line, when it has one.
+    var tick: (() -> Void)? = nil
     let action: () -> Void
     @State private var hover = false
 
@@ -87,9 +90,27 @@ private struct ModuleRowLine: View {
     }
 
     var body: some View {
+        HStack(spacing: 0) {
+            if let tick {
+                Button(action: tick) {
+                    Image(systemName: "circle")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(row.state == .failure ? IslandTheme.red : IslandTheme.muted)
+                        .frame(width: 20, height: Self.height)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(loc("Marquer comme terminée"))
+                .accessibilityLabel(loc("Marquer « \(row.title) » comme terminée"))
+            }
+            line
+        }
+    }
+
+    private var line: some View {
         Button(action: action) {
             HStack(spacing: 7) {
-                Circle().fill(color).frame(width: 6, height: 6)
+                if tick == nil { Circle().fill(color).frame(width: 6, height: 6) }
                 Text(row.title)
                     .font(IslandTheme.text(12, .semibold))
                     .foregroundStyle(IslandTheme.fg)

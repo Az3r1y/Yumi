@@ -118,6 +118,11 @@ struct RiskAssessor: Sendable {
         let files = resources.filter { $0.kind == .file }
         if [.create, .modify].contains(action.kind), files.count > table.severalFilesCount { risk = max(risk, .high) }
         if !action.reversible { risk = max(risk, .high) }
+        // Writing to an outside account or address leaves the Mac: never less than high, whatever
+        // the tool says. Every connector inherits it.
+        if action.kind != .read, resources.contains(where: { $0.kind == .account || $0.kind == .url }) {
+            risk = max(risk, .high)
+        }
         if resources.contains(where: { $0.kind == .unknown }) || (resources.isEmpty && action.kind != .read) {
             risk = max(risk, .medium)
         }

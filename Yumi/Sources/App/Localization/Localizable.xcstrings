@@ -1723,6 +1723,16 @@
         }
       }
     },
+    "Aujourd'hui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today"
+          }
+        }
+      }
+    },
     "Automatique": {
       "localizations": {
         "en": {
@@ -1915,6 +1925,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancelled, I didn't do anything."
+          }
+        }
+      }
+    },
+    "C'est coché dans Notion : %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ticked in Notion: %@."
           }
         }
       }
@@ -2689,6 +2709,16 @@
         }
       }
     },
+    "Cocher « %@ » dans Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tick “%@” in Notion"
+          }
+        }
+      }
+    },
     "Colle ton jeton d'accès": {
       "localizations": {
         "en": {
@@ -3171,6 +3201,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Paused. I'm keeping your seat."
+          }
+        }
+      }
+    },
+    "En retard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Late"
           }
         }
       }
@@ -4671,6 +4711,26 @@
         }
       }
     },
+    "Marquer comme terminée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark as done"
+          }
+        }
+      }
+    },
+    "Marquer « %@ » comme terminée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mark “%@” as done"
+          }
+        }
+      }
+    },
     "Masquer %@": {
       "localizations": {
         "en": {
@@ -4917,6 +4977,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Notion asks to wait %lld seconds"
+          }
+        }
+      }
+    },
+    "Notion ne la montre pas comme terminée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion does not show it as done"
           }
         }
       }
@@ -7597,6 +7667,16 @@
         }
       }
     },
+    "cette tâche n'est pas dans les bases Notion choisies": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "this task is not in the chosen Notion databases"
+          }
+        }
+      }
+    },
     "cherche": {
       "localizations": {
         "en": {
@@ -7995,6 +8075,16 @@
         }
       }
     },
+    "il me faut l'identifiant d'une page Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I need the id of a Notion page"
+          }
+        }
+      }
+    },
     "il me faut le fichier et le texte à ajouter": {
       "localizations": {
         "en": {
@@ -8071,6 +8161,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I only add to files I created myself, and %@ isn't one of them"
+          }
+        }
+      }
+    },
+    "je n'arrive pas à relire la tâche dans Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't read the task back from Notion"
           }
         }
       }
@@ -8263,6 +8363,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "the event \"%@\" isn't in your calendar"
+          }
+        }
+      }
+    },
+    "la base %@ n'a pas de case « terminé » choisie dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the %@ database has no “done” property chosen in the settings"
           }
         }
       }
@@ -8675,6 +8785,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "macOS won't let me read %@. Allow Yumi in System Settings, Privacy & Security, Files and Folders"
+          }
+        }
+      }
+    },
+    "marquer « %@ » comme terminée, dans la base Notion %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "mark “%@” as done, in the Notion database %@"
           }
         }
       }
@@ -9287,6 +9407,16 @@
         }
       }
     },
+    "« %@ » est déjà terminée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is already done"
+          }
+        }
+      }
+    },
     "« %@ » n'est pas un nom de fichier utilisable": {
       "localizations": {
         "en": {
@@ -9613,6 +9743,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "not connected"
+          }
+        }
+      }
+    },
+    "à cocher…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ticking…"
           }
         }
       }

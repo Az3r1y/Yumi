@@ -40,11 +40,52 @@ enum NotionBoard {
         guard let due = task.due else { return false }
         return task.hasTime ? due < now : calendar.startOfDay(for: due) < calendar.startOfDay(for: now)
     }
+
+    /// The date pill: "14:00", "aujourd'hui", "en retard · hier", "en retard · 5 oct.".
+    static func pill(_ task: NotionTask, now: Date, calendar: Calendar) -> String {
+        guard let due = task.due else { return "" }
+        let time = task.hasTime ? FrenchText.clock(due, calendar: calendar) : nil
+        guard isLate(task, now: now, calendar: calendar) else { return time ?? loc("aujourd'hui") }
+        let day: String
+        if calendar.isDate(due, inSameDayAs: now) {
+            day = time ?? loc("aujourd'hui")
+        } else if let yesterday = calendar.date(byAdding: .day, value: -1, to: now), calendar.isDate(due, inSameDayAs: yesterday) {
+            day = loc("hier")
+        } else {
+            let formatter = DateFormatter()
+            formatter.locale = AppLanguage.locale
+            formatter.calendar = calendar
+            formatter.timeZone = calendar.timeZone
+            formatter.setLocalizedDateFormatFromTemplate("dMMM")
+            day = formatter.string(from: due)
+        }
+        return loc("en retard") + " · " + day
+    }
+
+    /// The island's list: the late ones under their heading, then today's. Each opens its page and
+    /// can be ticked done (unless being ticked already, or when ticking is not possible).
+    static func rows(_ tasks: [NotionTask], now: Date, calendar: Calendar, canTick: Bool, ticking: Set<String>) -> [ModuleRow] {
+        var rows: [ModuleRow] = []
+        var heading: String?
+        for task in ordered(tasks).prefix(12) {
+            let late = isLate(task, now: now, calendar: calendar)
+            let section = late ? loc("En retard") : loc("Aujourd'hui")
+            rows.append(ModuleRow(id: task.id, title: ApprovalRequest.oneLine(task.title, limit: 80) ?? loc("Sans titre"),
+                                  detail: task.base, state: ticking.contains(task.id) ? .busy : (late ? .failure : .neutral),
+                                  label: ticking.contains(task.id) ? loc("à cocher…") : pill(task, now: now, calendar: calendar),
+                                  section: section == heading ? nil : section,
+                                  action: task.url == nil ? nil : "open:\(task.id)",
+                                  check: canTick && !ticking.contains(task.id) ? "done:\(task.id)" : nil))
+            heading = section
+        }
+        return rows
+    }
 }
 
 /// Notion, as a module: the tasks of today and the late ones, from the databases the person
-/// shared with their integration and chose in the settings. Reads, never writes (the agent's
-/// `add_notion_task` adds a page, with the person's approval).
+/// shared with their integration and chose in the settings. Reads; it writes only through the
+/// agent runtime, with the person's approval each time: `add_notion_task` adds a page, and a
+/// task ticked in the island runs `complete_notion_task`.
 @MainActor
 final class NotionModule: YumiModule {
     let id = "notion"
@@ -62,6 +103,10 @@ final class NotionModule: YumiModule {
     private var lastLook: Date?
     /// Opens the settings, where Notion is set up. Given by the core.
     private let openSettings: @MainActor () -> Void
+    /// Ticks a task done through the agent runtime (its approval, its check). nil: no box to tick.
+    var complete: (@MainActor (NotionTask) async -> Void)?
+    /// The tasks being ticked, until Notion has been read again.
+    private var ticking: Set<String> = []
 
     init(api: NotionAPI, bases: @escaping () -> [NotionBase] = { NotionBases.load() },
          openSettings: @escaping @MainActor () -> Void = {}) {
@@ -69,6 +114,9 @@ final class NotionModule: YumiModule {
         self.bases = bases
         self.openSettings = openSettings
     }
+
+    /// A task of the list, for the approval of its completion.
+    func listed(page id: String) -> NotionTask? { tasks.first { $0.id == id } }
 
     var snapshot: ModuleSnapshot {
         let now = Date()
@@ -92,13 +140,7 @@ final class NotionModule: YumiModule {
         snapshot.title = tasks.isEmpty ? loc("Aucune tâche pour aujourd'hui") : (tasks.count == 1 ? loc("Une tâche à faire") : loc("\(tasks.count) tâches à faire"))
         snapshot.subtitle = late.isEmpty ? loc("Rien en retard.") : (late.count == 1 ? loc("Une en retard.") : loc("\(late.count) en retard."))
         snapshot.needsAttention = NotionBoard.dueNow(tasks, now: now) != nil
-        snapshot.rows = tasks.prefix(12).map { task in
-            let isLate = NotionBoard.isLate(task, now: now, calendar: .current)
-            let when = task.due.map { task.hasTime ? FrenchText.clock($0) : (isLate ? loc("en retard") : loc("aujourd'hui")) } ?? ""
-            return ModuleRow(id: task.id, title: ApprovalRequest.oneLine(task.title, limit: 80) ?? loc("Sans titre"),
-                             detail: task.base, state: isLate ? .failure : .neutral, label: when,
-                             date: task.due, action: task.url == nil ? nil : "open:\(task.id)")
-        }
+        snapshot.rows = NotionBoard.rows(tasks, now: now, calendar: .current, canTick: complete != nil, ticking: ticking)
         if let due = NotionBoard.dueNow(tasks, now: now) {
             snapshot.live = ModuleLive(text: "\(FrenchText.clock(due.due ?? now)) \(ApprovalRequest.oneLine(due.title, limit: 30) ?? "")",
                                        priority: ModuleLivePriority.attention - 10)
@@ -123,6 +165,7 @@ final class NotionModule: YumiModule {
         polling?.cancel()
         polling = nil
         tasks = []
+        NotionListedTasks.shared.set([])
         problem = nil
         for observer in [rowObserver, settingsObserver].compactMap({ $0 }) { NotificationCenter.default.removeObserver(observer) }
         rowObserver = nil
@@ -188,11 +231,26 @@ final class NotionModule: YumiModule {
         lastLook = Date()
         let ordered = NotionBoard.ordered(found)
         if ordered != tasks { tasks = ordered }
+        NotionListedTasks.shared.set(tasks)
         onChange?()
         return Self.interval
     }
 
+    private func tick(_ id: String) {
+        guard let complete, !ticking.contains(id), let task = tasks.first(where: { $0.id == id }) else { return }
+        ticking.insert(id)
+        onChange?()
+        Task { [weak self] in
+            await complete(task)
+            guard let self else { return }
+            _ = await self.look()
+            self.ticking.remove(id)
+            self.onChange?()
+        }
+    }
+
     private func open(_ row: String) {
+        if row.hasPrefix("done:") { return tick(String(row.dropFirst("done:".count))) }
         guard row.hasPrefix("open:"), let task = tasks.first(where: { "open:\($0.id)" == row }), let web = task.url else { return }
         if let app = NotionAPI.appLink(web), NSWorkspace.shared.urlForApplication(toOpen: app) != nil {
             NSWorkspace.shared.open(app)

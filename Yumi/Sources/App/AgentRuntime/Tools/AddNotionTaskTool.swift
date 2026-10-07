@@ -7,6 +7,8 @@ protocol NotionTaskStore: Sendable {
     func baseNames() -> [String]
     /// Why a task cannot be added to this base right now (no key, not shared…), or nil.
     func problem(base: String) async -> String?
+    /// The Notion id of a chosen database, by its name. nil when unknown.
+    func baseID(named name: String) -> String?
     /// Creates the page. Returns its id. Throws `ToolError` with the reason in words.
     func create(title: String, day: Date?, base: String) async throws -> String
     /// The title of the page, read back from Notion. nil when it cannot be found.
@@ -37,13 +39,14 @@ struct AddNotionTaskTool: Tool {
             outputKeys: ["id", "title", "reply"])
     }
 
-    /// The approval shows the task, the day and the database.
+    /// The approval shows the task, the day and the database. The resource is the database, as
+    /// an outside account: a write there is high, and a rule can name one database.
     func action(for arguments: ToolArguments) -> ToolAction? {
-        guard let title = title(arguments) else { return nil }
+        guard let title = title(arguments), let name = try? base(arguments), let id = store.baseID(named: name) else { return nil }
         var text = loc("la tâche « \(title) »")
         if let day = try? day(arguments, allowingPast: true) { text += ", " + loc("pour le \(NotionAPI.dayString(day, calendar))") }
-        text += ", " + loc("dans la base Notion \((try? base(arguments)) ?? "?")")
-        return ToolAction(kind: .create, resources: [ResourceRef(.unknown, text)], reversible: true)
+        text += ", " + loc("dans la base Notion \(name)")
+        return ToolAction(kind: .create, resources: [ResourceRef(.account, "notion:\(id)")], reversible: true, content: text)
     }
 
     func check(_ arguments: ToolArguments) async -> String? {
