@@ -6,13 +6,14 @@
 
 <p align="center">
   A small companion that lives in the notch of your Mac.<br>
-  He watches your agents, listens to your music with you, and tells you when to take a break.
+  He shows what your AI agents are doing, asks before anything changes on your Mac, and keeps you company the rest of the day.
 </p>
 
 <p align="center">
   <a href="https://github.com/estebanbaigts/Yumi/actions/workflows/build.yml"><img src="https://github.com/estebanbaigts/Yumi/actions/workflows/build.yml/badge.svg" alt="Build"></a>
   <img src="https://img.shields.io/badge/macOS-15%2B-black" alt="macOS 15 or later">
   <img src="https://img.shields.io/badge/Swift-6-orange" alt="Swift 6">
+  <img src="https://img.shields.io/badge/status-alpha-yellow" alt="Alpha">
   <img src="https://img.shields.io/badge/code-MIT-blue" alt="Code under MIT">
 </p>
 
@@ -28,88 +29,183 @@
   <img src="docs/demo.gif" alt="A Claude Code session asks to run npm test; the user approves it from the notch" width="420">
 </p>
 
-Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependency. The character is drawn in code, frame by frame.
+---
 
-> **Status: public alpha.** [Download the latest alpha](https://github.com/estebanbaigts/Yumi/releases) (macOS 15+). It is not notarized by Apple yet: the first time, open System Settings › Privacy & Security and click « Open Anyway ». The interface speaks French for now. Feedback is very welcome: it decides what comes next.
+## At a glance
+
+| | |
+|---|---|
+| **What** | A native macOS companion in the notch: Claude Code sessions live, approvals from the notch, small actions on request, your day at a glance. |
+| **Status** | Public alpha, **0.1.0-alpha.5**. Free and open source. |
+| **Requires** | macOS 15 or later. A Mac with a notch is recommended (see [Known limitations](#known-limitations)). |
+| **Languages** | English and French, following your Mac (Settings › General › Language). |
+| **Privacy** | No account, no telemetry, no server of ours. Nothing changes on your Mac without your click. |
+| **Built with** | Swift 6, SwiftUI and AppKit. No third-party dependency. About 28,700 lines of Swift and 820 unit tests. The character is drawn in code. |
+
+## Install
+
+1. Download `Yumi-<version>.zip` from the [latest release](https://github.com/estebanbaigts/Yumi/releases).
+2. Unzip it and drag **Yumi.app** into **Applications**.
+3. Open it. The alpha is **not notarized by Apple yet**, so the first time macOS blocks it: open **System Settings › Privacy & Security** and click **Open Anyway**.
+4. Yumi appears in the notch. Right-click him for the settings.
+
+Optional: in **Settings › Claude Code**, install the hooks so Yumi can follow your sessions. Yumi offers it himself when Claude Code is installed.
+
+**Check the download.** Every release is built by GitHub Actions from the public code, not on a personal machine. The release page lists `SHA256SUMS.txt` and a build provenance attestation:
+
+```bash
+shasum -a 256 Yumi-0.1.0-alpha.5.zip
+```
+
+```bash
+gh attestation verify Yumi-0.1.0-alpha.5.zip --repo estebanbaigts/Yumi
+```
+
+Yumi tells you when a new version is out, at most once a day. He never downloads or installs anything by himself.
 
 ## What he does
 
-**He follows Claude Code.** Every session, in every terminal and editor, shows up in the notch with what it is working on: your request, the task of Claude's todo list and its progress (3/7), the action in progress ("Edits IslandModel.swift", "Runs swift test"), the last files and commands, and when a turn ends a short summary of what was done. Click a session to unfold it. All of this is read from the hooks and, for Claude's last message, from the session's transcript on your Mac; none of it is sent to Yumi's engine or anywhere else, and keys or tokens in commands are masked. When Claude Code asks for a permission, the island opens and you answer from there, without switching windows. If you do not answer, the question goes back to Claude Code as usual.
+### He follows Claude Code
 
-**He shows one thing at a time.** Folded, the island shows what matters now: the track playing, the session at work, the next meeting. Open, a rail of icons lets you move between the modules.
+Every session, in every terminal and editor, appears in the notch with **what it is working on**: your request, the current task of Claude's todo list and its progress (« 3/7 »), the action in progress (« Edits IslandModel.swift », « Runs swift test »), the last files and commands, and a short summary when a turn ends. Click a session to unfold it, or to open its terminal.
+
+When Claude Code asks for a permission, the island opens and you answer **Allow**, **Always** or **Deny** without leaving what you are doing. If you do not answer, the question goes back to Claude Code as usual.
+
+All of this comes from Claude Code's hooks and, for Claude's last message, from the session transcript on your Mac. None of it is sent anywhere. Keys and tokens that appear in commands are masked.
+
+### You ask, he acts, after your click
+
+In the chat you talk to the engine of your choice (see [Engines](#engines)). When you ask for an action, Yumi's own agent prepares a plan, **shows you exactly what will change** (the file and its content, the reminder, the event), waits for your click, does it, then **checks it is really done**. Today he can:
+
+| Action | Example | Asks first |
+|---|---|---|
+| Create a text file (Downloads, or Desktop, or Documents if you say so; never replaces a file) | « Create todo.md with two tasks » | Yes |
+| Add a line at the end of a file he created | « Add "buy bread" to my todo » | Yes |
+| Add a reminder | « Remind me to call the dentist tomorrow at 10 » | Yes |
+| Add an event to your own calendar, never with guests | « Block Thursday 2 pm, client meeting » | Yes |
+| Add a task to Notion | « Add "call Paul" to my Notion tasks » | Yes |
+| Start a Focus session | « I'm working for 45 minutes » | No, nothing leaves the Mac |
+| Sum up a day and your free time, up to two weeks ahead | « How much free time do I have tomorrow? » | No, read only |
+
+He **never** deletes, moves, sends a message or an email, runs a command, or edits a file he did not create. A request he cannot do is refused, and he says why.
+
+### He keeps you company
+
+- **One thing at a time.** Folded, the island shows what matters now: the music playing, the session at work, the next meeting. Open, a rail of icons lets you move between modules.
+- **He remembers** what you tell him, in a plain text file on your Mac that you can read, edit or erase. He leaves secrets out.
+- **He speaks first**, sometimes: two hours without a break, a meeting coming, an agent waiting. A setting makes him more or less discreet.
+- **He is alive**: a soft body, eyes that follow the pointer, a rim of light that shows his state, small habits (coffee, matcha) while an agent works, and a little scene for GitHub events.
 
 <p align="center">
   <img src="docs/musique.png" alt="The music module in the island" width="720">
 </p>
 
-**You talk, he acts.** The chat runs through the Claude Code already installed on your Mac: in the chat it talks, reads and searches, and changes nothing. When you ask for an action, Yumi's own agent plans it, asks you before anything changes (showing the exact file and what it will hold, the reminder or the event, with a minute to answer once the question is on screen), does it and checks that it is really there. Today he can:
+## Modules
 
-- create a new text file, in Downloads unless you name the Desktop or Documents (never replacing a file);
-- add a line at the end of a file he created himself;
-- add a reminder to your default Reminders list;
-- add an event to your default calendar, without inviting anyone;
-- start a Focus session (no question asked: nothing leaves the Mac);
-- sum up your day from what his modules already show (no question asked).
+You choose which modules appear and in which order: drag and drop in **Settings › Modules**, or right in the island with **Edit**.
 
-He never deletes, sends, runs a command or edits a file he did not create. A request he cannot do is refused and passed to nobody. If a step that writes takes too long, he does not try it a second time and tells you to check.
-
-### Which model Yumi thinks with
-
-The engine chats with you and proposes the plans. Whichever it is, every plan is checked by Yumi (known tools only, valid arguments, risk set by Yumi's code), every change asks you first, and the result is verified. In the chat, no engine has a tool that changes your Mac. What goes with your messages is said under « Privacy ».
-
-By default (« Automatique ») Yumi takes the first one ready, in this order; the settings, section Moteurs, let you pick one, change the order, enter keys and models, and test each engine.
-
-| Engine | What you need | What leaves your Mac, and who bills it |
+| Module | What it shows | What it needs |
 |---|---|---|
-| **Claude Code** | Installed and logged in (`claude`, then `/login`). Used without any tool, shell, file, web, MCP server, settings or hooks. | Your messages and plan requests go to Anthropic through your Claude Code account (your subscription or that account's billing). Not free. |
-| **Anthropic API** | A key in the settings. | Your messages and plan requests go to Anthropic. Billed by Anthropic per use. |
-| **OpenAI API** | A key in the settings (default model `gpt-4o-mini`, editable). | Your messages and plan requests go to OpenAI. Billed by OpenAI per use. |
-| **Google Gemini API** | A key in the settings (default model `gemini-2.5-flash`, editable). | Your messages and plan requests go to Google. Its free tier is enough to try; beyond it, billed by Google. |
-| **Ollama** | [Ollama](https://ollama.com) running on your Mac, with a model installed (chosen in the settings). | Nothing leaves your Mac. Free. |
-
-Keys are stored in the macOS Keychain, never in a log or the permission history. Yumi does not use other command-line agents (Codex, Gemini CLI): it cannot prove they run without tools. With no engine ready, Yumi says so and does nothing. The App Store build cannot use Claude Code.
-
-<p align="center">
-  <img src="docs/parler.png" alt="The chat in the island" width="720">
-</p>
-
-**He remembers, and speaks first.** Yumi keeps what you tell him in a plain text file on your Mac, that you can read, edit and erase from the settings. He leaves secrets out of it. He also speaks up on his own on a few occasions (two hours without a break, a meeting coming, an agent waiting), and a setting makes him more or less discreet.
-
-**He is alive.** A soft body, eyes that follow, a rim of light that carries his state, habits when he is bored, and a small scene for each GitHub event: a star, a fork, a merged pull request.
+| **Claude Code** | Every session, live: request, task progress, current action, approvals | Yumi's hooks (offered in the island) and `python3` |
+| **GitHub** | Activity on all your repositories, grouped by repository: pushes with their exact commits, commits today and this week, pull requests and their checks, stars, forks, releases | A read-only personal access token |
+| **Notion** | How many tasks are due today and how many are late, from the databases you choose | An internal integration key, and the databases shared with it |
+| **Agenda** | Your next event of the day | Calendar access |
+| **Notes** | Today's reminders, ticked from the notch | Reminders access |
+| **Focus** | A work timer and its breaks | Nothing |
+| **Music** | The track playing, pause, next, previous | Automation, for Music or Spotify |
+| **Weather** | The sky where you are | Location, or a city typed by hand |
 
 ## Getting around
 
-- **Right-click Yumi** (or the island): Settings, Send feedback, Quit. On small screens the notch can hide menu bar icons, so you never need the menu bar icon.
-- **Triple Shift** opens or folds the island (Settings, General; needs the Accessibility permission outside the island).
-- **Click outside** the open island to fold it, unless an approval is waiting or the chat has unsent text.
-- **Arrange your modules**: drag and drop them in Settings, Modules, or right in the island with « Modifier » (Edit). Hide the ones you do not use.
-- **Send feedback** from the right-click menu: a short form, no account needed. GitHub issues work too.
+| | |
+|---|---|
+| **Right-click Yumi** or the island | Settings, Send feedback, Quit |
+| **⌘,** / **⌘Q** | Settings / Quit, when the island is active |
+| **Triple Shift** | Opens or folds the island (needs Accessibility outside the island) |
+| **Click outside** | Folds the open island, unless an approval is waiting or the chat has unsent text |
+| **Drag a file or a window onto Yumi** | Ask about it in the chat |
 
-## What's new in 0.1.0-alpha.5
+## Engines
 
-- What each Claude Code session is doing, live: your request, its task list (« 3/7 »), the current action, the last actions, a summary at the end.
-- GitHub across all your repositories, with the exact commits of each push and commits today and this week.
-- Notion: today's tasks in the notch, and tasks added with your approval.
-- Modules you arrange yourself, the right-click menu, triple Shift, click outside to fold, feedback without an account.
+The engine talks with you in the chat and proposes plans for actions. Whichever you use, **every plan is checked by Yumi** (known tools only, valid arguments, risk set by Yumi's code, not by the model), **every change asks you first**, and **the result is verified**. In the chat, no engine has a tool that changes your Mac.
 
-## Modules
+**Automatic** takes the first engine that is ready, in this order. **Settings › Engines** lets you pick one, change the order, enter keys and models, and test each one.
 
-| Module | What it shows | What it needs |
-| --- | --- | --- |
-| Claude Code | Sessions, activity, permission requests | Yumi's hooks, installed from the settings |
-| Agenda | The next event of the day | Calendar access |
-| Notes | Today's reminders, ticked from the notch | Reminders access |
-| Focus | A work timer and its breaks | Nothing |
-| Music | The track playing, pause, next, previous | Automation, for Music or Spotify |
-| Weather | The sky where you are | Location, or a city typed by hand |
-| GitHub | What happens on all your repositories (yours, shared, your organisations'), grouped by repository: pushes with their exact commits, commits today and this week, pull requests with their checks, stars, forks, releases; a click opens the commit. About once a minute, at GitHub's pace | A read-only personal access token |
-| Notion | Today's unfinished tasks and the late ones, from the databases you choose; a click opens the page | An internal integration key, and the databases shared with it |
+| Engine | What you need | What leaves your Mac, and who bills it |
+|---|---|---|
+| **Claude Code** | Installed and logged in. Yumi runs it with no tool, shell, file, web, MCP server, settings or hooks. | Your messages go to Anthropic through your Claude Code account. Counted in your plan. |
+| **Anthropic API** | A key | Your messages go to Anthropic. Billed per use. |
+| **OpenAI API** | A key (default model `gpt-4o-mini`) | Your messages go to OpenAI. Billed per use. |
+| **Google Gemini API** | A key (default model `gemini-2.5-flash`) | Your messages go to Google. Free tier to try, then billed. |
+| **Ollama** | Ollama running on your Mac, with a model | Nothing leaves your Mac. Free. |
 
-You choose which modules appear and in which order.
+Keys are stored in the macOS Keychain. Yumi does not use other command-line agents (Codex, Gemini CLI): it cannot prove they run without tools.
 
-## Build
+## How the safety model works
 
-You need macOS 15 or later, Xcode 16 or later, [XcodeGen](https://github.com/yonaskolb/XcodeGen), and, for the hook script that shows Claude Code sessions in the notch, a `python3`: Homebrew's, python.org's, or Apple's once the Command Line Tools are installed (`xcode-select --install`). Without one, Claude Code works as usual and only the sessions are missing; the settings say so. The chat also needs [Claude Code](https://claude.com/claude-code) installed.
+```
+Your request → engine proposes a plan → Yumi validates it → Permission gate → tool runs → Yumi verifies → result
+```
+
+- **The model only proposes.** A plan is accepted only if every step uses a known tool with valid arguments.
+- **The risk comes from the code.** Each tool describes what it really does (read, create, modify); the risk level is computed from that, with fixed floors. The model cannot lower it.
+- **One gate.** Every step goes through a single permission manager: allowed (safe and local), asked, or refused (secrets, system folders, payments, `sudo`).
+- **Approvals are precise and short-lived.** A request shows exactly what will change, expires after a minute on screen, and answers once.
+- **Verification is a step.** If the file, reminder or event is not really there afterwards, the run fails and says so.
+- **A history** of every decision stays on your Mac (Settings › Permissions): which tool, which file or site, what was decided. Never the content.
+
+## Privacy
+
+- No telemetry, no account, no server of ours.
+- The memory never leaves your Mac. Calendar, reminders and Notion tasks are read on your Mac; the engine only receives Yumi's own one or two sentences about your day, which then stay in the conversation.
+- When you open the chat, **the name of the app in front, its window title and the site's domain** are attached to your first message and shown in the notch (« With … »). **One click removes them.** The content of your screen is never sent. Only an explicit gesture (« Summarize », a window dragged onto Yumi, a dropped file) sends the full address or the file.
+- A plan request sends your words, the last few messages, today's date and time, the list of Yumi's tools and the names of the files he created.
+- Network calls go only to the services behind the modules you turned on (Open-Meteo, api.github.com, api.notion.com) and to the engine you use. GitHub is read-only; Notion reads only the databases you tick.
+- **« Always »** on a Claude Code permission writes a permanent rule in your Claude Code settings. Remove it with `/permissions` in Claude Code.
+- Tokens and keys are stored in the macOS Keychain, never on disk and never in git.
+
+### Permissions
+
+Yumi works without any of these. Each one unlocks a feature and is asked for when you first use it.
+
+| Permission | What it is for |
+|---|---|
+| Calendar | Your next event, the events you ask for |
+| Reminders | Today's reminders, the ones you ask for |
+| Location | The weather where you are |
+| Automation | Pause and next track, the address of the page you show him |
+| Accessibility | The window you show him, the Escape key, triple Shift |
+| Downloads, Desktop, Documents | The files you ask him to create, and add to |
+| Login item | Launching at startup, if you turn it on |
+
+## Known limitations
+
+This is an alpha. Here is what we know is missing or rough today.
+
+- **Not notarized by Apple.** The first launch needs « Open Anyway ». Notarization needs a paid Apple Developer account, not set up yet. Builds are signed with a local certificate so that macOS keeps your permissions across updates.
+- **Macs without a notch** are not tested yet. The island falls back to a fixed size at the top of the screen.
+- **Read then act is not there yet.** The agent can read (your day) or act (create, add), but not read and then act on what it read in one request, like « prepare my day ».
+- **Notion** shows counts in the island, not the list of tasks yet.
+- **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
+- **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
+- **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
+- **The App Store build** is not shipped and cannot use Claude Code or the hooks.
+- **Windows and Linux**: not planned for now. If you want them, [say so](https://tally.so/r/Me9lvA).
+
+## Roadmap
+
+- **Read then act**: « prepare my day », with a preview of the whole plan before the first question.
+- **External modules**: described in a file instead of written in the code, always behind the same permission gate.
+- **Notion task list** in the island, foldable GitHub commits.
+- **Notarized releases**, once the Apple Developer account exists.
+- **Macs without a notch**, tested and polished.
+- More connected modules from your feedback.
+
+What comes next depends on feedback: [tell us](https://tally.so/r/Me9lvA) what is missing.
+
+## Build from source
+
+You need macOS 15 or later, a recent Xcode (Xcode 26 or later), [XcodeGen](https://github.com/yonaskolb/XcodeGen), and `python3` for the hook script (Homebrew's, python.org's, or Apple's after `xcode-select --install`).
 
 ```bash
 brew install xcodegen
@@ -123,89 +219,33 @@ git clone https://github.com/estebanbaigts/Yumi.git
 cd Yumi/Yumi && xcodegen && open Yumi.xcodeproj
 ```
 
-Then press ⌘R in Xcode. From the command line:
+Then ⌘R in Xcode. The Xcode project and the `Info.plist` files are generated from [Yumi/project.yml](Yumi/project.yml) and are not in git.
 
-```bash
-cd Yumi && xcodegen && xcodebuild -scheme Yumi -configuration Debug build
-```
-
-The Xcode project and the `Info.plist` files are generated from [Yumi/project.yml](Yumi/project.yml) and are not in git: change `project.yml` and run `xcodegen` again.
-
-The Debug build is not signed, so macOS asks again for the permissions after each rebuild.
-
-### Tests
+Tests run without launching the app:
 
 ```bash
 cd Yumi && xcodegen && xcodebuild -scheme Yumi -configuration Debug test CODE_SIGNING_ALLOWED=NO
 ```
 
-The tests run without launching the app. Continuous integration runs the build and the tests on every push.
-
-## Set up Claude Code
-
-Open Yumi's settings and choose to install the hooks. Yumi shows the exact change before writing anything, saves a dated backup of `~/.claude/settings.json`, and merges its entries with yours. The same screen removes them.
-
-The hook is a small script that forwards each event to the app over a local Unix socket. If Yumi is not running, the script exits at once and Claude Code carries on. Installing Yumi's hooks removes those of Coucou or NotchBuddy if they are present: Yumi replaces them.
-
-## Permissions
-
-Yumi works without any of these. Each one unlocks a feature, and is asked for when you first use it.
-
-| Permission | What it is for |
-| --- | --- |
-| Calendar | Announcing your next event, adding the events you ask for |
-| Reminders | Showing today's reminders, ticking them, adding the ones you ask for |
-| Location | The weather where you are, to the nearest kilometre |
-| Automation | Pause and next track, the address of the page you show him |
-| Accessibility | The title of the window you show him, the Escape key, the global shortcut |
-| Downloads, Desktop, Documents | Creating the files you ask for, and adding to them |
-| Login item | Launching Yumi at startup, if you turn it on |
-
-## Privacy
-
-- No telemetry, no account, no server of ours.
-- The memory never leaves your Mac. The calendar, the reminders and your Notion tasks are read on your Mac (Notion from its API, with your key); the engine only gets Yumi's own answer about your day (one or two sentences), which then stays in the conversation like any message.
-- Notion: only the databases you tick in the settings are read. Yumi adds a task only through the agent, with your approval each time, and never changes or deletes a page.
-- GitHub is only asked at api.github.com, read-only, with conditional requests: repositories you hide in the settings are not read.
-- Network calls go only to the services behind the modules you turned on (Open-Meteo for the weather, GitHub and Notion with your own keys) and to the engine you use (see « Which model Yumi thinks with »).
-- The chat goes through that engine: your own Claude Code under your account, the API whose key you saved, or Ollama on your Mac.
-- When you open the chat, the name of the app in front, its window title and the site's domain are attached to your first message, and shown in the notch (« With … »); one click removes them, another attaches them again. The content of your screen is never sent. Only an explicit gesture (« Summarize », a window dragged onto Yumi, a dropped file) sends the full address of the page, or the file.
-- A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. The window in front goes to the planner only from the Agent section of the settings, when you tick it for that request.
-- « Always » on a Claude Code permission in the notch writes a permanent rule in your Claude Code settings (Claude Code's `updatedPermissions`). You remove it from Claude Code's settings (`/permissions` in Claude Code).
-- Tokens are stored in the macOS Keychain, never on disk and never in git.
-- Yumi never approves a Claude Code permission without an explicit click.
-- Every permission decision, Yumi's own and those of the chat, is kept in one history on your Mac (Settings, Yumi's permissions): which tool, which file or site, what was decided. Never the content, the search or the full address.
+Continuous integration builds and tests every push. Pushing a tag `v<version>` builds, signs, zips and attests a release draft ([.github/workflows/release.yml](.github/workflows/release.yml)).
 
 ## Repository
 
 ```
-Yumi/                    the app
-├── project.yml          XcodeGen project, source of truth for the build
-├── Sources/App/         all Swift code
-├── Tests/               unit tests (Swift Testing)
-└── Resources/           entitlements, sounds
-design/yumi/             character sheet, voice, mockups, video plan
-motion/                  the presentation film, made with Remotion
-scripts/release.sh       signed and notarized build
+Yumi/                  the app (Sources/App, Tests, Resources, project.yml)
+release/               the install guides shipped in the zip
+design/yumi/           character sheet, voice (French and English), mockups, video plan
+motion/                the presentation films, made with Remotion
+site/                  the website
+docs/                  images, post-alpha status, backlog
 ```
 
-- [YUMI.md](YUMI.md): decisions, character design brief, work plan (in French).
-- [design/yumi/voix.md](design/yumi/voix.md): how Yumi speaks, what he remembers, when he speaks first (in French).
-- [ARCHITECTURE.md](ARCHITECTURE.md): analysis of the original code base, system by system.
+- [YUMI.md](YUMI.md): decisions and work plan (in French).
+- [docs/POST_ALPHA_STATUS.md](docs/POST_ALPHA_STATUS.md): an honest audit of where Yumi stands.
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to build, test and propose a change.
-- [motion/README.md](motion/README.md): the film, the stories and how to render them.
-
-## Roadmap
-
-- A signed and notarized release. [scripts/release.sh](scripts/release.sh) is ready, it needs an Apple Developer team.
-- Connected modules: n8n, Make.
-- Read then act: « prepare my day », with a preview of the plan.
-- External modules, described in a file instead of written in the code.
-- Macs without a notch.
-- App Store, then Windows and Linux.
 
 ## Credits and license
 
-Yumi is built on the source code of [Coucou](https://github.com/Louis-CFM/coucou) by Louis Raillé, used under the MIT License. Yumi is an independent project, not affiliated with or endorsed by the author of Coucou. [ATTRIBUTION.md](ATTRIBUTION.md) lists what comes from Coucou and what does not.
+Yumi started from the source code of [Coucou](https://github.com/Louis-CFM/coucou) by Louis Raillé, used under the MIT License; about 6 % of today's Swift code is unchanged from it. Yumi is an independent project, not affiliated with or endorsed by the author of Coucou. [ATTRIBUTION.md](ATTRIBUTION.md) lists what comes from Coucou and what does not.
 
-The code is under the [MIT License](LICENSE). The Yumi name, the character, the icons, the sounds and the film in `motion/` are not: see [LICENSE-ASSETS.md](LICENSE-ASSETS.md) and [motion/LICENSE.md](motion/LICENSE.md).
+The code is under the [MIT License](LICENSE). The Yumi name, the character, the icons, the sounds and the films in `motion/` are not: see [LICENSE-ASSETS.md](LICENSE-ASSETS.md) and [motion/LICENSE.md](motion/LICENSE.md).
