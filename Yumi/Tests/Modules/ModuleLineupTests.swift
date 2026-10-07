@@ -95,4 +95,15 @@ private final class Plain: YumiModule {
         #expect(lineup.selected.map(\.id).last == "github")
         #expect(lineup.hidden.map(\.id) == ["claude-code", "notes", "focus", "music"])
     }
+
+    @Test func notionJoinsTheLineupLikeAnyOtherModule() {
+        let ids = ["claude-code", "agenda", "notes", "focus", "music", "weather", "github", "notion"]
+        let (registry, lineup, _) = setUp(ids, stored: ["github", "music"], known: Array(ids.dropLast()))
+        #expect(lineup.selected.map(\.id) == ["github", "music", "notion"])
+        lineup.move("notion", to: 0)
+        #expect(lineup.place(of: "notion") == .island)
+        lineup.setShown("notion", false)
+        #expect(lineup.hidden.map(\.id).contains("notion"))
+        withExtendedLifetime(registry) {}
+    }
 }

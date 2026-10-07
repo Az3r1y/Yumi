@@ -65,6 +65,8 @@ final class KeychainStore: @unchecked Sendable {
         "openai-api-key",
         "gemini-api-key",
         "github-token",
+        // Not "notion-api-key": that name was Coucou's, erased once at launch.
+        "notion-integration-key",
     ]
 
     /// Keys of the integrations inherited from Coucou, removed from Yumi: erased once.

@@ -88,6 +88,7 @@ Keys are stored in the macOS Keychain, never in a log or the permission history.
 | Music | The track playing, pause, next, previous | Automation, for Music or Spotify |
 | Weather | The sky where you are | Location, or a city typed by hand |
 | GitHub | Stars, forks, pull requests, pushes on your repositories | A personal access token |
+| Notion | Today's unfinished tasks and the late ones, from the databases you choose; a click opens the page | An internal integration key, and the databases shared with it |
 
 You choose which modules appear and in which order.
 
@@ -148,8 +149,9 @@ Yumi works without any of these. Each one unlocks a feature, and is asked for wh
 ## Privacy
 
 - No telemetry, no account, no server of ours.
-- The calendar, the reminders and the memory never leave your Mac.
-- Network calls go only to the services behind the modules you turned on (Open-Meteo for the weather, GitHub with your own token) and to the engine you use (see « Which model Yumi thinks with »).
+- The memory never leaves your Mac. The calendar, the reminders and your Notion tasks are read on your Mac (Notion from its API, with your key); the engine only gets Yumi's own answer about your day (one or two sentences), which then stays in the conversation like any message.
+- Notion: only the databases you tick in the settings are read. Yumi adds a task only through the agent, with your approval each time, and never changes or deletes a page.
+- Network calls go only to the services behind the modules you turned on (Open-Meteo for the weather, GitHub and Notion with your own keys) and to the engine you use (see « Which model Yumi thinks with »).
 - The chat goes through that engine: your own Claude Code under your account, the API whose key you saved, or Ollama on your Mac.
 - When you open the chat, the name of the app in front, its window title and the site's domain are attached to your first message, and shown in the notch (« With … »); one click removes them, another attaches them again. The content of your screen is never sent. Only an explicit gesture (« Summarize », a window dragged onto Yumi, a dropped file) sends the full address of the page, or the file.
 - A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. The window in front goes to the planner only from the Agent section of the settings, when you tick it for that request.

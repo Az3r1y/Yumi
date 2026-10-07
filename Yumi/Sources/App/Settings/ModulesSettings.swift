@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Modules: which ones Yumi shows and in what order, GitHub, and the pills shown in the island.
+/// Modules: which ones Yumi shows and in what order, then the settings of GitHub and Notion.
 /// Keys go to the Keychain, under the same names as before.
 struct ModulesSettings: View {
     @ObservedObject private var state = AppState.shared
@@ -8,8 +8,11 @@ struct ModulesSettings: View {
     @State private var githubConnected = IslandActions.githubConnected
 
     var body: some View {
+        ScrollViewReader { scroller in
         Form {
-            ModuleOrderSections()
+            ModuleOrderSections { id in
+                withAnimation { scroller.scrollTo("module-settings-\(id)", anchor: .top) }
+            }
 
             Section {
                 LabeledContent("État") {
@@ -38,6 +41,11 @@ struct ModulesSettings: View {
             } footer: {
                 SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
             }
+            .id("module-settings-github")
+
+            NotionSettingsSection()
+                .id("module-settings-notion")
+        }
         }
     }
 
@@ -54,6 +62,10 @@ struct ModulesSettings: View {
 /// hidden with their switch. The same list as the island's edit mode (ModuleLineup).
 private struct ModuleOrderSections: View {
     @ObservedObject private var lineup = ModuleLineup.shared
+    /// Shows the settings of a module further down the page.
+    var showSettings: (String) -> Void = { _ in }
+    /// The modules that have their own settings on this page.
+    static let withSettings: Set<String> = ["github", "notion"]
 
     var body: some View {
         let shown = lineup.selected
@@ -82,6 +94,11 @@ private struct ModuleOrderSections: View {
                         ModuleIcon(entry: entry)
                         Text(entry.snapshot.name).foregroundStyle(.secondary)
                         Spacer()
+                        if Self.withSettings.contains(entry.id) {
+                            Button { showSettings(entry.id) } label: { Image(systemName: "gearshape") }
+                                .buttonStyle(.borderless)
+                                .help(loc("Réglages de \(entry.snapshot.name)"))
+                        }
                         Toggle("", isOn: Binding(get: { false }, set: { if $0 { lineup.setShown(entry.id, true) } }))
                             .labelsHidden()
                             .toggleStyle(.switch)
@@ -101,6 +118,11 @@ private struct ModuleOrderSections: View {
             ModuleIcon(entry: entry)
             Text(entry.snapshot.name)
             Spacer()
+            if Self.withSettings.contains(entry.id) {
+                Button { showSettings(entry.id) } label: { Image(systemName: "gearshape") }
+                    .buttonStyle(.borderless)
+                    .help(loc("Réglages de \(entry.snapshot.name)"))
+            }
             Text(place == .island ? loc("Dans l'île") : loc("Second carré"))
                 .font(.caption)
                 .foregroundStyle(place == .island ? Color.accentColor : .secondary)

@@ -807,6 +807,16 @@
         }
       }
     },
+    "%@ tâches Notion, dont %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Notion tasks, including %@"
+          }
+        }
+      }
+    },
     "%@ vient d'étoiler %@. Je l'ai attrapée au vol.": {
       "localizations": {
         "en": {
@@ -1033,12 +1043,32 @@
         }
       }
     },
+    "%lld en retard.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld late."
+          }
+        }
+      }
+    },
     "%lld min": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld tâches à faire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld tasks to do"
           }
         }
       }
@@ -1597,12 +1627,42 @@
         }
       }
     },
+    "Aucune": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "Aucune base partagée avec l'intégration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No database shared with the integration"
+          }
+        }
+      }
+    },
     "Aucune décision.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "No decisions."
+          }
+        }
+      }
+    },
+    "Aucune tâche pour aujourd'hui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No task for today"
           }
         }
       }
@@ -1753,6 +1813,16 @@
         }
       }
     },
+    "Branche Notion dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Notion in the settings"
+          }
+        }
+      }
+    },
     "Brancher": {
       "localizations": {
         "en": {
@@ -1789,6 +1859,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancelled, I didn't do anything."
+          }
+        }
+      }
+    },
+    "C'est dans Notion, dans %@ : %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's in Notion, in %@: %@."
           }
         }
       }
@@ -2503,6 +2583,26 @@
         }
       }
     },
+    "Clé d'intégration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integration key"
+          }
+        }
+      }
+    },
+    "Clé enregistrée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key saved"
+          }
+        }
+      }
+    },
     "Clé enregistrée.": {
       "localizations": {
         "en": {
@@ -2629,6 +2729,16 @@
         }
       }
     },
+    "Crée une intégration interne sur notion.so/my-integrations, colle sa clé ici, puis dans chaque base à suivre ouvre « … », « Connexions » et ajoute l'intégration. Je ne lis que les bases cochées ici, et je n'y ajoute une tâche qu'avec ton accord.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create an internal integration at notion.so/my-integrations, paste its key here, then in each database to follow open “…”, “Connections” and add the integration. I only read the databases ticked here, and only add a task with your approval."
+          }
+        }
+      }
+    },
     "Current context": {
       "localizations": {
         "en": {
@@ -2687,6 +2797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "In ~/.claude/settings.json, \"%@\" isn't in the expected shape. I didn't touch it."
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
           }
         }
       }
@@ -2975,6 +3095,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Send feedback"
+          }
+        }
+      }
+    },
+    "Erreur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error"
           }
         }
       }
@@ -4625,6 +4755,66 @@
         }
       }
     },
+    "Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion"
+          }
+        }
+      }
+    },
+    "Notion a répondu par une erreur (%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion answered with an error (%lld)"
+          }
+        }
+      }
+    },
+    "Notion demande d'attendre %lld secondes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion asks to wait %lld seconds"
+          }
+        }
+      }
+    },
+    "Notion ne répond pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion is not answering"
+          }
+        }
+      }
+    },
+    "Notion ne répond pas comme prévu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion is not answering as expected"
+          }
+        }
+      }
+    },
+    "Notion refuse la clé, vérifie-la dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion refuses the key, check it in the settings"
+          }
+        }
+      }
+    },
     "Nouvelle note": {
       "localizations": {
         "en": {
@@ -5461,12 +5651,32 @@
         }
       }
     },
+    "Retirer la clé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove the key"
+          }
+        }
+      }
+    },
     "Retirer le jeton": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Remove the token"
+          }
+        }
+      }
+    },
+    "Rien": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing"
           }
         }
       }
@@ -5497,6 +5707,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing running"
+          }
+        }
+      }
+    },
+    "Rien en retard.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing late."
           }
         }
       }
@@ -5733,6 +5953,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No answer, so I didn't do anything."
+          }
+        }
+      }
+    },
+    "Sans titre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Untitled"
           }
         }
       }
@@ -6499,6 +6729,26 @@
         }
       }
     },
+    "Une clé d'intégration et les bases à suivre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An integration key and the databases to follow."
+          }
+        }
+      }
+    },
+    "Une en retard.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One late."
+          }
+        }
+      }
+    },
     "Une heure": {
       "localizations": {
         "en": {
@@ -6619,6 +6869,16 @@
         }
       }
     },
+    "Une tâche à faire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One task to do"
+          }
+        }
+      }
+    },
     "Une version de %@": {
       "localizations": {
         "en": {
@@ -6707,6 +6967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Go get some air, I'll mind the house."
+          }
+        }
+      }
+    },
+    "Valeur « terminé »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Done” value"
           }
         }
       }
@@ -7025,12 +7295,32 @@
         }
       }
     },
+    "aucune base Notion n'est choisie dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no Notion database is chosen in the settings"
+          }
+        }
+      }
+    },
     "aucune durée à vérifier": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "no duration to check"
+          }
+        }
+      }
+    },
+    "aucune page à vérifier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no page to check"
           }
         }
       }
@@ -7051,6 +7341,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "blocked"
+          }
+        }
+      }
+    },
+    "c'est un jour déjà passé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "that day is already past"
           }
         }
       }
@@ -7081,6 +7381,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "this tool, this session"
+          }
+        }
+      }
+    },
+    "cette base n'est pas partagée avec ton intégration Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "this database is not shared with your Notion integration"
           }
         }
       }
@@ -7131,6 +7441,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "MMM d, HH:mm"
+          }
+        }
+      }
+    },
+    "dans la base Notion %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in the Notion database %@"
           }
         }
       }
@@ -7215,6 +7535,16 @@
         }
       }
     },
+    "dis-moi dans quelle base : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tell me which database: %@"
+          }
+        }
+      }
+    },
     "du brouillard": {
       "localizations": {
         "en": {
@@ -7267,6 +7597,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "in error"
+          }
+        }
+      }
+    },
+    "en retard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "late"
           }
         }
       }
@@ -7463,6 +7803,16 @@
         }
       }
     },
+    "il n'y a pas de clé Notion dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "there is no Notion key in the settings"
+          }
+        }
+      }
+    },
     "je n'ai pas accès %@, autorise Yumi dans Réglages Système, Confidentialité et sécurité": {
       "localizations": {
         "en": {
@@ -7489,6 +7839,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "I only add to files I created myself, and %@ isn't one of them"
+          }
+        }
+      }
+    },
+    "je ne connais pas cette base Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't know this Notion database"
+          }
+        }
+      }
+    },
+    "je ne connais pas la base « %@ » ; les bases choisies : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't know the database “%@”; the chosen ones: %@"
           }
         }
       }
@@ -7695,6 +8065,26 @@
         }
       }
     },
+    "la page enregistrée s'appelle « %@ », pas « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the saved page is called “%@”, not “%@”"
+          }
+        }
+      }
+    },
+    "la page « %@ » n'est pas dans Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the page “%@” is not in Notion"
+          }
+        }
+      }
+    },
     "la réponse est une liste": {
       "localizations": {
         "en": {
@@ -7721,6 +8111,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "the answer is more than two sentences"
+          }
+        }
+      }
+    },
+    "la tâche « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the task “%@”"
           }
         }
       }
@@ -8127,6 +8527,16 @@
         }
       }
     },
+    "ntn_…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ntn_…"
+          }
+        }
+      }
+    },
     "oui": {
       "localizations": {
         "en": {
@@ -8183,6 +8593,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "no more free time %@"
+          }
+        }
+      }
+    },
+    "pour le %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "for %@"
           }
         }
       }
@@ -8555,6 +8975,16 @@
         }
       }
     },
+    "une tâche Notion : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "one Notion task: %@"
+          }
+        }
+      }
+    },
     "une étape facultative a été laissée": {
       "localizations": {
         "en": {
@@ -8681,6 +9111,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "\"When it matters\": a few times a day at most. \"Gladly\": also to say hello."
+          }
+        }
+      }
+    },
+    "À brancher": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To connect"
           }
         }
       }

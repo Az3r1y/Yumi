@@ -526,3 +526,16 @@ Chemins où un contexte de fenêtre ou de fichier part vers un moteur, vérifié
 4. Agent depuis le chat : le snapshot du Context Engine accompagne la demande mais n'est jamais transmis au planificateur (`sharesContextWithModel` à false) ; seul le panneau Agent des réglages peut le transmettre, sur case cochée.
 5. Mémoire : ce que la personne a fait noter, envoyé au moteur du chat ; jamais le contexte de fenêtre.
 6. Résumé de fil (fin de conversation Claude Code) : reprend la session existante, sans contexte nouveau.
+
+## Module Notion (branche `yumi/notion`)
+
+Demandé par plusieurs testeurs.
+
+| Sujet | Décision |
+|---|---|
+| API | API publique de Notion, version datée `2022-06-28` (toujours prise en charge d'après la doc de versionnement de Notion), en-têtes `Notion-Version` et `Authorization: Bearer`. Recherche des bases partagées, requête d'une base, création de page, lecture de page. Pas de Notion Calendar (pas d'API publique). |
+| Clé | Clé d'intégration interne collée dans Réglages, Modules, Notion, rangée dans le trousseau sous `notion-integration-key` (pas `notion-api-key`, le nom de Coucou, effacé une fois au lancement). Lue au lancement avec les autres. |
+| Bases | La personne coche les bases partagées avec l'intégration (`NotionBases`, préférence `notion.bases`) et choisit pour chacune la propriété de date et celle de fin (case à cocher, ou statut avec sa valeur « terminé »). Seules ces bases sont lues. |
+| Île | Module `notion` : tâches non terminées du jour et en retard (en retard d'abord), un clic ouvre la page (`notion://`, repli https). Live dans l'île repliée seulement si une tâche à heure tombe dans le quart d'heure. Une lecture toutes les 5 minutes ; sur 429, attente du `Retry-After`, jamais moins d'une minute. |
+| Agent | `get_today` ajoute les tâches Notion du jour demandé (« deux tâches Notion, dont … »), titres coupés à une ligne. `add_notion_task` (titre, date facultative, base si plusieurs) : action create, risque write (plancher medium), accord toujours demandé avec la tâche, le jour et la base ; `check` avant (base connue et accessible) ; vérification après (la page relue a ce titre). Aucune modification ni suppression de page. Build directe seulement. |
+| Confidentialité | Rien n'est envoyé au moteur en dehors de la phrase de `get_today`. Les titres de pages sont des données : ils ne changent ni les permissions ni le plan. |
