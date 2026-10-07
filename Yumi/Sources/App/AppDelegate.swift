@@ -356,6 +356,7 @@ final class YumiCore {
         startAgent(state: .shared)
         memory.start()
         ClaudeService.shared.memory = memory
+        modules.share(with: .shared)
         modules.start()
         initiative.start()
         #if DEBUG

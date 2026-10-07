@@ -21,11 +21,14 @@ struct ModuleSelection: Equatable, Sendable {
         ids = Array(ids.prefix(ModuleCatalog.selectionLimit))
     }
 
-    /// Adds the modules that did not exist when the selection was saved, once each, while there is room.
+    /// Adds the modules that did not exist when the selection was saved, once each, at the end,
+    /// while there is room.
     /// - Parameter known: the modules the person has already been offered. Returns it completed.
     mutating func welcome(available: [String], known: [String]?) -> [String] {
         guard let known else { return available }
-        for id in Self.defaultIDs where available.contains(id) && !known.contains(id) { select(id, available: available) }
+        // Every module the person has never been offered arrives at the end, visible: the
+        // order they chose does not move. (Notion, after an update.)
+        for id in available where !known.contains(id) { select(id, available: available) }
         return Array(Set(known).union(available)).sorted()
     }
 

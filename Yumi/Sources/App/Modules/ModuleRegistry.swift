@@ -13,6 +13,8 @@ final class ModuleRegistry {
     private var running: Set<String> = []
     private var published: [ModuleSnapshot]?
     private var actionObserver: NSObjectProtocol?
+    /// The views' copy of the lineup, kept up to date.
+    private weak var shared: ModuleLineup?
 
     private(set) var selection: ModuleSelection
 
@@ -29,6 +31,24 @@ final class ModuleRegistry {
                                       known: stored == nil ? nil : defaults.stringArray(forKey: Self.knownKey) ?? ModuleSelection.firstModules)
         defaults.set(known, forKey: Self.knownKey)
         if stored != nil, selection.ids != stored { defaults.set(selection.ids, forKey: Self.selectionKey) }
+    }
+
+    /// Every module, the selected ones first in their order, then the hidden ones, for the
+    /// settings and the island's edit mode.
+    var lineup: [ModuleLineup.Entry] {
+        let byID = Dictionary(modules.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
+        let hidden = availableIDs.filter { !selection.contains($0) }
+        return (selection.ids + hidden).compactMap { id in
+            byID[id].map { ModuleLineup.Entry(module: $0.snapshot, selected: selection.contains(id)) }
+        }
+    }
+
+    /// Hands the lineup to the views, and lets them change it. One registry at a time.
+    func share(with lineup: ModuleLineup) {
+        shared = lineup
+        lineup.attach(entries: self.lineup,
+                      move: { [weak self] id, index in self?.move(id, to: index); return self?.lineup ?? [] },
+                      select: { [weak self] id, on in self?.setSelected(id, on); return self?.lineup ?? [] })
     }
 
     /// Identifiers of every module of this build, in catalogue order.
@@ -108,6 +128,7 @@ final class ModuleRegistry {
         let snapshots = selection.ids.compactMap { byID[$0]?.snapshot }
         guard snapshots != published else { return }
         published = snapshots
+        shared?.refresh(lineup)
         onPublish(snapshots)
     }
 

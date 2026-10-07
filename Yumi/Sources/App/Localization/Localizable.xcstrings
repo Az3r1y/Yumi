@@ -1445,6 +1445,16 @@
         }
       }
     },
+    "Afficher %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show %@"
+          }
+        }
+      }
+    },
     "Afficher les outils de développeur": {
       "localizations": {
         "en": {
@@ -1593,6 +1603,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Waiting for your message."
+          }
+        }
+      }
+    },
+    "Aucun module affiché. Active-en un ci-dessous.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No module shown. Turn one on below."
           }
         }
       }
@@ -2761,6 +2781,16 @@
         }
       }
     },
+    "Dans l'île": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the island"
+          }
+        }
+      }
+    },
     "Dans ~/.claude/settings.json, « %@ » n'a pas la forme attendue. Je n'y ai pas touché.": {
       "localizations": {
         "en": {
@@ -2859,6 +2889,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Latest note"
+          }
+        }
+      }
+    },
+    "Descendre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move down"
           }
         }
       }
@@ -3155,6 +3195,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub"
+          }
+        }
+      }
+    },
+    "Glisse pour changer l'ordre. Les %lld premiers restent dans l'île.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to change the order. The first %lld stay in the island."
           }
         }
       }
@@ -4415,6 +4465,16 @@
         }
       }
     },
+    "Les %lld premiers vont dans l'île, les suivants dans le second carré. Glisse-les pour changer l'ordre, ou utilise les flèches de chaque ligne (Tab pour y aller au clavier).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The first %lld go in the island, the next ones in the second square. Drag them to change the order, or use each row's arrows (Tab to reach them with the keyboard)."
+          }
+        }
+      }
+    },
     "Les hooks me disent ce que font tes sessions Claude Code. Claude Code marche pareil sans eux, je ne vois juste rien.": {
       "localizations": {
         "en": {
@@ -4471,6 +4531,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lueur · Halo Nord"
+          }
+        }
+      }
+    },
+    "Masquer %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide %@"
           }
         }
       }
@@ -4535,6 +4605,36 @@
         }
       }
     },
+    "Modifier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        }
+      }
+    },
+    "Modules affichés": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shown modules"
+          }
+        }
+      }
+    },
+    "Modules masqués": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden modules"
+          }
+        }
+      }
+    },
     "Modèle": {
       "localizations": {
         "en": {
@@ -4561,6 +4661,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm Yumi. And you?"
+          }
+        }
+      }
+    },
+    "Monter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move up"
           }
         }
       }
@@ -4641,6 +4751,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edits a notebook"
+          }
+        }
+      }
+    },
+    "Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion"
           }
         }
       }
@@ -5873,6 +5993,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fold away after"
+          }
+        }
+      }
+    },
+    "Second carré": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Second square"
           }
         }
       }
@@ -8317,6 +8447,16 @@
         }
       }
     },
+    "masqué": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hidden"
+          }
+        }
+      }
+    },
     "met à jour ses tâches": {
       "localizations": {
         "en": {
@@ -8383,6 +8523,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "no"
+          }
+        }
+      }
+    },
+    "ntn_…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ntn_…"
           }
         }
       }
@@ -8599,6 +8749,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "untitled"
+          }
+        }
+      }
+    },
+    "second carré": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "second square"
           }
         }
       }
@@ -9271,6 +9431,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "stars"
+          }
+        }
+      }
+    },
+    "île": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "island"
           }
         }
       }
