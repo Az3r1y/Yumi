@@ -2885,6 +2885,16 @@
         }
       }
     },
+    "Contributions GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub contributions"
+          }
+        }
+      }
+    },
     "Copie un texte, je le garde en note.": {
       "localizations": {
         "en": {

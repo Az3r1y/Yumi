@@ -11,26 +11,45 @@ struct ContributionGrid: View {
     @Binding var selected: ContributionDay?
     @AppStorage(GitHubContributions.paletteKey) private var palette = "yumi"
 
+    // One Canvas for the whole grid, one hover tracker: the grid used to be 371 views, each
+    // with its own hover area and two date formatters built on every redraw of the island.
     var body: some View {
-        HStack(alignment: .top, spacing: gap) {
-            ForEach(Array(calendar.weeks.suffix(53).enumerated()), id: \.offset) { _, week in
-                VStack(spacing: gap) {
-                    ForEach(week) { day in
-                        RoundedRectangle(cornerRadius: cell * 0.28)
-                            .fill(Self.color(level: day.level, palette: palette))
-                            .frame(width: cell, height: cell)
-                            .overlay(RoundedRectangle(cornerRadius: cell * 0.28)
-                                .strokeBorder(Color.white.opacity(selected == day ? 0.8 : 0), lineWidth: 1))
-                            .onHover { inside in
-                                if inside { selected = day } else if selected == day { selected = nil }
-                            }
-                            .onTapGesture { selected = day }
-                            .accessibilityLabel(Self.sentence(for: day))
+        let weeks = Array(calendar.weeks.suffix(53))
+        let step = cell + gap
+        let width = CGFloat(weeks.count) * step - gap
+        let height = 7 * step - gap
+        func day(at point: CGPoint) -> ContributionDay? {
+            let column = Int(point.x / step), row = Int(point.y / step)
+            guard point.x >= 0, point.y >= 0, weeks.indices.contains(column),
+                  weeks[column].indices.contains(row) else { return nil }
+            return weeks[column][row]
+        }
+        return Canvas { context, _ in
+            for (column, week) in weeks.enumerated() {
+                for (row, day) in week.enumerated() {
+                    let rect = CGRect(x: CGFloat(column) * step, y: CGFloat(row) * step, width: cell, height: cell)
+                    let shape = Path(roundedRect: rect, cornerRadius: cell * 0.28)
+                    context.fill(shape, with: .color(Self.color(level: day.level, palette: palette)))
+                    if selected == day {
+                        context.stroke(shape, with: .color(.white.opacity(0.8)), lineWidth: 1)
                     }
                 }
             }
         }
-        .accessibilityElement(children: .contain)
+        .frame(width: max(0, width), height: max(0, height))
+        .contentShape(Rectangle())
+        .onContinuousHover { phase in
+            switch phase {
+            case .active(let point):
+                let found = day(at: point)
+                if found != selected { selected = found }
+            case .ended:
+                if selected != nil { selected = nil }
+            }
+        }
+        .gesture(SpatialTapGesture().onEnded { selected = day(at: $0.location) })
+        .accessibilityElement()
+        .accessibilityLabel(selected.map(Self.sentence(for:)) ?? loc("Contributions GitHub"))
     }
 
     /// Level 0 to 4 in Yumi's violet, or GitHub's greens.
@@ -44,13 +63,20 @@ struct ContributionGrid: View {
     }
 
     /// "12 contributions le 3 octobre", "Aucune contribution le 3 octobre".
-    static func sentence(for day: ContributionDay) -> String {
+    private static let parser: DateFormatter = {
         let parser = DateFormatter()
         parser.locale = Locale(identifier: "en_US_POSIX")
         parser.dateFormat = "yyyy-MM-dd"
+        return parser
+    }()
+    private static let formatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = AppLanguage.locale
         formatter.setLocalizedDateFormatFromTemplate("dMMMM")
+        return formatter
+    }()
+
+    static func sentence(for day: ContributionDay) -> String {
         let date = parser.date(from: day.date).map(formatter.string(from:)) ?? day.date
         switch day.count {
         case 0:  return loc("Aucune contribution le \(date)")
