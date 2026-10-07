@@ -106,6 +106,8 @@ enum IslandActions {
         #if !APPSTORE
         if view == .prompt, state.promptContext == nil {
             state.promptContext = WindowContextCapture.captureActive(from: state.lastExternalApp, askingFirst: false)
+            state.contextAttached = true
+            state.contextExplicit = false
         }
         #endif
         if view == .upload {
@@ -246,7 +248,9 @@ enum IslandActions {
         state.lastActivity = .now
         SoundEngine.shared.play("send")
         let appState = state
-        Task { await ClaudeService.shared.chat(query: query, context: appState.promptContext, state: appState) }
+        // Only what the person left attached goes, and a page only by its domain without a gesture.
+        let context = appState.promptContext?.outgoing(attached: appState.contextAttached, explicit: appState.contextExplicit)
+        Task { await ClaudeService.shared.chat(query: query, context: context, state: appState) }
     }
 
     // MARK: Drop
@@ -261,6 +265,8 @@ enum IslandActions {
         if let context = WindowContextCapture.captureActive(from: state.lastExternalApp) {
             newConversation()
             state.promptContext = context
+            state.contextAttached = true
+            state.contextExplicit = true
             send(loc("Résume-moi cette fenêtre en trois points"))
             return
         }

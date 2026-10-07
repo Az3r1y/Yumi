@@ -148,3 +148,20 @@ enum ChatToolOutcome: Equatable, Sendable {
     /// The user refused it in the notch.
     case refused
 }
+
+/// What of the window or the file in front goes with a chat message. The chat attaches it when
+/// it opens, shows it in the notch, and one click detaches it: detached, it goes nowhere.
+/// Without an explicit gesture (« Résume-moi cette fenêtre », a window dragged onto Yumi, a
+/// dropped file), a page's address is reduced to its domain.
+enum ChatContextPolicy {
+    static func outgoing(_ context: ChatContext?, attached: Bool, explicit: Bool) -> ChatContext? {
+        guard attached, let context else { return nil }
+        guard !explicit, case .window(let app, let title, let url?) = context else { return context }
+        return .window(app: app, title: title, url: domain(of: url))
+    }
+
+    /// `https://mail.example.com/thread/42?x=1` → `mail.example.com`. nil when there is no host.
+    static func domain(of url: String) -> String? {
+        URL(string: url)?.host()?.nonEmptyTrimmed
+    }
+}

@@ -53,6 +53,8 @@ enum FileDropHandler {
         state.droppedFile = DroppedFile(url: url, name: name)
         state.fileDragOver = false
         state.promptContext = .file(name: name, fileURL: url)
+        state.contextAttached = true
+        state.contextExplicit = true
 
         let inbox = AppIdentity.inboxDirectory
         Task.detached {
