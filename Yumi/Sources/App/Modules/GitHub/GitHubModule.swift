@@ -60,6 +60,8 @@ final class GitHubModule: YumiModule {
     private var followed: [String] = []
     private var wait = GitHubModule.pollInterval
     private var looks = 0
+    /// Where the contribution calendar goes (the island and the settings read it).
+    var contributions = GitHubContributions.shared
     /// Every repository of the person: owned, shared with them, of their organisations.
     private var repos: Set<String> = []
     /// Pushes whose commits were read, newest first, and those already asked (once each).
@@ -131,6 +133,7 @@ final class GitHubModule: YumiModule {
         polling = nil
         guard token() != nil else {
             set(.noToken)
+            contributions.clear()
             return
         }
         polling = Task { [weak self] in
@@ -222,6 +225,7 @@ final class GitHubModule: YumiModule {
         }
         guard let login else { return }
         set(.connected)
+        if contributions.due() { await readContributions(token: token) }
 
         if slow || repos.isEmpty {
             // Every repository the token can see: owned, shared, of the person's organisations.
@@ -332,6 +336,17 @@ final class GitHubModule: YumiModule {
         if let worth = events.last(where: { $0.kind.isWorthAWord }) {
             onNews(worth, events.filter { $0.kind == worth.kind }.count)
         }
+        onChange?()
+    }
+
+    /// The calendar of the profile, by GraphQL: one request, at most every 30 minutes, or
+    /// after the moment GitHub said to wait until.
+    private func readContributions(token: String) async {
+        guard let response = try? await fetch(GitHubContributionsFeed.request(token: token)) else {
+            contributions.record(.failure(.unreachable))
+            return
+        }
+        contributions.record(GitHubContributionsFeed.read(status: response.status, data: response.data, headers: response.headers))
         onChange?()
     }
 

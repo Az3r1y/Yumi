@@ -42,6 +42,8 @@ struct ModulesSettings: View {
                 SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
             }
             .id("module-settings-github")
+
+            ContributionsSection()
             if githubConnected { GitHubReposSection() }
 
             NotionSettingsSection()
@@ -184,6 +186,46 @@ struct GitHubReposSection: View {
             Text(loc("Dépôts suivis"))
         } footer: {
             SettingsHelp(loc("Tous tes dépôts sont suivis : les tiens, ceux où tu collabores et ceux de tes organisations que le jeton voit. Un jeton classique avec « repo » (et « read:org » pour les organisations), ou un jeton à granularité fine en lecture seule sur Contents, Metadata, Pull requests et Checks, suffit. Je ne fais que lire, et seulement auprès de api.github.com."))
+        }
+    }
+}
+
+/// GitHub, Contributions: the grid as on the profile, larger, with the total and the streak,
+/// whether it shows in the island, and its colours.
+private struct ContributionsSection: View {
+    @ObservedObject private var contributions = GitHubContributions.shared
+    @AppStorage(GitHubContributions.inIslandKey) private var inIsland = true
+    @AppStorage(GitHubContributions.paletteKey) private var palette = "yumi"
+    @State private var selected: ContributionDay?
+
+    var body: some View {
+        Section {
+            if let calendar = contributions.calendar {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    ContributionGrid(calendar: calendar, cell: 9, gap: 2.5, selected: $selected)
+                        .padding(8)
+                        .background(RoundedRectangle(cornerRadius: 8).fill(Color.black.opacity(palette == "github" ? 0.9 : 0.85)))
+                }
+                LabeledContent(loc("Sur un an"), value: calendar.total.formatted(.number.locale(AppLanguage.locale)))
+                LabeledContent(loc("Série en cours")) {
+                    let streak = calendar.streak(today: GitHubContributionsFeed.day(.now))
+                    Text(streak == 1 ? loc("un jour") : loc("\(streak) jours"))
+                }
+                if let selected { SettingsHelp(ContributionGrid.sentence(for: selected)) }
+            } else if let problem = contributions.problem {
+                SettingsStatus(text: GitHubContributions.explanation(problem), tone: problem == .noToken ? .off : .warning)
+            } else {
+                SettingsHelp(loc("Je les lis au prochain passage chez GitHub."))
+            }
+            Toggle(loc("Afficher dans l'île"), isOn: $inIsland)
+            Picker(loc("Couleurs"), selection: $palette) {
+                Text("Yumi").tag("yumi")
+                Text("GitHub").tag("github")
+            }
+        } header: {
+            Text("Contributions")
+        } footer: {
+            SettingsHelp(loc("Comme sur ton profil GitHub. Je les relis au plus toutes les trente minutes."))
         }
     }
 }
