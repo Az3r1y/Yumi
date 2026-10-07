@@ -1,0 +1,84 @@
+YUMI, version {{VERSION}}
+Un petit compagnon qui vit dans la notch de ton Mac.
+
+Merci de tester Yumi. Cette version est une alpha : elle n'est pas encore
+notarisée par Apple, d'où l'étape 3 ci-dessous, à faire une seule fois.
+
+
+IL TE FAUT
+
+- Un Mac sous macOS 15 ou plus récent (idéalement avec une notch).
+- Pour le chat et les actions, un moteur au choix (Réglages > Moteurs) :
+  Claude Code installé et connecté (https://claude.com/claude-code, compté
+  dans ton forfait Claude Code), une clé OpenAI ou Google Gemini (facturée
+  par le fournisseur ; Gemini a un palier gratuit), ou Ollama en local
+  (gratuit). Sans moteur, Yumi marche quand même (musique, agenda, météo,
+  focus...), sans le chat.
+- Pour suivre tes sessions Claude Code : python3 (celui de Homebrew, de
+  python.org, ou des outils de ligne de commande d'Apple).
+
+
+INSTALLER
+
+1. Glisse Yumi.app dans ton dossier Applications.
+
+2. Ouvre-le (double-clic). macOS affiche « Impossible d'ouvrir Yumi » :
+   clique sur Terminé, c'est normal pour une alpha.
+
+3. Ouvre Réglages Système > Confidentialité et sécurité.
+   Tout en bas, à côté de « Yumi a été bloqué », clique sur
+   « Ouvrir quand même », puis confirme avec ton mot de passe.
+
+4. Yumi apparaît dans la notch. C'est fait : la prochaine fois, il s'ouvre
+   normalement.
+
+Yumi te demandera l'accès à ton agenda, tes rappels ou ta position
+seulement quand tu utilises le module concerné. Tu peux tout refuser :
+chaque accès ne débloque qu'une fonction.
+
+
+SUIVRE CLAUDE CODE (facultatif)
+
+Dans les réglages de Yumi (icône dans la barre des menus), installe les
+hooks Claude Code. Yumi montre le changement avant de l'écrire, garde une
+copie de ton fichier de réglages, et refuse d'y toucher s'il est abîmé.
+
+
+TA VIE PRIVÉE
+
+Pas de compte, pas de pub, pas de télémétrie. Ton agenda, tes rappels et ce
+que Yumi retient de toi restent sur ton Mac. Yumi ne fait jamais rien qui
+modifie ton Mac sans te demander d'abord dans la notch.
+
+
+UN BUG, UNE IDÉE ?
+
+Réglages de Yumi > « Envoyer un retour ». Ça ouvre un formulaire GitHub
+avec ta version de Yumi et de macOS déjà remplies.
+Yumi te prévient quand une nouvelle version sort.
+
+
+LIMITES CONNUES
+
+- Pas encore testé sur un Mac sans notch.
+- OpenAI, Gemini et Ollama sont nouveaux : dis-moi s'ils marchent chez toi.
+- Yumi parle français ou anglais (Réglages > Général > Langue).
+
+
+VÉRIFIER CE ZIP (facultatif)
+
+Ce zip est construit par GitHub Actions à partir du code public du dépôt,
+pas sur l'ordinateur de l'auteur. Pour vérifier qu'il n'a pas été modifié :
+
+  shasum -a 256 Yumi-{{VERSION}}.zip
+
+doit donner la somme publiée dans SHA256SUMS.txt, sur la page de la release.
+Avec l'outil gh de GitHub, tu peux aussi vérifier d'où il vient :
+
+  gh attestation verify Yumi-{{VERSION}}.zip --repo estebanbaigts/Yumi
+
+
+DÉSINSTALLER
+
+Si tu as installé les hooks, retire-les d'abord depuis les réglages de
+Yumi. Puis quitte Yumi et mets Yumi.app à la corbeille.
