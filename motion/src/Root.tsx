@@ -13,6 +13,7 @@ import { LinkedInFilm, LinkedInLancement, LinkedInPermission } from "./linkedin/
 import { MASTERCLASS_LENGTH, Masterclass } from "./linkedin/masterclass/Masterclass";
 import { JOURNEE_LENGTH, Journee } from "./linkedin/journee/Journee";
 import { JourneeEdito } from "./linkedin/journee/JourneeEdito";
+import { ALPHA5_LENGTH, Alpha5En, Alpha5Fr } from "./recap/Alpha5";
 import { REEL_LENGTH, RECAP_LENGTH, Recap, RecapEn, ReelEn, ReelFr } from "./recap/Recap";
 
 export const RemotionRoot: React.FC = () => {
@@ -54,6 +55,10 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="Recap-EN-16x9" component={RecapEn} durationInFrames={Math.round(RECAP_LENGTH * 60)} fps={60} width={1920} height={1080} />
         <Composition id="Recap-EN-4x5" component={RecapEn} durationInFrames={Math.round(RECAP_LENGTH * 60)} fps={60} width={1080} height={1350} />
         <Composition id="Reel-FR-9x16" component={ReelFr} durationInFrames={Math.round(REEL_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Alpha5-FR-9x16" component={Alpha5Fr} durationInFrames={Math.round(ALPHA5_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Alpha5-FR-4x5" component={Alpha5Fr} durationInFrames={Math.round(ALPHA5_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Alpha5-EN-9x16" component={Alpha5En} durationInFrames={Math.round(ALPHA5_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Alpha5-EN-4x5" component={Alpha5En} durationInFrames={Math.round(ALPHA5_LENGTH * 60)} fps={60} width={1080} height={1350} />
         <Composition id="Reel-EN-9x16" component={ReelEn} durationInFrames={Math.round(REEL_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="Masterclass-16x9" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1920} height={1080} />
         <Composition id="Masterclass-9x16" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1080} height={1920} />
