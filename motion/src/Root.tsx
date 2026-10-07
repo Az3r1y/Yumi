@@ -13,6 +13,7 @@ import { LinkedInFilm, LinkedInLancement, LinkedInPermission } from "./linkedin/
 import { MASTERCLASS_LENGTH, Masterclass } from "./linkedin/masterclass/Masterclass";
 import { JOURNEE_LENGTH, Journee } from "./linkedin/journee/Journee";
 import { JourneeEdito } from "./linkedin/journee/JourneeEdito";
+import { NOUVEAUTE_LENGTH, NouveauteClaudeFr, NouveauteClaudeEn, NouveauteGithubFr, NouveauteGithubEn, NouveauteNotionFr, NouveauteNotionEn } from "./recap/Nouveautes";
 import { GUIDE_LENGTH, GuideGithubFr, GuideGithubEn, GuideNotionFr, GuideNotionEn, GuideClaudeFr, GuideClaudeEn, GuideUsageFr, GuideUsageEn } from "./recap/Guides";
 import { BALADE_LENGTH, FondBalade, FondMatcha, MATCHA_LENGTH } from "./recap/Fonds";
 import { ALPHA5_LENGTH, Alpha5En, Alpha5Fr } from "./recap/Alpha5";
@@ -73,6 +74,18 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="Guide-Claude-EN-9x16" component={GuideClaudeEn} durationInFrames={Math.round(GUIDE_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="Guide-Usage-FR-9x16" component={GuideUsageFr} durationInFrames={Math.round(GUIDE_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="Guide-Usage-EN-9x16" component={GuideUsageEn} durationInFrames={Math.round(GUIDE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Nouveaute-Claude-FR-9x16" component={NouveauteClaudeFr} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Nouveaute-Claude-FR-4x5" component={NouveauteClaudeFr} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Nouveaute-Claude-EN-9x16" component={NouveauteClaudeEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Nouveaute-Claude-EN-4x5" component={NouveauteClaudeEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Nouveaute-Github-FR-9x16" component={NouveauteGithubFr} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Nouveaute-Github-FR-4x5" component={NouveauteGithubFr} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Nouveaute-Github-EN-9x16" component={NouveauteGithubEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Nouveaute-Github-EN-4x5" component={NouveauteGithubEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Nouveaute-Notion-FR-9x16" component={NouveauteNotionFr} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Nouveaute-Notion-FR-4x5" component={NouveauteNotionFr} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Nouveaute-Notion-EN-9x16" component={NouveauteNotionEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1920} />
+        <Composition id="Nouveaute-Notion-EN-4x5" component={NouveauteNotionEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
         <Composition id="Reel-EN-9x16" component={ReelEn} durationInFrames={Math.round(REEL_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="Masterclass-16x9" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1920} height={1080} />
         <Composition id="Masterclass-9x16" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1080} height={1920} />

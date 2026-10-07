@@ -182,6 +182,9 @@ export const TAKES = {
   "journee-temps-libre": { w: 1380, h: 500 },
   "journee-sessions": { w: 1380, h: 500 },
   "journee-matcha": { w: 1380, h: 500 },
+  "a5-claude": { w: 1320, h: 540 },
+  "a5-github": { w: 1320, h: 540 },
+  "a5-notion": { w: 1320, h: 540 },
 } as const;
 
 /**
