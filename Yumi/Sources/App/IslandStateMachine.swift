@@ -473,6 +473,14 @@ struct YumiVersion: Comparable, Equatable, Sendable {
 /// what is passed to it, so the link goes to the form itself; the form links back to the others.
 enum Feedback {
     static let newIssue = "https://github.com/estebanbaigts/Yumi/issues/new"
+    /// A form that needs no account (Tally). Its hidden field `version` is filled from the link.
+    static let form = "https://tally.so/r/Me9lvA"
+
+    static func formURL(version: String) -> URL? {
+        var parts = URLComponents(string: form)
+        parts?.queryItems = [URLQueryItem(name: "version", value: version)]
+        return parts?.url
+    }
 
     /// The fields of `.github/ISSUE_TEMPLATE/bug.yml`, by their `id`.
     static func fields(version: String, macOS: String, model: String, notch: Bool) -> [(String, String)] {

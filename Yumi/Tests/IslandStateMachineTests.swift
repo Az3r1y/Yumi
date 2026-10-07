@@ -874,6 +874,11 @@ import Foundation
         #expect(items.map(\.value) == ["bug.yml", "0.1.0-alpha", "26.1.0", "Mac15,3, notch : oui"])
         #expect(Feedback.fields(version: "1", macOS: "2", model: "Mac14,2", notch: false).last?.1 == "Mac14,2, notch : non")
     }
+
+    @Test func theFormWithoutAccountCarriesOnlyTheVersion() {
+        let url = Feedback.formURL(version: "0.1.0-alpha.5")!
+        #expect(url.absoluteString == "https://tally.so/r/Me9lvA?version=0.1.0-alpha.5")
+    }
 }
 
 @Suite struct SettingsPageTests {

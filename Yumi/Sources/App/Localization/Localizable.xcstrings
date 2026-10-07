@@ -6357,6 +6357,16 @@
         }
       }
     },
+    "Sur GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On GitHub"
+          }
+        }
+      }
+    },
     "T'attend.": {
       "localizations": {
         "en": {

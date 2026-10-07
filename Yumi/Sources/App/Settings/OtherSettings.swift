@@ -156,8 +156,13 @@ struct AboutSettings: View {
 
             Section {
                 LabeledContent("Un bug, une idée") {
-                    Button("Envoyer un retour") {
-                        if let url = YumiUpdates.feedbackURL() { NSWorkspace.shared.open(url) }
+                    HStack {
+                        Button("Envoyer un retour") {
+                            if let url = YumiUpdates.feedbackURL() { NSWorkspace.shared.open(url) }
+                        }
+                        Button("Sur GitHub") {
+                            if let url = YumiUpdates.githubFeedbackURL() { NSWorkspace.shared.open(url) }
+                        }
                     }
                 }
                 LabeledContent("Licences") {
