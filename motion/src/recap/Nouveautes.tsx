@@ -77,3 +77,17 @@ export const NouveauteGithubFr: React.FC = () => <Film sujet="github" langue="fr
 export const NouveauteGithubEn: React.FC = () => <Film sujet="github" langue="en" />;
 export const NouveauteNotionFr: React.FC = () => <Film sujet="notion" langue="fr" />;
 export const NouveauteNotionEn: React.FC = () => <Film sujet="notion" langue="en" />;
+
+/** The three in a row, in English: each take, then one end card. */
+export const NOUVEAUTES_LENGTH = 3 * TAKE_END + (NOUVEAUTE_LENGTH - TAKE_END);
+export const NouveautesEn: React.FC = () => {
+  const { fps } = useVideoConfig();
+  const step = Math.round(TAKE_END * fps);
+  return (
+    <AbsoluteFill>
+      <Sequence durationInFrames={step}><Film sujet="claude" langue="en" /></Sequence>
+      <Sequence from={step} durationInFrames={step}><Film sujet="github" langue="en" /></Sequence>
+      <Sequence from={2 * step}><Film sujet="notion" langue="en" /></Sequence>
+    </AbsoluteFill>
+  );
+};

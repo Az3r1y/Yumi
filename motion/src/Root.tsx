@@ -13,7 +13,8 @@ import { LinkedInFilm, LinkedInLancement, LinkedInPermission } from "./linkedin/
 import { MASTERCLASS_LENGTH, Masterclass } from "./linkedin/masterclass/Masterclass";
 import { JOURNEE_LENGTH, Journee } from "./linkedin/journee/Journee";
 import { JourneeEdito } from "./linkedin/journee/JourneeEdito";
-import { NOUVEAUTE_LENGTH, NouveauteClaudeFr, NouveauteClaudeEn, NouveauteGithubFr, NouveauteGithubEn, NouveauteNotionFr, NouveauteNotionEn } from "./recap/Nouveautes";
+import { SLIDE_LENGTH, SlideCover, SlideDrawn, SlideFaces, SlideHabits, SlideIsland, SlideLive, SlideNew } from "./recap/Carrousel";
+import { NOUVEAUTES_LENGTH, NouveautesEn, NOUVEAUTE_LENGTH, NouveauteClaudeFr, NouveauteClaudeEn, NouveauteGithubFr, NouveauteGithubEn, NouveauteNotionFr, NouveauteNotionEn } from "./recap/Nouveautes";
 import { GUIDE_LENGTH, GuideGithubFr, GuideGithubEn, GuideNotionFr, GuideNotionEn, GuideClaudeFr, GuideClaudeEn, GuideUsageFr, GuideUsageEn } from "./recap/Guides";
 import { BALADE_LENGTH, FondBalade, FondMatcha, MATCHA_LENGTH } from "./recap/Fonds";
 import { ALPHA5_LENGTH, Alpha5En, Alpha5Fr } from "./recap/Alpha5";
@@ -86,6 +87,14 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="Nouveaute-Notion-FR-4x5" component={NouveauteNotionFr} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
         <Composition id="Nouveaute-Notion-EN-9x16" component={NouveauteNotionEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="Nouveaute-Notion-EN-4x5" component={NouveauteNotionEn} durationInFrames={Math.round(NOUVEAUTE_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Nouveautes-EN-4x5" component={NouveautesEn} durationInFrames={Math.round(NOUVEAUTES_LENGTH * 60)} fps={60} width={1080} height={1350} />
+        <Composition id="Slide-0-Cover" component={SlideCover} durationInFrames={SLIDE_LENGTH * 60} fps={60} width={1080} height={1350} />
+        <Composition id="Slide-1-Drawn" component={SlideDrawn} durationInFrames={SLIDE_LENGTH * 60} fps={60} width={1080} height={1350} />
+        <Composition id="Slide-2-Faces" component={SlideFaces} durationInFrames={SLIDE_LENGTH * 60} fps={60} width={1080} height={1350} />
+        <Composition id="Slide-3-Habits" component={SlideHabits} durationInFrames={SLIDE_LENGTH * 60} fps={60} width={1080} height={1350} />
+        <Composition id="Slide-4-Island" component={SlideIsland} durationInFrames={SLIDE_LENGTH * 60} fps={60} width={1080} height={1350} />
+        <Composition id="Slide-5-Live" component={SlideLive} durationInFrames={SLIDE_LENGTH * 60} fps={60} width={1080} height={1350} />
+        <Composition id="Slide-6-New" component={SlideNew} durationInFrames={SLIDE_LENGTH * 60} fps={60} width={1080} height={1350} />
         <Composition id="Reel-EN-9x16" component={ReelEn} durationInFrames={Math.round(REEL_LENGTH * 60)} fps={60} width={1080} height={1920} />
         <Composition id="Masterclass-16x9" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1920} height={1080} />
         <Composition id="Masterclass-9x16" component={Masterclass} durationInFrames={Math.round(MASTERCLASS_LENGTH * 60)} fps={60} width={1080} height={1920} />
