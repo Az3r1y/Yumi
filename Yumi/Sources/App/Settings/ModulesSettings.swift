@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Modules: GitHub and the pills shown in the island.
+/// Modules: GitHub and Notion.
 /// Keys go to the Keychain, under the same names as before.
 struct ModulesSettings: View {
     @ObservedObject private var state = AppState.shared
@@ -36,6 +36,8 @@ struct ModulesSettings: View {
             } footer: {
                 SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
             }
+
+            NotionSettingsSection()
         }
     }
 
