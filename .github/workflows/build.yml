@@ -15,6 +15,12 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: Use the newest Xcode
+        run: |
+          newest=$(ls -d /Applications/Xcode_*.app | grep -v -i beta | sort -V | tail -1)
+          [ -n "$newest" ] && sudo xcode-select -s "$newest/Contents/Developer"
+          xcodebuild -version
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
