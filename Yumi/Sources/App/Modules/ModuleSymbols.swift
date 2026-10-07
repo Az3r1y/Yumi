@@ -7,6 +7,7 @@ enum ModuleSymbols {
         "Voir": "eye.fill",
         "Relire": "eye.fill",
         "Brancher": "link",
+        "Installer": "arrow.down.circle.fill",
         "Ouvrir le terminal": "terminal.fill",
         "Ouvrir l'éditeur": "curlybraces",
         "Ouvrir la session": "arrow.up.forward.app.fill",

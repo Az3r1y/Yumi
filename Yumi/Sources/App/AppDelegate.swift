@@ -74,11 +74,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.image?.isTemplate = true
 
         let menu = NSMenu()
-        menu.addItem(withTitle: "Open \(AppIdentity.productName)", action: #selector(openIsland), keyEquivalent: "")
+        menu.addItem(withTitle: loc("Ouvrir \(AppIdentity.productName)"), action: #selector(openIsland), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        menu.addItem(withTitle: loc("Réglages…"), action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: loc("Quitter Yumi"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         statusItem?.menu = menu
     }
@@ -91,14 +91,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var settingsWindow: NSWindow?
 
-    @objc private func openSettings() {
-        if let w = settingsWindow, w.isVisible { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+    @objc private func openSettings(_ sender: Any? = nil) {
+        // The island may ask for a page: Claude Code, to install the hooks
+        let page = (sender as? Notification)?.object as? SettingsPage
+        if let w = settingsWindow, w.isVisible, page == nil { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+        settingsWindow?.close()
         let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600),
                            styleMask: [.titled, .closable, .miniaturizable, .resizable],
                            backing: .buffered, defer: false)
         win.title = loc("Réglages de \(AppIdentity.productName)")
         win.contentMinSize = NSSize(width: 700, height: 480)
-        win.contentView = NSHostingView(rootView: SettingsView())
+        win.contentView = NSHostingView(rootView: SettingsView(page: page ?? .general))
         win.center()
         win.isReleasedWhenClosed = false
         settingsWindow = win
@@ -123,7 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #if DEBUG
         if plan.chat { sendDevelopmentChatPrompts() }
         #endif
-        NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
+        NotificationCenter.default.addObserver(self, selector: #selector(openSettings(_:)),
                                                name: .openFullSettings, object: nil)
     }
 }
@@ -265,7 +268,9 @@ final class YumiCore {
             if state.memory != book.entries { state.memory = book.entries }
             if state.userName != book.name { state.userName = book.name }
         }
-        let claudeCode = ClaudeCodeModule(onShow: { mirror.show() })
+        let claudeCode = ClaudeCodeModule(onShow: { mirror.show() },
+                                          hooksMissing: { EngineFactory.hasClaudeCode && !HookServer.hooksInstalled() },
+                                          onInstallHooks: { IslandActions.openSettings(.claudeCode) })
         let agenda = AgendaModule()
         let focus = FocusModule()
         let notes = NotesModule()

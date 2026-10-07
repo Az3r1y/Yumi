@@ -15,15 +15,25 @@ final class ClaudeCodeModule: YumiModule {
     /// Shows the sessions in the island (the pending approval if there is one).
     private let onShow: @MainActor () -> Void
 
-    init(onShow: @escaping @MainActor () -> Void) {
+    /// True when Claude Code is on the Mac but Yumi's hooks are not in its settings: Yumi sees
+    /// no session. Read when the module starts and after each install.
+    private let hooksMissing: @MainActor () -> Bool
+    /// Opens the settings on the hooks, where the change is shown before anything is written.
+    private let onInstallHooks: @MainActor () -> Void
+    private var missing = false
+
+    init(onShow: @escaping @MainActor () -> Void, hooksMissing: @escaping @MainActor () -> Bool = { false },
+         onInstallHooks: @escaping @MainActor () -> Void = {}) {
         self.onShow = onShow
+        self.hooksMissing = hooksMissing
+        self.onInstallHooks = onInstallHooks
     }
 
     /// What the chat is doing, while it answers through Claude Code; nil when it is idle.
     private var chat: ChatAnnouncement?
 
     var snapshot: ModuleSnapshot {
-        var snapshot = ClaudeSessions.snapshot(sessions)
+        var snapshot = ClaudeSessions.snapshot(sessions, hooksMissing: missing)
         snapshot.rows = board.rows()
         // A session waiting for the user stays ahead of the chat's own activity.
         if snapshot.live == nil, let chat {
@@ -42,6 +52,7 @@ final class ClaudeCodeModule: YumiModule {
 
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
+        missing = hooksMissing()
         rowObserver = NotificationCenter.default.addObserver(forName: .moduleRowAction, object: nil, queue: .main) { [weak self] note in
             guard note.userInfo?["module"] as? String == "claude-code", let row = note.userInfo?["row"] as? String else { return }
             MainActor.assumeIsolated { self?.open(row) }
@@ -88,6 +99,9 @@ final class ClaudeCodeModule: YumiModule {
 
     func perform(_ action: ModuleAction) {
         switch action {
+        case .primary where missing && sessions.isEmpty:
+            onInstallHooks()
+            missing = hooksMissing()
         case .primary:
             // A pending approval is answered in the island. Otherwise "Voir" goes where the
             // conversation is: the application the session runs in, whichever it is.

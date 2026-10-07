@@ -2463,6 +2463,16 @@
         }
       }
     },
+    "Clic droit sur moi pour les réglages ou pour quitter. Triple Maj m'ouvre de partout.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right-click me for settings or to quit. Press Shift three times to open me from anywhere."
+          }
+        }
+      }
+    },
     "Clé API": {
       "localizations": {
         "en": {
@@ -3145,6 +3155,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm missing the API key. Open Settings."
+          }
+        }
+      }
+    },
+    "Il me manque mes hooks. Je m'installe ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm missing my hooks. Shall I install them?"
           }
         }
       }
@@ -3915,6 +3935,16 @@
         }
       }
     },
+    "Je ne vois pas tes sessions Claude Code.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't see your Claude Code sessions."
+          }
+        }
+      }
+    },
     "Je ne vois pas ton GitHub.": {
       "localizations": {
         "en": {
@@ -3941,6 +3971,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I speak up"
+          }
+        }
+      }
+    },
+    "Je peux suivre tes sessions Claude Code. Je m'installe ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can follow your Claude Code sessions. Shall I set myself up?"
           }
         }
       }
@@ -4695,6 +4735,16 @@
         }
       }
     },
+    "Ouvrir l'île avec trois appuis sur Maj": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the island by pressing Shift three times"
+          }
+        }
+      }
+    },
     "Ouvrir l'île avec un raccourci": {
       "localizations": {
         "en": {
@@ -5111,6 +5161,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "One more person follows you."
+          }
+        }
+      }
+    },
+    "Quitter Yumi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Yumi"
           }
         }
       }
