@@ -36,7 +36,7 @@
 | | |
 |---|---|
 | **What** | A native macOS companion in the notch: Claude Code sessions live, approvals from the notch, small actions on request, your day at a glance. |
-| **Status** | Public alpha, **0.1.0-alpha.6**. Free and open source. |
+| **Status** | Public alpha, **0.1.0-alpha.7**. Free and open source. |
 | **Requires** | macOS 15 or later. A Mac with a notch is recommended (see [Known limitations](#known-limitations)). |
 | **Languages** | English and French, following your Mac (Settings › General › Language). |
 | **Privacy** | No account, no telemetry, no server of ours. Nothing changes on your Mac without your click. |
@@ -54,11 +54,11 @@ Optional: in **Settings › Claude Code**, install the hooks so Yumi can follow 
 **Check the download.** Every release is built by GitHub Actions from the public code, not on a personal machine. The release page lists `SHA256SUMS.txt` and a build provenance attestation:
 
 ```bash
-shasum -a 256 Yumi-0.1.0-alpha.6.zip
+shasum -a 256 Yumi-0.1.0-alpha.7.zip
 ```
 
 ```bash
-gh attestation verify Yumi-0.1.0-alpha.6.zip --repo estebanbaigts/Yumi
+gh attestation verify Yumi-0.1.0-alpha.7.zip --repo estebanbaigts/Yumi
 ```
 
 Yumi tells you when a new version is out, at most once a day. He never downloads or installs anything by himself.
