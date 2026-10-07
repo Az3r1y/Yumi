@@ -112,12 +112,10 @@ export const Balade: React.FC<{ readonly from: number; readonly to: number; read
   const x = interpolate(t, [from, to], [-size * 1.1, width + size * 0.1], CLAMP);
   const phase = (s % hop) / hop;
   const lift = Math.sin(Math.PI * phase) * size * 0.16;
-  const hops = Math.floor((to - from) / hop);
   const script: YumiScript = {
     seed: 507,
     cues: [
       { at: 0, mood: "happy", rim: "joy", gaze: [1, 0] },
-      ...Array.from({ length: hops }, (_, i) => ({ at: i * hop + hop * 0.92, pose: "squash" as const })),
     ],
   };
   return (
