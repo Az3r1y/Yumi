@@ -42,21 +42,6 @@ const T = {
   },
 } as const;
 
-// One Yumi through the three beats, large and still in the frame, Apple-keynote clean: only
-// his face and his light change with each feature
-const SUIT: YumiScript = {
-  seed: 506,
-  cues: [
-    { at: 0, lit: false, mood: "asleep" },
-    { at: 0.3, mood: "surprised", pose: "pop" },
-    { at: 0.7, lit: true, mood: "curious", rim: "calm" },
-    { at: B1, mood: "thinking", rim: "work" },
-    { at: B1 + 1.2, gaze: [1, -0.4] },
-    { at: B2, gaze: null, mood: "happy", rim: "done", pose: "celebrate" },
-    { at: B3, mood: "happy", rim: "joy", pose: "wave" },
-  ],
-};
-
 const FIN: YumiScript = {
   seed: 505,
   cues: [
@@ -87,18 +72,8 @@ const Film: React.FC<{ readonly langue: Langue }> = ({ langue }) => {
           <Legende at={starts[i] + 0.1} end={starts[i + 1] - 0.05}>{b.legende}</Legende>
         </React.Fragment>
       ))}
-      {/* Him, centred under the type, through the hook and the three beats */}
-      <div
-        style={{
-          position: "absolute",
-          left: (m.W - 400) / 2,
-          top: m.tall ? 760 : 620,
-          opacity: ease(t, 0.1, 0.5) * (1 - ease(t, END - 0.45, END - 0.1, EASE.in)),
-          scale: interpolate(t, [0, 0.8], [0.92, 1], { ...CLAMP, easing: EASE.camera }),
-        }}
-      >
-        <Yumi script={SUIT} size={400} />
-      </div>
+      {/* Him, crossing the page in small hops behind the type */}
+      <Balade from={0.2} to={END - 0.1} y={m.tall ? 880 : 700} size={300} />
       <Pied lines={[{ at: 0.6, end: END - 0.2, text: tx.pied }]} />
       <Sequence from={Math.round(END * fps)} premountFor={fps}>
         <Yumi script={FIN} size={360} style={{ position: "absolute", right: m.tall ? 120 : 60, top: m.tall ? 300 : 120 }} />
@@ -123,6 +98,47 @@ const Film: React.FC<{ readonly langue: Langue }> = ({ langue }) => {
         volume={(f) => 0.45 * interpolate(f / fps, [0, 0.6, ALPHA5_LENGTH - 1.5, ALPHA5_LENGTH], [0, 1, 1, 0], CLAMP)}
       />
     </AbsoluteFill>
+  );
+};
+
+/**
+ * Yumi has no legs: he walks in hops. He comes in from the left, crosses the frame and leaves
+ * on the right, squashing a little at every landing, his eyes on where he is going.
+ */
+export const Balade: React.FC<{ readonly from: number; readonly to: number; readonly y: number; readonly size: number; readonly hop?: number }> = ({ from, to, y, size, hop = 0.55 }) => {
+  const t = useT();
+  const { width } = useVideoConfig();
+  const s = Math.max(0, t - from);
+  const x = interpolate(t, [from, to], [-size * 1.1, width + size * 0.1], CLAMP);
+  const phase = (s % hop) / hop;
+  const lift = Math.sin(Math.PI * phase) * size * 0.16;
+  const hops = Math.floor((to - from) / hop);
+  const script: YumiScript = {
+    seed: 507,
+    cues: [
+      { at: 0, mood: "happy", rim: "joy", gaze: [1, 0] },
+      ...Array.from({ length: hops }, (_, i) => ({ at: i * hop + hop * 0.92, pose: "squash" as const })),
+    ],
+  };
+  return (
+    <Sequence from={Math.round(from * 60)} durationInFrames={Math.round((to - from) * 60)} layout="none">
+      <div style={{ position: "absolute", left: x, top: y - lift }}>
+        <Yumi script={script} size={size} />
+      </div>
+      {/* His shadow stays on the ground and shrinks while he is up */}
+      <div
+        style={{
+          position: "absolute",
+          left: x + size * 0.2,
+          top: y + size * 0.8,
+          width: size * 0.6,
+          height: size * 0.07,
+          borderRadius: "50%",
+          backgroundColor: "rgba(12,12,16,0.18)",
+          scale: 1 - (lift / (size * 0.16)) * 0.35,
+        }}
+      />
+    </Sequence>
   );
 };
 
