@@ -63,6 +63,8 @@ struct ModuleRow: Identifiable, Equatable, Sendable {
     /// Lines shown when the line is unfolded: the request, the task, the last actions. Empty:
     /// the line does not unfold, a click sends `action` as before.
     var details: [String] = []
+    /// A box to tick before the title: sent back with `moduleRowAction` when ticked. nil: none.
+    var check: String? = nil
 }
 
 /// How a line reads at a glance. The island picks the colour.

@@ -26,6 +26,8 @@ struct NotionTask: Equatable, Sendable, Identifiable {
     var hasTime: Bool
     var url: URL?
     var base: String
+    /// The id of its database, to mark it done.
+    var baseID: String = ""
 }
 
 /// A database shared with the integration, and its properties by type, for the settings.
@@ -122,6 +124,46 @@ struct NotionAPI: Sendable {
         return (id, (object["url"] as? String).flatMap(URL.init(string:)))
     }
 
+    /// Marks a page of the database done: its checkbox ticked, or its status set to the done value.
+    /// Only the done property is sent; nothing else of the page changes.
+    func markDone(pageID: String, in base: NotionBase) async throws(NotionError) {
+        guard Self.isPageID(pageID), let value = Self.doneValue(for: base) else { throw .unexpected(0) }
+        _ = try await send("pages/\(pageID)", method: "PATCH", body: ["properties": [base.doneProperty!: value]])
+    }
+
+    /// The page as Notion has it now: its database, and whether it is done for this base.
+    func pageState(id: String, base: NotionBase) async throws(NotionError) -> (database: String?, done: Bool, title: String?) {
+        guard Self.isPageID(id) else { throw .notShared }
+        let object = try await send("pages/\(id)", method: "GET", body: nil)
+        let parent = (object["parent"] as? [String: Any])?["database_id"] as? String
+        return (parent, Self.isDone(object, base: base), Self.title(of: object))
+    }
+
+    /// The value written to mark a task done. nil when the base has no done property.
+    static func doneValue(for base: NotionBase) -> [String: Any]? {
+        guard base.doneProperty != nil else { return nil }
+        if base.doneIsCheckbox { return ["checkbox": true] }
+        guard let value = base.doneValue else { return nil }
+        return ["status": ["name": value]]
+    }
+
+    static func isDone(_ page: [String: Any], base: NotionBase) -> Bool {
+        guard let done = base.doneProperty, let value = (page["properties"] as? [String: [String: Any]])?[done] else { return false }
+        if base.doneIsCheckbox { return value["checkbox"] as? Bool == true }
+        return ((value["status"] as? [String: Any])?["name"] as? String) == base.doneValue
+    }
+
+    /// A Notion id: 32 hexadecimal digits, with or without dashes. Nothing else reaches a path.
+    static func isPageID(_ text: String) -> Bool {
+        let digits = text.replacingOccurrences(of: "-", with: "")
+        return digits.count == 32 && digits.allSatisfy(\.isHexDigit)
+    }
+
+    /// Two Notion ids are the same with or without their dashes.
+    static func sameID(_ a: String, _ b: String) -> Bool {
+        a.replacingOccurrences(of: "-", with: "").lowercased() == b.replacingOccurrences(of: "-", with: "").lowercased()
+    }
+
     /// The title of a page, read back.
     func pageTitle(id: String) async throws(NotionError) -> String? {
         let object = try await send("pages/\(id)", method: "GET", body: nil)
@@ -184,7 +226,7 @@ struct NotionAPI: Sendable {
         }
         let title = Self.title(of: page) ?? loc("Sans titre")
         return NotionTask(id: id, title: title, due: due, hasTime: hasTime,
-                          url: (page["url"] as? String).flatMap(URL.init(string:)), base: base.name)
+                          url: (page["url"] as? String).flatMap(URL.init(string:)), base: base.name, baseID: base.id)
     }
 
     static func title(of page: [String: Any]) -> String? {

@@ -64,6 +64,26 @@ import Foundation
         #expect(assessment.risk == .high)
     }
 
+    @Test func writingToAnAccountOrAnAddressIsHighForAnyTool() {
+        for kind in [ActionKind.create, .modify] {
+            let writer = ActionTool(id: "writer", kind: kind)
+            for arguments: ToolArguments in [["account": .string("trello:board")], ["url": .string("https://api.example.com/x")]] {
+                guard case .success(let assessment) = Fixture.assessor.assess(Fixture.request(writer, arguments)) else {
+                    Issue.record("refused"); continue
+                }
+                #expect(assessment.risk == .high)
+            }
+        }
+        // Reading there, and writing on the Mac, keep their level.
+        let reader = ActionTool(id: "fetch_page", kind: .read, risk: .read)
+        guard case .success(let read) = Fixture.assessor.assess(Fixture.request(reader, ["url": .string("https://example.com")])),
+              case .success(let local) = Fixture.assessor.assess(Fixture.request(editor, Fixture.file("a.swift"))) else {
+            Issue.record("refused"); return
+        }
+        #expect(read.risk < .high)
+        #expect(local.risk == .medium)
+    }
+
     // MARK: - Audit
 
     @Test func theAuditLogKeepsDecisionsAndNoSecret() async {

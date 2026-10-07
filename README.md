@@ -83,7 +83,7 @@ In the chat you talk to the engine of your choice (see [Engines](#engines)). Whe
 | Add a line at the end of a file he created | « Add "buy bread" to my todo » | Yes |
 | Add a reminder | « Remind me to call the dentist tomorrow at 10 » | Yes |
 | Add an event to your own calendar, never with guests | « Block Thursday 2 pm, client meeting » | Yes |
-| Add a task to Notion | « Add "call Paul" to my Notion tasks » | Yes |
+| Add a task to Notion | « Add "call Paul" to my Notion tasks » | Yes, every time (high risk: it leaves your Mac) |
 | Start a Focus session | « I'm working for 45 minutes » | No, nothing leaves the Mac |
 | Sum up a day and your free time, up to two weeks ahead | « How much free time do I have tomorrow? » | No, read only |
 
@@ -108,7 +108,7 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 |---|---|---|
 | **Claude Code** | Every session, live: request, task progress, current action, approvals | Yumi's hooks (offered in the island) and `python3` |
 | **GitHub** | Activity on all your repositories, grouped by repository: pushes with their exact commits, commits today and this week, pull requests and their checks, stars, forks, releases | A read-only personal access token |
-| **Notion** | How many tasks are due today and how many are late, from the databases you choose | An internal integration key, and the databases shared with it |
+| **Notion** | Today's and late tasks from the databases you choose: title, database, a date pill, late ones first. Click to open the page; tick the circle to mark it done in Notion (asked every time) | An internal integration key, and the databases shared with it |
 | **Agenda** | Your next event of the day | Calendar access |
 | **Notes** | Today's reminders, ticked from the notch | Reminders access |
 | **Focus** | A work timer and its breaks | Nothing |
@@ -149,6 +149,7 @@ Your request → engine proposes a plan → Yumi validates it → Permission gat
 
 - **The model only proposes.** A plan is accepted only if every step uses a known tool with valid arguments.
 - **The risk comes from the code.** Each tool describes what it really does (read, create, modify); the risk level is computed from that, with fixed floors. The model cannot lower it.
+- **Leaving the Mac is high.** Any change to an outside account or site (a Notion database, for instance) is at least high risk, whatever the tool says: it is asked every time, an "allow" rule turns into a question, and it cannot be remembered.
 - **One gate.** Every step goes through a single permission manager: allowed (safe and local), asked, or refused (secrets, system folders, payments, `sudo`).
 - **Approvals are precise and short-lived.** A request shows exactly what will change, expires after a minute on screen, and answers once.
 - **Verification is a step.** If the file, reminder or event is not really there afterwards, the run fails and says so.
@@ -160,7 +161,7 @@ Your request → engine proposes a plan → Yumi validates it → Permission gat
 - The memory never leaves your Mac. Calendar, reminders and Notion tasks are read on your Mac; the engine only receives Yumi's own one or two sentences about your day, which then stay in the conversation.
 - When you open the chat, **the name of the app in front, its window title and the site's domain** are attached to your first message and shown in the notch (« With … »). **One click removes them.** The content of your screen is never sent. Only an explicit gesture (« Summarize », a window dragged onto Yumi, a dropped file) sends the full address or the file.
 - A plan request sends your words, the last few messages, today's date and time, the list of Yumi's tools and the names of the files he created.
-- Network calls go only to the services behind the modules you turned on (Open-Meteo, api.github.com, api.notion.com) and to the engine you use. GitHub is read-only; Notion reads only the databases you tick.
+- Network calls go only to the services behind the modules you turned on (Open-Meteo, api.github.com, api.notion.com) and to the engine you use. GitHub is read-only; Notion reads only the databases you tick, and writes there only after you approve (adding a task, ticking one done).
 - **« Always »** on a Claude Code permission writes a permanent rule in your Claude Code settings. Remove it with `/permissions` in Claude Code.
 - Tokens and keys are stored in the macOS Keychain, never on disk and never in git.
 
@@ -185,7 +186,7 @@ This is an alpha. Here is what we know is missing or rough today.
 - **Not notarized by Apple.** The first launch needs « Open Anyway ». Notarization needs a paid Apple Developer account, not set up yet. Builds are signed with a local certificate so that macOS keeps your permissions across updates.
 - **Macs without a notch** are not tested yet. The island falls back to a fixed size at the top of the screen.
 - **Read then act is not there yet.** The agent can read (your day) or act (create, add), but not read and then act on what it read in one request, like « prepare my day ».
-- **Notion** shows counts in the island, not the list of tasks yet.
+- **Notion** lists twelve tasks at most in the island. Ticking needs a "done" property (checkbox or status) chosen in the settings, and is only offered in the direct build.
 - **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
 - **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
 - **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
@@ -196,7 +197,7 @@ This is an alpha. Here is what we know is missing or rough today.
 
 - **Read then act**: « prepare my day », with a preview of the whole plan before the first question.
 - **External modules**: described in a file instead of written in the code, always behind the same permission gate.
-- **Notion task list** in the island, foldable GitHub commits.
+- Foldable GitHub commits.
 - **Notarized releases**, once the Apple Developer account exists.
 - **Macs without a notch**, tested and polished.
 - More connected modules from your feedback.
