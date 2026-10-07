@@ -42,6 +42,7 @@ struct ModulesSettings: View {
                 SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
             }
             .id("module-settings-github")
+            if githubConnected { GitHubReposSection() }
 
             NotionSettingsSection()
                 .id("module-settings-notion")
@@ -156,5 +157,33 @@ struct ModuleIcon: View {
             .foregroundStyle(.white)
             .frame(width: 22, height: 22)
             .background(RoundedRectangle(cornerRadius: 6).fill(entry.snapshot.color))
+    }
+}
+
+/// The repositories GitHub showed, all followed by default: untick one to hide it everywhere
+/// (activity, pull requests, scenes). And what the token needs.
+struct GitHubReposSection: View {
+    @State private var hidden = GitHubRepos.hidden()
+    private let known = GitHubRepos.known()
+    private let login = UserDefaults.standard.string(forKey: GitHubRepos.loginKey)
+
+    var body: some View {
+        Section {
+            LabeledContent(loc("Compte")) { Text(login ?? loc("pas encore lu")).foregroundStyle(.secondary) }
+            if known.isEmpty {
+                SettingsHelp(loc("La liste arrive après la première lecture de GitHub."))
+            }
+            ForEach(known, id: \.self) { repo in
+                Toggle(repo, isOn: Binding(get: { !hidden.contains(repo) }, set: { shown in
+                    if shown { hidden.remove(repo) } else { hidden.insert(repo) }
+                    GitHubRepos.setHidden(hidden)
+                    NotificationCenter.default.post(name: .githubReposChanged, object: nil)
+                }))
+            }
+        } header: {
+            Text(loc("Dépôts suivis"))
+        } footer: {
+            SettingsHelp(loc("Tous tes dépôts sont suivis : les tiens, ceux où tu collabores et ceux de tes organisations que le jeton voit. Un jeton classique avec « repo » (et « read:org » pour les organisations), ou un jeton à granularité fine en lecture seule sur Contents, Metadata, Pull requests et Checks, suffit. Je ne fais que lire, et seulement auprès de api.github.com."))
+        }
     }
 }

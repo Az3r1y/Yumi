@@ -881,6 +881,26 @@
         }
       }
     },
+    "%@ · %lld commits sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld commits on %@"
+          }
+        }
+      }
+    },
+    "%@ · un commit sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · one commit on %@"
+          }
+        }
+      }
+    },
     "%@ à %@": {
       "localizations": {
         "en": {
@@ -1039,6 +1059,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld %%"
+          }
+        }
+      }
+    },
+    "%lld aujourd'hui, %lld cette semaine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld today, %lld this week"
+          }
+        }
+      }
+    },
+    "%lld commits sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld commits on %@"
           }
         }
       }
@@ -2643,6 +2683,16 @@
         }
       }
     },
+    "Compte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
     "Conséquence : on ne pourra pas revenir en arrière": {
       "localizations": {
         "en": {
@@ -3005,6 +3055,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Start"
+          }
+        }
+      }
+    },
+    "Dépôts suivis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Followed repositories"
           }
         }
       }
@@ -4331,6 +4391,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "La la la"
+          }
+        }
+      }
+    },
+    "La liste arrive après la première lecture de GitHub.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The list comes after the first look at GitHub."
           }
         }
       }
@@ -6487,6 +6557,16 @@
         }
       }
     },
+    "Tous tes dépôts sont suivis : les tiens, ceux où tu collabores et ceux de tes organisations que le jeton voit. Un jeton classique avec « repo » (et « read:org » pour les organisations), ou un jeton à granularité fine en lecture seule sur Contents, Metadata, Pull requests et Checks, suffit. Je ne fais que lire, et seulement auprès de api.github.com.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All your repositories are followed: yours, those you collaborate on, and those of your organisations the token can see. A classic token with “repo” (and “read:org” for organisations), or a fine-grained token with read-only Contents, Metadata, Pull requests and Checks, is enough. I only read, and only from api.github.com."
+          }
+        }
+      }
+    },
     "Tout effacer": {
       "localizations": {
         "en": {
@@ -6659,6 +6739,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "A bug, an idea"
+          }
+        }
+      }
+    },
+    "Un commit sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One commit on %@"
           }
         }
       }
@@ -8563,6 +8653,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "where?"
+          }
+        }
+      }
+    },
+    "pas encore lu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not read yet"
           }
         }
       }

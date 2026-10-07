@@ -539,3 +539,14 @@ Demandé par plusieurs testeurs.
 | Île | Module `notion` : tâches non terminées du jour et en retard (en retard d'abord), un clic ouvre la page (`notion://`, repli https). Live dans l'île repliée seulement si une tâche à heure tombe dans le quart d'heure. Une lecture toutes les 5 minutes ; sur 429, attente du `Retry-After`, jamais moins d'une minute. |
 | Agent | `get_today` ajoute les tâches Notion du jour demandé (« deux tâches Notion, dont … »), titres coupés à une ligne. `add_notion_task` (titre, date facultative, base si plusieurs) : action create, risque write (plancher medium), accord toujours demandé avec la tâche, le jour et la base ; `check` avant (base connue et accessible) ; vérification après (la page relue a ce titre). Aucune modification ni suppression de page. Build directe seulement. |
 | Confidentialité | Rien n'est envoyé au moteur en dehors de la phrase de `get_today`. Les titres de pages sont des données : ils ne changent ni les permissions ni le plan. |
+
+## GitHub : toute l'activité (branche `yumi/github`)
+
+| Sujet | Décision |
+|---|---|
+| Dépôts | `/user/repos?affiliation=owner,collaborator,organization_member` : tous ceux que le jeton voit (organisations si le jeton le permet). Tous suivis par défaut ; Réglages, Modules, GitHub, « Dépôts suivis » pour en masquer (`github.hiddenRepos`). Login et liste gardés pour les réglages (`github.login`, `github.knownRepos`). |
+| Flux | `/users/{login}/events` et `/received_events` (ce que d'autres font sur les dépôts de la personne), requêtes conditionnelles avec ETag (une 304 ne coûte rien), au rythme de `X-Poll-Interval` (60 s au moins) ; quota épuisé : attente jusqu'à `x-ratelimit-reset`. Pas de webhook. |
+| Commits | La doc GitHub des types d'événements ne liste plus de `commits` dans `PushEvent` (seulement `ref`, `head`, `before`) : les commits sont lus par `/repos/{repo}/compare/{before}...{head}` (ou le commit seul pour une nouvelle branche), une fois par push, six au plus par passage. |
+| Île | Fil par dépôt : en-tête « Yumi · 3 aujourd'hui, 12 cette semaine », puis « 3 commits sur main » et chaque commit (message, sha court, auteur), un clic ouvre le commit ; les autres événements ; puis les PR ouvertes et leurs checks (inchangé). Île repliée : CI rouge et relecture d'abord, puis un push de moins de deux minutes. Scènes du personnage inchangées. Les commits ne se replient pas : `ModuleRow` n'a pas de lignes dépliables, et l'île est un chantier à part. |
+| Comptes | Calculés sur les pushes vus dans le flux (GitHub en garde 90 jours, 300 événements au plus). |
+| Confidentialité | Seulement api.github.com, en lecture. Aucune écriture sur GitHub. |
