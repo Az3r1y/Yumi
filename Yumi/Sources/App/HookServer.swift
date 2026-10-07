@@ -120,6 +120,14 @@ final class HookServer: @unchecked Sendable {
             return
         }
 
+        // What the session is working on, for the module's details. Read here, off the main thread:
+        // a Stop reads the end of the session's transcript, on this Mac only.
+        if let note = SessionNote.from(payload, lastMessage: { path in
+            SessionText.readTail(path).flatMap(SessionText.lastAssistantText(transcript:))
+        }) {
+            Task { @MainActor in ClaudeSessionJournals.shared.apply(note) }
+        }
+
         if eventName == "PermissionRequest" {
             // Hold fd open: Claude Code waits for our decision (up to 120s)
             let requestID = UUID().uuidString

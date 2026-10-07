@@ -1089,6 +1089,22 @@
         }
       }
     },
+    "%lld/%lld tâches": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld/%2$lld tasks"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld/%2$lld tâches"
+          }
+        }
+      }
+    },
     "%lldh %@m": {
       "localizations": {
         "en": {
@@ -2259,6 +2275,16 @@
         }
       }
     },
+    "Cherche sur le web": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searches the web"
+          }
+        }
+      }
+    },
     "Choisir…": {
       "localizations": {
         "en": {
@@ -2863,6 +2889,16 @@
         }
       }
     },
+    "Demande : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request: %@"
+          }
+        }
+      }
+    },
     "Demande Bash : npm test": {
       "localizations": {
         "en": {
@@ -2879,6 +2915,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ask me something"
+          }
+        }
+      }
+    },
+    "Depuis %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For %@"
           }
         }
       }
@@ -4385,6 +4431,16 @@
         }
       }
     },
+    "Lance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs"
+          }
+        }
+      }
+    },
     "Lance Claude Code, je regarderai.": {
       "localizations": {
         "en": {
@@ -4511,6 +4567,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reads"
+          }
+        }
+      }
+    },
+    "Lit la page": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reads the page"
           }
         }
       }
@@ -5681,6 +5747,16 @@
         }
       }
     },
+    "Rien de modifié": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing changed"
+          }
+        }
+      }
+    },
     "Rien de neuf. Je surveille.": {
       "localizations": {
         "en": {
@@ -6643,6 +6719,22 @@
         }
       }
     },
+    "Tâche %@ : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task %1$@: %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Tâche %1$@ : %2$@"
+          }
+        }
+      }
+    },
     "Tâches": {
       "localizations": {
         "en": {
@@ -7425,6 +7517,26 @@
         }
       }
     },
+    "commande": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "command"
+          }
+        }
+      }
+    },
+    "commandes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "commands"
+          }
+        }
+      }
+    },
     "créer": {
       "localizations": {
         "en": {
@@ -7669,6 +7781,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "and write to us if you have a question."
+          }
+        }
+      }
+    },
+    "fichier modifié": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "file changed"
+          }
+        }
+      }
+    },
+    "fichiers modifiés": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "files changed"
           }
         }
       }

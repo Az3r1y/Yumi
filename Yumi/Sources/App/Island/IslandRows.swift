@@ -10,8 +10,16 @@ struct ModuleRowsList: View {
     var elapsed = false
 
     /// Five lines are seen at once; the others scroll.
-    private let limit: CGFloat = 5 * ModuleRowLine.height + 40
+    private var limit: CGFloat { 5 * ModuleRowLine.height + 40 + (open.isEmpty ? 0 : 110) }
     @Environment(\.islandLayerShown) private var shown
+    /// The lines unfolded to show their details.
+    @State private var open: Set<String> = {
+        #if DEBUG
+        // Captures: `YUMI_ISLAND_UNFOLD=<row id>` opens a line from the start
+        if let id = ProcessInfo.processInfo.environment["YUMI_ISLAND_UNFOLD"] { return [id] }
+        #endif
+        return []
+    }()
 
     var body: some View {
         ScrollView(.vertical) {
@@ -29,8 +37,20 @@ struct ModuleRowsList: View {
                                 .padding(.top, row.id == module.rows.first?.id ? 0 : 6)
                                 .padding(.bottom, 1)
                         }
-                        ModuleRowLine(row: row, time: time(row, now: shown ? context.date : .now)) {
-                            if let action = row.action { IslandActions.row(module.id, action) }
+                        ModuleRowLine(row: row, time: time(row, now: shown ? context.date : .now), unfolded: open.contains(row.id)) {
+                            if !row.details.isEmpty {
+                                withAnimation(.islandSpring(0.35)) {
+                                    if open.contains(row.id) { open.remove(row.id) } else { open.insert(row.id) }
+                                }
+                            } else if let action = row.action {
+                                IslandActions.row(module.id, action)
+                            }
+                        }
+                        if open.contains(row.id) {
+                            RowDetails(lines: row.details) {
+                                if let action = row.action { IslandActions.row(module.id, action) }
+                            }
+                            .transition(.opacity.combined(with: .move(edge: .top)))
                         }
                     }
                 }
@@ -52,6 +72,7 @@ private struct ModuleRowLine: View {
     static let height: CGFloat = 24
     let row: ModuleRow
     let time: String
+    var unfolded = false
     let action: () -> Void
     @State private var hover = false
 
@@ -80,6 +101,15 @@ private struct ModuleRowLine: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                if let progress = row.progress {
+                    Text(progress)
+                        .font(IslandTheme.round(10.5, .bold))
+                        .monospacedDigit()
+                        .foregroundStyle(IslandTheme.fg)
+                        .padding(.horizontal, 5)
+                        .background(Capsule().fill(Color.white.opacity(0.1)))
+                        .fixedSize()
+                }
                 Text(row.label)
                     .font(IslandTheme.text(11, .semibold))
                     .foregroundStyle(row.state == .neutral ? IslandTheme.muted : color)
@@ -97,12 +127,37 @@ private struct ModuleRowLine: View {
             }
             .padding(.horizontal, 7)
             .frame(height: Self.height)
-            .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(hover && row.action != nil ? 0.09 : 0)))
+            .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity((hover || unfolded) && clickable ? 0.09 : 0)))
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .disabled(row.action == nil)
+        .disabled(!clickable)
         .onHover { hover = $0 }
         .accessibilityLabel("\(row.title), \(row.detail), \(row.label)")
+    }
+
+    private var clickable: Bool { row.action != nil || !row.details.isEmpty }
+}
+
+/// The details of an unfolded line, then the button that opens where it runs.
+private struct RowDetails: View {
+    let lines: [String]
+    let open: () -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                Text(line)
+                    .font(IslandTheme.text(11, line.hasPrefix("·") ? .regular : .medium))
+                    .foregroundStyle(line.hasPrefix("·") ? IslandTheme.muted : IslandTheme.fg)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            TextButton(label: loc("Ouvrir le terminal"), action: open)
+        }
+        .padding(.leading, 20)
+        .padding(.trailing, 7)
+        .padding(.bottom, 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
