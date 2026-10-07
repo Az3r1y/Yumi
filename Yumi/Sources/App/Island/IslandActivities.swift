@@ -395,6 +395,8 @@ struct ModuleActivity: View {
     /// A pull request that waits goes first, with a button to review it.
     private var github: some View {
         VStack(alignment: .leading, spacing: 8) {
+            IslandContributions()
+                .riseIn(0)
             githubHead
             if !module.rows.isEmpty {
                 ModuleRowsList(module: module)

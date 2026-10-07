@@ -341,6 +341,16 @@
         }
       }
     },
+    "%@ contributions sur un an": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ contributions in the last year"
+          }
+        }
+      }
+    },
     "%@ d'affilée. Une pause ?": {
       "localizations": {
         "en": {
@@ -1083,12 +1093,38 @@
         }
       }
     },
+    "%lld contributions le %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld contributions on %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld contributions le %2$@"
+          }
+        }
+      }
+    },
     "%lld en retard.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld late."
+          }
+        }
+      }
+    },
+    "%lld jours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld days"
           }
         }
       }
@@ -1511,6 +1547,16 @@
         }
       }
     },
+    "Afficher dans l'île": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show in the island"
+          }
+        }
+      }
+    },
     "Afficher les outils de développeur": {
       "localizations": {
         "en": {
@@ -1699,6 +1745,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No database shared with the integration"
+          }
+        }
+      }
+    },
+    "Aucune contribution le %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No contributions on %@"
           }
         }
       }
@@ -2709,6 +2765,16 @@
         }
       }
     },
+    "Comme sur ton profil GitHub. Je les relis au plus toutes les trente minutes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "As on your GitHub profile. I read them again every thirty minutes at most."
+          }
+        }
+      }
+    },
     "Compte": {
       "localizations": {
         "en": {
@@ -2779,12 +2845,32 @@
         }
       }
     },
+    "Contributions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Contributions"
+          }
+        }
+      }
+    },
     "Copie un texte, je le garde en note.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Copy some text, I'll keep it as a note."
+          }
+        }
+      }
+    },
+    "Couleurs": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colours"
           }
         }
       }
@@ -3055,6 +3141,16 @@
         }
       }
     },
+    "Donne-moi un jeton GitHub pour voir tes contributions.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Give me a GitHub token to see your contributions."
+          }
+        }
+      }
+    },
     "Donne-moi un jeton, je surveille tes dépôts.": {
       "localizations": {
         "en": {
@@ -3301,6 +3397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub"
+          }
+        }
+      }
+    },
+    "GitHub me demande d'attendre. Je réessaie à %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub asks me to wait. I'll try again at %@."
           }
         }
       }
@@ -3821,6 +3927,16 @@
         }
       }
     },
+    "Je les lis au prochain passage chez GitHub.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'll read them next time I check GitHub."
+          }
+        }
+      }
+    },
     "Je lis": {
       "localizations": {
         "en": {
@@ -4047,6 +4163,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I can't reach GitHub."
+          }
+        }
+      }
+    },
+    "Je n'arrive pas à joindre GitHub. Je réessaie dans un moment.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't reach GitHub. I'll try again in a moment."
           }
         }
       }
@@ -6367,6 +6493,26 @@
         }
       }
     },
+    "Sur un an": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Last year"
+          }
+        }
+      }
+    },
+    "Série en cours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current streak"
+          }
+        }
+      }
+    },
     "T'attend.": {
       "localizations": {
         "en": {
@@ -6599,6 +6745,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your GitHub token no longer works."
+          }
+        }
+      }
+    },
+    "Ton jeton ne me laisse pas lire tes contributions. Un jeton classique a besoin de read:user ; un jeton fin, de l'accès en lecture à ton profil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your token doesn't let me read your contributions. A classic token needs read:user; a fine-grained one, read access to your profile."
           }
         }
       }
@@ -6927,6 +7083,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "An integration key and the databases to follow."
+          }
+        }
+      }
+    },
+    "Une contribution le %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One contribution on %@"
           }
         }
       }
@@ -7343,6 +7509,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ne travaille que sur demande. Planifie avec Claude Code (sans outils, ta connexion Claude Code) ou sinon la clé Anthropic ; créer un fichier demande toujours avant. Ce qui est à l'écran reste sur le Mac sauf si tu coches la case."
+          }
+        }
+      }
+    },
+    "Yumi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yumi"
           }
         }
       }
@@ -9055,6 +9231,26 @@
         }
       }
     },
+    "série d'un jour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a one-day streak"
+          }
+        }
+      }
+    },
+    "série de %lld jours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a %lld-day streak"
+          }
+        }
+      }
+    },
     "ta review": {
       "localizations": {
         "en": {
@@ -9171,6 +9367,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "bright sunshine"
+          }
+        }
+      }
+    },
+    "un jour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "one day"
           }
         }
       }
