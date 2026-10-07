@@ -290,6 +290,9 @@ enum IslandDemo {
         switch name {
         case "home":
             controller.expand(to: .overview)
+        case "home-edit":
+            controller.expand(to: .overview)
+            model.editingModules = true
         case "working":
             state.stateOverride = .working
             model.selectedModuleID = IslandModel.agentModuleID
