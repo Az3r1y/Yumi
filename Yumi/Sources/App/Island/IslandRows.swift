@@ -142,7 +142,7 @@ private struct ModuleRowLine: View {
 /// The details of an unfolded line, then the button that opens where it runs.
 private struct RowDetails: View {
     let lines: [String]
-    let open: () -> Void
+    let open: @MainActor () -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
