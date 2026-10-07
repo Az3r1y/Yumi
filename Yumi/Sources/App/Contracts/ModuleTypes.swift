@@ -58,6 +58,11 @@ struct ModuleRow: Identifiable, Equatable, Sendable {
     var section: String? = nil
     /// Sent back with `moduleRowAction` when the line is clicked. nil: the line is not a button.
     var action: String? = nil
+    /// A count shown next to the state: "3/7" for the tasks of a Claude Code session. nil for none.
+    var progress: String? = nil
+    /// Lines shown when the line is unfolded: the request, the task, the last actions. Empty:
+    /// the line does not unfold, a click sends `action` as before.
+    var details: [String] = []
 }
 
 /// How a line reads at a glance. The island picks the colour.

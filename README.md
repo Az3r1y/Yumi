@@ -34,7 +34,7 @@ Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependen
 
 ## What he does
 
-**He follows Claude Code.** Every session, in every terminal and editor, shows up in the notch: thinking, running a tool, finished, failed. When Claude Code asks for a permission, the island opens and you answer from there, without switching windows. If you do not answer, the question goes back to Claude Code as usual.
+**He follows Claude Code.** Every session, in every terminal and editor, shows up in the notch with what it is working on: your request, the task of Claude's todo list and its progress (3/7), the action in progress ("Edits IslandModel.swift", "Runs swift test"), the last files and commands, and when a turn ends a short summary of what was done. Click a session to unfold it. All of this is read from the hooks and, for Claude's last message, from the session's transcript on your Mac; none of it is sent to Yumi's engine or anywhere else, and keys or tokens in commands are masked. When Claude Code asks for a permission, the island opens and you answer from there, without switching windows. If you do not answer, the question goes back to Claude Code as usual.
 
 **He shows one thing at a time.** Folded, the island shows what matters now: the track playing, the session at work, the next meeting. Open, a rail of icons lets you move between the modules.
 

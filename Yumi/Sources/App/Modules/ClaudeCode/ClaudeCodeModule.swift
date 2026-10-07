@@ -33,8 +33,9 @@ final class ClaudeCodeModule: YumiModule {
     private var chat: ChatAnnouncement?
 
     var snapshot: ModuleSnapshot {
-        var snapshot = ClaudeSessions.snapshot(sessions, hooksMissing: missing)
-        snapshot.rows = board.rows()
+        let journals = ClaudeSessionJournals.shared.journals
+        var snapshot = ClaudeSessions.snapshot(sessions, hooksMissing: missing, journals: journals)
+        snapshot.rows = board.rows(journals: journals)
         // A session waiting for the user stays ahead of the chat's own activity.
         if snapshot.live == nil, let chat {
             snapshot.live = ModuleLive(text: chat.text,
@@ -53,6 +54,7 @@ final class ClaudeCodeModule: YumiModule {
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
         missing = hooksMissing()
+        ClaudeSessionJournals.shared.onChange = { [weak self] in self?.onChange?() }
         rowObserver = NotificationCenter.default.addObserver(forName: .moduleRowAction, object: nil, queue: .main) { [weak self] note in
             guard note.userInfo?["module"] as? String == "claude-code", let row = note.userInfo?["row"] as? String else { return }
             MainActor.assumeIsolated { self?.open(row) }
@@ -66,6 +68,7 @@ final class ClaudeCodeModule: YumiModule {
         chat = nil
         departure?.cancel()
         departure = nil
+        ClaudeSessionJournals.shared.onChange = nil
         if let rowObserver { NotificationCenter.default.removeObserver(rowObserver) }
         rowObserver = nil
     }
@@ -75,6 +78,8 @@ final class ClaudeCodeModule: YumiModule {
         guard ordered != self.sessions else { return }
         self.sessions = ordered
         board.update(ordered)
+        // A journal lives as long as its session is in the list (a finished one, a moment more)
+        ClaudeSessionJournals.shared.keep(only: Set(board.rows().map(\.id)))
         scheduleDeparture()
         onChange?()
     }
