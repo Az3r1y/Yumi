@@ -21,7 +21,7 @@
   ·
   <a href="https://estebanbaigts.github.io/Yumi/">Website</a>
   ·
-  <a href="https://github.com/estebanbaigts/Yumi/issues/new/choose">Give feedback</a>
+  <a href="https://tally.so/r/Me9lvA">Give feedback</a> (no account needed)
 </p>
 
 <p align="center">
@@ -76,6 +76,21 @@ Keys are stored in the macOS Keychain, never in a log or the permission history.
 **He remembers, and speaks first.** Yumi keeps what you tell him in a plain text file on your Mac, that you can read, edit and erase from the settings. He leaves secrets out of it. He also speaks up on his own on a few occasions (two hours without a break, a meeting coming, an agent waiting), and a setting makes him more or less discreet.
 
 **He is alive.** A soft body, eyes that follow, a rim of light that carries his state, habits when he is bored, and a small scene for each GitHub event: a star, a fork, a merged pull request.
+
+## Getting around
+
+- **Right-click Yumi** (or the island): Settings, Send feedback, Quit. On small screens the notch can hide menu bar icons, so you never need the menu bar icon.
+- **Triple Shift** opens or folds the island (Settings, General; needs the Accessibility permission outside the island).
+- **Click outside** the open island to fold it, unless an approval is waiting or the chat has unsent text.
+- **Arrange your modules**: drag and drop them in Settings, Modules, or right in the island with « Modifier » (Edit). Hide the ones you do not use.
+- **Send feedback** from the right-click menu: a short form, no account needed. GitHub issues work too.
+
+## What's new in 0.1.0-alpha.5
+
+- What each Claude Code session is doing, live: your request, its task list (« 3/7 »), the current action, the last actions, a summary at the end.
+- GitHub across all your repositories, with the exact commits of each push and commits today and this week.
+- Notion: today's tasks in the notch, and tasks added with your approval.
+- Modules you arrange yourself, the right-click menu, triple Shift, click outside to fold, feedback without an account.
 
 ## Modules
 
@@ -183,8 +198,9 @@ scripts/release.sh       signed and notarized build
 ## Roadmap
 
 - A signed and notarized release. [scripts/release.sh](scripts/release.sh) is ready, it needs an Apple Developer team.
-- Connected modules: Notion, n8n, Make.
-- English interface.
+- Connected modules: n8n, Make.
+- Read then act: « prepare my day », with a preview of the plan.
+- External modules, described in a file instead of written in the code.
 - Macs without a notch.
 - App Store, then Windows and Linux.
 
