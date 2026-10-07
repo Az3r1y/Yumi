@@ -270,8 +270,10 @@ final class YumiCore {
         let focus = FocusModule()
         let notes = NotesModule()
         let weather = WeatherModule()
+        let notion = NotionModule(api: Self.notionAPI,
+                                  openSettings: { NotificationCenter.default.post(name: .openFullSettings, object: nil) })
         agent = Self.makeAgent(permissions: permissions,
-                               modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather))
+                               modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather, notion: notion))
         let memory = memory
         var initiativeDefaults = UserDefaults.standard
         #if DEBUG
@@ -318,6 +320,7 @@ final class YumiCore {
                 focus,
                 MusicModule(),
                 weather,
+                notion,
                 GitHubModule(
                     token: { KeychainStore.shared.get("github-token") },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
@@ -401,6 +404,9 @@ final class YumiCore {
     /// creating a file or a reminder, which always asks first; starting a Focus and summing up the
     /// day need no question. The App Store build may not launch programs nor write outside its
     /// container: it plans with the key only, and only reads.
+    /// Notion, with the integration key of the settings (Keychain).
+    static let notionAPI = NotionAPI(key: { KeychainStore.shared.get("notion-integration-key") })
+
     private static func makeAgent(permissions: LocalPermissionManager, modules: ModuleBridge) -> RuntimeAgent {
         // The engines of the settings, in their order (EngineFactory): read again at each request.
         let provider = EngineFactory.planner
@@ -413,6 +419,7 @@ final class YumiCore {
         try? tools.register(CreateFileTool(log: created))
         try? tools.register(AppendToFileTool(log: created))
         try? tools.register(AddEventTool(store: EventKitEventStore()))
+        try? tools.register(AddNotionTaskTool(store: NotionAgentStore(api: notionAPI)))
         try? tools.register(AddReminderTool(store: EventKitReminderStore()))
         try? tools.register(StartFocusTool(focus: modules))
         try? tools.register(GetTodayTool(source: modules))
