@@ -537,7 +537,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
     /// Where each stored setting lives: the same UserDefaults and Keychain keys as before the
     /// window was redone, so nothing set earlier is lost.
     static let settings: [SettingsPage: [String]] = [
-        .general:     ["yumiLanguage", "launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
+        .general:     ["yumiLanguage", "tripleShiftEnabled", "launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
                        "absenceInterval", "contextEngineEnabled"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
         .modules:     ["github-token"],
@@ -551,4 +551,61 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
 
     /// Shows the developer page in the sidebar.
     static let developerKey = "settingsDeveloper"
+}
+
+// MARK: - Reaching Yumi without the menu bar
+
+/// Three quick presses on Shift, alone: opens or folds the island. A press is Shift going down
+/// then up with no other key or modifier in between.
+struct TripleShift: Equatable, Sendable {
+    /// The three presses must fit in this time.
+    static let window: TimeInterval = 0.8
+    static let defaultsKey = "tripleShiftEnabled"
+
+    private var presses: [TimeInterval] = []
+    private var down = false
+    private var spoiled = false
+
+    init() {}
+
+    /// The modifiers changed. Returns true when this release completes a triple press.
+    mutating func modifiers(shift: Bool, others: Bool, at time: TimeInterval) -> Bool {
+        if others { presses = []; spoiled = down || shift; down = shift; return false }
+        if shift && !down {
+            down = true
+            spoiled = false
+            return false
+        }
+        guard !shift && down else { return false }
+        down = false
+        if spoiled { presses = []; return false }
+        presses = presses.filter { time - $0 <= Self.window } + [time]
+        guard presses.count >= 3 else { return false }
+        presses = []
+        return true
+    }
+
+    /// Another key was typed: the presses before it do not count.
+    mutating func keyTyped() {
+        presses = []
+        spoiled = down
+    }
+}
+
+/// A click outside the open island folds it, unless something is waiting there.
+enum OutsideClick {
+    static func folds(islandOpen: Bool, insideIsland: Bool, approvalPending: Bool, unsentDraft: Bool, pinned: Bool) -> Bool {
+        islandOpen && !insideIsland && !approvalPending && !unsentDraft && !pinned
+    }
+}
+
+/// When the island offers to install the Claude Code hooks: Claude Code is there, the hooks
+/// are not, it was never offered, and nothing is being filmed. Nothing is written without the
+/// person's accord: the offer only opens the preview.
+enum HookOffer {
+    static let defaultsKey = "hookOfferShown"
+
+    static func offers(claudeCodeInstalled: Bool, hooksInstalled: Bool, alreadyOffered: Bool, filming: Bool) -> Bool {
+        claudeCodeInstalled && !hooksInstalled && !alreadyOffered && !filming
+    }
 }

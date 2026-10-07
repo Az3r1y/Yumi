@@ -909,3 +909,67 @@ import Foundation
         }
     }
 }
+
+@Suite struct ReachingYumiTests {
+    private func press(_ detector: inout TripleShift, at time: TimeInterval) -> Bool {
+        _ = detector.modifiers(shift: true, others: false, at: time)
+        return detector.modifiers(shift: false, others: false, at: time + 0.05)
+    }
+
+    @Test func threeQuickShiftsOpenTheIsland() {
+        var detector = TripleShift()
+        let r1 = press(&detector, at: 0)
+        #expect(!r1)
+        let r2 = press(&detector, at: 0.2)
+        #expect(!r2)
+        let r3 = press(&detector, at: 0.4)
+        #expect(r3)
+        // It starts again from zero
+        let r4 = press(&detector, at: 0.6)
+        #expect(!r4)
+    }
+
+    @Test func slowShiftsOrShiftWithAKeyDoNot() {
+        var slow = TripleShift()
+        let r5 = press(&slow, at: 0)
+        #expect(!r5)
+        let r6 = press(&slow, at: 0.5)
+        #expect(!r6)
+        let r7 = press(&slow, at: 1.2)
+        #expect(!r7)
+        var typing = TripleShift()
+        let r8 = press(&typing, at: 0)
+        #expect(!r8)
+        let r9 = press(&typing, at: 0.1)
+        #expect(!r9)
+        _ = typing.modifiers(shift: true, others: false, at: 0.2)
+        typing.keyTyped()   // Shift+A: a capital letter
+        let r10 = typing.modifiers(shift: false, others: false, at: 0.25)
+        #expect(!r10)
+        var combo = TripleShift()
+        let r11 = press(&combo, at: 0)
+        #expect(!r11)
+        _ = combo.modifiers(shift: true, others: true, at: 0.1)   // ⌘⇧
+        let r12 = combo.modifiers(shift: false, others: false, at: 0.15)
+        #expect(!r12)
+        let r13 = press(&combo, at: 0.2)
+        #expect(!r13)
+    }
+
+    @Test func aClickOutsideFoldsUnlessSomethingWaits() {
+        #expect(OutsideClick.folds(islandOpen: true, insideIsland: false, approvalPending: false, unsentDraft: false, pinned: false))
+        #expect(!OutsideClick.folds(islandOpen: true, insideIsland: true, approvalPending: false, unsentDraft: false, pinned: false))
+        #expect(!OutsideClick.folds(islandOpen: true, insideIsland: false, approvalPending: true, unsentDraft: false, pinned: false))
+        #expect(!OutsideClick.folds(islandOpen: true, insideIsland: false, approvalPending: false, unsentDraft: true, pinned: false))
+        #expect(!OutsideClick.folds(islandOpen: false, insideIsland: false, approvalPending: false, unsentDraft: false, pinned: false))
+        #expect(!OutsideClick.folds(islandOpen: true, insideIsland: false, approvalPending: false, unsentDraft: false, pinned: true))
+    }
+
+    @Test func theHooksAreOfferedOnceWhenClaudeCodeIsThereWithoutThem() {
+        #expect(HookOffer.offers(claudeCodeInstalled: true, hooksInstalled: false, alreadyOffered: false, filming: false))
+        #expect(!HookOffer.offers(claudeCodeInstalled: false, hooksInstalled: false, alreadyOffered: false, filming: false))
+        #expect(!HookOffer.offers(claudeCodeInstalled: true, hooksInstalled: true, alreadyOffered: false, filming: false))
+        #expect(!HookOffer.offers(claudeCodeInstalled: true, hooksInstalled: false, alreadyOffered: true, filming: false))
+        #expect(!HookOffer.offers(claudeCodeInstalled: true, hooksInstalled: false, alreadyOffered: false, filming: true))
+    }
+}

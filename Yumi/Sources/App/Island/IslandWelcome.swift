@@ -44,6 +44,9 @@ struct WelcomeActivity: View {
             .riseIn(3)
             TextButton(label: loc("Plus tard")) { IslandActions.skipName() }
                 .riseIn(4)
+            // The menu bar item can hide behind the notch: the other ways in, said once
+            ActSub(text: loc("Clic droit sur moi pour les réglages ou pour quitter. Triple Maj m'ouvre de partout."))
+                .riseIn(5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear { focused = true }

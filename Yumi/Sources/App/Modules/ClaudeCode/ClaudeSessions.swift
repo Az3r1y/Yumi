@@ -41,8 +41,18 @@ enum ClaudeSessions {
         }
     }
 
-    static func snapshot(_ sessions: [Session]) -> ModuleSnapshot {
-        plainSnapshot(sessions).withSymbols("terminal.fill")
+    /// - Parameter hooksMissing: Claude Code is installed, Yumi's hooks are not: no session can
+    ///   reach Yumi, and the module says so with a button to install them.
+    static func snapshot(_ sessions: [Session], hooksMissing: Bool = false) -> ModuleSnapshot {
+        var snapshot = plainSnapshot(sessions)
+        if hooksMissing && sessions.isEmpty {
+            snapshot.status = loc("à brancher")
+            snapshot.title = loc("Je ne vois pas tes sessions Claude Code.")
+            snapshot.subtitle = loc("Il me manque mes hooks. Je m'installe ?")
+            snapshot.primaryAction = loc("Installer")
+            snapshot.secondaryAction = nil
+        }
+        return snapshot.withSymbols("terminal.fill")
     }
 
     private static func plainSnapshot(_ sessions: [Session]) -> ModuleSnapshot {

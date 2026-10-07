@@ -96,6 +96,12 @@ enum IslandActions {
     private static var state: AppState { .shared }
 
     /// A tap that changes nothing by itself: the little "tap" of the mock-up.
+    /// The settings window, on a page. Does not depend on the menu bar item, which the notch
+    /// can hide on a small screen.
+    static func openSettings(_ page: SettingsPage = .general) {
+        NotificationCenter.default.post(name: .openFullSettings, object: page)
+    }
+
     static func tap() {
         SoundEngine.shared.play("blip")
     }

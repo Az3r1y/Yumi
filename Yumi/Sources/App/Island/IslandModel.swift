@@ -15,6 +15,8 @@ final class IslandModel: ObservableObject {
     @Published var launchStage: IslandStage?
     /// The classes of `.greet` in the mock-up: lit, say, bye.
     @Published var greeting = GreetingPhase()
+    /// The chat field holds text not sent yet.
+    var hasDraft = false
     /// The sequence playing is the goodbye, not the launch.
     @Published var leaving = false
     /// When the rings and the sparks of the greeting started.
