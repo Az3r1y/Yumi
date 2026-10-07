@@ -23,6 +23,8 @@ final class IslandWindowController: NSWindowController {
     /// Held for a measure (`YUMI_ISLAND_HOLD`): nothing from outside changes the island's state.
     private var frozen = false
     private var monitors: [Any] = []
+    /// Three quick presses on Shift open or fold the island.
+    private var tripleShift = TripleShift()
     private var subscriptions: Set<AnyCancellable> = []
 
     /// The view the island opens on, when something other than a click opens it.
@@ -119,6 +121,7 @@ final class IslandWindowController: NSWindowController {
         IslandDemo.startIfRequested(controller: self)
         #endif
         IslandStudio.startIfRequested(controller: self)
+        IslandHookOffer.startIfNeeded()
         YumiUpdates.shared.start()
     }
 
@@ -352,16 +355,50 @@ final class IslandWindowController: NSWindowController {
         keep(NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { [weak self] event in
             let keyCode = event.keyCode
             let flags = event.modifierFlags.intersection([.command, .control, .option, .shift]).rawValue
-            MainActor.assumeIsolated { self?.keyDown(keyCode: keyCode, flags: flags) }
+            MainActor.assumeIsolated {
+                self?.tripleShift.keyTyped()
+                self?.keyDown(keyCode: keyCode, flags: flags)
+            }
         })
         keep(NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
             guard let self else { return event }
+            let keyCode = event.keyCode
+            let command = event.modifierFlags.intersection([.command, .control, .option, .shift]) == .command
             let handled = MainActor.assumeIsolated { () -> Bool in
-                guard event.keyCode == 53, self.fsm.state == .home, !self.state.isPinned else { return false }
+                self.tripleShift.keyTyped()
+                // Without the menu bar item (hidden by the notch on a small screen): ⌘, and ⌘Q
+                if command && keyCode == 43 { IslandActions.openSettings(); return true }
+                if command && keyCode == 12 { NSApp.terminate(nil); return true }
+                guard keyCode == 53, self.fsm.state == .home, !self.state.isPinned else { return false }
                 self.collapse()
                 return true
             }
             return handled ? nil : event
+        })
+
+        // Triple Shift, from anywhere (global) or in the island (local)
+        let flags: (NSEvent) -> Void = { [weak self] event in
+            let modifiers = event.modifierFlags.intersection([.command, .control, .option, .shift])
+            let time = event.timestamp
+            MainActor.assumeIsolated { self?.flagsChanged(modifiers, at: time) }
+        }
+        keep(NSEvent.addGlobalMonitorForEvents(matching: .flagsChanged, handler: flags))
+        keep(NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { event in flags(event); return event })
+
+        // A click in another application folds the open island, unless something waits in it
+        keep(NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            MainActor.assumeIsolated { self?.clickedOutside() }
+        })
+
+        // Right click on Yumi or the island: the menu the menu bar item would give
+        keep(NSEvent.addLocalMonitorForEvents(matching: .rightMouseDown) { [weak self] event in
+            guard let self else { return event }
+            let shown = MainActor.assumeIsolated { () -> Bool in
+                guard self.wasInIsland, let view = event.window?.contentView else { return false }
+                IslandMenu.pop(at: event.locationInWindow, in: view)
+                return true
+            }
+            return shown ? nil : event
         })
 
         // Window attach drag, and the click that opens the compact island.
@@ -421,6 +458,21 @@ final class IslandWindowController: NSWindowController {
         if fsm.state != .home { expand(to: .overview) }
     }
 
+    private func flagsChanged(_ modifiers: NSEvent.ModifierFlags, at time: TimeInterval) {
+        let others = !modifiers.subtracting(.shift).isEmpty
+        guard tripleShift.modifiers(shift: modifiers.contains(.shift), others: others, at: time),
+              UserDefaults.standard.object(forKey: TripleShift.defaultsKey) as? Bool ?? true,
+              !IslandStudio.isOn, !frozen else { return }
+        if fsm.state == .home { collapse() } else { expand(to: .overview) }
+    }
+
+    private func clickedOutside() {
+        let approval = state.pendingApproval != nil
+        guard OutsideClick.folds(islandOpen: fsm.state == .home, insideIsland: wasInIsland, approvalPending: approval,
+                                 unsentDraft: model.hasDraft, pinned: state.isPinned || holdsOpen || frozen) else { return }
+        collapse()
+    }
+
     /// Yumi was dropped on a window: it becomes the context of the conversation.
     private func finishDrag() {
         guard inAttachDrag else { return }
@@ -432,6 +484,8 @@ final class IslandWindowController: NSWindowController {
         if let ctx = windowContextAtPoint(mouse) {
             IslandActions.newConversation()
             state.promptContext = ctx
+            state.contextAttached = true
+            state.contextExplicit = true
             SoundEngine.shared.play("approve")
             expand(to: .prompt)
         }

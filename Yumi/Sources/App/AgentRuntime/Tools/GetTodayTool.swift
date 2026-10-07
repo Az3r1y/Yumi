@@ -16,6 +16,8 @@ struct TodayFacts: Equatable, Sendable {
     /// Every timed appointment of the day, ended ones included, to work out the free time.
     /// nil: the same as `events`.
     var dayEvents: [AgendaEvent]? = nil
+    /// The unfinished Notion tasks of the day, from the chosen databases. nil: no Notion.
+    var notionTasks: [NotionTask]? = nil
 }
 
 /// Reads `TodayFacts` from the modules, on demand. Implemented by the modules' bridge.
@@ -118,7 +120,8 @@ enum TodayPhrase {
         let isToday = calendar.isDate(day, inSameDayAs: now)
         let label = isToday ? loc("aujourd'hui") : dayLabel(day, now: now, calendar: calendar)
         let first = [agenda(facts.events, label: label, isToday: isToday, calendar: calendar),
-                     reminders(facts.reminders, label: isToday ? nil : label)].compactMap { $0 }
+                     reminders(facts.reminders, label: isToday ? nil : label),
+                     notion(facts.notionTasks)].compactMap { $0 }
         var sentences: [String] = []
         if !first.isEmpty { sentences.append(FrenchText.sentenceStart(first.joined(separator: loc(", et "))) + ".") }
         if freeTime, let free = free(facts.dayEvents ?? facts.events, day: day, now: now, calendar: calendar) {
@@ -165,6 +168,14 @@ enum TodayPhrase {
         guard let first = NotesSummary.ordered(reminders).first else { return loc("aucun rappel\(when)") }
         if reminders.count == 1 { return loc("un rappel\(when) : \(oneLine(first.title))") }
         return loc("\(FrenchText.spelledCount(reminders.count, loc("rappel"), loc("rappels")))\(when), dont \(oneLine(first.title))")
+    }
+
+    /// "deux tâches Notion, dont Envoyer le devis". Titles are data: one line, cut short.
+    private static func notion(_ tasks: [NotionTask]?) -> String? {
+        guard let tasks, let first = tasks.first else { return nil }
+        let title = ApprovalRequest.oneLine(first.title, limit: 60) ?? loc("sans titre")
+        if tasks.count == 1 { return loc("une tâche Notion : \(title)") }
+        return loc("\(FrenchText.spelled(tasks.count, feminine: true)) tâches Notion, dont \(title)")
     }
 
     /// "demain", "après-demain", "jeudi 9 octobre".

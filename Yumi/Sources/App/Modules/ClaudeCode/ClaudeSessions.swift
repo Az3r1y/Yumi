@@ -41,8 +41,22 @@ enum ClaudeSessions {
         }
     }
 
-    static func snapshot(_ sessions: [Session]) -> ModuleSnapshot {
-        plainSnapshot(sessions).withSymbols("terminal.fill")
+    /// - Parameter hooksMissing: Claude Code is installed, Yumi's hooks are not: no session can
+    ///   reach Yumi, and the module says so with a button to install them.
+    /// Above what is only good to know (the next event), below what the person started (music).
+    static let workingPriority = ModuleLivePriority.ambient + 20
+
+    static func snapshot(_ sessions: [Session], hooksMissing: Bool = false, journals: [String: SessionJournal] = [:]) -> ModuleSnapshot {
+        var snapshot = plainSnapshot(sessions)
+        if let live = live(sessions, journals: journals) { snapshot.live = live }
+        if hooksMissing && sessions.isEmpty {
+            snapshot.status = loc("à brancher")
+            snapshot.title = loc("Je ne vois pas tes sessions Claude Code.")
+            snapshot.subtitle = loc("Il me manque mes hooks. Je m'installe ?")
+            snapshot.primaryAction = loc("Installer")
+            snapshot.secondaryAction = nil
+        }
+        return snapshot.withSymbols("terminal.fill")
     }
 
     private static func plainSnapshot(_ sessions: [Session]) -> ModuleSnapshot {
@@ -73,10 +87,18 @@ enum ClaudeSessions {
     /// The folded island hears about Claude Code when a session is waiting for the user, and
     /// when several sessions run: how many, and the one waiting first.
     /// `sessions` is ordered: a waiting session, if any, is the first one.
-    static func live(_ sessions: [Session]) -> ModuleLive? {
+    /// With a journal, a working session says what it is on: "yumi · Modifie IslandModel.swift".
+    static func live(_ sessions: [Session], journals: [String: SessionJournal] = [:]) -> ModuleLive? {
         let open = sessions.filter { $0.status != .completed }.count
         let count = open > 1 ? FrenchText.count(open, "session", "sessions") : nil
         guard let session = sessions.first, session.status == .waitingForUser else {
+            if let working = sessions.first(where: { $0.status == .running && $0.isTurnActive }),
+               let journal = journals[working.id.value],
+               let what = journal.current?.sentence ?? journal.currentTask {
+                let progress = journal.progress.map { " \($0)" } ?? ""
+                return ModuleLive(text: "\(projectName(working))\(progress) · \(what)", priority: Self.workingPriority,
+                                  controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Voir"))])
+            }
             guard let count else { return nil }
             return ModuleLive(text: count, priority: ModuleLivePriority.ambient,
                               controls: [ModuleControl(id: ModuleAction.primary.rawValue, symbol: "eye.fill", label: loc("Voir"))])
@@ -198,7 +220,8 @@ struct SessionBoard: Equatable, Sendable {
     }
 
     /// The sessions to list, the ones waiting for something first.
-    func rows(now: Date = .now) -> [ModuleRow] {
+    /// - Parameter journals: what each session is working on (ClaudeSessionJournals), by session id.
+    func rows(now: Date = .now, journals: [String: SessionJournal] = [:]) -> [ModuleRow] {
         seen.values
             .filter { !Self.expired($0, now: now) }
             .sorted { a, b in
@@ -207,7 +230,26 @@ struct SessionBoard: Equatable, Sendable {
                 if a.session.recency != b.session.recency { return a.session.recency > b.session.recency }
                 return a.session.id.value < b.session.id.value
             }
-            .map(Self.row)
+            .map { Self.enriched(Self.row($0), journals[$0.session.id.value], now: now) }
+    }
+
+    /// The row with what the journal knows: the action or the task in progress instead of
+    /// "travaille", the progress of the todo list, the summary of a finished turn, the details.
+    static func enriched(_ row: ModuleRow, _ journal: SessionJournal?, now: Date) -> ModuleRow {
+        guard let journal else { return row }
+        var row = row
+        row.progress = journal.progress
+        row.details = journal.details(now: now)
+        switch row.state {
+        case .busy:
+            if let step = journal.current { row.detail = step.sentence }
+            else if let task = journal.currentTask { row.detail = task }
+        case .success:
+            if let summary = journal.summary { row.detail = summary }
+        default:
+            break
+        }
+        return row
     }
 
     /// When the next finished session leaves the list, to refresh it then.

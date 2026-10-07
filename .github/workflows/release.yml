@@ -1,0 +1,120 @@
+name: Release
+
+# Builds the alpha that testers download, from the public code, on GitHub's machines.
+# Push a tag v<version> (the version of Yumi/project.yml, YumiDisplayVersion) and this
+# workflow builds, tests, signs with the "Yumi Local" certificate, zips the app with its
+# install guides, publishes SHA256SUMS.txt and a build provenance attestation, and opens a
+# draft pre-release. The author reads it and publishes it by hand.
+#
+# Secrets (Settings > Secrets and variables > Actions):
+#   YUMI_LOCAL_P12           the "Yumi Local" certificate and its key, exported as .p12, base64
+#   YUMI_LOCAL_P12_PASSWORD  the password chosen at export
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write       # create the draft release
+  id-token: write       # sign the attestation
+  attestations: write   # publish the attestation
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read the version
+        id: version
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          wanted="${tag#v}"
+          declared=$(grep -m1 'YumiDisplayVersion:' Yumi/project.yml | sed -E 's/.*"(.*)".*/\1/')
+          if [ "$wanted" != "$declared" ]; then
+            echo "::error::Tag $tag does not match YumiDisplayVersion $declared in Yumi/project.yml"
+            exit 1
+          fi
+          echo "version=$wanted" >> "$GITHUB_OUTPUT"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate project
+        run: cd Yumi && xcodegen
+
+      - name: Test
+        run: |
+          xcodebuild -project Yumi/Yumi.xcodeproj -scheme Yumi -configuration Debug test \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Build Release
+        run: |
+          xcodebuild -project Yumi/Yumi.xcodeproj -scheme Yumi -configuration Release build \
+            -derivedDataPath build/dd CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Sign with Yumi Local
+        env:
+          P12: ${{ secrets.YUMI_LOCAL_P12 }}
+          P12_PASSWORD: ${{ secrets.YUMI_LOCAL_P12_PASSWORD }}
+        run: |
+          if [ -z "$P12" ] || [ -z "$P12_PASSWORD" ]; then
+            echo "::error::Secrets YUMI_LOCAL_P12 and YUMI_LOCAL_P12_PASSWORD are missing"
+            exit 1
+          fi
+          keychain="$RUNNER_TEMP/yumi.keychain-db"
+          keychain_password=$(uuidgen)
+          echo "$P12" | base64 --decode > "$RUNNER_TEMP/yumi.p12"
+          security create-keychain -p "$keychain_password" "$keychain"
+          security set-keychain-settings -lut 900 "$keychain"
+          security unlock-keychain -p "$keychain_password" "$keychain"
+          security import "$RUNNER_TEMP/yumi.p12" -k "$keychain" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$keychain_password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm -f "$RUNNER_TEMP/yumi.p12"
+          app="build/dd/Build/Products/Release/Yumi.app"
+          codesign --force --deep --options runtime \
+            --entitlements Yumi/Resources/Yumi.entitlements \
+            --keychain "$keychain" -s "Yumi Local" "$app"
+          codesign --verify --deep --strict "$app"
+          codesign -dr - "$app"
+          security delete-keychain "$keychain"
+
+      - name: Zip
+        id: zip
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          stage="$RUNNER_TEMP/stage/Yumi"
+          mkdir -p "$stage"
+          cp -R build/dd/Build/Products/Release/Yumi.app "$stage/"
+          for f in LISEZ-MOI.txt README.txt; do
+            sed "s/{{VERSION}}/$version/g" "release/$f" > "$stage/$f"
+          done
+          zip="Yumi-$version.zip"
+          (cd "$RUNNER_TEMP/stage" && ditto -c -k --sequesterRsrc --keepParent Yumi "$GITHUB_WORKSPACE/$zip")
+          shasum -a 256 "$zip" > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+          echo "zip=$zip" >> "$GITHUB_OUTPUT"
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ steps.zip.outputs.zip }}
+
+      - name: Draft the pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${{ steps.version.outputs.version }}"
+          sum=$(cut -d' ' -f1 SHA256SUMS.txt)
+          notes="Built by GitHub Actions from commit ${GITHUB_SHA} (run ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}).
+
+          SHA-256: \`$sum\`
+
+          Check: \`gh attestation verify ${{ steps.zip.outputs.zip }} --repo ${GITHUB_REPOSITORY}\`"
+          gh release create "$GITHUB_REF_NAME" "${{ steps.zip.outputs.zip }}" SHA256SUMS.txt \
+            --draft --prerelease --title "Yumi $version" --notes "$notes"

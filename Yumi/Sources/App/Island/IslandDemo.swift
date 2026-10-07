@@ -254,9 +254,11 @@ enum IslandDemo {
                     ModuleRow(id: "s1", title: "api", detail: "Demande Bash : rm -rf build", state: .waiting,
                               label: "attend un accord", date: now.addingTimeInterval(-40), action: "s1"),
                     ModuleRow(id: "s2", title: "yumi", detail: "Modifie IslandRows.swift", state: .busy,
-                              label: "travaille", date: now.addingTimeInterval(-720), action: "s2"),
-                    ModuleRow(id: "s3", title: "site", detail: "C'est passé.", state: .success,
-                              label: "terminée", date: now.addingTimeInterval(-50), action: "s3"),
+                              label: "travaille", date: now.addingTimeInterval(-720), action: "s2", progress: "3/7",
+                              details: ["Demande : Montre sur quoi Claude travaille dans l'île", "Tâche 3/7 : Écrit les tests du journal",
+                                        "· Lance swift test", "· Modifie ClaudeSessions.swift", "· Lit HookServer.swift", "Depuis 12 min"]),
+                    ModuleRow(id: "s3", title: "site", detail: "Deux fichiers modifiés, une commande, 4/4 tâches.", state: .success,
+                              label: "terminée", date: now.addingTimeInterval(-50), action: "s3", progress: "4/4"),
                 ]
             case "agenda": module.primarySymbol = "video.fill"
             case "music":
@@ -290,6 +292,9 @@ enum IslandDemo {
         switch name {
         case "home":
             controller.expand(to: .overview)
+        case "home-edit":
+            controller.expand(to: .overview)
+            model.editingModules = true
         case "working":
             state.stateOverride = .working
             model.selectedModuleID = IslandModel.agentModuleID

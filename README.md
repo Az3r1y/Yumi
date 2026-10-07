@@ -34,7 +34,7 @@ Yumi is a native macOS app: Swift 6, SwiftUI and AppKit, no third-party dependen
 
 ## What he does
 
-**He follows Claude Code.** Every session, in every terminal and editor, shows up in the notch: thinking, running a tool, finished, failed. When Claude Code asks for a permission, the island opens and you answer from there, without switching windows. If you do not answer, the question goes back to Claude Code as usual.
+**He follows Claude Code.** Every session, in every terminal and editor, shows up in the notch with what it is working on: your request, the task of Claude's todo list and its progress (3/7), the action in progress ("Edits IslandModel.swift", "Runs swift test"), the last files and commands, and when a turn ends a short summary of what was done. Click a session to unfold it. All of this is read from the hooks and, for Claude's last message, from the session's transcript on your Mac; none of it is sent to Yumi's engine or anywhere else, and keys or tokens in commands are masked. When Claude Code asks for a permission, the island opens and you answer from there, without switching windows. If you do not answer, the question goes back to Claude Code as usual.
 
 **He shows one thing at a time.** Folded, the island shows what matters now: the track playing, the session at work, the next meeting. Open, a rail of icons lets you move between the modules.
 
@@ -55,7 +55,7 @@ He never deletes, sends, runs a command or edits a file he did not create. A req
 
 ### Which model Yumi thinks with
 
-The engine chats with you and proposes the plans. Whichever it is, every plan is checked by Yumi (known tools only, valid arguments, risk set by Yumi's code), every change asks you first, and the result is verified. In the chat, no engine has a tool that changes your Mac. What is on your screen is sent only if you tick it.
+The engine chats with you and proposes the plans. Whichever it is, every plan is checked by Yumi (known tools only, valid arguments, risk set by Yumi's code), every change asks you first, and the result is verified. In the chat, no engine has a tool that changes your Mac. What goes with your messages is said under « Privacy ».
 
 By default (« Automatique ») Yumi takes the first one ready, in this order; the settings, section Moteurs, let you pick one, change the order, enter keys and models, and test each engine.
 
@@ -87,7 +87,8 @@ Keys are stored in the macOS Keychain, never in a log or the permission history.
 | Focus | A work timer and its breaks | Nothing |
 | Music | The track playing, pause, next, previous | Automation, for Music or Spotify |
 | Weather | The sky where you are | Location, or a city typed by hand |
-| GitHub | Stars, forks, pull requests, pushes on your repositories | A personal access token |
+| GitHub | What happens on all your repositories (yours, shared, your organisations'), grouped by repository: pushes with their exact commits, commits today and this week, pull requests with their checks, stars, forks, releases; a click opens the commit. About once a minute, at GitHub's pace | A read-only personal access token |
+| Notion | Today's unfinished tasks and the late ones, from the databases you choose; a click opens the page | An internal integration key, and the databases shared with it |
 
 You choose which modules appear and in which order.
 
@@ -148,10 +149,14 @@ Yumi works without any of these. Each one unlocks a feature, and is asked for wh
 ## Privacy
 
 - No telemetry, no account, no server of ours.
-- The calendar, the reminders and the memory never leave your Mac.
-- Network calls go only to the services behind the modules you turned on (Open-Meteo for the weather, GitHub with your own token) and to the engine you use (see « Which model Yumi thinks with »).
+- The memory never leaves your Mac. The calendar, the reminders and your Notion tasks are read on your Mac (Notion from its API, with your key); the engine only gets Yumi's own answer about your day (one or two sentences), which then stays in the conversation like any message.
+- Notion: only the databases you tick in the settings are read. Yumi adds a task only through the agent, with your approval each time, and never changes or deletes a page.
+- GitHub is only asked at api.github.com, read-only, with conditional requests: repositories you hide in the settings are not read.
+- Network calls go only to the services behind the modules you turned on (Open-Meteo for the weather, GitHub and Notion with your own keys) and to the engine you use (see « Which model Yumi thinks with »).
 - The chat goes through that engine: your own Claude Code under your account, the API whose key you saved, or Ollama on your Mac.
-- A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. What is on your screen is never sent from the chat; only the Agent section of the settings can send it, when you tick it for that request.
+- When you open the chat, the name of the app in front, its window title and the site's domain are attached to your first message, and shown in the notch (« With … »); one click removes them, another attaches them again. The content of your screen is never sent. Only an explicit gesture (« Summarize », a window dragged onto Yumi, a dropped file) sends the full address of the page, or the file.
+- A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. The window in front goes to the planner only from the Agent section of the settings, when you tick it for that request.
+- « Always » on a Claude Code permission in the notch writes a permanent rule in your Claude Code settings (Claude Code's `updatedPermissions`). You remove it from Claude Code's settings (`/permissions` in Claude Code).
 - Tokens are stored in the macOS Keychain, never on disk and never in git.
 - Yumi never approves a Claude Code permission without an explicit click.
 - Every permission decision, Yumi's own and those of the chat, is kept in one history on your Mac (Settings, Yumi's permissions): which tool, which file or site, what was decided. Never the content, the search or the full address.

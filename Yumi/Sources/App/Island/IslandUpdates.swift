@@ -114,7 +114,11 @@ final class YumiUpdates: ObservableObject {
 
     // MARK: Feedback
 
-    static func feedbackURL() -> URL? {
+    /// "Envoyer un retour": the form that needs no account, with the version of Yumi filled in.
+    static func feedbackURL() -> URL? { Feedback.formURL(version: installed) }
+
+    /// The same, as a GitHub issue, for those who have an account.
+    static func githubFeedbackURL() -> URL? {
         let os = ProcessInfo.processInfo.operatingSystemVersion
         let notch = NSScreen.screens.contains { $0.safeAreaInsets.top > 0 }
         return Feedback.url(version: installed, macOS: "\(os.majorVersion).\(os.minorVersion).\(os.patchVersion)",

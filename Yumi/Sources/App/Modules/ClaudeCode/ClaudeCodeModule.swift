@@ -15,16 +15,27 @@ final class ClaudeCodeModule: YumiModule {
     /// Shows the sessions in the island (the pending approval if there is one).
     private let onShow: @MainActor () -> Void
 
-    init(onShow: @escaping @MainActor () -> Void) {
+    /// True when Claude Code is on the Mac but Yumi's hooks are not in its settings: Yumi sees
+    /// no session. Read when the module starts and after each install.
+    private let hooksMissing: @MainActor () -> Bool
+    /// Opens the settings on the hooks, where the change is shown before anything is written.
+    private let onInstallHooks: @MainActor () -> Void
+    private var missing = false
+
+    init(onShow: @escaping @MainActor () -> Void, hooksMissing: @escaping @MainActor () -> Bool = { false },
+         onInstallHooks: @escaping @MainActor () -> Void = {}) {
         self.onShow = onShow
+        self.hooksMissing = hooksMissing
+        self.onInstallHooks = onInstallHooks
     }
 
     /// What the chat is doing, while it answers through Claude Code; nil when it is idle.
     private var chat: ChatAnnouncement?
 
     var snapshot: ModuleSnapshot {
-        var snapshot = ClaudeSessions.snapshot(sessions)
-        snapshot.rows = board.rows()
+        let journals = ClaudeSessionJournals.shared.journals
+        var snapshot = ClaudeSessions.snapshot(sessions, hooksMissing: missing, journals: journals)
+        snapshot.rows = board.rows(journals: journals)
         // A session waiting for the user stays ahead of the chat's own activity.
         if snapshot.live == nil, let chat {
             snapshot.live = ModuleLive(text: chat.text,
@@ -42,6 +53,8 @@ final class ClaudeCodeModule: YumiModule {
 
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
+        missing = hooksMissing()
+        ClaudeSessionJournals.shared.onChange = { [weak self] in self?.onChange?() }
         rowObserver = NotificationCenter.default.addObserver(forName: .moduleRowAction, object: nil, queue: .main) { [weak self] note in
             guard note.userInfo?["module"] as? String == "claude-code", let row = note.userInfo?["row"] as? String else { return }
             MainActor.assumeIsolated { self?.open(row) }
@@ -55,6 +68,7 @@ final class ClaudeCodeModule: YumiModule {
         chat = nil
         departure?.cancel()
         departure = nil
+        ClaudeSessionJournals.shared.onChange = nil
         if let rowObserver { NotificationCenter.default.removeObserver(rowObserver) }
         rowObserver = nil
     }
@@ -64,6 +78,8 @@ final class ClaudeCodeModule: YumiModule {
         guard ordered != self.sessions else { return }
         self.sessions = ordered
         board.update(ordered)
+        // A journal lives as long as its session is in the list (a finished one, a moment more)
+        ClaudeSessionJournals.shared.keep(only: Set(board.rows().map(\.id)))
         scheduleDeparture()
         onChange?()
     }
@@ -88,6 +104,9 @@ final class ClaudeCodeModule: YumiModule {
 
     func perform(_ action: ModuleAction) {
         switch action {
+        case .primary where missing && sessions.isEmpty:
+            onInstallHooks()
+            missing = hooksMissing()
         case .primary:
             // A pending approval is answered in the island. Otherwise "Voir" goes where the
             // conversation is: the application the session runs in, whichever it is.

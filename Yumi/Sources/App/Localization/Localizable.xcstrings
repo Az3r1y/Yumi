@@ -807,6 +807,16 @@
         }
       }
     },
+    "%@ tâches Notion, dont %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ Notion tasks, including %@"
+          }
+        }
+      }
+    },
     "%@ vient d'étoiler %@. Je l'ai attrapée au vol.": {
       "localizations": {
         "en": {
@@ -867,6 +877,26 @@
           "stringUnit": {
             "state": "new",
             "value": "%1$@ · %2$@%3$@"
+          }
+        }
+      }
+    },
+    "%@ · %lld commits sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · %lld commits on %@"
+          }
+        }
+      }
+    },
+    "%@ · un commit sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · one commit on %@"
           }
         }
       }
@@ -1033,12 +1063,52 @@
         }
       }
     },
+    "%lld aujourd'hui, %lld cette semaine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld today, %lld this week"
+          }
+        }
+      }
+    },
+    "%lld commits sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld commits on %@"
+          }
+        }
+      }
+    },
+    "%lld en retard.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld late."
+          }
+        }
+      }
+    },
     "%lld min": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld tâches à faire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld tasks to do"
           }
         }
       }
@@ -1055,6 +1125,22 @@
           "stringUnit": {
             "state": "new",
             "value": "%1$lld. %2$@"
+          }
+        }
+      }
+    },
+    "%lld/%lld tâches": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$lld/%2$lld tasks"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "%1$lld/%2$lld tâches"
           }
         }
       }
@@ -1415,6 +1501,16 @@
         }
       }
     },
+    "Afficher %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show %@"
+          }
+        }
+      }
+    },
     "Afficher les outils de développeur": {
       "localizations": {
         "en": {
@@ -1567,6 +1663,16 @@
         }
       }
     },
+    "Aucun module affiché. Active-en un ci-dessous.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No module shown. Turn one on below."
+          }
+        }
+      }
+    },
     "Aucun modèle installé dans Ollama.": {
       "localizations": {
         "en": {
@@ -1577,12 +1683,42 @@
         }
       }
     },
+    "Aucune": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "Aucune base partagée avec l'intégration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No database shared with the integration"
+          }
+        }
+      }
+    },
     "Aucune décision.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "No decisions."
+          }
+        }
+      }
+    },
+    "Aucune tâche pour aujourd'hui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No task for today"
           }
         }
       }
@@ -1733,6 +1869,16 @@
         }
       }
     },
+    "Branche Notion dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Notion in the settings"
+          }
+        }
+      }
+    },
     "Brancher": {
       "localizations": {
         "en": {
@@ -1769,6 +1915,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancelled, I didn't do anything."
+          }
+        }
+      }
+    },
+    "C'est dans Notion, dans %@ : %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's in Notion, in %@: %@."
           }
         }
       }
@@ -2159,6 +2315,16 @@
         }
       }
     },
+    "Cherche sur le web": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searches the web"
+          }
+        }
+      }
+    },
     "Choisir…": {
       "localizations": {
         "en": {
@@ -2463,12 +2629,42 @@
         }
       }
     },
+    "Clic droit sur moi pour les réglages ou pour quitter. Triple Maj m'ouvre de partout.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Right-click me for settings or to quit. Press Shift three times to open me from anywhere."
+          }
+        }
+      }
+    },
     "Clé API": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "API key"
+          }
+        }
+      }
+    },
+    "Clé d'intégration": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Integration key"
+          }
+        }
+      }
+    },
+    "Clé enregistrée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Key saved"
           }
         }
       }
@@ -2513,6 +2709,16 @@
         }
       }
     },
+    "Compte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Account"
+          }
+        }
+      }
+    },
     "Conséquence : on ne pourra pas revenir en arrière": {
       "localizations": {
         "en": {
@@ -2553,6 +2759,26 @@
         }
       }
     },
+    "Contexte joint : %@. Retirer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context attached: %@. Remove"
+          }
+        }
+      }
+    },
+    "Contexte retiré : %@. Joindre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context removed: %@. Attach"
+          }
+        }
+      }
+    },
     "Copie un texte, je le garde en note.": {
       "localizations": {
         "en": {
@@ -2575,6 +2801,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Créer un fichier"
+          }
+        }
+      }
+    },
+    "Crée une intégration interne sur notion.so/my-integrations, colle sa clé ici, puis dans chaque base à suivre ouvre « … », « Connexions » et ajoute l'intégration. Je ne lis que les bases cochées ici, et je n'y ajoute une tâche qu'avec ton accord.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create an internal integration at notion.so/my-integrations, paste its key here, then in each database to follow open “…”, “Connections” and add the integration. I only read the databases ticked here, and only add a task with your approval."
           }
         }
       }
@@ -2621,12 +2857,32 @@
         }
       }
     },
+    "Dans l'île": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the island"
+          }
+        }
+      }
+    },
     "Dans ~/.claude/settings.json, « %@ » n'a pas la forme attendue. Je n'y ai pas touché.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "In ~/.claude/settings.json, \"%@\" isn't in the expected shape. I didn't touch it."
+          }
+        }
+      }
+    },
+    "Date": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date"
           }
         }
       }
@@ -2683,6 +2939,16 @@
         }
       }
     },
+    "Demande : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Request: %@"
+          }
+        }
+      }
+    },
     "Demande Bash : npm test": {
       "localizations": {
         "en": {
@@ -2703,12 +2969,32 @@
         }
       }
     },
+    "Depuis %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For %@"
+          }
+        }
+      }
+    },
     "Dernière note": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Latest note"
+          }
+        }
+      }
+    },
+    "Descendre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move down"
           }
         }
       }
@@ -2819,6 +3105,16 @@
         }
       }
     },
+    "Dépôts suivis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Followed repositories"
+          }
+        }
+      }
+    },
     "Détail": {
       "localizations": {
         "en": {
@@ -2909,6 +3205,16 @@
         }
       }
     },
+    "Erreur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error"
+          }
+        }
+      }
+    },
     "Essayer plus tard": {
       "localizations": {
         "en": {
@@ -2995,6 +3301,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub"
+          }
+        }
+      }
+    },
+    "Glisse pour changer l'ordre. Les %lld premiers restent dans l'île.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drag to change the order. The first %lld stay in the island."
           }
         }
       }
@@ -3125,6 +3441,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm missing the API key. Open Settings."
+          }
+        }
+      }
+    },
+    "Il me manque mes hooks. Je m'installe ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm missing my hooks. Shall I install them?"
           }
         }
       }
@@ -3895,6 +4221,16 @@
         }
       }
     },
+    "Je ne vois pas tes sessions Claude Code.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't see your Claude Code sessions."
+          }
+        }
+      }
+    },
     "Je ne vois pas ton GitHub.": {
       "localizations": {
         "en": {
@@ -3921,6 +4257,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I speak up"
+          }
+        }
+      }
+    },
+    "Je peux suivre tes sessions Claude Code. Je m'installe ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can follow your Claude Code sessions. Shall I set myself up?"
           }
         }
       }
@@ -4035,6 +4381,16 @@
         }
       }
     },
+    "Joindre cette fenêtre à ton message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attach this window to your message"
+          }
+        }
+      }
+    },
     "Juste ton prénom. Je le garde pour moi.": {
       "localizations": {
         "en": {
@@ -4085,6 +4441,16 @@
         }
       }
     },
+    "La liste arrive après la première lecture de GitHub.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The list comes after the first look at GitHub."
+          }
+        }
+      }
+    },
     "La nouvelle langue s'applique au prochain lancement de Yumi.": {
       "localizations": {
         "en": {
@@ -4131,6 +4497,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The session is over."
+          }
+        }
+      }
+    },
+    "Lance": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Runs"
           }
         }
       }
@@ -4215,6 +4591,16 @@
         }
       }
     },
+    "Les %lld premiers vont dans l'île, les suivants dans le second carré. Glisse-les pour changer l'ordre, ou utilise les flèches de chaque ligne (Tab pour y aller au clavier).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The first %lld go in the island, the next ones in the second square. Drag them to change the order, or use each row's arrows (Tab to reach them with the keyboard)."
+          }
+        }
+      }
+    },
     "Les hooks me disent ce que font tes sessions Claude Code. Claude Code marche pareil sans eux, je ne vois juste rien.": {
       "localizations": {
         "en": {
@@ -4255,6 +4641,16 @@
         }
       }
     },
+    "Lit la page": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reads the page"
+          }
+        }
+      }
+    },
     "Lueur": {
       "localizations": {
         "en": {
@@ -4271,6 +4667,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lueur · Halo Nord"
+          }
+        }
+      }
+    },
+    "Masquer %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hide %@"
           }
         }
       }
@@ -4335,6 +4741,36 @@
         }
       }
     },
+    "Modifier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Edit"
+          }
+        }
+      }
+    },
+    "Modules affichés": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shown modules"
+          }
+        }
+      }
+    },
+    "Modules masqués": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hidden modules"
+          }
+        }
+      }
+    },
     "Modèle": {
       "localizations": {
         "en": {
@@ -4361,6 +4797,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm Yumi. And you?"
+          }
+        }
+      }
+    },
+    "Monter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Move up"
           }
         }
       }
@@ -4415,6 +4861,16 @@
         }
       }
     },
+    "Ne pas envoyer cette fenêtre avec ton message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't send this window with your message"
+          }
+        }
+      }
+    },
     "Non, garde": {
       "localizations": {
         "en": {
@@ -4431,6 +4887,66 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edits a notebook"
+          }
+        }
+      }
+    },
+    "Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion"
+          }
+        }
+      }
+    },
+    "Notion a répondu par une erreur (%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion answered with an error (%lld)"
+          }
+        }
+      }
+    },
+    "Notion demande d'attendre %lld secondes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion asks to wait %lld seconds"
+          }
+        }
+      }
+    },
+    "Notion ne répond pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion is not answering"
+          }
+        }
+      }
+    },
+    "Notion ne répond pas comme prévu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion is not answering as expected"
+          }
+        }
+      }
+    },
+    "Notion refuse la clé, vérifie-la dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion refuses the key, check it in the settings"
           }
         }
       }
@@ -4651,6 +5167,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open the editor"
+          }
+        }
+      }
+    },
+    "Ouvrir l'île avec trois appuis sur Maj": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the island by pressing Shift three times"
           }
         }
       }
@@ -5075,6 +5601,16 @@
         }
       }
     },
+    "Quitter Yumi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quit Yumi"
+          }
+        }
+      }
+    },
     "Raccourci": {
       "localizations": {
         "en": {
@@ -5251,12 +5787,42 @@
         }
       }
     },
+    "Retirer la clé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove the key"
+          }
+        }
+      }
+    },
     "Retirer le jeton": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Remove the token"
+          }
+        }
+      }
+    },
+    "Rien": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing"
+          }
+        }
+      }
+    },
+    "Rien de modifié": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing changed"
           }
         }
       }
@@ -5287,6 +5853,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing running"
+          }
+        }
+      }
+    },
+    "Rien en retard.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing late."
           }
         }
       }
@@ -5497,6 +6073,16 @@
         }
       }
     },
+    "Sans %@ (cliquer pour joindre)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Without %@ (click to attach)"
+          }
+        }
+      }
+    },
     "Sans python3, je ne vois pas tes sessions (Claude Code marche normalement). « Installer » ouvre l'installation des outils de ligne de commande d'Apple.": {
       "localizations": {
         "en": {
@@ -5513,6 +6099,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No answer, so I didn't do anything."
+          }
+        }
+      }
+    },
+    "Sans titre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Untitled"
           }
         }
       }
@@ -5543,6 +6139,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Fold away after"
+          }
+        }
+      }
+    },
+    "Second carré": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Second square"
           }
         }
       }
@@ -5747,6 +6353,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Résumer une journée"
+          }
+        }
+      }
+    },
+    "Sur GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On GitHub"
           }
         }
       }
@@ -6027,6 +6643,16 @@
         }
       }
     },
+    "Tous tes dépôts sont suivis : les tiens, ceux où tu collabores et ceux de tes organisations que le jeton voit. Un jeton classique avec « repo » (et « read:org » pour les organisations), ou un jeton à granularité fine en lecture seule sur Contents, Metadata, Pull requests et Checks, suffit. Je ne fais que lire, et seulement auprès de api.github.com.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All your repositories are followed: yours, those you collaborate on, and those of your organisations the token can see. A classic token with “repo” (and “read:org” for organisations), or a fine-grained token with read-only Contents, Metadata, Pull requests and Checks, is enough. I only read, and only from api.github.com."
+          }
+        }
+      }
+    },
     "Tout effacer": {
       "localizations": {
         "en": {
@@ -6183,6 +6809,22 @@
         }
       }
     },
+    "Tâche %@ : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task %1$@: %2$@"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "new",
+            "value": "Tâche %1$@ : %2$@"
+          }
+        }
+      }
+    },
     "Tâches": {
       "localizations": {
         "en": {
@@ -6199,6 +6841,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "A bug, an idea"
+          }
+        }
+      }
+    },
+    "Un commit sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One commit on %@"
           }
         }
       }
@@ -6265,6 +6917,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "A sub-agent starts"
+          }
+        }
+      }
+    },
+    "Une clé d'intégration et les bases à suivre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An integration key and the databases to follow."
+          }
+        }
+      }
+    },
+    "Une en retard.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One late."
           }
         }
       }
@@ -6389,6 +7061,16 @@
         }
       }
     },
+    "Une tâche à faire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One task to do"
+          }
+        }
+      }
+    },
     "Une version de %@": {
       "localizations": {
         "en": {
@@ -6477,6 +7159,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Go get some air, I'll mind the house."
+          }
+        }
+      }
+    },
+    "Valeur « terminé »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Done” value"
           }
         }
       }
@@ -6795,12 +7487,32 @@
         }
       }
     },
+    "aucune base Notion n'est choisie dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no Notion database is chosen in the settings"
+          }
+        }
+      }
+    },
     "aucune durée à vérifier": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "no duration to check"
+          }
+        }
+      }
+    },
+    "aucune page à vérifier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no page to check"
           }
         }
       }
@@ -6821,6 +7533,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "blocked"
+          }
+        }
+      }
+    },
+    "c'est un jour déjà passé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "that day is already past"
           }
         }
       }
@@ -6855,6 +7577,16 @@
         }
       }
     },
+    "cette base n'est pas partagée avec ton intégration Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "this database is not shared with your Notion integration"
+          }
+        }
+      }
+    },
     "cette session": {
       "localizations": {
         "en": {
@@ -6885,6 +7617,26 @@
         }
       }
     },
+    "commande": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "command"
+          }
+        }
+      }
+    },
+    "commandes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "commands"
+          }
+        }
+      }
+    },
     "créer": {
       "localizations": {
         "en": {
@@ -6901,6 +7653,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "MMM d, HH:mm"
+          }
+        }
+      }
+    },
+    "dans la base Notion %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "in the Notion database %@"
           }
         }
       }
@@ -6985,6 +7747,16 @@
         }
       }
     },
+    "dis-moi dans quelle base : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tell me which database: %@"
+          }
+        }
+      }
+    },
     "du brouillard": {
       "localizations": {
         "en": {
@@ -7037,6 +7809,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "in error"
+          }
+        }
+      }
+    },
+    "en retard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "late"
           }
         }
       }
@@ -7099,6 +7881,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "and write to us if you have a question."
+          }
+        }
+      }
+    },
+    "fichier modifié": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "file changed"
+          }
+        }
+      }
+    },
+    "fichiers modifiés": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "files changed"
           }
         }
       }
@@ -7233,6 +8035,16 @@
         }
       }
     },
+    "il n'y a pas de clé Notion dans les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "there is no Notion key in the settings"
+          }
+        }
+      }
+    },
     "je n'ai pas accès %@, autorise Yumi dans Réglages Système, Confidentialité et sécurité": {
       "localizations": {
         "en": {
@@ -7259,6 +8071,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "I only add to files I created myself, and %@ isn't one of them"
+          }
+        }
+      }
+    },
+    "je ne connais pas cette base Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't know this Notion database"
+          }
+        }
+      }
+    },
+    "je ne connais pas la base « %@ » ; les bases choisies : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't know the database “%@”; the chosen ones: %@"
           }
         }
       }
@@ -7465,6 +8297,26 @@
         }
       }
     },
+    "la page enregistrée s'appelle « %@ », pas « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the saved page is called “%@”, not “%@”"
+          }
+        }
+      }
+    },
+    "la page « %@ » n'est pas dans Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the page “%@” is not in Notion"
+          }
+        }
+      }
+    },
     "la réponse est une liste": {
       "localizations": {
         "en": {
@@ -7491,6 +8343,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "the answer is more than two sentences"
+          }
+        }
+      }
+    },
+    "la tâche « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the task “%@”"
           }
         }
       }
@@ -7817,6 +8679,16 @@
         }
       }
     },
+    "masqué": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hidden"
+          }
+        }
+      }
+    },
     "met à jour ses tâches": {
       "localizations": {
         "en": {
@@ -7887,6 +8759,16 @@
         }
       }
     },
+    "ntn_…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ntn_…"
+          }
+        }
+      }
+    },
     "oui": {
       "localizations": {
         "en": {
@@ -7917,6 +8799,16 @@
         }
       }
     },
+    "pas encore lu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "not read yet"
+          }
+        }
+      }
+    },
     "pause": {
       "localizations": {
         "en": {
@@ -7943,6 +8835,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "no more free time %@"
+          }
+        }
+      }
+    },
+    "pour le %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "for %@"
           }
         }
       }
@@ -8089,6 +8991,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "untitled"
+          }
+        }
+      }
+    },
+    "second carré": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "second square"
           }
         }
       }
@@ -8305,6 +9217,16 @@
         }
       }
     },
+    "une tâche Notion : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "one Notion task: %@"
+          }
+        }
+      }
+    },
     "une étape facultative a été laissée": {
       "localizations": {
         "en": {
@@ -8431,6 +9353,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "\"When it matters\": a few times a day at most. \"Gladly\": also to say hello."
+          }
+        }
+      }
+    },
+    "À brancher": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To connect"
           }
         }
       }
@@ -8741,6 +9673,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "stars"
+          }
+        }
+      }
+    },
+    "île": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "island"
           }
         }
       }

@@ -71,6 +71,11 @@ final class AppState: ObservableObject {
 
     // Context for prompt (window attach / file)
     @Published var promptContext: PromptContext? = nil
+    /// The context shown in the chat goes with the next message; one click on « Avec … » detaches it.
+    @Published var contextAttached: Bool = true
+    /// The context comes from a gesture of the person (« Résumer », a dragged window, a dropped
+    /// file): it goes as it is. Otherwise a page's address is reduced to its domain.
+    var contextExplicit: Bool = false
 
     // Dropped file (set during upload flow)
     @Published var droppedFile: DroppedFile? = nil
@@ -232,6 +237,19 @@ final class AppState: ObservableObject {
 enum PromptContext {
     case window(appName: String, title: String, url: String?)
     case file(name: String, fileURL: URL?)
+
+    /// What may leave with a message, after the person's choice (ChatContextPolicy).
+    func outgoing(attached: Bool, explicit: Bool) -> PromptContext? {
+        let chat: ChatContext = switch self {
+        case .window(let app, let title, let url): .window(app: app, title: title, url: url)
+        case .file(let name, let fileURL): .file(name: name, path: fileURL?.path)
+        }
+        switch ChatContextPolicy.outgoing(chat, attached: attached, explicit: explicit) {
+        case .window(let app, let title, let url)?: return .window(appName: app, title: title, url: url)
+        case .file?: return self
+        case nil: return nil
+        }
+    }
 }
 
 struct DroppedFile {

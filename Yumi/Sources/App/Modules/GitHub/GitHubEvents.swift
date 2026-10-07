@@ -34,6 +34,9 @@ struct GitHubEvent: Equatable, Sendable {
     var url: URL? = nil
     /// When it happened (`created_at`), when GitHub says.
     var date: Date? = nil
+    /// A push: the commit before it and its head, to read its commits through compare.
+    var before: String = ""
+    var head: String = ""
 
     /// The repository's own name, without its owner.
     var repoName: String { repo.split(separator: "/").last.map(String.init) ?? repo }
@@ -81,14 +84,17 @@ enum GitHubFeed {
     /// The events of a feed (`/users/{login}/events` or `/received_events`) that Yumi follows.
     /// - Parameter received: true for what others did. Only the person's own repositories count
     ///   there, and never what the person did (it is already in their own feed).
-    static func events(from data: Data, login: String, received: Bool) -> [GitHubEvent] {
+    /// - Parameter repos: the person's repositories (owned, shared, of their organisations). In
+    ///   the received feed, what others do on them counts; nil keeps the person's own namespace.
+    static func events(from data: Data, login: String, received: Bool, repos: Set<String>? = nil) -> [GitHubEvent] {
         guard let items = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]] else { return [] }
         return items.compactMap { item in
             guard let id = (item["id"] as? String).flatMap(Int64.init),
                   let repo = (item["repo"] as? [String: Any])?["name"] as? String,
                   let actor = (item["actor"] as? [String: Any])?["login"] as? String else { return nil }
             if received {
-                guard repo.lowercased().hasPrefix(login.lowercased() + "/"), actor.lowercased() != login.lowercased() else { return nil }
+                let mine = repos.map { $0.contains(repo) } ?? false
+                guard mine || repo.lowercased().hasPrefix(login.lowercased() + "/"), actor.lowercased() != login.lowercased() else { return nil }
             }
             let payload = item["payload"] as? [String: Any] ?? [:]
             let action = payload["action"] as? String ?? ""
@@ -112,7 +118,8 @@ enum GitHubFeed {
                 return nil
             case "PushEvent":
                 let branch = (payload["ref"] as? String ?? "").replacingOccurrences(of: "refs/heads/", with: "")
-                return GitHubEvent(id: id, kind: .push, repo: repo, actor: actor, detail: branch, url: page)
+                return GitHubEvent(id: id, kind: .push, repo: repo, actor: actor, detail: branch, url: page,
+                                   before: payload["before"] as? String ?? "", head: payload["head"] as? String ?? "")
             case "IssuesEvent" where action == "opened":
                 let issue = payload["issue"] as? [String: Any] ?? [:]
                 return GitHubEvent(id: id, kind: .issue, repo: repo, actor: actor, detail: issue["title"] as? String ?? "",

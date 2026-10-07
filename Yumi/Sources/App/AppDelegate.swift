@@ -74,11 +74,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         button.image?.isTemplate = true
 
         let menu = NSMenu()
-        menu.addItem(withTitle: "Open \(AppIdentity.productName)", action: #selector(openIsland), keyEquivalent: "")
+        menu.addItem(withTitle: loc("Ouvrir \(AppIdentity.productName)"), action: #selector(openIsland), keyEquivalent: "")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
+        menu.addItem(withTitle: loc("Réglages…"), action: #selector(openSettings), keyEquivalent: ",")
         menu.addItem(.separator())
-        menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        menu.addItem(withTitle: loc("Quitter Yumi"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
         statusItem?.menu = menu
     }
@@ -91,14 +91,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private var settingsWindow: NSWindow?
 
-    @objc private func openSettings() {
-        if let w = settingsWindow, w.isVisible { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+    @objc private func openSettings(_ sender: Any? = nil) {
+        // The island may ask for a page: Claude Code, to install the hooks
+        let page = (sender as? Notification)?.object as? SettingsPage
+        if let w = settingsWindow, w.isVisible, page == nil { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+        settingsWindow?.close()
         let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600),
                            styleMask: [.titled, .closable, .miniaturizable, .resizable],
                            backing: .buffered, defer: false)
         win.title = loc("Réglages de \(AppIdentity.productName)")
         win.contentMinSize = NSSize(width: 700, height: 480)
-        win.contentView = NSHostingView(rootView: SettingsView())
+        win.contentView = NSHostingView(rootView: SettingsView(page: page ?? .general))
         win.center()
         win.isReleasedWhenClosed = false
         settingsWindow = win
@@ -123,7 +126,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         #if DEBUG
         if plan.chat { sendDevelopmentChatPrompts() }
         #endif
-        NotificationCenter.default.addObserver(self, selector: #selector(openSettings),
+        NotificationCenter.default.addObserver(self, selector: #selector(openSettings(_:)),
                                                name: .openFullSettings, object: nil)
     }
 }
@@ -265,13 +268,17 @@ final class YumiCore {
             if state.memory != book.entries { state.memory = book.entries }
             if state.userName != book.name { state.userName = book.name }
         }
-        let claudeCode = ClaudeCodeModule(onShow: { mirror.show() })
+        let claudeCode = ClaudeCodeModule(onShow: { mirror.show() },
+                                          hooksMissing: { EngineFactory.hasClaudeCode && !HookServer.hooksInstalled() },
+                                          onInstallHooks: { IslandActions.openSettings(.claudeCode) })
         let agenda = AgendaModule()
         let focus = FocusModule()
         let notes = NotesModule()
         let weather = WeatherModule()
+        let notion = NotionModule(api: Self.notionAPI,
+                                  openSettings: { NotificationCenter.default.post(name: .openFullSettings, object: nil) })
         agent = Self.makeAgent(permissions: permissions,
-                               modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather))
+                               modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather, notion: notion))
         let memory = memory
         var initiativeDefaults = UserDefaults.standard
         #if DEBUG
@@ -318,6 +325,7 @@ final class YumiCore {
                 focus,
                 MusicModule(),
                 weather,
+                notion,
                 GitHubModule(
                     token: { KeychainStore.shared.get("github-token") },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
@@ -348,6 +356,7 @@ final class YumiCore {
         startAgent(state: .shared)
         memory.start()
         ClaudeService.shared.memory = memory
+        modules.share(with: .shared)
         modules.start()
         initiative.start()
         #if DEBUG
@@ -401,6 +410,9 @@ final class YumiCore {
     /// creating a file or a reminder, which always asks first; starting a Focus and summing up the
     /// day need no question. The App Store build may not launch programs nor write outside its
     /// container: it plans with the key only, and only reads.
+    /// Notion, with the integration key of the settings (Keychain).
+    static let notionAPI = NotionAPI(key: { KeychainStore.shared.get("notion-integration-key") })
+
     private static func makeAgent(permissions: LocalPermissionManager, modules: ModuleBridge) -> RuntimeAgent {
         // The engines of the settings, in their order (EngineFactory): read again at each request.
         let provider = EngineFactory.planner
@@ -413,6 +425,7 @@ final class YumiCore {
         try? tools.register(CreateFileTool(log: created))
         try? tools.register(AppendToFileTool(log: created))
         try? tools.register(AddEventTool(store: EventKitEventStore()))
+        try? tools.register(AddNotionTaskTool(store: NotionAgentStore(api: notionAPI)))
         try? tools.register(AddReminderTool(store: EventKitReminderStore()))
         try? tools.register(StartFocusTool(focus: modules))
         try? tools.register(GetTodayTool(source: modules))

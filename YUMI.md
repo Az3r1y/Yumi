@@ -506,3 +506,47 @@ But : que l'on puisse essayer le chat et l'agent sans Claude Code.
 | `IslandDemo`, `BotDemo`, mode tournage | Outils de développement et de tournage. |
 
 Correction faite au passage : `openai-api-key` et `gemini-api-key` n'étaient pas lues au lancement par `KeychainStore` : ces clés étaient oubliées à chaque redémarrage.
+
+## Confidentialité : le contexte du chat (branche `yumi/contexte-chat`)
+
+Signalé par un lecteur du code : à l'ouverture du chat, le nom de l'app au premier plan, le titre de sa fenêtre et l'URL complète partaient au moteur avec le premier message, sans geste de la personne, alors que le README disait le contraire.
+
+| Sujet | Décision |
+|---|---|
+| Phrase exacte | Quand tu ouvres le chat, le nom de l'app au premier plan, le titre de sa fenêtre et le domaine du site sont joints à ton premier message, et affichés dans l'encoche ; un clic les retire. Le contenu de ton écran n'est jamais envoyé. |
+| Contrôle | Le bandeau « Avec … » est un bouton (clavier et VoiceOver compris) : un clic détache le contexte, un clic le rattache (`AppState.contextAttached`). Détaché, il ne part nulle part. |
+| URL | Sans geste explicite, réduite au domaine (`ChatContextPolicy`). « Résume-moi cette fenêtre », une fenêtre glissée sur Yumi ou un fichier déposé (`AppState.contextExplicit`) gardent le comportement d'avant : adresse complète, fichier. |
+| Un seul filtre | `IslandActions.send` applique `PromptContext.outgoing` avant `ClaudeService.chat` : les trois chemins qui suivent reçoivent le même contexte filtré. |
+| « Toujours » | Écrit une règle permanente dans les réglages Claude Code de la personne (`updatedPermissions`), qu'elle retire depuis Claude Code (`/permissions`). |
+
+Chemins où un contexte de fenêtre ou de fichier part vers un moteur, vérifiés :
+1. Chat par Claude Code : `ChatPhrases.message` préfixe le premier message (fenêtre, ou chemin d'un fichier déposé, lu par Claude Code dans le dossier inbox) ; une seule fois par session (`sentContext`).
+2. Chat par la clé Anthropic (`chatWithAPI`) : « Context — App, Window, URL » au premier message ; un fichier déposé y est envoyé en entier (`readFileAsBlock`), seulement après un dépôt.
+3. Chat par OpenAI, Gemini, Ollama (`chatWithProvider`) : `ChatPhrases.message` au premier message.
+4. Agent depuis le chat : le snapshot du Context Engine accompagne la demande mais n'est jamais transmis au planificateur (`sharesContextWithModel` à false) ; seul le panneau Agent des réglages peut le transmettre, sur case cochée.
+5. Mémoire : ce que la personne a fait noter, envoyé au moteur du chat ; jamais le contexte de fenêtre.
+6. Résumé de fil (fin de conversation Claude Code) : reprend la session existante, sans contexte nouveau.
+
+## Module Notion (branche `yumi/notion`)
+
+Demandé par plusieurs testeurs.
+
+| Sujet | Décision |
+|---|---|
+| API | API publique de Notion, version datée `2022-06-28` (toujours prise en charge d'après la doc de versionnement de Notion), en-têtes `Notion-Version` et `Authorization: Bearer`. Recherche des bases partagées, requête d'une base, création de page, lecture de page. Pas de Notion Calendar (pas d'API publique). |
+| Clé | Clé d'intégration interne collée dans Réglages, Modules, Notion, rangée dans le trousseau sous `notion-integration-key` (pas `notion-api-key`, le nom de Coucou, effacé une fois au lancement). Lue au lancement avec les autres. |
+| Bases | La personne coche les bases partagées avec l'intégration (`NotionBases`, préférence `notion.bases`) et choisit pour chacune la propriété de date et celle de fin (case à cocher, ou statut avec sa valeur « terminé »). Seules ces bases sont lues. |
+| Île | Module `notion` : tâches non terminées du jour et en retard (en retard d'abord), un clic ouvre la page (`notion://`, repli https). Live dans l'île repliée seulement si une tâche à heure tombe dans le quart d'heure. Une lecture toutes les 5 minutes ; sur 429, attente du `Retry-After`, jamais moins d'une minute. |
+| Agent | `get_today` ajoute les tâches Notion du jour demandé (« deux tâches Notion, dont … »), titres coupés à une ligne. `add_notion_task` (titre, date facultative, base si plusieurs) : action create, risque write (plancher medium), accord toujours demandé avec la tâche, le jour et la base ; `check` avant (base connue et accessible) ; vérification après (la page relue a ce titre). Aucune modification ni suppression de page. Build directe seulement. |
+| Confidentialité | Rien n'est envoyé au moteur en dehors de la phrase de `get_today`. Les titres de pages sont des données : ils ne changent ni les permissions ni le plan. |
+
+## GitHub : toute l'activité (branche `yumi/github`)
+
+| Sujet | Décision |
+|---|---|
+| Dépôts | `/user/repos?affiliation=owner,collaborator,organization_member` : tous ceux que le jeton voit (organisations si le jeton le permet). Tous suivis par défaut ; Réglages, Modules, GitHub, « Dépôts suivis » pour en masquer (`github.hiddenRepos`). Login et liste gardés pour les réglages (`github.login`, `github.knownRepos`). |
+| Flux | `/users/{login}/events` et `/received_events` (ce que d'autres font sur les dépôts de la personne), requêtes conditionnelles avec ETag (une 304 ne coûte rien), au rythme de `X-Poll-Interval` (60 s au moins) ; quota épuisé : attente jusqu'à `x-ratelimit-reset`. Pas de webhook. |
+| Commits | La doc GitHub des types d'événements ne liste plus de `commits` dans `PushEvent` (seulement `ref`, `head`, `before`) : les commits sont lus par `/repos/{repo}/compare/{before}...{head}` (ou le commit seul pour une nouvelle branche), une fois par push, six au plus par passage. |
+| Île | Fil par dépôt : en-tête « Yumi · 3 aujourd'hui, 12 cette semaine », puis « 3 commits sur main » et chaque commit (message, sha court, auteur), un clic ouvre le commit ; les autres événements ; puis les PR ouvertes et leurs checks (inchangé). Île repliée : CI rouge et relecture d'abord, puis un push de moins de deux minutes. Scènes du personnage inchangées. Les commits ne se replient pas : `ModuleRow` n'a pas de lignes dépliables, et l'île est un chantier à part. |
+| Comptes | Calculés sur les pushes vus dans le flux (GitHub en garde 90 jours, 300 événements au plus). |
+| Confidentialité | Seulement api.github.com, en lecture. Aucune écriture sur GitHub. |

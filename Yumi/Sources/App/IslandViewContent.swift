@@ -139,7 +139,16 @@ struct IslandTalkView: View {
         let lines = lines
         VStack(alignment: .leading, spacing: 8) {
             if let contextName {
-                ActMeta(color: IslandTheme.violet, text: loc("Avec \(contextName)")).riseIn(0)
+                // A control, not a label: one click detaches what is in front, one click attaches it again.
+                Button { state.contextAttached.toggle() } label: {
+                    ActMeta(color: state.contextAttached ? IslandTheme.violet : IslandTheme.muted,
+                            text: state.contextAttached ? loc("Avec \(contextName)") : loc("Sans \(contextName) (cliquer pour joindre)"))
+                        .opacity(state.contextAttached ? 1 : 0.6)
+                }
+                .buttonStyle(.plain)
+                .help(state.contextAttached ? loc("Ne pas envoyer cette fenêtre avec ton message") : loc("Joindre cette fenêtre à ton message"))
+                .accessibilityLabel(state.contextAttached ? loc("Contexte joint : \(contextName). Retirer") : loc("Contexte retiré : \(contextName). Joindre"))
+                .riseIn(0)
             }
 
             if !lines.isEmpty || live != nil || state.stateOverride == .thinking {
@@ -185,6 +194,8 @@ struct IslandTalkView: View {
             // `.ask`
             HStack(spacing: 6) {
                 TextField("", text: $text, prompt: Text("Demande-moi quelque chose").foregroundStyle(IslandTheme.faint))
+                    // An unsent message keeps the island open when the person clicks elsewhere
+                    .onChange(of: text) { _, value in IslandModel.shared.hasDraft = !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                     .textFieldStyle(.plain)
                     .font(IslandTheme.text(13, .regular))
                     .foregroundStyle(IslandTheme.fg)
