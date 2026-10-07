@@ -1,5 +1,6 @@
 import React from "react";
-import { AbsoluteFill, Sequence, interpolate, useVideoConfig } from "remotion";
+import { Audio } from "@remotion/media";
+import { AbsoluteFill, Sequence, interpolate, staticFile, useVideoConfig } from "remotion";
 import { Son } from "../son/Son";
 import { EASE, THEME } from "../theme";
 import { Words } from "../type/Words";
@@ -418,7 +419,38 @@ const Reel: React.FC<{ readonly langue: Langue }> = ({ langue }) => {
   );
 };
 
-export const Recap: React.FC = () => <Corps langue="fr" />;
-export const RecapEn: React.FC = () => <Corps langue="en" />;
-export const ReelFr: React.FC = () => <Reel langue="fr" />;
-export const ReelEn: React.FC = () => <Reel langue="en" />;
+/** An original lo-fi track (public/musique/lofi-recap.wav), under Yumi's own sounds, faded out at the end. */
+const Musique: React.FC<{ readonly length: number }> = ({ length }) => {
+  const { fps } = useVideoConfig();
+  return (
+    <Audio
+      src={staticFile("musique/lofi-recap.wav")}
+      volume={(f) => 0.42 * interpolate(f / fps, [length - 2.5, length], [1, 0], CLAMP)}
+    />
+  );
+};
+
+export const Recap: React.FC = () => (
+  <>
+    <Corps langue="fr" />
+    <Musique length={RECAP_LENGTH} />
+  </>
+);
+export const RecapEn: React.FC = () => (
+  <>
+    <Corps langue="en" />
+    <Musique length={RECAP_LENGTH} />
+  </>
+);
+export const ReelFr: React.FC = () => (
+  <>
+    <Reel langue="fr" />
+    <Musique length={REEL_LENGTH} />
+  </>
+);
+export const ReelEn: React.FC = () => (
+  <>
+    <Reel langue="en" />
+    <Musique length={REEL_LENGTH} />
+  </>
+);
