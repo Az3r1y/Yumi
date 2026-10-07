@@ -15,6 +15,8 @@ final class IslandModel: ObservableObject {
     @Published var launchStage: IslandStage?
     /// The classes of `.greet` in the mock-up: lit, say, bye.
     @Published var greeting = GreetingPhase()
+    /// The overview is in "Modifier" mode: the modules wiggle, can be moved and hidden.
+    @Published var editingModules = false
     /// The chat field holds text not sent yet.
     var hasDraft = false
     /// The sequence playing is the goodbye, not the launch.
