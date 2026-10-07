@@ -432,6 +432,8 @@ final class IslandWindowController: NSWindowController {
         if let ctx = windowContextAtPoint(mouse) {
             IslandActions.newConversation()
             state.promptContext = ctx
+            state.contextAttached = true
+            state.contextExplicit = true
             SoundEngine.shared.play("approve")
             expand(to: .prompt)
         }

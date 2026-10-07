@@ -2553,6 +2553,26 @@
         }
       }
     },
+    "Contexte joint : %@. Retirer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context attached: %@. Remove"
+          }
+        }
+      }
+    },
+    "Contexte retiré : %@. Joindre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Context removed: %@. Attach"
+          }
+        }
+      }
+    },
     "Copie un texte, je le garde en note.": {
       "localizations": {
         "en": {
@@ -4035,6 +4055,16 @@
         }
       }
     },
+    "Joindre cette fenêtre à ton message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Attach this window to your message"
+          }
+        }
+      }
+    },
     "Juste ton prénom. Je le garde pour moi.": {
       "localizations": {
         "en": {
@@ -4411,6 +4441,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Weather"
+          }
+        }
+      }
+    },
+    "Ne pas envoyer cette fenêtre avec ton message": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Don't send this window with your message"
           }
         }
       }
@@ -5493,6 +5533,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hi."
+          }
+        }
+      }
+    },
+    "Sans %@ (cliquer pour joindre)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Without %@ (click to attach)"
           }
         }
       }

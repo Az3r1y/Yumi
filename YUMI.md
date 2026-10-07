@@ -506,3 +506,23 @@ But : que l'on puisse essayer le chat et l'agent sans Claude Code.
 | `IslandDemo`, `BotDemo`, mode tournage | Outils de développement et de tournage. |
 
 Correction faite au passage : `openai-api-key` et `gemini-api-key` n'étaient pas lues au lancement par `KeychainStore` : ces clés étaient oubliées à chaque redémarrage.
+
+## Confidentialité : le contexte du chat (branche `yumi/contexte-chat`)
+
+Signalé par un lecteur du code : à l'ouverture du chat, le nom de l'app au premier plan, le titre de sa fenêtre et l'URL complète partaient au moteur avec le premier message, sans geste de la personne, alors que le README disait le contraire.
+
+| Sujet | Décision |
+|---|---|
+| Phrase exacte | Quand tu ouvres le chat, le nom de l'app au premier plan, le titre de sa fenêtre et le domaine du site sont joints à ton premier message, et affichés dans l'encoche ; un clic les retire. Le contenu de ton écran n'est jamais envoyé. |
+| Contrôle | Le bandeau « Avec … » est un bouton (clavier et VoiceOver compris) : un clic détache le contexte, un clic le rattache (`AppState.contextAttached`). Détaché, il ne part nulle part. |
+| URL | Sans geste explicite, réduite au domaine (`ChatContextPolicy`). « Résume-moi cette fenêtre », une fenêtre glissée sur Yumi ou un fichier déposé (`AppState.contextExplicit`) gardent le comportement d'avant : adresse complète, fichier. |
+| Un seul filtre | `IslandActions.send` applique `PromptContext.outgoing` avant `ClaudeService.chat` : les trois chemins qui suivent reçoivent le même contexte filtré. |
+| « Toujours » | Écrit une règle permanente dans les réglages Claude Code de la personne (`updatedPermissions`), qu'elle retire depuis Claude Code (`/permissions`). |
+
+Chemins où un contexte de fenêtre ou de fichier part vers un moteur, vérifiés :
+1. Chat par Claude Code : `ChatPhrases.message` préfixe le premier message (fenêtre, ou chemin d'un fichier déposé, lu par Claude Code dans le dossier inbox) ; une seule fois par session (`sentContext`).
+2. Chat par la clé Anthropic (`chatWithAPI`) : « Context — App, Window, URL » au premier message ; un fichier déposé y est envoyé en entier (`readFileAsBlock`), seulement après un dépôt.
+3. Chat par OpenAI, Gemini, Ollama (`chatWithProvider`) : `ChatPhrases.message` au premier message.
+4. Agent depuis le chat : le snapshot du Context Engine accompagne la demande mais n'est jamais transmis au planificateur (`sharesContextWithModel` à false) ; seul le panneau Agent des réglages peut le transmettre, sur case cochée.
+5. Mémoire : ce que la personne a fait noter, envoyé au moteur du chat ; jamais le contexte de fenêtre.
+6. Résumé de fil (fin de conversation Claude Code) : reprend la session existante, sans contexte nouveau.

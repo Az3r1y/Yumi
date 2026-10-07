@@ -55,7 +55,7 @@ He never deletes, sends, runs a command or edits a file he did not create. A req
 
 ### Which model Yumi thinks with
 
-The engine chats with you and proposes the plans. Whichever it is, every plan is checked by Yumi (known tools only, valid arguments, risk set by Yumi's code), every change asks you first, and the result is verified. In the chat, no engine has a tool that changes your Mac. What is on your screen is sent only if you tick it.
+The engine chats with you and proposes the plans. Whichever it is, every plan is checked by Yumi (known tools only, valid arguments, risk set by Yumi's code), every change asks you first, and the result is verified. In the chat, no engine has a tool that changes your Mac. What goes with your messages is said under « Privacy ».
 
 By default (« Automatique ») Yumi takes the first one ready, in this order; the settings, section Moteurs, let you pick one, change the order, enter keys and models, and test each engine.
 
@@ -151,7 +151,9 @@ Yumi works without any of these. Each one unlocks a feature, and is asked for wh
 - The calendar, the reminders and the memory never leave your Mac.
 - Network calls go only to the services behind the modules you turned on (Open-Meteo for the weather, GitHub with your own token) and to the engine you use (see « Which model Yumi thinks with »).
 - The chat goes through that engine: your own Claude Code under your account, the API whose key you saved, or Ollama on your Mac.
-- A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. What is on your screen is never sent from the chat; only the Agent section of the settings can send it, when you tick it for that request.
+- When you open the chat, the name of the app in front, its window title and the site's domain are attached to your first message, and shown in the notch (« With … »); one click removes them, another attaches them again. The content of your screen is never sent. Only an explicit gesture (« Summarize », a window dragged onto Yumi, a dropped file) sends the full address of the page, or the file.
+- A plan request sends the model your words, the last few messages of the chat, today's date and time, the list of Yumi's tools and the names of the last files he created. The window in front goes to the planner only from the Agent section of the settings, when you tick it for that request.
+- « Always » on a Claude Code permission in the notch writes a permanent rule in your Claude Code settings (Claude Code's `updatedPermissions`). You remove it from Claude Code's settings (`/permissions` in Claude Code).
 - Tokens are stored in the macOS Keychain, never on disk and never in git.
 - Yumi never approves a Claude Code permission without an explicit click.
 - Every permission decision, Yumi's own and those of the chat, is kept in one history on your Mac (Settings, Yumi's permissions): which tool, which file or site, what was decided. Never the content, the search or the full address.
