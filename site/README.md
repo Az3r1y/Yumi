@@ -1,6 +1,6 @@
 # Le site de Yumi
 
-Une seule page statique, servie par GitHub Pages à l'adresse https://estebanbaigts.github.io/Yumi/. Rien à installer pour la servir : HTML, CSS, un fichier JavaScript déjà construit, des images et la vidéo.
+Une page statique en anglais (`index.html`) et sa version française (`fr/index.html`), servie par GitHub Pages à l'adresse https://estebanbaigts.github.io/Yumi/. Rien à installer pour la servir : HTML, CSS, un fichier JavaScript déjà construit, des images et la vidéo.
 
 ## Prévisualiser
 
