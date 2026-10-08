@@ -229,6 +229,40 @@ private final class FakeNotion: NotionTaskStore, @unchecked Sendable {
     }
 }
 
+@Suite struct NotionMoreThanTodayTests {
+    @Test func theWeekAndTheLatestPagesFollowToday() {
+        let now = paris.date(from: DateComponents(year: 2026, month: 10, day: 7, hour: 14))!
+        let today = [NotionTask(id: "t", title: "Courses", due: paris.startOfDay(for: now), hasTime: false, url: nil, base: " Tâches", status: "À faire")]
+        let friday = paris.date(from: DateComponents(year: 2026, month: 10, day: 9, hour: 15))!
+        let week = [NotionTask(id: "w", title: "Démo client", due: friday, hasTime: true, url: URL(string: "https://notion.so/w"), base: "Tâches")]
+        let recent = [
+            NotionPage(id: "old", title: "Contrat", edited: now.addingTimeInterval(-7200), url: nil, base: "DOCS"),
+            NotionPage(id: "p", title: "Acme", edited: now.addingTimeInterval(-60), url: URL(string: "https://notion.so/p"), base: "Clients actifs"),
+            NotionPage(id: "t", title: "Courses", edited: now, url: nil, base: " Tâches"),
+        ]
+        let rows = NotionBoard.rows(today, upcoming: week, recent: recent, now: now, calendar: paris, canTick: true, ticking: [])
+        #expect(rows.map(\.id) == ["t", "w", "page-p", "page-old"])
+        #expect(rows.map(\.section) == ["Aujourd'hui", "Cette semaine", "Modifié récemment", nil])
+        #expect(rows[0].detail == "Tâches · À faire")
+        #expect(rows[1].label == "ven. 15:00" && rows[1].check == "done:w")
+        #expect(rows[2].action == "open:p" && rows[2].check == nil && rows[2].detail == "Clients actifs")
+    }
+
+    @Test func statusAndPagesAreRead() {
+        let properties: [String: [String: Any]] = [
+            "Fait": ["type": "checkbox", "checkbox": false],
+            "status": ["type": "status", "status": ["name": "a faire"]],
+        ]
+        #expect(NotionAPI.status(of: properties, except: "Fait") == "a faire")
+        #expect(NotionAPI.status(of: properties, except: "status") == nil)
+        let page: [String: Any] = ["id": "abc", "url": "https://notion.so/abc", "last_edited_time": "2026-10-07T12:00:00.000Z",
+                                   "properties": ["Nom": ["type": "title", "title": [["plain_text": "Acme"]]]]]
+        let read = NotionAPI.page(from: page, base: NotionBase(id: "db", name: "Clients", titleProperty: "Nom"))
+        #expect(read?.title == "Acme" && read?.base == "Clients")
+        #expect(read?.edited == ISO8601DateFormatter().date(from: "2026-10-07T12:00:00Z"))
+    }
+}
+
 private final class FakeCompletion: NotionCompletionStore, @unchecked Sendable {
     private let lock = NSLock()
     private var done = false
