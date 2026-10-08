@@ -364,11 +364,17 @@ final class IslandWindowController: NSWindowController {
             guard let self else { return event }
             let keyCode = event.keyCode
             let command = event.modifierFlags.intersection([.command, .control, .option, .shift]) == .command
+            let plain = event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty
             let handled = MainActor.assumeIsolated { () -> Bool in
                 self.tripleShift.keyTyped()
                 // Without the menu bar item (hidden by the notch on a small screen): ⌘, and ⌘Q
                 if command && keyCode == 43 { IslandActions.openSettings(); return true }
                 if command && keyCode == 12 { NSApp.terminate(nil); return true }
+                // ← and → turn the pages of the GitHub view
+                if self.fsm.state == .home,
+                   GitHubPagerKeys.handle(keyCode: keyCode, plain: plain) {
+                    return true
+                }
                 guard keyCode == 53, self.fsm.state == .home, !self.state.isPinned else { return false }
                 self.collapse()
                 return true

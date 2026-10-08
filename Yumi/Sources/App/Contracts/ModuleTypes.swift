@@ -38,6 +38,9 @@ struct ModuleSnapshot: Identifiable, Equatable, Sendable {
     /// Lines the activity view lists under the headline: one Claude Code session each, one pull
     /// request or one GitHub event each. Already in the order to show. Empty for most modules.
     var rows: [ModuleRow] = []
+    /// Lines of the activity view's other pages, by page: "recent", "repos" for GitHub.
+    /// Empty for most modules.
+    var pages: [String: [ModuleRow]] = [:]
 }
 
 /// One line of a module's list: a session, a pull request, an event.
