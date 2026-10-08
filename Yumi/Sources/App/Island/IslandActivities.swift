@@ -391,17 +391,16 @@ struct ModuleActivity: View {
         }
     }
 
-    /// GitHub: the repository, the last event in one sentence, three figures, one button.
-    /// A pull request that waits goes first, with a button to review it.
-    private var github: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            IslandContributions()
-                .riseIn(0)
+    /// GitHub: once connected, three pages one at a time (activity, recent, repositories);
+    /// before, the repository line with its button. A pull request that waits, or checks gone
+    /// red, stay above the pages with their button.
+    @ViewBuilder private var github: some View {
+        if module.pages.isEmpty {
             githubHead
-            if !module.rows.isEmpty {
-                ModuleRowsList(module: module)
-                    .padding(.leading, -7)
-                    .riseIn(3)
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                if module.needsAttention { githubHead }
+                GitHubPager(module: module).riseIn(module.needsAttention ? 3 : 0)
             }
         }
     }
@@ -635,7 +634,7 @@ struct DropActivity: View {
 }
 
 /// One figure of the GitHub activity: a small symbol, then the number in the rounded face.
-private struct GitHubFigure: View {
+struct GitHubFigure: View {
     let symbol: String
     let value: String
     let label: String

@@ -91,12 +91,14 @@ struct ContributionGrid: View {
 struct IslandContributions: View {
     @ObservedObject private var contributions = GitHubContributions.shared
     @AppStorage(GitHubContributions.inIslandKey) private var shown = true
+    var cell: CGFloat = 5
+    var gap: CGFloat = 1.5
     @State private var selected: ContributionDay?
 
     var body: some View {
         if shown, let calendar = contributions.calendar {
             VStack(alignment: .leading, spacing: 4) {
-                ContributionGrid(calendar: calendar, cell: 5, gap: 1.5, selected: $selected)
+                ContributionGrid(calendar: calendar, cell: cell, gap: gap, selected: $selected)
                 Text(selected.map(ContributionGrid.sentence(for:)) ?? Self.summary(calendar))
                     .font(IslandTheme.text(10.5, .medium))
                     .foregroundStyle(IslandTheme.muted)

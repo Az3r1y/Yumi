@@ -96,6 +96,9 @@ final class GitHubModule: YumiModule {
         guard connection == .connected else { return snapshot }
         // What happens, by repository, then the open pull requests and their checks.
         snapshot.rows = GitHubActivity.rows(pushes: pushes, events: recent, hidden: hidden, now: now) + snapshot.rows
+        // The pages of the island: the latest commits, then the repositories one line each.
+        snapshot.pages = ["recent": GitHubPages.recent(pushes: pushes, hidden: hidden),
+                          "repos": GitHubPages.repos(followed: followed, pushes: pushes, pulls: pulls, hidden: hidden, now: now)]
         // A push of the last two minutes shows in the folded island, after a red check or a review.
         if snapshot.live == nil, let push = GitHubActivity.livePush(pushes, hidden: hidden, now: now) {
             let text = push.total == 1 ? loc("\(push.repoName) · un commit sur \(push.branch)") : loc("\(push.repoName) · \(push.total) commits sur \(push.branch)")
