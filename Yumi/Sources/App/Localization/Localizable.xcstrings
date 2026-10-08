@@ -61,6 +61,16 @@
         }
       }
     },
+    " et %lld autres": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " and %lld more"
+          }
+        }
+      }
+    },
     " le lendemain": {
       "localizations": {
         "en": {
@@ -91,12 +101,32 @@
         }
       }
     },
+    " sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " on %@"
+          }
+        }
+      }
+    },
     " à ": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": " at "
+          }
+        }
+      }
+    },
+    " à %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " at %@"
           }
         }
       }
@@ -901,6 +931,16 @@
         }
       }
     },
+    "%@ · accord sur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ · approval on %@"
+          }
+        }
+      }
+    },
     "%@ · un commit sur %@": {
       "localizations": {
         "en": {
@@ -1073,6 +1113,16 @@
         }
       }
     },
+    "%lld PR ouvertes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld open PRs"
+          }
+        }
+      }
+    },
     "%lld aujourd'hui, %lld cette semaine": {
       "localizations": {
         "en": {
@@ -1119,6 +1169,16 @@
         }
       }
     },
+    "%lld fichiers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld files"
+          }
+        }
+      }
+    },
     "%lld jours": {
       "localizations": {
         "en": {
@@ -1145,6 +1205,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld tasks to do"
+          }
+        }
+      }
+    },
+    "%lld éléments": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld items"
           }
         }
       }
@@ -1479,6 +1549,16 @@
         }
       }
     },
+    "Activité": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Activity"
+          }
+        }
+      }
+    },
     "Actualiser les modèles": {
       "localizations": {
         "en": {
@@ -1639,6 +1719,66 @@
         }
       }
     },
+    "Ajouter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "Ajouter dans": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to"
+          }
+        }
+      }
+    },
+    "Ajouter une tâche avec un raccourci": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a task with a shortcut"
+          }
+        }
+      }
+    },
+    "Ajouter « %@ » à Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add “%@” to Notion"
+          }
+        }
+      }
+    },
+    "Ajouter « %@ » à Rappels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add “%@” to Reminders"
+          }
+        }
+      }
+    },
+    "Ajouté : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added: %@"
+          }
+        }
+      }
+    },
     "Aléatoire": {
       "localizations": {
         "en": {
@@ -1665,6 +1805,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Anthropic (API key)"
+          }
+        }
+      }
+    },
+    "Appuie sur les touches…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press the keys…"
           }
         }
       }
@@ -1705,6 +1855,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Waiting for your message."
+          }
+        }
+      }
+    },
+    "Aucun": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "None"
+          }
+        }
+      }
+    },
+    "Aucun dépôt suivi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No repository followed."
           }
         }
       }
@@ -1809,6 +1979,26 @@
         }
       }
     },
+    "Autorise Yumi à lire tes Rappels pour voir ceux du jour.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Yumi to read your Reminders to see today's."
+          }
+        }
+      }
+    },
+    "Autorise d'abord Yumi à lire ton calendrier : ouvre le module Agenda dans l'île, ou Réglages Système, Confidentialité et sécurité, Calendriers.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First allow Yumi to read your calendar: open the Agenda module in the island, or System Settings, Privacy & Security, Calendars."
+          }
+        }
+      }
+    },
     "Autoriser": {
       "localizations": {
         "en": {
@@ -1855,6 +2045,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "With %@"
+          }
+        }
+      }
+    },
+    "Base Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion database"
           }
         }
       }
@@ -2289,6 +2489,26 @@
         }
       }
     },
+    "Calendrier par défaut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default calendar"
+          }
+        }
+      }
+    },
+    "Calendrier par défaut (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default calendar (%@)"
+          }
+        }
+      }
+    },
     "Cancel": {
       "localizations": {
         "en": {
@@ -2411,6 +2631,26 @@
         }
       }
     },
+    "Choisis d'abord une base dans Réglages > Modules > Notion.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First choose a database in Settings > Modules > Notion."
+          }
+        }
+      }
+    },
+    "Choisis la base Notion dans Réglages > Général.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the Notion database in Settings > General."
+          }
+        }
+      }
+    },
     "Choisis mes modules dans les réglages de l'app.": {
       "localizations": {
         "en": {
@@ -2437,6 +2677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose a model."
+          }
+        }
+      }
+    },
+    "Choisis une base Notion dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a Notion database in the settings."
           }
         }
       }
@@ -2815,6 +3065,16 @@
         }
       }
     },
+    "Concerne : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concerns: %@"
+          }
+        }
+      }
+    },
     "Conséquence : on ne pourra pas revenir en arrière": {
       "localizations": {
         "en": {
@@ -2941,6 +3201,16 @@
         }
       }
     },
+    "Créer les événements dans": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create events in"
+          }
+        }
+      }
+    },
     "Current context": {
       "localizations": {
         "en": {
@@ -2979,6 +3249,36 @@
           "stringUnit": {
             "state": "translated",
             "value": "Alright, I won't touch it."
+          }
+        }
+      }
+    },
+    "Dans Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Notion"
+          }
+        }
+      }
+    },
+    "Dans Notion, %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Notion, %@"
+          }
+        }
+      }
+    },
+    "Dans Rappels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Reminders"
           }
         }
       }
@@ -3101,6 +3401,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "For %@"
+          }
+        }
+      }
+    },
+    "Derniers événements": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Latest events"
           }
         }
       }
@@ -3241,6 +3551,16 @@
         }
       }
     },
+    "Dépôts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Repositories"
+          }
+        }
+      }
+    },
     "Dépôts suivis": {
       "localizations": {
         "en": {
@@ -3357,6 +3677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Error"
+          }
+        }
+      }
+    },
+    "Espace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Space"
           }
         }
       }
@@ -4377,6 +4707,16 @@
         }
       }
     },
+    "Je ne suis pas encore prêt, réessaie dans un instant.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm not ready yet, try again in a moment."
+          }
+        }
+      }
+    },
     "Je ne surveille rien pour l'instant.": {
       "localizations": {
         "en": {
@@ -4743,6 +5083,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "The engine thinks for me: it chats and proposes the plans. Whichever it is, every plan is checked, and nothing touches your Mac without your approval. On automatic, I use the first one ready, in the order below."
+          }
+        }
+      }
+    },
+    "Le raccourci ouvre l'île sur « Nouvelle tâche ». J'y lis une date simple (« demain », « jeudi 15h »). J'ajoute le rappel dans ta liste par défaut, après ton accord.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shortcut opens the island on “New task”. I read a simple date in it (“tomorrow”, “thursday 3pm”). I add the reminder to your default list, after your approval."
+          }
+        }
+      }
+    },
+    "Le raccourci ouvre l'île sur « Nouvelle tâche ». J'y lis une date simple (« demain », « jeudi 15h »). Notion est hors de ton Mac : je te demande ton accord à chaque tâche.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shortcut opens the island on “New task”. I read a simple date in it (“tomorrow”, “thursday 3pm”). Notion is outside your Mac: I ask for your approval for every task."
           }
         }
       }
@@ -5167,6 +5527,16 @@
         }
       }
     },
+    "Nouvelle tâche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New task"
+          }
+        }
+      }
+    },
     "Nouvelle version": {
       "localizations": {
         "en": {
@@ -5327,6 +5697,16 @@
         }
       }
     },
+    "Outil : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tool: %@"
+          }
+        }
+      }
+    },
     "Ouvrir": {
       "localizations": {
         "en": {
@@ -5427,6 +5807,36 @@
         }
       }
     },
+    "Page %lld sur %lld": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Page %lld of %lld"
+          }
+        }
+      }
+    },
+    "Page précédente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous page"
+          }
+        }
+      }
+    },
+    "Page suivante": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next page"
+          }
+        }
+      }
+    },
     "Parler": {
       "localizations": {
         "en": {
@@ -5443,6 +5853,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Talk to Yumi"
+          }
+        }
+      }
+    },
+    "Pas ajouté.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not added."
           }
         }
       }
@@ -5807,6 +6227,16 @@
         }
       }
     },
+    "Quelqu'un te suit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Someone follows you"
+          }
+        }
+      }
+    },
     "Quitter Yumi": {
       "localizations": {
         "en": {
@@ -5863,6 +6293,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reminder: %@"
+          }
+        }
+      }
+    },
+    "Rappels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders"
+          }
+        }
+      }
+    },
+    "Rappels n'a pas coché la tâche.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders didn't tick the task."
           }
         }
       }
@@ -5973,6 +6423,16 @@
         }
       }
     },
+    "Relis le changement avant de l'écrire.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the change before I write it."
+          }
+        }
+      }
+    },
     "Reprendre": {
       "localizations": {
         "en": {
@@ -6043,6 +6503,16 @@
         }
       }
     },
+    "Rien de poussé récemment.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing pushed lately."
+          }
+        }
+      }
+    },
     "Rien de prévu.": {
       "localizations": {
         "en": {
@@ -6083,6 +6553,16 @@
         }
       }
     },
+    "Rien pour aujourd'hui.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing for today."
+          }
+        }
+      }
+    },
     "Rien pour l'instant.": {
       "localizations": {
         "en": {
@@ -6099,6 +6579,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing to keep yet."
+          }
+        }
+      }
+    },
+    "Risque : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Risk: %@"
           }
         }
       }
@@ -6125,6 +6615,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "RULES"
+          }
+        }
+      }
+    },
+    "Récent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Recent"
           }
         }
       }
@@ -6245,6 +6745,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Summarise"
+          }
+        }
+      }
+    },
+    "Rétablir ⌥ Espace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to ⌥ Space"
           }
         }
       }
@@ -7045,6 +7555,16 @@
         }
       }
     },
+    "Tu utilises Notion Calendar ? Il n'a pas d'API publique : ajoute le même compte Google ou iCloud dans Calendrier (Réglages Système > Comptes Internet), Yumi verra et créera les mêmes rendez-vous.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Using Notion Calendar? It has no public API: add the same Google or iCloud account to Calendar (System Settings > Internet Accounts), and Yumi will see and create the same appointments."
+          }
+        }
+      }
+    },
     "Tâche %@ : %@": {
       "localizations": {
         "en": {
@@ -7057,6 +7577,16 @@
           "stringUnit": {
             "state": "new",
             "value": "Tâche %1$@ : %2$@"
+          }
+        }
+      }
+    },
+    "Tâche rapide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick task"
           }
         }
       }
@@ -7703,6 +8233,16 @@
         }
       }
     },
+    "aucun": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "none"
+          }
+        }
+      }
+    },
     "aucun rappel à vérifier": {
       "localizations": {
         "en": {
@@ -7903,6 +8443,16 @@
         }
       }
     },
+    "critique": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "critical"
+          }
+        }
+      }
+    },
     "créer": {
       "localizations": {
         "en": {
@@ -7979,6 +8529,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "tomorrow"
+          }
+        }
+      }
+    },
+    "depuis %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "for %@"
           }
         }
       }
@@ -8141,12 +8701,32 @@
         }
       }
     },
+    "envoyer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "send"
+          }
+        }
+      }
+    },
     "et écris-nous si tu as une question.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "and write to us if you have a question."
+          }
+        }
+      }
+    },
+    "faible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "low"
           }
         }
       }
@@ -8327,6 +8907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I have no access %@, allow Yumi in System Settings, Privacy & Security"
+          }
+        }
+      }
+    },
+    "je n'ai pas le droit d'ouvrir %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm not allowed to open %@"
           }
         }
       }
@@ -8673,6 +9263,16 @@
         }
       }
     },
+    "lancer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "run"
+          }
+        }
+      }
+    },
     "le Focus dure %lld minutes, pas %lld": {
       "localizations": {
         "en": {
@@ -8885,6 +9485,16 @@
         }
       }
     },
+    "lire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "read"
+          }
+        }
+      }
+    },
     "lit": {
       "localizations": {
         "en": {
@@ -9045,12 +9655,32 @@
         }
       }
     },
+    "modifier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "modify"
+          }
+        }
+      }
+    },
     "moins d'une minute": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "less than a minute"
+          }
+        }
+      }
+    },
+    "moyen": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "medium"
           }
         }
       }
@@ -9125,6 +9755,16 @@
         }
       }
     },
+    "payer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "pay"
+          }
+        }
+      }
+    },
     "plus aucun rendez-vous aujourd'hui": {
       "localizations": {
         "en": {
@@ -9161,6 +9801,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "ready"
+          }
+        }
+      }
+    },
+    "publier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "publish"
           }
         }
       }
@@ -9271,6 +9921,16 @@
         }
       }
     },
+    "rien cette semaine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nothing this week"
+          }
+        }
+      }
+    },
     "rien à vérifier": {
       "localizations": {
         "en": {
@@ -9347,6 +10007,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "site"
+          }
+        }
+      }
+    },
+    "supprimer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "delete"
           }
         }
       }
@@ -9527,6 +10197,26 @@
         }
       }
     },
+    "une PR ouverte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "one open PR"
+          }
+        }
+      }
+    },
+    "une commande": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "a command"
+          }
+        }
+      }
+    },
     "une fois": {
       "localizations": {
         "en": {
@@ -9569,6 +10259,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "an optional step was left out"
+          }
+        }
+      }
+    },
+    "utiliser": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "use"
           }
         }
       }
@@ -9709,6 +10409,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "To connect"
+          }
+        }
+      }
+    },
+    "À choisir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose one"
           }
         }
       }
@@ -9953,6 +10663,16 @@
         }
       }
     },
+    "à %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "at %@"
+          }
+        }
+      }
+    },
     "à brancher": {
       "localizations": {
         "en": {
@@ -10059,6 +10779,26 @@
         }
       }
     },
+    "… et %lld lignes de plus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "… and %lld more lines"
+          }
+        }
+      }
+    },
+    "… et une ligne de plus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "… and one more line"
+          }
+        }
+      }
+    },
     "▍": {
       "localizations": {
         "en": {
@@ -10085,116 +10825,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "✗ No answer."
-          }
-        }
-      }
-    },
-    "Activité": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Activity"
-          }
-        }
-      }
-    },
-    "Récent": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Recent"
-          }
-        }
-      }
-    },
-    "Dépôts": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Repositories"
-          }
-        }
-      }
-    },
-    "Page précédente": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Previous page"
-          }
-        }
-      }
-    },
-    "Page suivante": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Next page"
-          }
-        }
-      }
-    },
-    "Page %lld sur %lld": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Page %lld of %lld"
-          }
-        }
-      }
-    },
-    "Rien de poussé récemment.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing pushed lately."
-          }
-        }
-      }
-    },
-    "Aucun dépôt suivi.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No repository followed."
-          }
-        }
-      }
-    },
-    "rien cette semaine": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "nothing this week"
-          }
-        }
-      }
-    },
-    "une PR ouverte": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "one open PR"
-          }
-        }
-      }
-    },
-    "%lld PR ouvertes": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%lld open PRs"
           }
         }
       }

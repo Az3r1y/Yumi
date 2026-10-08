@@ -16,7 +16,7 @@ struct PermissionsSettings: View {
                         HStack {
                             let value = states[permission]
                             SettingsStatus(text: MacPermission.label(value), tone: value == .granted ? .ok : value == .denied ? .warning : .off)
-                            Button(value == .granted ? "Réglages…" : "Autoriser…") {
+                            Button(value == .granted ? loc("Réglages…") : loc("Autoriser…")) {
                                 NSWorkspace.shared.open(permission.settingsURL)
                             }
                         }

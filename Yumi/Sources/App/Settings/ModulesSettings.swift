@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Modules: which ones Yumi shows and in what order, then the settings of GitHub and Notion.
+/// Modules: which ones Yumi shows and in what order, then the settings of GitHub, Notion and Agenda.
 /// Keys go to the Keychain, under the same names as before.
 struct ModulesSettings: View {
     @ObservedObject private var state = AppState.shared
@@ -48,6 +48,9 @@ struct ModulesSettings: View {
 
             NotionSettingsSection()
                 .id("module-settings-notion")
+
+            AgendaSettingsSection()
+                .id("module-settings-agenda")
         }
         }
     }
@@ -68,7 +71,7 @@ private struct ModuleOrderSections: View {
     /// Shows the settings of a module further down the page.
     var showSettings: (String) -> Void = { _ in }
     /// The modules that have their own settings on this page.
-    static let withSettings: Set<String> = ["github", "notion"]
+    static let withSettings: Set<String> = ["github", "notion", "agenda"]
 
     var body: some View {
         let shown = lineup.selected

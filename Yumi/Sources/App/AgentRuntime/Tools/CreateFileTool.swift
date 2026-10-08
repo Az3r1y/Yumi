@@ -86,7 +86,7 @@ struct CreateFileTool: Tool {
         do {
             _ = try FileManager.default.contentsOfDirectory(atPath: folder)
         } catch {
-            return posixCode(of: error) == .EACCES ? "je n'ai pas le droit d'ouvrir \(display(folder))" : noAccess(to: folder)
+            return posixCode(of: error) == .EACCES ? loc("je n'ai pas le droit d'ouvrir \(display(folder))") : noAccess(to: folder)
         }
         if !FileManager.default.isWritableFile(atPath: folder) { return loc("je n'ai pas le droit d'écrire dans \(display(folder))") }
         return nil

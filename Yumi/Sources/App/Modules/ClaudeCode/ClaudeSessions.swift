@@ -108,7 +108,7 @@ enum ClaudeSessions {
         if case .requestingPermission = session.activity { approval = true } else { approval = false }
         let text: String
         if let count {
-            text = approval ? "\(count) · accord sur \(name)" : loc("\(count) · \(name) t'attend")
+            text = approval ? loc("\(count) · accord sur \(name)") : loc("\(count) · \(name) t'attend")
         } else {
             text = approval ? loc("Claude veut ton accord sur \(name)") : loc("Claude t'attend sur \(name)")
         }

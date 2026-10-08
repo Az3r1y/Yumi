@@ -173,7 +173,7 @@ struct ClaudeCodeSettings: View {
             #else
             preview = try HookServer.shared.previewClaudeHooks()
             #endif
-            message = ["Relis le changement avant de l'écrire.", legacyNote()].compactMap { $0 }.joined(separator: " ")
+            message = [loc("Relis le changement avant de l'écrire."), legacyNote()].compactMap { $0 }.joined(separator: " ")
         } catch {
             message = loc("Je n'ai pas pu lire les réglages de Claude Code : \(error.localizedDescription)")
         }

@@ -737,7 +737,7 @@ import Foundation
         #expect(Voice.duration(20) == "moins d'une minute")
         #expect(Voice.duration(60) == "une minute")
         #expect(Voice.duration(12 * 60 + 40) == "douze minutes")
-        #expect(Voice.duration(21 * 60) == "vingt-et-une minutes")
+        #expect(Voice.duration(21 * 60) == "vingt et une minutes")
         #expect(Voice.duration(3600) == "une heure")
         #expect(Voice.duration(2 * 3600 + 10 * 60) == "deux heures dix")
     }

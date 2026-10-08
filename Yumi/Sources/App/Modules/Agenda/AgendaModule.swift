@@ -10,6 +10,7 @@ final class AgendaModule: YumiModule {
     private var events: [AgendaEvent] = []
     private var onChange: (@MainActor () -> Void)?
     private var storeObserver: NSObjectProtocol?
+    private var settingsObserver: NSObjectProtocol?
     private var ticking: Task<Void, Never>?
 
     var snapshot: ModuleSnapshot {
@@ -48,6 +49,11 @@ final class AgendaModule: YumiModule {
         ) { [weak self] _ in
             MainActor.assumeIsolated { self?.reload() }
         }
+        settingsObserver = NotificationCenter.default.addObserver(
+            forName: .agendaCalendarsChanged, object: nil, queue: .main
+        ) { [weak self] _ in
+            MainActor.assumeIsolated { self?.reload() }
+        }
         // "dans 12 min" changes every minute. Without the permission a tick costs nothing.
         ticking = Task { [weak self] in
             while !Task.isCancelled {
@@ -63,8 +69,9 @@ final class AgendaModule: YumiModule {
         onChange = nil
         ticking?.cancel()
         ticking = nil
-        if let storeObserver { NotificationCenter.default.removeObserver(storeObserver) }
+        for observer in [storeObserver, settingsObserver].compactMap({ $0 }) { NotificationCenter.default.removeObserver(observer) }
         storeObserver = nil
+        settingsObserver = nil
         events = []
     }
 
@@ -105,7 +112,11 @@ final class AgendaModule: YumiModule {
     }
 
     private func read(from start: Date, to end: Date) -> [AgendaEvent] {
-        let predicate = eventStore.predicateForEvents(withStart: start, end: end, calendars: nil)
+        // Only the calendars chosen in the settings; an empty choice reads nothing.
+        let all = eventStore.calendars(for: .event)
+        let calendars = AgendaCalendars.shown(among: all.map(\.calendarIdentifier)).map { ids in all.filter { ids.contains($0.calendarIdentifier) } }
+        if calendars?.isEmpty == true { return [] }
+        let predicate = eventStore.predicateForEvents(withStart: start, end: end, calendars: calendars)
         return eventStore.events(matching: predicate)
             .filter { $0.status != .canceled }
             .map { event in

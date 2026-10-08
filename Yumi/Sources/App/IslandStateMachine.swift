@@ -295,27 +295,16 @@ enum FirstName {
 enum Voice {
     /// "douze" up to ninety-nine, figures beyond.
     static func number(_ n: Int) -> String {
-        guard (0...99).contains(n) else { return String(n) }
-        let formatter = NumberFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
-        formatter.numberStyle = .spellOut
-        return formatter.string(from: NSNumber(value: n)) ?? String(n)
+        FrenchText.spelled(n)
     }
 
-    /// "une" before a feminine noun: "une minute", "vingt-et-une minutes".
-    private static func feminine(_ n: Int) -> String {
-        let text = number(n)
-        return text == "un" || text.hasSuffix(" un") || text.hasSuffix("-un") ? text + "e" : text
-    }
 
     /// "moins d'une minute", "une minute", "douze minutes", "une heure", "deux heures dix".
     static func duration(_ seconds: TimeInterval) -> String {
         let minutes = Int(max(0, seconds) / 60)
         if minutes < 1 { return loc("moins d'une minute") }
-        if minutes < 60 { return "\(feminine(minutes)) \(minutes == 1 ? "minute" : "minutes")" }
-        let hours = minutes / 60, rest = minutes % 60
-        let head = "\(feminine(hours)) \(hours == 1 ? "heure" : "heures")"
-        return rest == 0 ? head : "\(head) \(number(rest))"
+        // In the language of the app: "deux heures dix", "two hours and ten minutes".
+        return FrenchText.spokenMinutes(TimeInterval(minutes * 60))
     }
 
     /// "un fichier touché", "trois fichiers touchés"; nil for none.
@@ -546,9 +535,10 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
     /// window was redone, so nothing set earlier is lost.
     static let settings: [SettingsPage: [String]] = [
         .general:     ["yumiLanguage", "tripleShiftEnabled", "launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
-                       "absenceInterval", "contextEngineEnabled"],
+                       "absenceInterval", "contextEngineEnabled", "quickTaskShortcutEnabled", "quickTaskShortcutFlags",
+                       "quickTaskShortcutCode", "quickTaskDestination", "quickTaskNotionBase"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
-        .modules:     ["github-token"],
+        .modules:     ["github-token", "agendaHiddenCalendars", "agendaTargetCalendar"],
         .engines:     ["engineSettings", "engineKeys"],
         .claudeCode:  ["hooks", "claudeDirectoryBookmark"],
         .permissions: ["macOSPermissions", "yumiPermissions"],

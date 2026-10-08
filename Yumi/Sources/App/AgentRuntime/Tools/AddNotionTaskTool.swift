@@ -91,7 +91,8 @@ struct AddNotionTaskTool: Tool {
         let names = store.baseNames()
         guard !names.isEmpty else { throw .invalidInput(loc("aucune base Notion n'est choisie dans les réglages")) }
         if case .string(let raw)? = arguments["base"], let wanted = raw.nonEmptyTrimmed {
-            guard let name = names.first(where: { $0.caseInsensitiveCompare(wanted) == .orderedSame }) else {
+            // A Notion title can start or end with a space (" Tâches"): compared without it.
+            guard let name = names.first(where: { $0.trimmingCharacters(in: .whitespaces).caseInsensitiveCompare(wanted) == .orderedSame }) else {
                 throw .invalidInput(loc("je ne connais pas la base « \(wanted) » ; les bases choisies : \(names.joined(separator: ", "))"))
             }
             return name

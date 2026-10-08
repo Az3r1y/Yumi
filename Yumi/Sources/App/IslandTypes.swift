@@ -18,6 +18,8 @@ enum IslandView: String, CaseIterable {
     case welcome
     /// Everything Yumi remembers, to read, correct and erase.
     case memory
+    /// The quick task field and the day's list of its destination.
+    case quickTask
 }
 
 // MARK: - What the island shows (design/yumi/maquette/reference.html)
@@ -26,7 +28,7 @@ enum IslandView: String, CaseIterable {
 /// the hook server and the chat service, land on the same screen.
 enum IslandScreen: String, CaseIterable {
     /// `home` is the overview ("Tous"): what the island opens on when nothing is urgent.
-    case home, working, alert, finished, error, module, talk, drop, settings, welcome, memory
+    case home, working, alert, finished, error, module, talk, drop, settings, welcome, memory, quickTask
 
     /// The screen for what the application says right now. A view that names a screen wins;
     /// on the home view, only what is urgent takes its place.
@@ -41,6 +43,7 @@ enum IslandScreen: String, CaseIterable {
         case .settings:                                 return .settings
         case .welcome:                                  return .welcome
         case .memory:                                   return .memory
+        case .quickTask:                                return .quickTask
         case .overview, .empty, .confused, .greeting:
             if approvalPending { return .alert }
             switch state {

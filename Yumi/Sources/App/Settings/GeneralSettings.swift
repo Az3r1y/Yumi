@@ -57,6 +57,8 @@ struct GeneralSettings: View {
                 }
             }
 
+            QuickTaskSettingsSection()
+
             Section {
                 Toggle("Regarder l'app au premier plan", isOn: $state.contextEnabled)
             } header: {
@@ -92,6 +94,76 @@ struct GeneralSettings: View {
             startupError = loc("macOS a refusé : \(error.localizedDescription)")
             launchAtStartup = !on
         }
+    }
+}
+
+/// The quick task: its shortcut, and where the task goes.
+private struct QuickTaskSettingsSection: View {
+    @AppStorage(QuickTaskShortcut.enabledKey) private var enabled = true
+    @AppStorage(QuickTaskDestination.defaultsKey) private var destination = QuickTaskDestination.reminders.rawValue
+    @AppStorage(QuickTaskDestination.notionBaseKey) private var base = ""
+    @State private var flags = QuickTaskShortcut.stored()?.flags ?? QuickTaskShortcut.standard.flags
+    @State private var code = QuickTaskShortcut.stored()?.keyCode ?? QuickTaskShortcut.standard.keyCode
+    private let bases = NotionBases.load().map(\.name)
+
+    var body: some View {
+        Section {
+            Toggle("Ajouter une tâche avec un raccourci", isOn: $enabled)
+                .onChange(of: enabled) { _, _ in changed() }
+            if enabled {
+                LabeledContent("Raccourci") {
+                    HStack {
+                        ShortcutRecorderButton(flags: $flags, code: $code)
+                        if flags != QuickTaskShortcut.standard.flags || code != QuickTaskShortcut.standard.keyCode {
+                            Button("Rétablir ⌥ Espace") {
+                                flags = QuickTaskShortcut.standard.flags
+                                code = QuickTaskShortcut.standard.keyCode
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+                .onChange(of: flags) { _, _ in save() }
+                .onChange(of: code) { _, _ in save() }
+            }
+            Picker("Ajouter dans", selection: $destination) {
+                Text("Rappels").tag(QuickTaskDestination.reminders.rawValue)
+                Text(verbatim: "Notion").tag(QuickTaskDestination.notion.rawValue)
+            }
+            if destination == QuickTaskDestination.notion.rawValue {
+                if bases.isEmpty {
+                    SettingsHelp(loc("Choisis d'abord une base dans Réglages > Modules > Notion."))
+                } else if bases.count > 1 {
+                    Picker("Base Notion", selection: $base) {
+                        Text("À choisir").tag("")
+                        ForEach(bases, id: \.self) { Text(verbatim: $0).tag($0) }
+                    }
+                }
+            }
+        } header: {
+            Text("Tâche rapide")
+        } footer: {
+            SettingsHelp(destination == QuickTaskDestination.notion.rawValue
+                ? loc("Le raccourci ouvre l'île sur « Nouvelle tâche ». J'y lis une date simple (« demain », « jeudi 15h »). Notion est hors de ton Mac : je te demande ton accord à chaque tâche.")
+                : loc("Le raccourci ouvre l'île sur « Nouvelle tâche ». J'y lis une date simple (« demain », « jeudi 15h »). J'ajoute le rappel dans ta liste par défaut, après ton accord."))
+        }
+    }
+
+    private func save() {
+        let shortcut = QuickTaskShortcut(flags: flags, keyCode: code)
+        guard shortcut.isValid else {
+            // Shift alone would take a capital letter from every app: back to the last one.
+            let stored = QuickTaskShortcut.stored() ?? .standard
+            flags = stored.flags
+            code = stored.keyCode
+            return
+        }
+        shortcut.store()
+        changed()
+    }
+
+    private func changed() {
+        NotificationCenter.default.post(name: .quickTaskShortcutChanged, object: nil)
     }
 }
 

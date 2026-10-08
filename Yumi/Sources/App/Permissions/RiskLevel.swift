@@ -31,11 +31,11 @@ enum RiskLevel: String, Codable, Sendable, CaseIterable, Comparable {
     /// One word for the details of an approval and the history.
     var label: String {
         switch self {
-        case .safe: "aucun"
-        case .low: "faible"
-        case .medium: "moyen"
+        case .safe: loc("aucun")
+        case .low: loc("faible")
+        case .medium: loc("moyen")
         case .high: loc("élevé")
-        case .critical: "critique"
+        case .critical: loc("critique")
         }
     }
 }

@@ -74,24 +74,24 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
     /// One sentence, in Yumi's voice: "Je dois modifier 2 fichiers dans le projet Yumi."
     var headline: String {
         let verb = switch action {
-        case .read: "lire"
+        case .read: loc("lire")
         case .create: loc("créer")
-        case .modify: "modifier"
-        case .delete: "supprimer"
-        case .run: "lancer"
-        case .send: "envoyer"
-        case .publish: "publier"
-        case .pay: "payer"
-        case .other, nil: "utiliser"
+        case .modify: loc("modifier")
+        case .delete: loc("supprimer")
+        case .run: loc("lancer")
+        case .send: loc("envoyer")
+        case .publish: loc("publier")
+        case .pay: loc("payer")
+        case .other, nil: loc("utiliser")
         }
         let object: String
         if resources.count == 1 {
-            object = resources[0].kind == .command ? "une commande" : Self.displayName(resources[0], in: container)
+            object = resources[0].kind == .command ? loc("une commande") : Self.displayName(resources[0], in: container)
         } else if resources.isEmpty {
             object = action == nil || action == .other ? toolName : loc("quelque chose avec \(toolName)")
         } else {
             let files = resources.allSatisfy { $0.kind == .file }
-            object = "\(resources.count) \(files ? "fichiers" : "éléments")"
+            object = files ? loc("\(resources.count) fichiers") : loc("\(resources.count) éléments")
         }
         return loc("Je dois \(verb) \(object)\(place).")
     }
@@ -118,7 +118,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
         var shown = lines.prefix(Self.previewLines).map { $0.isEmpty ? " " : $0 }
         if lines.count > Self.previewLines {
             let more = lines.count - Self.previewLines
-            shown.append(loc("… et \(more) ligne\(more > 1 ? "s" : "") de plus"))
+            shown.append(more > 1 ? loc("… et \(more) lignes de plus") : loc("… et une ligne de plus"))
         }
         return shown
     }
@@ -137,10 +137,10 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
 
     /// "Voir les détails": tool, resources, scope, risk, reason, consequences.
     var details: [String] {
-        var lines = ["Outil : \(toolName)"]
+        var lines = [loc("Outil : \(toolName)")]
         if !resources.isEmpty {
             let names = resources.prefix(6).map { Self.displayName($0, in: container) }
-            lines.append("Concerne : " + names.joined(separator: ", ") + (resources.count > 6 ? " et \(resources.count - 6) autres" : ""))
+            lines.append(loc("Concerne : \(names.joined(separator: ", "))") + (resources.count > 6 ? loc(" et \(resources.count - 6) autres") : ""))
         }
         if let content {
             let count = Self.lines(of: content).count
@@ -148,7 +148,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
             lines.append(count > 1 ? loc("\(label) : \(count) lignes, \(content.count) caractères") : loc("\(label) : « \(content.trimmingCharacters(in: .newlines)) »"))
         }
         lines.append(loc("Portée : \(scope.label)") + (offersSession ? loc(" (ou cette session)") : ""))
-        lines.append("Risque : \(riskLevel.label)")
+        lines.append(loc("Risque : \(riskLevel.label)"))
         if let why = Self.oneLine(reason, limit: 120) { lines.append(loc("Raison donnée par l'agent : \(why)")) }
         lines.append(reversible ? loc("Conséquence : réversible") : loc("Conséquence : on ne pourra pas revenir en arrière"))
         return lines
@@ -160,7 +160,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
             return loc(" dans le projet \((container as NSString).lastPathComponent)")
         }
         if resources.count == 1, resources[0].identifier == container { return "" }
-        return " sur \(container)"
+        return loc(" sur \(container)")
     }
 
     /// A file relative to its project, a site by its host, anything else as it is.
