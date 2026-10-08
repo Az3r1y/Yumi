@@ -10718,46 +10718,6 @@
           }
         }
       }
-    },
-    "Cette semaine": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "This week"
-          }
-        }
-      }
-    },
-    "Modifié récemment": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Edited recently"
-          }
-        }
-      }
-    },
-    "Rien en retard, une cette semaine.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing late, one this week."
-          }
-        }
-      }
-    },
-    "Rien en retard, %lld cette semaine.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Nothing late, %lld this week."
-          }
-        }
-      }
     }
   },
   "version": "1.0"

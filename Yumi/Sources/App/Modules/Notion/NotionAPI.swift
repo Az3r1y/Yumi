@@ -28,18 +28,6 @@ struct NotionTask: Equatable, Sendable, Identifiable {
     var base: String
     /// The id of its database, to mark it done.
     var baseID: String = ""
-    /// Its status or select value when it has one ("À faire", "En cours"), for the line's detail.
-    var status: String? = nil
-}
-
-/// A page of a chosen database, any database: the latest edited ones show in the island, so a
-/// base of clients or of documents is useful too, not only a base of tasks.
-struct NotionPage: Equatable, Sendable, Identifiable {
-    let id: String
-    var title: String
-    var edited: Date
-    var url: URL?
-    var base: String
 }
 
 /// A database shared with the integration, and its properties by type, for the settings.
@@ -108,31 +96,11 @@ struct NotionAPI: Sendable {
 
     /// Unfinished tasks due on or before the end of `day` (`overdue` true), or on that day only.
     func tasks(in base: NotionBase, on day: Date, overdue: Bool) async throws(NotionError) -> [NotionTask] {
+        guard let dateProperty = base.dateProperty else { return [] }
         let start = calendar.startOfDay(for: day)
         guard let next = calendar.date(byAdding: .day, value: 1, to: start) else { return [] }
-        return try await tasks(in: base, from: overdue ? nil : start, before: next)
-    }
-
-    /// Unfinished tasks of the `days` days after `day`, today left out: what comes this week.
-    func upcoming(in base: NotionBase, after day: Date, days: Int = 7) async throws(NotionError) -> [NotionTask] {
-        let start = calendar.startOfDay(for: day)
-        guard let from = calendar.date(byAdding: .day, value: 1, to: start),
-              let end = calendar.date(byAdding: .day, value: days + 1, to: start) else { return [] }
-        return try await tasks(in: base, from: from, before: end)
-    }
-
-    /// The pages of the database edited last, whatever their properties.
-    func recentPages(in base: NotionBase, limit: Int = 5) async throws(NotionError) -> [NotionPage] {
-        let body: [String: Any] = ["sorts": [["timestamp": "last_edited_time", "direction": "descending"]], "page_size": limit]
-        let object = try await send("databases/\(base.id)/query", method: "POST", body: body)
-        return (object["results"] as? [[String: Any]] ?? []).compactMap { Self.page(from: $0, base: base) }
-    }
-
-    /// Unfinished tasks due from `from` (nil: any day before) to before `before`.
-    private func tasks(in base: NotionBase, from: Date?, before: Date) async throws(NotionError) -> [NotionTask] {
-        guard let dateProperty = base.dateProperty else { return [] }
-        var filters: [[String: Any]] = [["property": dateProperty, "date": ["before": Self.dayString(before, calendar)]]]
-        if let from { filters.append(["property": dateProperty, "date": ["on_or_after": Self.dayString(from, calendar)]]) }
+        var filters: [[String: Any]] = [["property": dateProperty, "date": ["before": Self.dayString(next, calendar)]]]
+        if !overdue { filters.append(["property": dateProperty, "date": ["on_or_after": Self.dayString(start, calendar)]]) }
         if let done = base.doneProperty {
             if base.doneIsCheckbox {
                 filters.append(["property": done, "checkbox": ["equals": false]])
@@ -258,27 +226,7 @@ struct NotionAPI: Sendable {
         }
         let title = Self.title(of: page) ?? loc("Sans titre")
         return NotionTask(id: id, title: title, due: due, hasTime: hasTime,
-                          url: (page["url"] as? String).flatMap(URL.init(string:)), base: base.name, baseID: base.id,
-                          status: status(of: properties, except: base.doneProperty))
-    }
-
-    static func page(from object: [String: Any], base: NotionBase) -> NotionPage? {
-        guard let id = object["id"] as? String else { return nil }
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        let text = object["last_edited_time"] as? String ?? ""
-        let edited = formatter.date(from: text) ?? ISO8601DateFormatter().date(from: text) ?? .distantPast
-        return NotionPage(id: id, title: title(of: object) ?? loc("Sans titre"), edited: edited,
-                          url: (object["url"] as? String).flatMap(URL.init(string:)), base: base.name)
-    }
-
-    /// The first status or select value of a page, the done property aside.
-    static func status(of properties: [String: [String: Any]], except done: String?) -> String? {
-        for key in properties.keys.sorted() where key != done {
-            guard let value = properties[key], let type = value["type"] as? String, type == "status" || type == "select" else { continue }
-            if let name = (value[type] as? [String: Any])?["name"] as? String, let clean = name.nonEmptyTrimmed { return clean }
-        }
-        return nil
+                          url: (page["url"] as? String).flatMap(URL.init(string:)), base: base.name, baseID: base.id)
     }
 
     static func title(of page: [String: Any]) -> String? {
