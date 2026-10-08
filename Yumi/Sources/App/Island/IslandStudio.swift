@@ -156,6 +156,102 @@ enum IslandStudio {
         return all
     }
 
+    // MARK: - Alpha 5 shots
+
+    /// A session's journal as the hooks build it, for the example project "atelier".
+    static func liveJournal() -> SessionJournal {
+        var journal = SessionJournal(started: Date.now.addingTimeInterval(-540))
+        journal.request = "Refais l'écran d'accueil, plus calme"
+        journal.todos = [
+            SessionTodo(text: "Lire l'écran d'accueil", state: .completed),
+            SessionTodo(text: "Simplifier la mise en page", state: .inProgress),
+            SessionTodo(text: "Lancer les tests", state: .pending),
+            SessionTodo(text: "Adoucir les couleurs", state: .pending),
+            SessionTodo(text: "Revoir les textes", state: .pending),
+            SessionTodo(text: "Vérifier le mode sombre", state: .pending),
+            SessionTodo(text: "Résumer les changements", state: .pending),
+        ]
+        journal.history = [ToolStep(tool: "Read", input: ["file_path": "/atelier/Sources/AccueilView.swift"])]
+        journal.current = ToolStep(tool: "Edit", input: ["file_path": "/atelier/Sources/AccueilView.swift"])
+        return journal
+    }
+
+    /// The example modules with Claude Code as ClaudeSessions makes it from that journal:
+    /// the row enriched with the progress and the details, the live line of the folded island.
+    static func liveSession(_ journal: SessionJournal, now: Date) -> [ModuleSnapshot] {
+        var all = modules(musicPlaying: false)
+        guard let index = all.firstIndex(where: { $0.id == "claude-code" }) else { return all }
+        var claude = all[index]
+        let base = ModuleRow(id: "studio-session", title: "atelier", detail: "", state: .busy, label: loc("travaille"),
+                             date: journal.started, action: "studio-session")
+        let row = SessionBoard.enriched(base, journal, now: now)
+        let what = journal.current?.sentence ?? journal.currentTask ?? ""
+        let progress = journal.progress.map { " \($0)" } ?? ""
+        claude.status = loc("1 session")
+        claude.title = "Claude \(what.prefix(1).lowercased() + what.dropFirst()) sur atelier."
+        claude.subtitle = journal.currentTask.map { loc("Tâche \(journal.progress ?? "") : \($0)") } ?? ""
+        claude.rows = [row]
+        claude.live = ModuleLive(text: "atelier\(progress) · \(what)", priority: ModuleLivePriority.activity)
+        all[index] = claude
+        return all
+    }
+
+    /// GitHub as its module shows it, built by GitHubActivity from example pushes on two
+    /// repositories. `fresh` adds a push made a few seconds ago.
+    static func githubActivity(fresh: Bool) -> [ModuleSnapshot] {
+        let now = Date.now
+        func commit(_ sha: String, _ message: String) -> GitHubCommit {
+            GitHubCommit(sha: sha, message: message, author: "alex", url: URL(string: "https://github.com/alex/atelier/commit/\(sha)"))
+        }
+        var pushes = [
+            GitHubPush(eventID: 3, repo: "alex/atelier", branch: "main", actor: "alex", date: now.addingTimeInterval(-3600), total: 2,
+                       commits: [commit("a41c9e27d0", "Accueil : une mise en page plus calme"), commit("9be03f1c55", "Tests de l'écran d'accueil")]),
+            GitHubPush(eventID: 2, repo: "alex/site", branch: "main", actor: "lea", date: now.addingTimeInterval(-7200), total: 1,
+                       commits: [GitHubCommit(sha: "77d2a0b913", message: "Page tarifs : corrige le lien", author: "lea", url: nil)]),
+        ]
+        if fresh {
+            pushes.append(GitHubPush(eventID: 4, repo: "alex/atelier", branch: "main", actor: "alex", date: now.addingTimeInterval(-5), total: 3,
+                                     commits: [commit("c0ffee1a2b", "Couleurs plus douces sur l'accueil"), commit("5e6f7a8b9c", "Mode sombre de l'accueil"),
+                                               commit("1d2e3f4a5b", "Textes de l'accueil revus")]))
+        }
+        var all = modules(musicPlaying: false)
+        guard let index = all.firstIndex(where: { $0.id == "github" }) else { return all }
+        var github = all[index]
+        github.status = "2"
+        github.title = loc("Ce qui bouge sur tes dépôts")
+        github.subtitle = "alex/atelier, alex/site"
+        github.rows = GitHubActivity.rows(pushes: pushes, events: [], hidden: [], now: now)
+        if let push = GitHubActivity.livePush(pushes, hidden: [], now: now) {
+            github.live = ModuleLive(text: loc("\(push.repoName) · \(push.total) commits sur \(push.branch)"), priority: ModuleLivePriority.activity)
+        }
+        all[index] = github
+        return all
+    }
+
+    /// Notion as NotionModule.snapshot words it, from example tasks: two today, one late.
+    static func notionTasks() -> [ModuleSnapshot] {
+        let now = Date.now
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: now)
+        let tasks = [
+            NotionTask(id: "n1", title: "Envoyer la maquette à Léa", due: calendar.date(byAdding: .day, value: -1, to: today), hasTime: false, url: nil, base: "Projets"),
+            NotionTask(id: "n2", title: "Relire le texte de la page d'accueil", due: today, hasTime: false, url: nil, base: "Projets"),
+            NotionTask(id: "n3", title: "Appel avec le client", due: calendar.date(bySettingHour: 16, minute: 0, second: 0, of: today), hasTime: true, url: nil, base: "Rendez-vous"),
+        ]
+        var notion = ModuleSnapshot(id: "notion", name: "Notion", colorHex: "#E8E8E8", status: "\(tasks.count)", title: "", subtitle: "",
+                                    primaryAction: loc("Ouvrir"), symbol: "checklist")
+        let late = tasks.filter { NotionBoard.isLate($0, now: now, calendar: calendar) }
+        notion.title = loc("\(tasks.count) tâches à faire")
+        notion.subtitle = late.count == 1 ? loc("Une en retard.") : loc("\(late.count) en retard.")
+        notion.rows = tasks.map { task in
+            let isLate = NotionBoard.isLate(task, now: now, calendar: calendar)
+            let when = task.due.map { task.hasTime ? FrenchText.clock($0) : (isLate ? loc("en retard") : loc("aujourd'hui")) } ?? ""
+            return ModuleRow(id: task.id, title: task.title, detail: task.base, state: isLate ? .failure : .neutral, label: when,
+                             date: task.due, action: "open:\(task.id)")
+        }
+        return modules(musicPlaying: false) + [notion]
+    }
+
     // MARK: - Starting
 
     static func startIfRequested(controller: IslandWindowController) {
@@ -186,7 +282,7 @@ enum IslandStudio {
     /// twice a second, to check the mode without filming.
     /// `YUMI_STUDIO_ONLY=10,11,12` plays only these shots, in this order.
     private static func rehearse(into folder: String) {
-        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15]
+        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15, 13: 11, 14: 11, 15: 10]
         let only = (ProcessInfo.processInfo.environment["YUMI_STUDIO_ONLY"] ?? "")
             .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         let shots = only.isEmpty ? Array(1...9) : only
@@ -234,7 +330,7 @@ enum IslandStudio {
     /// shots 10 to 12. Space plays the last one again, Escape puts Yumi back at rest, R folds
     /// the island.
     private static func key(_ code: UInt16) -> Bool {
-        let shots: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9, 29: 10, 27: 11, 24: 12]
+        let shots: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9, 29: 10, 27: 11, 24: 12, 33: 13, 30: 14, 42: 15]
         if let shot = shots[code] { play(shot); return true }
         switch code {
         case 49: if let lastShot { play(lastShot) }; return true        // Space
@@ -453,6 +549,49 @@ enum IslandStudio {
                 model.selectedModuleID = "claude-code"
                 controller.expand(to: .module)
             }
+
+        case 13:
+            // A Claude Code session at work, as its journal tells it: the task 2/7 then 3/7,
+            // the action in progress, the line unfolded on its details
+            var journal = liveJournal()
+            after(0.4) {
+                show(liveSession(journal, now: .now))
+            }
+            after(2.6) {
+                model.selectedModuleID = "claude-code"
+                controller.expand(to: .module)
+            }
+            after(5.6) {
+                journal.todos[1].state = .completed
+                journal.todos[2].state = .inProgress
+                journal.history.append(journal.current!)
+                journal.current = ToolStep(tool: "Bash", input: ["command": "swift test --filter Accueil"])
+                show(liveSession(journal, now: .now))
+            }
+            after(8.4) {
+                journal.history.append(journal.current!)
+                journal.current = ToolStep(tool: "Edit", input: ["file_path": "/atelier/Sources/AccueilView.swift"])
+                show(liveSession(journal, now: .now))
+            }
+
+        case 14:
+            // GitHub: every repository, each push with its exact commits; a push arrives
+            after(0.4) {
+                show(githubActivity(fresh: false))
+                model.selectedModuleID = "github"
+                controller.expand(to: .module)
+            }
+            after(5.5) { show(githubActivity(fresh: true)) }
+            after(8.0) { controller.collapse() }
+
+        case 15:
+            // Notion: the tasks of today and the late ones, in the island
+            after(0.4) {
+                show(notionTasks())
+                model.selectedModuleID = "notion"
+                controller.expand(to: .module)
+            }
+            after(6.5) { model.setMood(.happy, force: true); model.pose(.celebrate) }
 
         default:
             break
