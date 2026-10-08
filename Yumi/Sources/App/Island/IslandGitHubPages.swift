@@ -86,11 +86,11 @@ struct GitHubPager: View {
             if rows.isEmpty {
                 ActSub(text: each == .recent ? loc("Rien de poussé récemment.") : loc("Aucun dépôt suivi."))
             } else {
-                ModuleRowsList(module: listing(rows)).padding(.leading, -7)
+                ModuleRowsList(module: listing(rows), lines: 3).padding(.leading, -7)
             }
         } else {
             VStack(alignment: .leading, spacing: 6) {
-                IslandContributions()
+                IslandContributions(cell: 7, gap: 2)
                 if let figures = GitHubFigures.parse(module.status) {
                     HStack(spacing: 12) {
                         GitHubFigure(symbol: "star.fill", value: figures.stars, label: loc("étoiles"))

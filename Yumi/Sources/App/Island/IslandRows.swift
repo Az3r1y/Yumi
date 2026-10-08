@@ -9,8 +9,9 @@ struct ModuleRowsList: View {
     /// Sessions say since when; events and pull requests say when.
     var elapsed = false
 
-    /// Five lines are seen at once; the others scroll.
-    private var limit: CGFloat { 5 * ModuleRowLine.height + 40 + (open.isEmpty ? 0 : 110) }
+    /// Lines seen at once; the others scroll.
+    var lines = 5
+    private var limit: CGFloat { CGFloat(lines) * ModuleRowLine.height + 40 + (open.isEmpty ? 0 : 110) }
     @Environment(\.islandLayerShown) private var shown
     /// The lines unfolded to show their details.
     @State private var open: Set<String> = {
