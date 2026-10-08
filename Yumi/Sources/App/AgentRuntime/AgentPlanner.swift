@@ -74,7 +74,7 @@ enum PlannerPrompt {
         {"cannotPlan": "reason", "isAction": true}.
         - The person may write in French or in English. Understand both the same way (« demain » \
         is tomorrow, « rappelle-moi » is remind me). Write "goal", "description" and "cannotPlan" \
-        in the language of <request>.
+        in \(AppLanguage.isEnglish ? "English, whatever the language of <request>" : "the language of <request>").
         - Answer with one JSON object and nothing else:
           {"goal": "...", "steps": [{"description": "...", "tool": "tool_id", "arguments": {}, "optional": false}]}
           or {"cannotPlan": "reason", "isAction": true or false}

@@ -182,7 +182,7 @@ struct AddEventTool: Tool {
     /// "jeudi 9 octobre, 14 h à 15 h", "jeudi 9 octobre, 23 h à 1 h le lendemain".
     func spoken(_ start: Date, _ end: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "fr_FR")
+        formatter.locale = AppLanguage.locale
         formatter.calendar = calendar
         formatter.timeZone = calendar.timeZone
         formatter.dateFormat = loc("EEEE d MMMM")

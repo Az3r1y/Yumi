@@ -45,7 +45,7 @@ enum IslandAgent {
     /// "Depuis douze minutes, trois fichiers touchés. Je surveille."
     static func watching(_ model: IslandModel) -> String {
         var parts: [String] = []
-        if let start = model.workStart { parts.append("depuis \(Voice.duration(Date.now.timeIntervalSince(start)))") }
+        if let start = model.workStart { parts.append(loc("depuis \(Voice.duration(Date.now.timeIntervalSince(start)))")) }
         if let files = Voice.files(model.filesTouched.count) { parts.append(files) }
         if parts.isEmpty { return loc("Il vient de s'y mettre. Je surveille.") }
         return Voice.sentence(parts.joined(separator: ", ")) + loc(". Je surveille.")

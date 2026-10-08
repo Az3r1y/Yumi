@@ -165,12 +165,12 @@ struct AddReminderTool: Tool {
         let day = calendar.date(from: DateComponents(year: due.year, month: due.month, day: due.day)) ?? startOfToday
         let offset = calendar.dateComponents([.day], from: startOfToday, to: calendar.startOfDay(for: day)).day ?? 0
         var text = switch offset {
-        case 0: "aujourd'hui"
-        case 1: "demain"
+        case 0: loc("aujourd'hui")
+        case 1: loc("demain")
         case 2: loc("après-demain")
-        default: String(format: "le %02d/%02d/%d", due.day ?? 0, due.month ?? 0, due.year ?? 0)
+        default: day.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(AppLanguage.locale))
         }
-        if let hour = due.hour { text += String(format: " à %d:%02d", hour, due.minute ?? 0) }
+        if let hour = due.hour { text += loc(" à \(String(format: "%d:%02d", hour, due.minute ?? 0))") }
         return text
     }
 

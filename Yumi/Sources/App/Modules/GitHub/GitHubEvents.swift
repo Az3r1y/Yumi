@@ -346,7 +346,7 @@ enum GitHubBoard {
         for (index, event) in recent.prefix(events).enumerated() {
             rows.append(ModuleRow(id: "event-\(event.id)", title: title(event), detail: "\(event.actor) · \(event.repoName)",
                                   state: .neutral, label: label(event.kind), date: event.date,
-                                  section: index == 0 ? "Derniers événements" : nil,
+                                  section: index == 0 ? loc("Derniers événements") : nil,
                                   action: event.url?.absoluteString))
         }
         return rows
@@ -384,7 +384,7 @@ enum GitHubBoard {
         switch event.kind {
         case .star:        return loc("Une étoile")
         case .fork:        return loc("Un fork")
-        case .follower:    return "Quelqu'un te suit"
+        case .follower:    return loc("Quelqu'un te suit")
         case .push:        return event.detail.isEmpty ? loc("Du code poussé") : loc("Poussé sur \(event.detail)")
         default:           return event.detail.isEmpty ? event.repoName : event.detail
         }

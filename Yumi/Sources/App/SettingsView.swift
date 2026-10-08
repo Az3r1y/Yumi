@@ -112,7 +112,7 @@ struct ShortcutRecorderButton: View {
                 return nil
             }
         } label: {
-            Text(isRecording ? "Appuie sur les touches…" : shortcutLabel)
+            Text(isRecording ? loc("Appuie sur les touches…") : shortcutLabel)
                 .font(.system(size: 11, design: .monospaced))
                 .padding(.horizontal, 8).padding(.vertical, 3)
                 .background(isRecording ? Color.accentColor.opacity(0.12) : Color(NSColor.controlBackgroundColor))
@@ -130,7 +130,7 @@ struct ShortcutRecorderButton: View {
         if f.contains(.shift)   { s += "⇧" }
         if f.contains(.command) { s += "⌘" }
         s += keyChar(code)
-        return s.isEmpty ? "Aucun" : s
+        return s.isEmpty ? loc("Aucun") : s
     }
 
     private func keyChar(_ c: UInt16) -> String {

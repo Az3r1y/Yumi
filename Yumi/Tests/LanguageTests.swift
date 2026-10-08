@@ -147,6 +147,15 @@ private func english<T>(_ body: () throws -> T) rethrows -> T {
         }
     }
 
+    @Test func durationsRisksAndThePlannerSpeakEnglish() {
+        english {
+            #expect(Voice.duration(12 * 60) == "twelve minutes")
+            #expect(RiskLevel.medium.label == "medium")
+            #expect(RiskLevel.critical.label == "critical")
+            #expect(ChatPhrases.systemPrompt(characterName: "Yumi", folder: "none").hasSuffix("always answer in English, even when the person or these notes use French."))
+        }
+    }
+
     @Test func aButtonKeepsItsSymbolInEnglish() {
         english {
             #expect(ModuleSymbols.button(loc("Rejoindre")) == "video.fill")
