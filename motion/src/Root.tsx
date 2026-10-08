@@ -13,6 +13,8 @@ import { LinkedInFilm, LinkedInLancement, LinkedInPermission } from "./linkedin/
 import { MASTERCLASS_LENGTH, Masterclass } from "./linkedin/masterclass/Masterclass";
 import { JOURNEE_LENGTH, Journee } from "./linkedin/journee/Journee";
 import { JourneeEdito } from "./linkedin/journee/JourneeEdito";
+import { DEMO_DEFAULTS, Demo, demoMetadata } from "./demo/Demo";
+import { Og } from "./demo/Og";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -95,6 +97,19 @@ export const RemotionRoot: React.FC = () => {
           width={1080}
           height={1920}
         />
+      </Folder>
+      <Folder name="Demos">
+        <Composition
+          id="Demo-9x16"
+          component={Demo}
+          durationInFrames={60}
+          fps={60}
+          width={1080}
+          height={1920}
+          defaultProps={DEMO_DEFAULTS}
+          calculateMetadata={demoMetadata}
+        />
+        <Still id="Og" component={Og} width={1200} height={630} />
       </Folder>
       <Folder name="Reference">
         <Composition

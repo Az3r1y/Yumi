@@ -8,10 +8,10 @@
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src https://api.github.com; base-uri 'self'; form-action 'none'"
     />
     <meta name="referrer" content="no-referrer" />
-    <title>Yumi, your Mac's new little friend</title>
+    <title>Yumi, the little AI in your notch that asks before it acts</title>
     <meta
       name="description"
-      content="Your Mac has a new little friend. Yumi lives in your notch, helps with your day, and always asks before touching anything. He learns new tricks every week. Free and open source, macOS 15+."
+      content="Yumi does small things for you on your Mac (reminders, calendar events, notes and more), shows you exactly what will change, waits for your click, then checks it really happened. Free and open source, macOS 15+."
     />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#000000" />
@@ -20,14 +20,14 @@
     <link rel="alternate" hreflang="en" href="https://estebanbaigts.github.io/Yumi/" />
     <link rel="alternate" hreflang="fr" href="https://estebanbaigts.github.io/Yumi/fr/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Your Mac has a new little friend: Yumi" />
-    <meta property="og:description" content="He lives in your notch, helps with your day, and always asks before touching anything. He learns new tricks every week." />
+    <meta property="og:title" content="Yumi, the little AI in your notch that asks before it acts" />
+    <meta property="og:description" content="Small things on your Mac (reminders, events, notes), shown exactly before they happen, checked after. Free and open source." />
     <meta property="og:image" content="https://estebanbaigts.github.io/Yumi/media/og.jpg" />
     <meta property="og:url" content="https://estebanbaigts.github.io/Yumi/" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="module" src="assets/yumi.js"></script>
   </head>
-  <body>
+    <body>
     <a class="skip" href="#contenu">Skip to content</a>
 
     <header class="hero">
@@ -35,81 +35,99 @@
       <button class="yumi" type="button" aria-label="Yumi, a small black character with big eyes, surrounded by blue, purple and pink light. Touch him to make him bounce.">
         <span id="yumi" class="yumi-stage"></span>
       </button>
-      <h1>Your Mac has a new little friend.</h1>
-      <p class="lead">Yumi lives in your notch, helps with your day, and always asks before touching anything. He learns new tricks every week.</p>
+      <h1>The little AI in your notch that asks before it acts.</h1>
+      <p class="lead">Yumi does small things for you (reminders, calendar events, notes and more), shows you exactly what will change, waits for your click, then checks it really happened.</p>
       <div class="actions">
-        <a class="button primary" data-release href="https://github.com/estebanbaigts/Yumi/releases">Adopt Yumi, it's free</a>
-        <a class="button" href="#video">Watch the video</a>
+        <a class="button primary" data-release href="https://github.com/estebanbaigts/Yumi/releases">Download the free alpha</a>
+        <a class="button" href="#preuve">See it work</a>
       </div>
       <p class="meta"><span>macOS 15+</span> · <span>open source</span> · <span>version <span data-version>0.1.0-alpha</span></span> · <a href="fr/" hreflang="fr" lang="fr">Français</a></p>
     </header>
 
     <main id="contenu">
+      <section id="preuve" class="features" aria-labelledby="preuve-titre">
+        <h2 id="preuve-titre" class="kicker">You ask, he does it</h2>
+        <!-- PROOF ASSET TO PRODUCE: a real recording, request → approval card → result in Reminders, Calendar or Finder → checked. Replace chat.jpg with it. -->
+        <article class="feature">
+          <img src="media/chat.jpg" width="960" height="265" loading="lazy" alt="The chat in the notch: asked for a short welcome note, Yumi writes bienvenue.txt in Downloads, showing its content." />
+          <div>
+            <h3>Real changes, in your real apps.</h3>
+            <p>Ask in plain words. Yumi turns it into a plan, shows you exactly what will change (the file and its content, the reminder, the event) and waits for your click. Then he looks again: if it is not really there, he tells you.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="trust" aria-labelledby="actions-titre">
+        <h2 id="actions-titre" class="kicker">Small actions. Real results.</h2>
+        <ul class="promises">
+          <li><strong>Reminders</strong><span>« Remind me to call the dentist tomorrow at 10. » Added to Reminders, after your click.</span></li>
+          <li><strong>Calendar</strong><span>« Block Thursday 2 pm, client meeting. » Added to your own calendar, never with guests.</span></li>
+          <li><strong>Notes and files</strong><span>« Create todo.md with two tasks. » A text file in Downloads, and lines added to it later. He never replaces a file.</span></li>
+          <li><strong>Notion</strong><span>« Add "call Paul" to my Notion tasks. » Adds a task or ticks one done. Asked every time, because it leaves your Mac.</span></li>
+          <li><strong>Focus</strong><span>« I'm working for 45 minutes. » Starts a focus session.</span></li>
+          <li><strong>Your day</strong><span>« How much free time do I have tomorrow? » Read only, up to two weeks ahead.</span></li>
+        </ul>
+        <p class="section-lead">He does not control your whole Mac. He never deletes, moves, sends a message, runs a command or edits a file he did not create. New tricks come with each release.</p>
+      </section>
+
+      <section class="trust" aria-labelledby="confiance-titre">
+        <h2 id="confiance-titre" class="kicker">You stay in control</h2>
+        <ul class="promises">
+          <li>
+            <strong>He asks first.</strong>
+            <span>Every change waits for your click, unless you allowed it yourself for the session or always. Outside services like Notion are asked every time.</span>
+          </li>
+          <li>
+            <strong>The model only proposes.</strong>
+            <span>Yumi's code checks every plan and every step goes through one permission checkpoint. Secrets, system folders, payments and sudo are refused.</span>
+          </li>
+          <li>
+            <strong>He checks afterwards.</strong>
+            <span>If the reminder, the event or the file is not really there, the run fails and he says so. A history of decisions stays on your Mac.</span>
+          </li>
+          <li>
+            <strong>No account, no telemetry.</strong>
+            <span>No server of ours. Your messages go only to the AI engine you choose, and with Ollama nothing leaves your Mac.</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="features" aria-labelledby="personnage-titre">
+        <h2 id="personnage-titre" class="kicker">Lives in your notch</h2>
+        <article class="feature">
+          <img src="media/remarque.jpg" width="960" height="265" loading="lazy" alt="The folded island: Yumi suggests a break after two hours in a row." />
+          <div>
+            <h3>Not another chat window.</h3>
+            <p>He sits at the top of your screen and shows what matters now: your next meeting, today's reminders, your music. Sometimes he speaks first: a meeting coming, two hours without a break. What you tell him stays in a text file on your Mac that you can read and erase.</p>
+          </div>
+        </article>
+        <article class="feature">
+          <img src="media/activites.jpg" width="960" height="265" loading="lazy" alt="The island overview: Claude Code, Notes, Music, GitHub, Calendar, Focus and Weather, each with its key number." />
+          <div>
+            <h3>Your day, one thing at a time.</h3>
+            <p>Calendar, reminders, focus, music, weather, GitHub, Notion. You choose the modules and their order.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="features" aria-labelledby="dev-titre">
+        <h2 id="dev-titre" class="kicker">For developers</h2>
+        <article class="feature">
+          <img src="media/permission.jpg" width="960" height="265" loading="lazy" alt="The open notch island: Claude Code asks to run swift test, with a red button to deny and a green one to allow." />
+          <div>
+            <h3>Claude Code, in your notch.</h3>
+            <p>Every session, in every terminal and editor, shows what it is working on. When Claude Code asks for a permission, the island opens and you answer from there, without switching windows.</p>
+          </div>
+        </article>
+      </section>
+
       <section id="video" class="video" aria-labelledby="video-titre">
-        <h2 id="video-titre" class="kicker">In two minutes</h2>
-        <p class="section-lead">What he does, then how to install him. Subtitled, so it works without sound.</p>
+        <h2 id="video-titre" class="kicker">Meet Yumi</h2>
+        <p class="section-lead">An animated tour of what he does and how to install him (in French, with subtitles).</p>
         <video controls preload="none" playsinline poster="media/yumi-masterclass-poster.jpg" width="1920" height="1080">
           <source src="media/yumi-masterclass.mp4" type="video/mp4" />
           <a href="media/yumi-masterclass.mp4">Download the video (7 MB)</a>
         </video>
-      </section>
-
-      <section class="features" aria-labelledby="fait-titre">
-        <h2 id="fait-titre" class="kicker">What he does</h2>
-
-        <article class="feature">
-          <img src="media/chat.jpg" width="960" height="265" loading="lazy" alt="The chat in the island: Yumi writes a file named bienvenue.txt in Downloads." />
-          <div>
-            <h3>You ask, he does it.</h3>
-            <p>He creates a note, adds a line to it, sets a reminder, blocks time in your calendar, starts a focus session or sums up your day. Before he creates or changes anything, he shows you exactly what he is about to do and waits for your click. Then he checks it is really done.</p>
-          </div>
-        </article>
-
-        <article class="feature">
-          <img src="media/activites.jpg" width="960" height="265" loading="lazy" alt="The island overview: Claude Code, Notes, Music, GitHub, Calendar, Focus and Weather, each with its key number." />
-          <div>
-            <h3>One thing at a time.</h3>
-            <p>Your music, your next meeting, today's reminders, the weather, your GitHub activity. Folded, he shows what matters now. Open, you move from one module to the next. New modules arrive with every release.</p>
-          </div>
-        </article>
-
-        <article class="feature">
-          <img src="media/remarque.jpg" width="960" height="265" loading="lazy" alt="The folded island: Yumi suggests a break after two hours in a row." />
-          <div>
-            <h3>He remembers, and speaks first.</h3>
-            <p>What you tell him stays in a plain text file on your Mac that you can read, fix and erase. He speaks up on his own, rarely: two hours without a break, a meeting coming up, an agent waiting for your answer.</p>
-          </div>
-        </article>
-
-        <article class="feature">
-          <img src="media/permission.jpg" width="960" height="265" loading="lazy" alt="The open notch island: Claude Code asks to run swift test, with a red button to deny and a green one to allow." />
-          <div>
-            <h3>For developers: he follows Claude Code.</h3>
-            <p>Every session, in every terminal and editor, shows up in the notch: thinking, working, done or failed. When Claude Code asks for a permission, the island opens and you answer from there, without switching windows.</p>
-          </div>
-        </article>
-      </section>
-
-      <section class="trust" aria-labelledby="confiance-titre">
-        <h2 id="confiance-titre" class="kicker">Trust</h2>
-        <ul class="promises">
-          <li>
-            <strong>Nothing without your click.</strong>
-            <span>Yumi changes nothing on your Mac without your answer, and no Claude Code permission is granted without you.</span>
-          </li>
-          <li>
-            <strong>No account.</strong>
-            <span>No sign-up, no server of ours.</span>
-          </li>
-          <li>
-            <strong>No telemetry.</strong>
-            <span>No analytics, no tracking. Not in the app, not on this site.</span>
-          </li>
-          <li>
-            <strong>Your data stays on your Mac.</strong>
-            <span>Your calendar, your reminders and his memory never leave it. Only the services you turn on are contacted, and the AI engine you choose.</span>
-          </li>
-        </ul>
       </section>
 
       <section class="install" aria-labelledby="installer-titre">
@@ -140,7 +158,7 @@
         <div class="needs">
           <h3>You need</h3>
           <ul>
-            <li>macOS 15 or later.</li>
+            <li>macOS 15 or later. A Mac with a notch is recommended.</li>
             <li>An AI engine for the chat and the actions: Claude Code, an Anthropic, OpenAI or Gemini key, or Ollama running on your Mac (free, nothing leaves your Mac).</li>
           </ul>
         </div>
@@ -151,6 +169,10 @@
         <details>
           <summary>Is it free?</summary>
           <p>Yes. Yumi is free and open source. The chat goes through the AI engine you choose: your Claude Code plan, your own API key, or Ollama for free on your Mac.</p>
+        </details>
+        <details>
+          <summary>Can he do anything on my Mac?</summary>
+          <p>No, and on purpose. He does a short list of small actions (reminders, events, text files, Notion tasks, focus), always shown before and checked after. New ones come with each release. <a href="https://github.com/estebanbaigts/Yumi/issues/new?template=trick.yml">Suggest the next one</a>.</p>
         </details>
         <details>
           <summary>What about my data?</summary>
@@ -169,24 +191,20 @@
           <p>English and French, following your Mac's language.</p>
         </details>
         <details>
-          <summary>And on Windows?</summary>
-          <p>Not planned for now. Yumi is a native macOS app.</p>
-        </details>
-        <details>
           <summary>How do I give feedback?</summary>
-          <p>In Yumi's settings, « Send feedback » opens a form already filled in with your Yumi and macOS versions, no account needed. You can also <a href="https://github.com/estebanbaigts/Yumi/issues">open an issue on GitHub</a>. Every bit of feedback helps, even a small detail.</p>
+          <p>In Yumi's menu, « Send feedback » opens a form already filled in with your Yumi and macOS versions, no account needed. You can also <a href="https://github.com/estebanbaigts/Yumi/issues">open an issue on GitHub</a>.</p>
         </details>
       </section>
     </main>
 
     <footer class="footer">
-      <p><a href="https://github.com/estebanbaigts/Yumi">Yumi on GitHub</a></p>
+      <p><a href="https://github.com/estebanbaigts/Yumi">Yumi on GitHub</a> · <a href="https://github.com/estebanbaigts/Yumi/issues/new?template=trick.yml">Teach Yumi a new trick</a></p>
       <p>
         Code under the <a href="https://github.com/estebanbaigts/Yumi/blob/main/LICENSE">MIT license</a>. The Yumi name, the character, his icons, his sounds and the film are reserved:
         see <a href="https://github.com/estebanbaigts/Yumi/blob/main/LICENSE-ASSETS.md">LICENSE-ASSETS.md</a>.
       </p>
       <p>
-        Yumi started from the open source code of <a href="https://github.com/Louis-CFM/coucou">Coucou</a>, by Louis Raillé, under the MIT license. It is an independent project, not affiliated with or endorsed by the author of Coucou:
+        Yumi started from <a href="https://github.com/Louis-CFM/coucou">Coucou</a>'s open-source notch app (MIT, by Louis Raillé) and grew into its own agent, permission system and character. An independent project, not affiliated with or endorsed by the author of Coucou:
         see <a href="https://github.com/estebanbaigts/Yumi/blob/main/ATTRIBUTION.md">ATTRIBUTION.md</a>.
       </p>
       <p class="quiet">This site uses no cookies, no tracking and nothing loaded from another domain.</p>

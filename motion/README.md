@@ -37,6 +37,8 @@ npm run lint
 | `Couverture` | The cover, a still image | |
 | `Story1-Yeux` to `Story5-Salut` | The five stories | 4 to 6 s each |
 | `Accroche`, `Pov`, `Fonctions`, `Humeurs`, `Fin` | The shots of the film, one by one | |
+| `Demo-9x16` | Short demo for TikTok, Reels and Shorts around a **real screen recording**: hook, take, zoom on the strong moment, proof, end card. Props in `src/demo/Demo.tsx` | clip + 2.6 s |
+| `Og` | Social preview of the site and the repository, 1200 × 630. Render it to `site/media/og.jpg` | |
 | `Planche` | Reference sheet of the character, landscape | 8 s |
 
 ## Layout
@@ -61,3 +63,12 @@ python3 outils/musique.py public/musique/ambiance.wav
 ## License
 
 All rights reserved, see [LICENSE.md](LICENSE.md). This folder is not covered by the MIT License of the app. Remotion has its own terms: a company license is needed for some entities, [read them here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
+
+## Making a demo
+
+1. Record the real app with ⌘⇧5, full screen, English interface. One take, no cut at the important moment.
+2. Put the file in `public/demo/` (for instance `public/demo/rappel.mov`).
+3. In the studio (`npm run dev`), open `Demo-9x16` and set its props: `clip`, `clipStart`, `clipLength`, the `crop` (the part of the screen to keep), the `highlight` (zoom on the approval card), the `proof` and the `captions`.
+4. Render: `npx remotion render Demo-9x16 out/demo.mp4 --props=props.json`.
+
+Never stage the take: the demo must show the real app doing the real thing. The social preview is rendered with `npx remotion still Og ../site/media/og.jpg --image-format=jpeg`.

@@ -8,10 +8,10 @@
       content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src https://api.github.com; base-uri 'self'; form-action 'none'"
     />
     <meta name="referrer" content="no-referrer" />
-    <title>Yumi, le petit compagnon de ton Mac</title>
+    <title>Yumi, la petite IA de ta notch qui demande avant d'agir</title>
     <meta
       name="description"
-      content="Ton Mac a un nouveau petit compagnon. Yumi vit dans la notch, t'aide au quotidien et demande toujours avant de toucher à quoi que ce soit. Il apprend de nouveaux tours chaque semaine. Gratuit et open source, macOS 15+."
+      content="Yumi fait de petites choses pour toi sur ton Mac (rappels, événements, notes et plus), te montre exactement ce qui va changer, attend ton clic, puis vérifie que c'est bien fait. Gratuit et open source, macOS 15+.\"
     />
     <meta name="color-scheme" content="dark" />
     <meta name="theme-color" content="#000000" />
@@ -20,14 +20,14 @@
     <link rel="alternate" hreflang="en" href="https://estebanbaigts.github.io/Yumi/" />
     <link rel="alternate" hreflang="fr" href="https://estebanbaigts.github.io/Yumi/fr/" />
     <meta property="og:type" content="website" />
-    <meta property="og:title" content="Ton Mac a un nouveau petit compagnon : Yumi" />
-    <meta property="og:description" content="Il vit dans la notch, t'aide au quotidien et demande toujours avant de toucher à quoi que ce soit. Il apprend de nouveaux tours chaque semaine." />
+    <meta property="og:title" content="Yumi, la petite IA de ta notch qui demande avant d'agir" />
+    <meta property="og:description" content="De petites choses sur ton Mac (rappels, événements, notes), montrées exactement avant, vérifiées après. Gratuit et open source." />
     <meta property="og:image" content="https://estebanbaigts.github.io/Yumi/media/og.jpg" />
     <meta property="og:url" content="https://estebanbaigts.github.io/Yumi/fr/" />
     <meta name="twitter:card" content="summary_large_image" />
     <script type="module" src="../assets/yumi.js"></script>
   </head>
-  <body>
+    <body>
     <a class="skip" href="#contenu">Aller au contenu</a>
 
     <header class="hero">
@@ -35,81 +35,99 @@
       <button class="yumi" type="button" aria-label="Yumi, un petit personnage noir aux grands yeux, entouré d'une lumière bleue, violette et rose. Touche-le pour le faire rebondir.">
         <span id="yumi" class="yumi-stage"></span>
       </button>
-      <h1>Ton Mac a un nouveau petit compagnon.</h1>
-      <p class="lead">Yumi vit dans la notch, t'aide au quotidien et demande toujours avant de toucher à quoi que ce soit. Il apprend de nouveaux tours chaque semaine.</p>
+      <h1>La petite IA de ta notch qui demande avant d'agir.</h1>
+      <p class="lead">Yumi fait de petites choses pour toi (rappels, événements, notes et plus), te montre exactement ce qui va changer, attend ton clic, puis vérifie que c'est bien fait.</p>
       <div class="actions">
-        <a class="button primary" data-release href="https://github.com/estebanbaigts/Yumi/releases">Adopter Yumi, c'est gratuit</a>
-        <a class="button" href="#video">Voir la vidéo</a>
+        <a class="button primary" data-release href="https://github.com/estebanbaigts/Yumi/releases">Télécharger l'alpha gratuite</a>
+        <a class="button" href="#preuve">Le voir faire</a>
       </div>
       <p class="meta"><span>macOS 15+</span> · <span>open source</span> · <span>version <span data-version>0.1.0-alpha</span></span> · <a href="../" hreflang="en" lang="en">English</a></p>
     </header>
 
     <main id="contenu">
+      <section id="preuve" class="features" aria-labelledby="preuve-titre">
+        <h2 id="preuve-titre" class="kicker">Tu demandes, il le fait</h2>
+        <!-- ASSET DE PREUVE À PRODUIRE (voir la version anglaise): a real recording, request → approval card → result in Reminders, Calendar or Finder → checked. Replace chat.jpg with it. -->
+        <article class="feature">
+          <img src="../media/chat.jpg" width="960" height="265" loading="lazy" alt="Le chat dans la notch : à la demande d'un petit mot de bienvenue, Yumi écrit bienvenue.txt dans Téléchargements et montre son contenu." />
+          <div>
+            <h3>De vrais changements, dans tes vraies apps.</h3>
+            <p>Demande avec tes mots. Yumi en fait un plan, te montre exactement ce qui va changer (le fichier et son contenu, le rappel, l'événement) et attend ton clic. Puis il regarde à nouveau : si ce n'est pas vraiment là, il te le dit.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="trust" aria-labelledby="actions-titre">
+        <h2 id="actions-titre" class="kicker">Petites actions. Vrais résultats.</h2>
+        <ul class="promises">
+          <li><strong>Rappels</strong><span>« Rappelle-moi d'appeler le dentiste demain à 10 h. » Ajouté dans Rappels, après ton clic.</span></li>
+          <li><strong>Agenda</strong><span>« Bloque jeudi 14 h, rendez-vous client. » Ajouté à ton propre agenda, jamais avec des invités.</span></li>
+          <li><strong>Notes et fichiers</strong><span>« Crée todo.md avec deux tâches. » Un fichier texte dans Téléchargements, et des lignes ajoutées ensuite. Il ne remplace jamais un fichier.</span></li>
+          <li><strong>Notion</strong><span>« Ajoute "appeler Paul" à mes tâches Notion. » Ajoute une tâche ou en coche une. Demandé à chaque fois, parce que ça quitte ton Mac.</span></li>
+          <li><strong>Focus</strong><span>« Je bosse 45 minutes. » Lance une session de focus.</span></li>
+          <li><strong>Ta journée</strong><span>« Combien de temps libre j'ai demain ? » Lecture seule, jusqu'à deux semaines.</span></li>
+        </ul>
+        <p class="section-lead">Il ne contrôle pas tout ton Mac. Il ne supprime, ne déplace, n'envoie de message, ne lance de commande ni ne modifie un fichier qu'il n'a pas créé. De nouveaux tours arrivent à chaque version.</p>
+      </section>
+
+      <section class="trust" aria-labelledby="confiance-titre">
+        <h2 id="confiance-titre" class="kicker">Tu gardes la main</h2>
+        <ul class="promises">
+          <li>
+            <strong>Il demande d'abord.</strong>
+            <span>Chaque changement attend ton clic, sauf si tu l'as autorisé toi-même pour la session ou pour toujours. Les services extérieurs comme Notion sont demandés à chaque fois.</span>
+          </li>
+          <li>
+            <strong>Le modèle ne fait que proposer.</strong>
+            <span>Le code de Yumi vérifie chaque plan, et chaque étape passe par un seul point de contrôle. Secrets, dossiers système, paiements et sudo sont refusés.</span>
+          </li>
+          <li>
+            <strong>Il vérifie après.</strong>
+            <span>Si le rappel, l'événement ou le fichier n'est pas vraiment là, l'exécution échoue et il le dit. Un historique des décisions reste sur ton Mac.</span>
+          </li>
+          <li>
+            <strong>Pas de compte, pas de télémétrie.</strong>
+            <span>Aucun serveur à nous. Tes messages vont seulement au moteur d'IA que tu choisis, et avec Ollama rien ne quitte ton Mac.</span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="features" aria-labelledby="personnage-titre">
+        <h2 id="personnage-titre" class="kicker">Il vit dans ta notch</h2>
+        <article class="feature">
+          <img src="../media/remarque.jpg" width="960" height="265" loading="lazy" alt="L'île repliée : Yumi propose une pause après deux heures d'affilée." />
+          <div>
+            <h3>Pas une fenêtre de chat de plus.</h3>
+            <p>Il se tient en haut de ton écran et montre ce qui compte maintenant : ton prochain rendez-vous, tes rappels du jour, ta musique. Parfois il parle le premier : un rendez-vous qui approche, deux heures sans pause. Ce que tu lui dis reste dans un fichier texte sur ton Mac, que tu peux lire et effacer.</p>
+          </div>
+        </article>
+        <article class="feature">
+          <img src="../media/activites.jpg" width="960" height="265" loading="lazy" alt="La vue d'ensemble de l'île : Claude Code, Notes, Musique, GitHub, Agenda, Focus et Météo, chacun avec son chiffre clé." />
+          <div>
+            <h3>Ta journée, une chose à la fois.</h3>
+            <p>Agenda, rappels, focus, musique, météo, GitHub, Notion. Tu choisis les modules et leur ordre.</p>
+          </div>
+        </article>
+      </section>
+
+      <section class="features" aria-labelledby="dev-titre">
+        <h2 id="dev-titre" class="kicker">Pour les développeurs</h2>
+        <article class="feature">
+          <img src="../media/permission.jpg" width="960" height="265" loading="lazy" alt="L'île de la notch ouverte : Claude Code demande à lancer swift test, avec un bouton rouge pour refuser et un vert pour accepter." />
+          <div>
+            <h3>Claude Code, dans ta notch.</h3>
+            <p>Chaque session, dans chaque terminal et éditeur, montre ce sur quoi elle travaille. Quand Claude Code demande une permission, l'île s'ouvre et tu réponds de là, sans changer de fenêtre.</p>
+          </div>
+        </article>
+      </section>
+
       <section id="video" class="video" aria-labelledby="video-titre">
-        <h2 id="video-titre" class="kicker">En deux minutes</h2>
-        <p class="section-lead">Ce qu'il fait, puis comment l'installer. Sous-titrée : elle se regarde aussi sans le son.</p>
+        <h2 id="video-titre" class="kicker">Découvrir Yumi</h2>
+        <p class="section-lead">Un tour animé de ce qu'il fait et de son installation. Sous-titré : il se regarde aussi sans le son.</p>
         <video controls preload="none" playsinline poster="../media/yumi-masterclass-poster.jpg" width="1920" height="1080">
           <source src="../media/yumi-masterclass.mp4" type="video/mp4" />
           <a href="../media/yumi-masterclass.mp4">Télécharger la vidéo (7 Mo)</a>
         </video>
-      </section>
-
-      <section class="features" aria-labelledby="fait-titre">
-        <h2 id="fait-titre" class="kicker">Ce qu'il fait</h2>
-
-        <article class="feature">
-          <img src="../media/permission.jpg" width="960" height="265" loading="lazy" alt="L'île de la notch ouverte : Claude Code demande à lancer swift test, avec un bouton rouge pour refuser et un vert pour accepter." />
-          <div>
-            <h3>Il suit Claude Code.</h3>
-            <p>Chaque session, dans chaque terminal et éditeur, apparaît dans la notch : elle réfléchit, travaille, a fini ou a échoué. Quand Claude Code demande une permission, l'île s'ouvre et tu réponds de là, sans changer de fenêtre. Sans réponse, la question repart dans Claude Code.</p>
-          </div>
-        </article>
-
-        <article class="feature">
-          <img src="../media/chat.jpg" width="960" height="265" loading="lazy" alt="Le chat dans l'île : Yumi écrit un fichier bienvenue.txt dans les Téléchargements." />
-          <div>
-            <h3>Tu lui parles, il agit.</h3>
-            <p>Il crée un fichier, y ajoute une ligne, ajoute un rappel, bloque un créneau dans ton agenda, lance un focus ou résume ta journée. Avant de créer ou de modifier quoi que ce soit, il te montre exactement ce qu'il va faire et attend ton accord. Puis il vérifie que c'est bien fait.</p>
-          </div>
-        </article>
-
-        <article class="feature">
-          <img src="../media/activites.jpg" width="960" height="265" loading="lazy" alt="La vue d'ensemble de l'île : Claude Code, Notes, Musique, GitHub, Agenda, Focus et Météo, chacun avec son chiffre clé." />
-          <div>
-            <h3>Une chose à la fois.</h3>
-            <p>Ta musique, ton prochain rendez-vous, tes rappels du jour, la météo, tes pull requests GitHub. Replié, il montre ce qui compte maintenant. Ouvert, tu passes d'un module à l'autre.</p>
-          </div>
-        </article>
-
-        <article class="feature">
-          <img src="../media/remarque.jpg" width="960" height="265" loading="lazy" alt="L'île repliée : Yumi dit « Deux heures d'affilée. Une pause ? »" />
-          <div>
-            <h3>Il retient, et parle le premier.</h3>
-            <p>Ce que tu lui dis reste dans un fichier texte sur ton Mac, que tu peux lire, corriger et effacer. Il parle de lui-même, rarement : deux heures sans pause, un rendez-vous qui approche, un agent qui attend ta réponse.</p>
-          </div>
-        </article>
-      </section>
-
-      <section class="trust" aria-labelledby="confiance-titre">
-        <h2 id="confiance-titre" class="kicker">Confiance</h2>
-        <ul class="promises">
-          <li>
-            <strong>Rien sans ton accord.</strong>
-            <span>Aucune permission de Claude Code n'est accordée sans ton clic, et Yumi ne modifie rien sur ton Mac sans ta réponse.</span>
-          </li>
-          <li>
-            <strong>Pas de compte.</strong>
-            <span>Pas d'inscription, pas de serveur à nous.</span>
-          </li>
-          <li>
-            <strong>Pas de télémétrie.</strong>
-            <span>Aucune statistique, aucun suivi. Ni dans l'app, ni sur ce site.</span>
-          </li>
-          <li>
-            <strong>Tes données restent sur ton Mac.</strong>
-            <span>Ton agenda, tes rappels et sa mémoire ne le quittent jamais. Seuls les services que tu actives sont contactés : la météo, GitHub, Claude Code.</span>
-          </li>
-        </ul>
       </section>
 
       <section class="install" aria-labelledby="installer-titre">
@@ -134,13 +152,13 @@
           <li>
             <span class="step-number" aria-hidden="true">4</span>
             <h3>Il apparaît dans la notch.</h3>
-            <p>Pour voir tes sessions Claude Code, installe ses hooks depuis ses réglages. C'est facultatif : il te montre le changement avant de l'écrire et garde une sauvegarde.</p>
+            <p>Clic droit sur lui pour les réglages. Si tu utilises Claude Code, il propose de suivre tes sessions : c'est facultatif, et il te montre le changement avant de l'écrire.</p>
           </li>
         </ol>
         <div class="needs">
           <h3>Il te faut</h3>
           <ul>
-            <li>macOS 15 ou plus récent.</li>
+            <li>macOS 15 ou plus récent. Un Mac avec une notch est recommandé.</li>
             <li>Un moteur d'IA pour le chat et les actions : Claude Code, une clé Anthropic, OpenAI ou Gemini, ou Ollama sur ton Mac (gratuit, rien ne quitte ton Mac).</li>
           </ul>
         </div>
@@ -153,36 +171,40 @@
           <p>Oui. Yumi est gratuit et open source. Le chat passe par le moteur d'IA que tu choisis : ton forfait Claude Code, ta propre clé, ou Ollama gratuitement sur ton Mac.</p>
         </details>
         <details>
+          <summary>Il peut tout faire sur mon Mac ?</summary>
+          <p>Non, et c'est voulu. Il fait une courte liste de petites actions (rappels, événements, fichiers texte, tâches Notion, focus), toujours montrées avant et vérifiées après. De nouvelles arrivent à chaque version. <a href="https://github.com/estebanbaigts/Yumi/issues/new?template=trick.yml">Propose la prochaine</a>.</p>
+        </details>
+        <details>
           <summary>Et mes données ?</summary>
-          <p>Elles restent sur ton Mac. Pas de compte, pas de télémétrie. Sa mémoire est un simple fichier texte que tu peux lire, corriger ou effacer depuis ses réglages. Seuls les services que tu actives sont contactés : la météo, GitHub avec ton propre jeton, Claude Code avec ton propre compte.</p>
+          <p>Elles restent sur ton Mac. Pas de compte, pas de télémétrie. Sa mémoire est un simple fichier texte que tu peux lire, corriger ou effacer depuis ses réglages. Seuls les services que tu actives sont contactés.</p>
         </details>
         <details>
           <summary>Pourquoi macOS bloque-t-il l'ouverture ?</summary>
-          <p>Parce que cette alpha n'est pas encore notarisée par Apple. Tu l'autorises une seule fois dans Réglages Système › Confidentialité et sécurité, avec « Ouvrir quand même ».</p>
+          <p>Parce que cette alpha n'est pas encore notarisée par Apple. Tu l'autorises une seule fois dans Réglages Système › Confidentialité et sécurité, avec « Ouvrir quand même ». Chaque version est construite par GitHub à partir du code public, et tu peux le vérifier.</p>
         </details>
         <details>
           <summary>Ça marche sur un Mac sans notch ?</summary>
           <p>Pas encore testé. Yumi est pensé pour la notch ; les Mac sans notch viendront plus tard.</p>
         </details>
         <details>
-          <summary>Et sur Windows ?</summary>
-          <p>Pas prévu pour l'instant. Yumi est une app macOS native.</p>
+          <summary>Quelles langues parle-t-il ?</summary>
+          <p>Français et anglais, selon la langue de ton Mac.</p>
         </details>
         <details>
           <summary>Comment donner un retour ?</summary>
-          <p>Dans les réglages de Yumi, « Envoyer un retour » ouvre un formulaire déjà rempli avec ta version de Yumi et de macOS. Tu peux aussi <a href="https://github.com/estebanbaigts/Yumi/issues">ouvrir une issue sur GitHub</a>. Tout retour aide, même un détail.</p>
+          <p>Dans le menu de Yumi, « Envoyer un retour » ouvre un formulaire déjà rempli avec ta version de Yumi et de macOS, sans compte. Tu peux aussi <a href="https://github.com/estebanbaigts/Yumi/issues">ouvrir une issue sur GitHub</a>.</p>
         </details>
       </section>
     </main>
 
     <footer class="footer">
-      <p><a href="https://github.com/estebanbaigts/Yumi">Yumi sur GitHub</a></p>
+      <p><a href="https://github.com/estebanbaigts/Yumi">Yumi sur GitHub</a> · <a href="https://github.com/estebanbaigts/Yumi/issues/new?template=trick.yml">Apprendre un nouveau tour à Yumi</a></p>
       <p>
         Code sous <a href="https://github.com/estebanbaigts/Yumi/blob/main/LICENSE">licence MIT</a>. Le nom Yumi, le personnage, ses icônes, ses sons et le film restent réservés :
         voir <a href="https://github.com/estebanbaigts/Yumi/blob/main/LICENSE-ASSETS.md">LICENSE-ASSETS.md</a>.
       </p>
       <p>
-        Yumi part du code open source de <a href="https://github.com/Louis-CFM/coucou">Coucou</a>, de Louis Raillé, sous licence MIT. C'est un projet indépendant, ni affilié à l'auteur de Coucou, ni soutenu par lui :
+        Yumi est parti de l'app de notch open source de <a href="https://github.com/Louis-CFM/coucou">Coucou</a> (MIT, de Louis Raillé), puis a grandi avec son propre agent, son système de permissions et son personnage. Un projet indépendant, ni affilié à l'auteur de Coucou, ni soutenu par lui :
         voir <a href="https://github.com/estebanbaigts/Yumi/blob/main/ATTRIBUTION.md">ATTRIBUTION.md</a>.
       </p>
       <p class="quiet">Ce site n'utilise ni cookie, ni suivi, ni ressource venue d'un autre domaine.</p>

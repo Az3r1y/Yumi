@@ -1,0 +1,36 @@
+name: Un nouveau tour / A new trick
+description: Quelque chose que Yumi devrait savoir faire pour toi. Something Yumi should learn to do for you.
+title: "Trick: "
+labels: [new trick]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Écris en français ou en anglais. Write in French or in English.
+        Yumi fait de petites actions, toujours après ton accord. Les meilleures idées deviennent les prochaines versions.
+        Yumi does small actions, always after your approval. The best ideas become the next releases.
+  - type: input
+    id: phrase
+    attributes:
+      label: Ce que tu lui dirais / What you would say to him
+      placeholder: « Remind me to water the plants every Sunday »
+    validations:
+      required: true
+  - type: textarea
+    id: resultat
+    attributes:
+      label: Ce qu'il devrait faire / What he should do
+      description: Dans quelle app, et ce qu'on devrait y voir après. In which app, and what you should see there afterwards.
+      placeholder: A repeating reminder in Reminders, every Sunday at 10.
+    validations:
+      required: true
+  - type: textarea
+    id: pourquoi
+    attributes:
+      label: Pourquoi ça t'aiderait / Why it would help you
+  - type: checkboxes
+    id: video
+    attributes:
+      label: Vidéo / Video
+      options:
+        - label: Tu peux montrer ma demande dans une vidéo de Yumi (sans mon nom). You may show my request in a Yumi video (without my name).

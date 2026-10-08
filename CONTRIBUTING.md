@@ -66,6 +66,20 @@ Timers: set a delay to a few hundredths of a second when the transition must hap
 - Never send an email or approve a Claude Code permission without an explicit click.
 - Do not fix an odd behaviour in passing. `ARCHITECTURE.md` lists several gaps between what the settings promise and what the code does. Each one deserves its own change, with its own description.
 
+## Teaching Yumi a new trick
+
+Each action Yumi can take is one tool in `Yumi/Sources/App/AgentRuntime/Tools/`, following the `Tool` protocol (`AgentRuntime/Tool.swift`). Start from the closest existing one (`AddReminderTool.swift` is a good model):
+
+1. **`descriptor`**: id, name, description, input schema and risk. The planner only sees this.
+2. **`action(for:)`**: what the tool really touches (read, create, modify, and which resource). The permission manager computes the risk from it; refuse what the tool was not made for.
+3. **`check`**: what can be checked before asking the person (a missing access, a bad argument).
+4. **`execute`**: does the thing.
+5. **`verify`**: looks again and returns a message if the result is not really there.
+
+Register it in `AppDelegate.swift`, next to the other tools, and add tests in `Yumi/Tests/AgentRuntime/` (see `AgentToolsTests.swift` and `WriteToolsRefusalTests.swift`). A tool never asks the person itself and never bypasses the permission manager.
+
+Ideas waiting for someone are labelled `new trick` in the issues.
+
 ## Proposing a change
 
 1. Create a branch from `main`. Nobody pushes to `main` directly.
@@ -82,7 +96,9 @@ Please do not report a security problem in a public issue. Write to the maintain
 
 ## Releases
 
-Releases are made by the maintainer with `scripts/release.sh`, which needs the Developer ID certificate. Do not run it in a pull request or in continuous integration.
+Releases are made by the maintainer by pushing a tag `v<version>` that matches `YumiDisplayVersion` in `Yumi/project.yml`. The [release workflow](.github/workflows/release.yml) then runs on GitHub's machines: it tests, builds the Release configuration, signs it with the « Yumi Local » certificate (stored in the repository secrets), zips it with the install guides, publishes `SHA256SUMS.txt` and a build provenance attestation, and opens a draft pre-release that the maintainer reviews and publishes by hand. The builds are not notarized by Apple.
+
+`scripts/release.sh` is the notarized path (Developer ID certificate and an Apple Developer account). It is not used today, since there is no Apple Developer account yet. Do not run either in a pull request.
 
 ## License
 

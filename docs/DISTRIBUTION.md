@@ -2,12 +2,14 @@
 
 Diagnostic établi le 2026-10-08 sur l'état réel du dépôt (0.1.0-alpha.7, README alpha 5 réécrit, site `site/`, projet Remotion `motion/`, `docs/POST_ALPHA_STATUS.md`). Les chiffres GitHub (stars, forks, issues) n'ont pas pu être lus : `gh` n'est pas installé sur cette machine.
 
-**Révision du 2026-10-08 : cible grand public.** L'accroche retenue est « Your Mac has a new little friend » (étape 2). Conséquences sur le reste du document :
-- Les canaux visuels passent en tête : TikTok, Reels et Shorts d'abord, puis X. Reddit et Hacker News restent, mais comme canaux développeurs secondaires.
-- Format récurrent n°1 : « Cette semaine, Yumi a appris à… ». Un module ou une capacité, une vidéo de 15 s. La vitesse de développement devient le rendez-vous.
-- Les idées de contenu 1, 2, 7, 9, 14, 15, 20 et 22 passent devant les idées techniques (12, 16, 17, 18).
-- Claude Code reste un argument, mais pour les développeurs seulement, jamais dans l'accroche.
-- Le site est en anglais par défaut (`site/index.html`), avec le français dans `site/fr/`.
+**Positionnement validé (2026-10-08), remplace les versions précédentes.**
+- Message principal : *The little AI in your notch that asks before it acts.*
+- Promesse : *Yumi does small things for you (reminders, calendar events, notes and more), shows you exactly what will change, waits for your click, then checks it really happened.*
+- Preuve : demande, plan, contenu exact, permission, action réelle, vérification, avec le résultat visible hors de la notch (Rappels, Calendrier, Finder, Notion).
+- Piliers : Lives in your notch, Does small things for you, Always asks first.
+- Abandonné : « Your Mac has a new little friend » (piège Tamagotchi), « keeps you company », Claude Code comme identité, « control center for agents », habitudes animées (jamais la cigarette), toute promesse de contrôle total du Mac ou d'automatisation générale.
+- Boucle de contenu : « Will Yumi do it? », les demandes du public testées face caméra (il le fait, il refuse, ou il ne sait pas encore et l'apprend dans une prochaine release via le modèle d'issue « new trick »).
+- Les sections ci-dessous datent du premier diagnostic : en cas de désaccord, ce bloc fait foi.
 
 ---
 
