@@ -5,8 +5,9 @@
 <h1 align="center">Yumi</h1>
 
 <p align="center">
-  A small companion that lives in the notch of your Mac.<br>
-  He shows what your AI agents are doing, asks before anything changes on your Mac, and keeps you company the rest of the day.
+  <b>Your Mac has a new little friend.</b><br>
+  Yumi lives in your notch, helps with your day, and always asks before touching anything.<br>
+  He learns new tricks every week.
 </p>
 
 <p align="center">
@@ -18,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/estebanbaigts/Yumi/releases"><b>⬇ Download the free alpha</b></a>
+  <a href="https://github.com/estebanbaigts/Yumi/releases"><b>⬇ Adopt Yumi, it's free</b></a>
   ·
   <a href="https://estebanbaigts.github.io/Yumi/">Website</a>
   ·
@@ -28,6 +29,10 @@
 <p align="center">
   <img src="docs/demo.gif" alt="A Claude Code session asks to run npm test; the user approves it from the notch" width="420">
 </p>
+
+⭐ **If Yumi makes you smile, a star helps him learn new tricks faster.**
+
+<sub>Yumi started from <a href="https://github.com/Louis-CFM/coucou">Coucou</a>'s MIT notch app, then grew his own agent, permission gate and character. See <a href="ATTRIBUTION.md">ATTRIBUTION.md</a>.</sub>
 
 ---
 
