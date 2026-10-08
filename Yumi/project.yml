@@ -70,9 +70,9 @@ targets:
         CFBundleName: Yumi
         CFBundleDisplayName: Yumi
         CFBundleIdentifier: app.yumi
-        CFBundleVersion: "7"
+        CFBundleVersion: "8"
         CFBundleShortVersionString: "0.1.0"
-        YumiDisplayVersion: "0.1.0-alpha.7"
+        YumiDisplayVersion: "0.1.0-alpha.8"
         CFBundlePackageType: APPL
         LSUIElement: YES
         NSHighResolutionCapable: YES
@@ -115,9 +115,9 @@ targets:
         CFBundleName: Yumi
         CFBundleDisplayName: Yumi
         CFBundleIdentifier: app.yumi.appstore
-        CFBundleVersion: "7"
+        CFBundleVersion: "8"
         CFBundleShortVersionString: "0.1.0"
-        YumiDisplayVersion: "0.1.0-alpha.7"
+        YumiDisplayVersion: "0.1.0-alpha.8"
         CFBundlePackageType: APPL
         LSUIElement: YES
         NSHighResolutionCapable: YES

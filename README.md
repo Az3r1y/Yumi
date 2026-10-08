@@ -104,18 +104,18 @@ Yumi tells you when a new version is out, at most once a day. He never downloads
 **Check the download.** Every release is built by GitHub Actions from the public code, not on a personal machine. The release page lists `SHA256SUMS.txt` and a build provenance attestation:
 
 ```bash
-shasum -a 256 Yumi-0.1.0-alpha.7.zip
+shasum -a 256 Yumi-0.1.0-alpha.8.zip
 ```
 
 ```bash
-gh attestation verify Yumi-0.1.0-alpha.7.zip --repo estebanbaigts/Yumi
+gh attestation verify Yumi-0.1.0-alpha.8.zip --repo estebanbaigts/Yumi
 ```
 
 Yumi tells you when a new version is out, at most once a day. He never downloads or installs anything by himself.
 
 ## Alpha
 
-Yumi is a public alpha, **0.1.0-alpha.7**: free, open source, and moving fast.
+Yumi is a public alpha, **0.1.0-alpha.8**: free, open source, and moving fast.
 
 - **Works today:** the actions above, with approval and verification; Claude Code sessions and approvals; the modules (calendar, reminders, focus, music, weather, GitHub, Notion); memory; English and French.
 - **Still rough:** see [Known limitations](#known-limitations). Not notarized, not tested on Macs without a notch, and one request cannot yet read then act (« prepare my day »).
