@@ -20,6 +20,15 @@ final class NotionListedTasks: @unchecked Sendable {
         lock.withLock { tasks = map }
     }
 
+    /// Adds tasks shown elsewhere (the quick task's list) without forgetting the module's.
+    func add(_ list: [NotionTask]) {
+        lock.withLock {
+            for task in list where tasks[task.id] == nil {
+                tasks[task.id] = NotionTaskInfo(title: task.title, base: task.base, baseID: task.baseID, done: false)
+            }
+        }
+    }
+
     func info(page id: String) -> NotionTaskInfo? {
         lock.withLock { tasks.first { NotionAPI.sameID($0.key, id) }?.value }
     }

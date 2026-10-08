@@ -23,7 +23,7 @@ final class EventKitEventStore: EventStore, @unchecked Sendable {
     func defaultCalendar() -> EventCalendarInfo? {
         guard access == .granted else { return nil }
         return lock.withLock {
-            guard let calendar = store.defaultCalendarForNewEvents else { return nil }
+            guard let calendar = target() else { return nil }
             let usable = calendar.allowsContentModifications && !calendar.isSubscribed
                 && calendar.type != .subscription && calendar.type != .birthday
             return EventCalendarInfo(title: calendar.title, acceptsNewEvents: usable)
@@ -32,7 +32,7 @@ final class EventKitEventStore: EventStore, @unchecked Sendable {
 
     func add(title: String, start: Date, end: Date, location: String?) throws -> String {
         try lock.withLock {
-            guard let calendar = store.defaultCalendarForNewEvents, calendar.allowsContentModifications, !calendar.isSubscribed else {
+            guard let calendar = target(), calendar.allowsContentModifications, !calendar.isSubscribed else {
                 throw NSError(domain: EKErrorDomain, code: EKError.Code.calendarReadOnly.rawValue)
             }
             let event = EKEvent(eventStore: store)
@@ -44,6 +44,16 @@ final class EventKitEventStore: EventStore, @unchecked Sendable {
             try store.save(event, span: .thisEvent, commit: true)
             return event.eventIdentifier
         }
+    }
+
+    /// The calendar chosen in Réglages > Modules > Agenda when it still exists and accepts
+    /// events, else the Calendar app's default one. Called with the lock held.
+    private func target() -> EKCalendar? {
+        if let id = AgendaCalendars.target(), let chosen = store.calendar(withIdentifier: id),
+           chosen.allowsContentModifications, !chosen.isSubscribed {
+            return chosen
+        }
+        return store.defaultCalendarForNewEvents
     }
 
     func event(id: String) -> StoredEvent? {

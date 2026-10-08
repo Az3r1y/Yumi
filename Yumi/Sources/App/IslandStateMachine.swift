@@ -546,9 +546,10 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
     /// window was redone, so nothing set earlier is lost.
     static let settings: [SettingsPage: [String]] = [
         .general:     ["yumiLanguage", "tripleShiftEnabled", "launchAtStartup", "hotkeyEnabled", "hotkeyFlags", "hotkeyCode", "autoCloseInterval",
-                       "absenceInterval", "contextEngineEnabled"],
+                       "absenceInterval", "contextEngineEnabled", "quickTaskShortcutEnabled", "quickTaskShortcutFlags",
+                       "quickTaskShortcutCode", "quickTaskDestination", "quickTaskNotionBase"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
-        .modules:     ["github-token"],
+        .modules:     ["github-token", "agendaHiddenCalendars", "agendaTargetCalendar"],
         .engines:     ["engineSettings", "engineKeys"],
         .claudeCode:  ["hooks", "claudeDirectoryBookmark"],
         .permissions: ["macOSPermissions", "yumiPermissions"],

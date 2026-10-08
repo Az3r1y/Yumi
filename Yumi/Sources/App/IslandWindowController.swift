@@ -25,6 +25,8 @@ final class IslandWindowController: NSWindowController {
     private var monitors: [Any] = []
     /// Three quick presses on Shift open or fold the island.
     private var tripleShift = TripleShift()
+    /// The quick task shortcut (⌥ Espace by default), system-wide.
+    private var quickTaskKey: GlobalHotKey?
     private var subscriptions: Set<AnyCancellable> = []
 
     /// The view the island opens on, when something other than a click opens it.
@@ -116,6 +118,7 @@ final class IslandWindowController: NSWindowController {
         wireFSM()
         startPolling()
         startMonitors()
+        startQuickTaskKey()
         startObservers()
         #if DEBUG
         IslandDemo.startIfRequested(controller: self)
@@ -448,6 +451,27 @@ final class IslandWindowController: NSWindowController {
         })
     }
 
+    /// Registers the quick task shortcut, again each time the settings change it.
+    private func startQuickTaskKey() {
+        let key = GlobalHotKey { [weak self] in self?.quickTaskKeyPressed() }
+        quickTaskKey = key
+        if !IslandStudio.isOn { key.set(QuickTaskShortcut.stored()) }
+        NotificationCenter.default.publisher(for: .quickTaskShortcutChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { _ in if !IslandStudio.isOn { key.set(QuickTaskShortcut.stored()) } }
+            .store(in: &subscriptions)
+    }
+
+    /// Opens the island on the quick task field; pressed again there, folds it.
+    private func quickTaskKeyPressed() {
+        guard !frozen, !leaving else { return }
+        if fsm.state == .home, state.view == .quickTask, !state.isPinned {
+            collapse()
+        } else {
+            expand(to: .quickTask)
+        }
+    }
+
     private func keyDown(keyCode: UInt16, flags: UInt) {
         if keyCode == 53 { // Escape
             if fsm.state == .home && !state.isPinned { collapse() }
@@ -666,7 +690,7 @@ final class IslandWindowController: NSWindowController {
             .sink { [weak self] view in
                 guard let self, self.fsm.state == .home else { return }
                 let screen = IslandScreen.resolve(view: view, state: .idle, approvalPending: false)
-                if screen == .talk || screen == .welcome || screen == .memory {
+                if screen == .talk || screen == .welcome || screen == .memory || screen == .quickTask {
                     self.islandPanel.makeKey()
                 } else if self.islandPanel.isKeyWindow {
                     self.islandPanel.resignKey()

@@ -10088,6 +10088,326 @@
           }
         }
       }
+    },
+    "Ajouter « %@ » à Rappels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add “%@” to Reminders"
+          }
+        }
+      }
+    },
+    "Ajouter « %@ » à Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add “%@” to Notion"
+          }
+        }
+      }
+    },
+    "Dans Rappels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Reminders"
+          }
+        }
+      }
+    },
+    "Dans Notion, %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Notion, %@"
+          }
+        }
+      }
+    },
+    "Dans Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Notion"
+          }
+        }
+      }
+    },
+    "Choisis une base Notion dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a Notion database in the settings."
+          }
+        }
+      }
+    },
+    "Choisis la base Notion dans Réglages > Général.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the Notion database in Settings > General."
+          }
+        }
+      }
+    },
+    "Je ne suis pas encore prêt, réessaie dans un instant.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'm not ready yet, try again in a moment."
+          }
+        }
+      }
+    },
+    "Ajouté : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added: %@"
+          }
+        }
+      }
+    },
+    "Pas ajouté.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not added."
+          }
+        }
+      }
+    },
+    "Rappels n'a pas coché la tâche.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders didn't tick the task."
+          }
+        }
+      }
+    },
+    "Autorise Yumi à lire tes Rappels pour voir ceux du jour.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Allow Yumi to read your Reminders to see today's."
+          }
+        }
+      }
+    },
+    "Nouvelle tâche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New task"
+          }
+        }
+      }
+    },
+    "Ajouter": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add"
+          }
+        }
+      }
+    },
+    "Rien pour aujourd'hui.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing for today."
+          }
+        }
+      }
+    },
+    "à %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "at %@"
+          }
+        }
+      }
+    },
+    "Ajouter une tâche avec un raccourci": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add a task with a shortcut"
+          }
+        }
+      }
+    },
+    "Rétablir ⌥ Espace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to ⌥ Space"
+          }
+        }
+      }
+    },
+    "Ajouter dans": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add to"
+          }
+        }
+      }
+    },
+    "Rappels": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reminders"
+          }
+        }
+      }
+    },
+    "Choisis d'abord une base dans Réglages > Modules > Notion.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First choose a database in Settings > Modules > Notion."
+          }
+        }
+      }
+    },
+    "Base Notion": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notion database"
+          }
+        }
+      }
+    },
+    "À choisir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose one"
+          }
+        }
+      }
+    },
+    "Tâche rapide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick task"
+          }
+        }
+      }
+    },
+    "Le raccourci ouvre l'île sur « Nouvelle tâche ». J'y lis une date simple (« demain », « jeudi 15h »). Notion est hors de ton Mac : je te demande ton accord à chaque tâche.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shortcut opens the island on “New task”. I read a simple date in it (“tomorrow”, “thursday 3pm”). Notion is outside your Mac: I ask for your approval for every task."
+          }
+        }
+      }
+    },
+    "Le raccourci ouvre l'île sur « Nouvelle tâche ». J'y lis une date simple (« demain », « jeudi 15h »). J'ajoute le rappel dans ta liste par défaut, après ton accord.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The shortcut opens the island on “New task”. I read a simple date in it (“tomorrow”, “thursday 3pm”). I add the reminder to your default list, after your approval."
+          }
+        }
+      }
+    },
+    "Espace": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Space"
+          }
+        }
+      }
+    },
+    "Autorise d'abord Yumi à lire ton calendrier : ouvre le module Agenda dans l'île, ou Réglages Système, Confidentialité et sécurité, Calendriers.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "First allow Yumi to read your calendar: open the Agenda module in the island, or System Settings, Privacy & Security, Calendars."
+          }
+        }
+      }
+    },
+    "Créer les événements dans": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create events in"
+          }
+        }
+      }
+    },
+    "Calendrier par défaut (%@)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default calendar (%@)"
+          }
+        }
+      }
+    },
+    "Calendrier par défaut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Default calendar"
+          }
+        }
+      }
+    },
+    "Tu utilises Notion Calendar ? Il n'a pas d'API publique : ajoute le même compte Google ou iCloud dans Calendrier (Réglages Système > Comptes Internet), Yumi verra et créera les mêmes rendez-vous.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Using Notion Calendar? It has no public API: add the same Google or iCloud account to Calendar (System Settings > Internet Accounts), and Yumi will see and create the same appointments."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
