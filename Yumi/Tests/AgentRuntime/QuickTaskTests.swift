@@ -116,8 +116,8 @@ private func day(_ d: Int, month: Int = 10) -> DateComponents { DateComponents(y
 }
 
 private final class QuickNotion: NotionTaskStore, @unchecked Sendable {
-    func baseNames() -> [String] { ["Perso"] }
-    func baseID(named name: String) -> String? { name == "Perso" ? "0123456789abcdef0123456789abcdef" : nil }
+    func baseNames() -> [String] { ["Perso", " Tâches"] }
+    func baseID(named name: String) -> String? { ["Perso", " Tâches"].contains(name) ? "0123456789abcdef0123456789abcdef" : nil }
     func problem(base: String) async -> String? { nil }
     func create(title: String, day: Date?, base: String) async throws -> String { "page" }
     func title(ofPage id: String) async -> String? { nil }
@@ -139,6 +139,14 @@ private final class QuickNotion: NotionTaskStore, @unchecked Sendable {
         let notion = AddNotionTaskTool(store: QuickNotion(), calendar: parisCalendar, now: { thursday })
         #expect(risk(reminders, QuickTask.plan(draft, to: .reminders, base: nil).0.steps[0].arguments) == .medium)
         #expect(risk(notion, QuickTask.plan(draft, to: .notion, base: "Perso").0.steps[0].arguments) == .high)
+    }
+
+    /// A Notion title that starts with a space (" Tâches") is still found.
+    @Test func aBaseNamedWithASpaceIsFound() async {
+        let notion = AddNotionTaskTool(store: QuickNotion(), calendar: parisCalendar, now: { thursday })
+        let arguments = QuickTask.plan(QuickTaskDraft(title: "Appeler Paul", day: day(9)), to: .notion, base: " Tâches").0.steps[0].arguments
+        #expect(await notion.check(arguments) == nil)
+        #expect(notion.action(for: arguments) != nil)
     }
 
     @Test func theReminderIsAddedOnlyAfterTheApproval() async throws {

@@ -460,6 +460,13 @@ final class IslandWindowController: NSWindowController {
             .receive(on: DispatchQueue.main)
             .sink { _ in if !IslandStudio.isOn { key.set(QuickTaskShortcut.stored()) } }
             .store(in: &subscriptions)
+        NotificationCenter.default.publisher(for: .shortcutRecording)
+            .receive(on: DispatchQueue.main)
+            .sink { note in
+                guard !IslandStudio.isOn else { return }
+                key.set(note.object as? Bool == true ? nil : QuickTaskShortcut.stored())
+            }
+            .store(in: &subscriptions)
     }
 
     /// Opens the island on the quick task field; pressed again there, folds it.

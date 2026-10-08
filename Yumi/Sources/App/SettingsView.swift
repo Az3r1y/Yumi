@@ -87,15 +87,27 @@ struct ShortcutRecorderButton: View {
         Button {
             guard !isRecording else { return }
             isRecording = true
+            // A shortcut already held by Yumi (⌥ Espace) would never reach the recorder.
+            NotificationCenter.default.post(name: .shortcutRecording, object: true)
             var token: Any?
             token = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 let mods = event.modifierFlags.intersection([.command, .control, .option, .shift])
+                // Escape alone stops recording and keeps the shortcut.
+                if mods.isEmpty, event.keyCode == 53 {
+                    DispatchQueue.main.async {
+                        self.isRecording = false
+                        if let t = token { NSEvent.removeMonitor(t) }
+                        NotificationCenter.default.post(name: .shortcutRecording, object: false)
+                    }
+                    return nil
+                }
                 guard !mods.isEmpty else { return event }
                 DispatchQueue.main.async {
                     self.flags = mods.rawValue
                     self.code = event.keyCode
                     self.isRecording = false
                     if let t = token { NSEvent.removeMonitor(t) }
+                    NotificationCenter.default.post(name: .shortcutRecording, object: false)
                 }
                 return nil
             }
@@ -125,7 +137,9 @@ struct ShortcutRecorderButton: View {
         let map: [UInt16: String] = [
             0:"A", 1:"S", 2:"D", 3:"F", 4:"H", 5:"G", 6:"Z", 7:"X", 8:"C", 9:"V",
             11:"B", 12:"Q", 13:"W", 14:"E", 15:"R", 16:"Y", 17:"T", 31:"O", 32:"U",
-            34:"I", 37:"L", 38:"J", 40:"K", 45:"N", 46:"M", 49:loc("Espace"), 50:"`", 27:"-"
+            34:"I", 35:"P", 37:"L", 38:"J", 40:"K", 45:"N", 46:"M", 49:loc("Espace"), 50:"`", 27:"-", 24:"=",
+            18:"1", 19:"2", 20:"3", 21:"4", 23:"5", 22:"6", 26:"7", 28:"8", 25:"9", 29:"0",
+            36:"↩", 48:"⇥", 33:"[", 30:"]", 41:";", 39:"'", 43:",", 47:".", 44:"/", 42:"\\",
         ]
         return map[c] ?? "·"
     }

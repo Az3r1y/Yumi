@@ -84,4 +84,6 @@ enum QuickTask {
 extension Notification.Name {
     /// Posted by the settings when the quick task shortcut changes or is turned on or off.
     static let quickTaskShortcutChanged = AppIdentity.notification("quickTaskShortcutChanged")
+    /// Posted by a shortcut recorder of the settings: true while it listens, false after.
+    static let shortcutRecording = AppIdentity.notification("shortcutRecording")
 }
