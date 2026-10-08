@@ -332,6 +332,7 @@ enum IslandStudio {
     private static func key(_ code: UInt16) -> Bool {
         let shots: [UInt16: Int] = [18: 1, 19: 2, 20: 3, 21: 4, 23: 5, 22: 6, 26: 7, 28: 8, 25: 9, 29: 10, 27: 11, 24: 12, 33: 13, 30: 14, 42: 15]
         if let shot = shots[code] { play(shot); return true }
+        if let cue = StudioCue.forKey(code) { play(cue); return true }
         switch code {
         case 49: if let lastShot { play(lastShot) }; return true        // Space
         case 53: rest(); return true                                     // Escape
@@ -349,6 +350,46 @@ enum IslandStudio {
     private static func cancel() {
         timers.forEach { $0.cancel() }
         timers = []
+    }
+
+    // MARK: - Cues on demand (keys A, P, G, or the right-click menu)
+
+    private static var lastScene: YumiScene?
+
+    static func play(_ cue: StudioCue) {
+        guard let controller else { return }
+        let state = AppState.shared
+        switch cue {
+        case .approval:
+            cancel()
+            state.stateOverride = .approval
+            state.pendingApproval = ApprovalInfo(sessionId: "studio", tool: StudioFakes.approvalTool,
+                                                 command: StudioFakes.approvalCommand, requestID: StudioFakes.approvalID)
+            controller.expand(to: .approval)
+        case .breakRemark:
+            state.remark = StudioFakes.breakRemark(name: name)
+        case .githubScene:
+            let scene = StudioFakes.scene(after: lastScene)
+            lastScene = scene
+            NotificationCenter.default.post(name: .yumiScene, object: scene)
+        }
+    }
+
+    /// The buttons of the fake approval: the card closes, Yumi reacts, nothing else happens.
+    /// False for any other approval, which the hooks answer.
+    static func answer(_ decision: String) -> Bool {
+        let state = AppState.shared
+        guard isOn, StudioFakes.isFake(requestID: state.pendingApproval?.requestID) else { return false }
+        state.pendingApproval = nil
+        let celebrates = StudioFakes.celebrates(after: decision)
+        state.stateOverride = celebrates ? .finished : .idle
+        if celebrates {
+            state.view = .finished
+            after(5) { state.stateOverride = .idle }
+        } else {
+            controller?.collapse()
+        }
+        return true
     }
 
     /// Yumi at rest in the folded island, nothing live, nothing pending.

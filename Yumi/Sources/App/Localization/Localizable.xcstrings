@@ -10828,6 +10828,36 @@
           }
         }
       }
+    },
+    "Validation factice": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fake approval"
+          }
+        }
+      }
+    },
+    "Remarque : une pause ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remark: a break?"
+          }
+        }
+      }
+    },
+    "Scène GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub scene"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

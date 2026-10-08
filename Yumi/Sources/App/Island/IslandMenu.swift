@@ -10,6 +10,12 @@ enum IslandMenu {
         menu.addItem(item(loc("Envoyer un retour"), key: "") {
             if let url = YumiUpdates.feedbackURL() { NSWorkspace.shared.open(url) }
         })
+        if IslandStudio.isOn {
+            menu.addItem(.separator())
+            for cue in StudioCue.allCases {
+                menu.addItem(item(cue.title, key: cue.keyEquivalent) { IslandStudio.play(cue) })
+            }
+        }
         menu.addItem(.separator())
         menu.addItem(item(loc("Quitter Yumi"), key: "q") { NSApp.terminate(nil) })
         menu.popUp(positioning: nil, at: point, in: view)

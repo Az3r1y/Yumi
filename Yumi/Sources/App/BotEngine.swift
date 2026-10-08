@@ -644,7 +644,11 @@ final class BotEngine: ObservableObject {
         switch newState {
         case .finished:         play(.celebrate)
         case .error:            play(.squash)
-        case .approval, .dizzy: play(.shake)
+        case .approval:
+            // He jumps: surprised for a moment, then the shake. The orange rim stays while it waits.
+            emote = (.surprised, clock + ApprovalLook.startle)
+            play(.shake)
+        case .dizzy:            play(.shake)
         default:
             // No pop for the other states: they come and go with every session of Claude Code
             // (idle, working, idle again), and each pop forced full cadence for nothing. The
@@ -761,7 +765,9 @@ final class BotEngine: ObservableObject {
 
         let fromState = BotEngine.look(for: state, receiving: receiving)
         let mood = habit?.face ?? moodCommand?.face ?? fromState.mood.face
-        let tone = habit?.rim ?? rimCommand ?? fromState.rim
+        // Orange while a permission waits, whatever the island asked for
+        let tone = ApprovalLook.rim(waiting: state == .approval, warn: YumiRimTone.warn,
+                                    otherwise: habit?.rim ?? rimCommand ?? fromState.rim)
 
         if let e = emote, clock >= e.until { emote = nil }
         if let p = pose, clock - poseStart >= p.duration { pose = nil }

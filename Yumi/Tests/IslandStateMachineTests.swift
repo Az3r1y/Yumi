@@ -978,3 +978,15 @@ import Foundation
         #expect(!HookOffer.offers(claudeCodeInstalled: true, hooksInstalled: false, alreadyOffered: false, filming: true))
     }
 }
+
+// A permission asked: Yumi jumps, and the rim turns orange for as long as it waits.
+@Suite struct ApprovalLookTests {
+    @Test func theRimIsWarningWhileAPermissionWaits() {
+        #expect(ApprovalLook.rim(waiting: true, warn: "warn", otherwise: "calm") == "warn")
+        #expect(ApprovalLook.rim(waiting: false, warn: "warn", otherwise: "calm") == "calm")
+    }
+
+    @Test func theSurpriseIsBrief() {
+        #expect(ApprovalLook.startle > 0 && ApprovalLook.startle <= 1.2)
+    }
+}

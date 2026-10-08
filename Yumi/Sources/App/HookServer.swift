@@ -274,6 +274,8 @@ final class HookServer: @unchecked Sendable {
     ///   front, the click is dropped: an answer never goes to a request the person did not see.
     @MainActor
     func sendApprovalDecision(_ decision: String, for requestID: String? = nil) {
+        // The filming mode's fake approval answers itself
+        if IslandStudio.answer(decision) { return }
         guard let current = approvals.first else {
             closeApprovalView(after: nil)
             return
