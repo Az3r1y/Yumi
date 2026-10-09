@@ -407,6 +407,16 @@
         }
       }
     },
+    "%@ dans %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ in %2$@"
+          }
+        }
+      }
+    },
     "%@ dans %@, et Claude attend ta réponse.": {
       "localizations": {
         "en": {
@@ -699,6 +709,16 @@
         }
       }
     },
+    "%@ n'existe pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ does not exist"
+          }
+        }
+      }
+    },
     "%@ n'existe plus": {
       "localizations": {
         "en": {
@@ -751,6 +771,16 @@
           "stringUnit": {
             "state": "new",
             "value": "%1$@ ne m'a pas répondu (%2$@)."
+          }
+        }
+      }
+    },
+    "%@ ne tourne pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is not running"
           }
         }
       }
@@ -2243,6 +2273,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Done, and I checked%@."
+          }
+        }
+      }
+    },
+    "C'est fait, j'ai lancé « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Done, I ran “%@”."
           }
         }
       }
@@ -4101,6 +4141,16 @@
         }
       }
     },
+    "J'ai ouvert %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I opened %@."
+          }
+        }
+      }
+    },
     "J'ai perdu l'accès au dossier .claude. Choisis-le à nouveau.": {
       "localizations": {
         "en": {
@@ -5661,6 +5711,22 @@
         }
       }
     },
+    "Open an app, a page or a project": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open an app, a page or a project"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ouvrir une app, une page ou un projet"
+          }
+        }
+      }
+    },
     "OpenAI (clé API)": {
       "localizations": {
         "en": {
@@ -6605,6 +6671,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lancer"
+          }
+        }
+      }
+    },
+    "Run a shortcut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run a shortcut"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Lancer un raccourci"
           }
         }
       }
@@ -8821,12 +8903,32 @@
         }
       }
     },
+    "il manque ce qu'il faut ouvrir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "what to open is missing"
+          }
+        }
+      }
+    },
     "il manque l'emplacement ou le contenu": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "the location or the content is missing"
+          }
+        }
+      }
+    },
+    "il manque le nom du raccourci": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the name of the shortcut is missing"
           }
         }
       }
@@ -8941,12 +9043,42 @@
         }
       }
     },
+    "je n'arrive pas à lire tes raccourcis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't read your shortcuts"
+          }
+        }
+      }
+    },
     "je n'arrive pas à relire la tâche dans Notion": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "I can't read the task back from Notion"
+          }
+        }
+      }
+    },
+    "je n'ouvre pas %@ : il lancerait un programme. Pour une app, donne-moi son nom": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't open %@: it would run a program. For an app, give me its name"
+          }
+        }
+      }
+    },
+    "je n'ouvre que des pages web, des fichiers et des dossiers": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I only open web pages, files and folders"
           }
         }
       }
@@ -9021,6 +9153,16 @@
         }
       }
     },
+    "je ne trouve pas d'app « %@ » sur ce Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't find an app “%@” on this Mac"
+          }
+        }
+      }
+    },
     "je ne trouve pas de calendrier par défaut": {
       "localizations": {
         "en": {
@@ -9041,12 +9183,42 @@
         }
       }
     },
+    "je ne trouve pas de raccourci « %@ ». Tu as : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't find a shortcut “%1$@”. You have: %2$@"
+          }
+        }
+      }
+    },
+    "je ne trouve pas « %@ ». Donne-moi son chemin, par exemple ~/Work/%@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't find “%1$@”. Give me its path, for example ~/Work/%2$@"
+          }
+        }
+      }
+    },
     "l'ajout dans %@ a échoué": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "adding to %@ failed"
+          }
+        }
+      }
+    },
+    "l'app %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the app %@"
           }
         }
       }
@@ -9389,6 +9561,26 @@
         }
       }
     },
+    "le raccourci « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the shortcut “%@”"
+          }
+        }
+      }
+    },
+    "le raccourci « %@ » s'est arrêté : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the shortcut “%1$@” stopped: %2$@"
+          }
+        }
+      }
+    },
     "le rappel enregistré s'appelle « %@ », pas « %@ »": {
       "localizations": {
         "en": {
@@ -9521,6 +9713,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "macOS refused: %@"
+          }
+        }
+      }
+    },
+    "macOS n'a pas pu l'ouvrir : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "macOS could not open it: %@"
           }
         }
       }
@@ -10111,6 +10313,16 @@
         }
       }
     },
+    "tu n'as aucun raccourci dans l'app Raccourcis": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "you have no shortcut in the Shortcuts app"
+          }
+        }
+      }
+    },
     "un Focus tourne déjà, encore %@. Je ne le remplace pas": {
       "localizations": {
         "en": {
@@ -10339,6 +10551,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "\"%@\" isn't a usable file name"
+          }
+        }
+      }
+    },
+    "« %@ » n'est pas une adresse web valable": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@” is not a valid web address"
           }
         }
       }

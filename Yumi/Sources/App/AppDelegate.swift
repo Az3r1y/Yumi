@@ -438,6 +438,8 @@ final class YumiCore {
         try? tools.register(AddReminderTool(store: EventKitReminderStore()))
         try? tools.register(StartFocusTool(focus: modules))
         try? tools.register(GetTodayTool(source: modules))
+        try? tools.register(RunShortcutTool(library: SystemShortcuts()))
+        try? tools.register(OpenTool(opener: WorkspaceOpener()))
         return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), tools: tools, permissions: permissions,
                             policy: AgentPolicy(maximumRisk: .write))
         #endif
