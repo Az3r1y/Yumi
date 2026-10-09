@@ -184,7 +184,7 @@ private struct TextToolSettingsSection: View {
                     HStack {
                         ShortcutRecorderButton(flags: $flags, code: $code)
                         if flags != Self.keys.standard.flags || code != Self.keys.standard.keyCode {
-                            Button("Rétablir ⌥⇧T") {
+                            Button("Rétablir ⌥T") {
                                 flags = Self.keys.standard.flags
                                 code = Self.keys.standard.keyCode
                             }

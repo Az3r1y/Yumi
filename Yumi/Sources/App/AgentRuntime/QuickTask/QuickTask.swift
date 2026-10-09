@@ -52,9 +52,9 @@ struct QuickTaskShortcut: Equatable, Sendable {
     }
 
     static let quickTask = Keys(enabled: enabledKey, flags: flagsKey, code: codeKey, standard: standard)
-    /// ⌥⇧T: correct or translate the selected text.
+    /// ⌥T: correct or translate the selected text.
     static let textTool = Keys(enabled: "textToolShortcutEnabled", flags: "textToolShortcutFlags", code: "textToolShortcutCode",
-                               standard: QuickTaskShortcut(flags: option | (1 << 17), keyCode: 17))
+                               standard: QuickTaskShortcut(flags: option, keyCode: 17))
 
     static func stored(_ defaults: UserDefaults = .standard, _ keys: Keys = quickTask) -> QuickTaskShortcut? {
         guard defaults.object(forKey: keys.enabled) as? Bool ?? true else { return nil }

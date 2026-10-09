@@ -7381,12 +7381,12 @@
         }
       }
     },
-    "Rétablir ⌥⇧T": {
+    "Rétablir ⌥T": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Reset to ⌥⇧T"
+            "value": "Reset to ⌥T"
           }
         }
       }

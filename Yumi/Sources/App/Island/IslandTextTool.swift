@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Correct or translate a text (Réglages > Général, ⌥⇧T by default, or « Texte » in the rail):
+// Correct or translate a text (Réglages > Général, ⌥T by default, or « Texte » in the rail):
 // the text selected in the app in front comes in; Apple Intelligence's model corrects or
 // translates it on the Mac (or, without it, macOS's spelling checker and Apple's translation);
 // the result is shown with what changed, and nothing changes in the app before « Remplacer ».
