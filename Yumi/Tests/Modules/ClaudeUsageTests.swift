@@ -47,27 +47,48 @@ private func transcript(_ lines: [String]) throws -> URL {
         #expect(day.activeSeconds == 6 * 60)
         #expect(day.outputTokens == 165)
         #expect(day.inputTokens == 1060)
-        #expect(day.costUSD == 2.5)
+        #expect(day.apiCostUSD == 2.5)
     }
 
-    @Test func noCostWrittenSinceMidnightIsNotGuessed() throws {
-        let file = try transcript([cost(4), message("user", "09T09:00:00.000"), message("user", "09T09:01:00.000")])
-        #expect(ClaudeUsageReader.day(files: [file], since: midnight).costUSD == nil)
+    @Test func theStatusLineGivesTheCostOfTheLiveSession() throws {
+        let file = try transcript([message("user", "08T23:00:00.000"), cost(1.0), message("user", "09T09:00:00.000")])
+        let session = file.deletingPathExtension().lastPathComponent
+        // Yesterday's dollar is not today's
+        #expect(ClaudeUsageReader.day(files: [file], since: midnight, live: [session: 4.0]).apiCostUSD == 3.0)
+        #expect(ClaudeUsageReader.day(files: [file], since: midnight).apiCostUSD == nil)
     }
 
     @Test func aDayWithoutClaudeSaysSo() {
         let day = ClaudeUsageReader.day(files: [], since: midnight)
         #expect(day == ClaudeUsageDay())
-        #expect(ClaudeUsageReader.snapshot(day).title == "Pas encore de Claude aujourd'hui")
+        let snapshot = ClaudeUsageReader.snapshot(day)
+        #expect(snapshot.title == "Pas encore de Claude aujourd'hui")
+        #expect(snapshot.rows.first?.label == "à brancher")
     }
 
-    @Test func theIslandShowsTimeTokensAndCost() {
-        let snapshot = ClaudeUsageReader.snapshot(ClaudeUsageDay(sessions: 3, activeSeconds: 2 * 3600 + 5 * 60, outputTokens: 42_000,
-                                                                 inputTokens: 1_200_000, costUSD: 4.2))
-        #expect(snapshot.title == "2 h 05 avec Claude aujourd'hui")
-        #expect(snapshot.rows.map(\.label) == ["3", "2 h 05", "42 k", "1,2 M", snapshot.status])
-        #expect(snapshot.status.contains("4,20"))
-        #expect(snapshot.primarySymbol == "arrow.clockwise")
+    @Test func theAllowancesComeFirstAndTheCostInEuros() {
+        let now = ISO8601DateFormatter().date(from: "2026-10-09T10:00:00Z")!
+        var day = ClaudeUsageDay(sessions: 3, activeSeconds: 2 * 3600 + 5 * 60, outputTokens: 42_000, inputTokens: 1_200_000,
+                                 apiCostUSD: 10, quotasConnected: true)
+        day.fiveHour = .init(usedPercent: 42.4, resetsAt: now.addingTimeInterval(3 * 3600))
+        day.sevenDay = .init(usedPercent: 18, resetsAt: now.addingTimeInterval(3 * 86_400))
+        let snapshot = ClaudeUsageReader.snapshot(day, rate: 0.9, now: now)
+        #expect(snapshot.title == "Quota 5 h : 42 %")
+        #expect(snapshot.status == "42 %")
+        #expect(snapshot.rows.map(\.id) == ["five", "week", "sessions", "time", "tokens", "api"])
+        #expect(snapshot.rows[1].label == "18 %")
+        #expect(snapshot.rows[5].label.contains("9,00") && snapshot.rows[5].label.contains("€"))
+        #expect(!snapshot.subtitle.contains("$") && !snapshot.rows.contains { $0.label.contains("$") })
+        #expect(snapshot.progress?.fraction == 0.424)
+        #expect(snapshot.live == nil)
+    }
+
+    @Test func closeToTheLimitTheFoldedIslandSaysIt() {
+        var day = ClaudeUsageDay(sessions: 1)
+        day.fiveHour = .init(usedPercent: 91, resetsAt: nil)
+        let snapshot = ClaudeUsageReader.snapshot(day)
+        #expect(snapshot.live?.text == "Quota 5 h : 91 %")
+        #expect(snapshot.rows.first?.state == .failure)
     }
 
     @Test func itReadsInEnglish() {
@@ -75,12 +96,78 @@ private func transcript(_ lines: [String]) throws -> URL {
             let snapshot = ClaudeUsageReader.snapshot(ClaudeUsageDay(sessions: 3, activeSeconds: 600, outputTokens: 1, inputTokens: 1))
             #expect(snapshot.name == "Claude usage")
             #expect(snapshot.title == "10 min with Claude today")
-            #expect(snapshot.subtitle == "3 sessions · 2 tokens")
+            #expect(snapshot.subtitle == "3 sessions")
         }
     }
 
     @Test func tokensReadShort() {
         #expect(ClaudeUsageReader.tokens(850) == "850")
         #expect(ClaudeUsageReader.tokens(12_400) == "12 k")
+    }
+}
+
+// MARK: - The status line relay
+
+@Suite struct StatusLineRelayTests {
+    private let command = "/bin/sh \"/Users/someone/Library/Application Support/Yumi/yumi-statusline.sh\""
+
+    @Test func itStandsInFrontOfTheStatusLineAndPutsItBack() throws {
+        let original = #"{"model": "opus", "statusLine": {"type": "command", "command": "bash ~/ponytail.sh", "padding": 1}}"#
+        let installed = try StatusLineRelay.install(Data(original.utf8), command: command)
+        let settings = try #require(JSONSerialization.jsonObject(with: installed.data) as? [String: Any])
+        let line = try #require(settings["statusLine"] as? [String: Any])
+        #expect(line["command"] as? String == command)
+        #expect(line["padding"] as? Int == 1)
+        #expect(settings["model"] as? String == "opus")
+        #expect(installed.previous?["command"] as? String == "bash ~/ponytail.sh")
+        #expect(StatusLineRelay.isInstalled(installed.data, command: command))
+
+        // Installed again: what it stands in front of is not itself
+        #expect(try StatusLineRelay.install(installed.data, command: command).previous == nil)
+
+        let removed = try StatusLineRelay.remove(installed.data, command: command, previous: installed.previous)
+        let back = try #require(JSONSerialization.jsonObject(with: removed) as? [String: Any])
+        #expect((back["statusLine"] as? [String: Any])?["command"] as? String == "bash ~/ponytail.sh")
+        #expect(back["model"] as? String == "opus")
+    }
+
+    @Test func aStatusLineChangedSinceIsLeftAlone() throws {
+        let theirs = #"{"statusLine": {"type": "command", "command": "other"}}"#
+        let removed = try StatusLineRelay.remove(Data(theirs.utf8), command: command, previous: ["command": "old"])
+        let settings = try #require(JSONSerialization.jsonObject(with: removed) as? [String: Any])
+        #expect((settings["statusLine"] as? [String: Any])?["command"] as? String == "other")
+    }
+
+    @Test func settingsItCannotReadAreNeverReplaced() {
+        #expect(throws: HookSettings.Problem.notJSON) { try StatusLineRelay.install(Data("{oops".utf8), command: command) }
+    }
+
+    @Test func theScriptKeepsACopyAndHandsOn() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("relay-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try StatusLineRelay.script.write(to: StatusLineRelay.scriptURL(in: folder), atomically: true, encoding: .utf8)
+        // The status line that was there: it prints what it was given
+        try "cat".write(to: folder.appendingPathComponent(StatusLineRelay.nextName), atomically: true, encoding: .utf8)
+        let input = #"{"session_id":"abc-123","cost":{"total_cost_usd":1.25},"rate_limits":{"five_hour":{"used_percentage":42,"resets_at":1791463800},"seven_day":{"used_percentage":18.5,"resets_at":1791900000}}}"#
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/bin/sh")
+        process.arguments = [StatusLineRelay.scriptURL(in: folder).path]
+        let stdin = Pipe(), stdout = Pipe()
+        process.standardInput = stdin
+        process.standardOutput = stdout
+        try process.run()
+        stdin.fileHandleForWriting.write(Data(input.utf8))
+        try stdin.fileHandleForWriting.close()
+        process.waitUntilExit()
+
+        #expect(String(decoding: stdout.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self) == input)
+        let report = StatusLineRelay.report(in: folder, since: .distantPast)
+        #expect(report.fiveHour == .init(usedPercent: 42, resetsAt: Date(timeIntervalSince1970: 1791463800)))
+        #expect(report.sevenDay?.usedPercent == 18.5)
+        #expect(report.sessionCosts == ["abc-123": 1.25])
+        // Nothing left behind but the copy
+        let left = try FileManager.default.contentsOfDirectory(atPath: folder.appendingPathComponent(StatusLineRelay.reportsFolder).path)
+        #expect(left == ["abc-123.json"])
     }
 }

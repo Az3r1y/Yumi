@@ -9,6 +9,12 @@ struct ClaudeCodeSettings: View {
     @State private var outdated = HookServer.hooksNeedUpdate()
     @State private var preview: String?
     @State private var message: String?
+    #if !APPSTORE
+    @State private var relayInstalled = StatusLineRelay.isInstalled
+    @State private var relayPrepared: (data: Data, previous: [String: Any]?)?
+    @State private var relayPreview: String?
+    @State private var relayMessage: String?
+    #endif
     #if APPSTORE
     @State private var folderGranted = UserDefaults.standard.data(forKey: Self.bookmarkKey) != nil
     private static let bookmarkKey = "claudeDirectoryBookmark"
@@ -70,6 +76,10 @@ struct ClaudeCodeSettings: View {
                 SettingsHelp(loc("J'écris dans ~/.claude/settings.json, après t'avoir montré le changement. Une copie de l'ancien fichier est gardée à côté."))
             }
 
+            #if !APPSTORE
+            relaySection
+            #endif
+
             if let preview {
                 Section("Ce que je vais écrire") {
                     ScrollView {
@@ -91,6 +101,85 @@ struct ClaudeCodeSettings: View {
             }
         }
     }
+
+    #if !APPSTORE
+    /// The quotas of the « Usage Claude » module, through Claude Code's status line.
+    @ViewBuilder private var relaySection: some View {
+        Section {
+            LabeledContent("Quotas") {
+                SettingsStatus(text: relayInstalled ? loc("Branchés") : loc("Pas branchés"), tone: relayInstalled ? .ok : .off)
+            }
+            HStack {
+                Button(relayInstalled ? loc("Rebrancher") : loc("Brancher"), action: prepareRelay)
+                    .buttonStyle(.borderedProminent)
+                Button("Débrancher", action: removeRelay)
+                    .disabled(!relayInstalled)
+                Spacer()
+            }
+            if let note = relayMessage { SettingsHelp(note) }
+            if let change = relayPreview {
+                ScrollView {
+                    Text(change)
+                        .font(.system(.caption, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .frame(height: 120)
+                HStack {
+                    Spacer()
+                    Button("Annuler") { relayPreview = nil; relayPrepared = nil; relayMessage = nil }
+                    Button("Écrire", action: confirmRelay)
+                        .buttonStyle(.borderedProminent)
+                }
+            }
+        } header: {
+            Text("Quotas")
+        } footer: {
+            SettingsHelp(loc("Claude Code donne à sa ligne de statut ce que montre /usage. Je me place devant la tienne : je note les quotas et le coût, puis je lui passe la main, son affichage ne change pas. Seul « statusLine » change dans ~/.claude/settings.json, avec une copie de l'ancien fichier."))
+        }
+    }
+
+    private func prepareRelay() {
+        do {
+            let prepared = try StatusLineRelay.prepareInstall()
+            relayPrepared = prepared
+            let before = (try? Data(contentsOf: StatusLineRelay.settingsURL))
+                .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [String: Any] }?["statusLine"]
+            let after = (try? JSONSerialization.jsonObject(with: prepared.data) as? [String: Any])?["statusLine"]
+            func text(_ value: Any?) -> String {
+                guard let value, let data = try? JSONSerialization.data(withJSONObject: value, options: [.prettyPrinted, .sortedKeys]) else { return loc("(aucune)") }
+                return String(decoding: data, as: UTF8.self)
+            }
+            relayPreview = loc("statusLine avant :") + "\n" + text(before) + "\n\n" + loc("statusLine après :") + "\n" + text(after)
+            relayMessage = loc("Relis le changement avant de l'écrire.")
+        } catch {
+            relayMessage = loc("Je n'ai pas pu lire les réglages de Claude Code : \(error.localizedDescription)")
+        }
+    }
+
+    private func confirmRelay() {
+        guard let relayPrepared else { return }
+        do {
+            try StatusLineRelay.confirmInstall(relayPrepared)
+            relayPreview = nil
+            self.relayPrepared = nil
+            relayInstalled = StatusLineRelay.isInstalled
+            relayMessage = loc("C'est branché. Les quotas arrivent dès qu'une session Claude Code tourne.")
+        } catch {
+            relayMessage = loc("L'écriture a échoué : \(error.localizedDescription)")
+        }
+    }
+
+    private func removeRelay() {
+        do {
+            try StatusLineRelay.uninstall()
+            relayInstalled = StatusLineRelay.isInstalled
+            relayMessage = loc("Débranché. Ta ligne de statut d'avant est remise.")
+        } catch {
+            relayMessage = loc("Je n'ai pas pu débrancher : \(error.localizedDescription)")
+        }
+    }
+    #endif
 
     private var hookState: (text: String, tone: SettingsStatus.Tone) {
         if outdated { return (loc("À mettre à jour"), .warning) }

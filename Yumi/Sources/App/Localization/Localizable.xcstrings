@@ -1043,6 +1043,16 @@
         }
       }
     },
+    "%@ écrits, %@ lus (cache compris)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ written, %2$@ read (cache included)"
+          }
+        }
+      }
+    },
     "%@ étoiles": {
       "localizations": {
         "en": {
@@ -1353,6 +1363,16 @@
         }
       }
     },
+    "(aucune)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(none)"
+          }
+        }
+      }
+    },
     ", %@ t'attendent": {
       "localizations": {
         "en": {
@@ -1529,6 +1549,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "3 sessions · approval on api"
+          }
+        }
+      }
+    },
+    "5 h": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 h"
           }
         }
       }
@@ -1939,6 +1969,16 @@
         }
       }
     },
+    "Au tarif API": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "At API prices"
+          }
+        }
+      }
+    },
     "Aucun": {
       "localizations": {
         "en": {
@@ -2245,6 +2285,16 @@
         }
       }
     },
+    "Branchés": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected"
+          }
+        }
+      }
+    },
     "C'est ajouté à la fin de %@.": {
       "localizations": {
         "en": {
@@ -2261,6 +2311,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancelled, I didn't do anything."
+          }
+        }
+      }
+    },
+    "C'est branché. Les quotas arrivent dès qu'une session Claude Code tourne.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected. The quotas arrive as soon as a Claude Code session runs."
           }
         }
       }
@@ -2819,6 +2879,16 @@
           "stringUnit": {
             "state": "new",
             "value": "Claude %1$@ sur %2$@."
+          }
+        }
+      }
+    },
+    "Claude Code donne à sa ligne de statut ce que montre /usage. Je me place devant la tienne : je note les quotas et le coût, puis je lui passe la main, son affichage ne change pas. Seul « statusLine » change dans ~/.claude/settings.json, avec une copie de l'ancien fichier.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude Code gives its status line what /usage shows. I stand in front of yours: I note the quotas and the cost, then hand over to it, and what it shows does not change. Only “statusLine” changes in ~/.claude/settings.json, with a copy of the old file."
           }
         }
       }
@@ -3637,6 +3707,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Code pushed"
+          }
+        }
+      }
+    },
+    "Débrancher": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnect"
+          }
+        }
+      }
+    },
+    "Débranché. Ta ligne de statut d'avant est remise.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnected. Your previous status line is back."
           }
         }
       }
@@ -4603,6 +4693,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I couldn't: %@."
+          }
+        }
+      }
+    },
+    "Je n'ai pas pu débrancher : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I couldn't disconnect: %@"
           }
         }
       }
@@ -6033,6 +6133,16 @@
         }
       }
     },
+    "Pas branchés": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected"
+          }
+        }
+      }
+    },
     "Pas configuré.": {
       "localizations": {
         "en": {
@@ -6423,6 +6533,46 @@
         }
       }
     },
+    "Quota 5 h": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5-hour quota"
+          }
+        }
+      }
+    },
+    "Quota 5 h : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5-hour quota: %@"
+          }
+        }
+      }
+    },
+    "Quota semaine": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Weekly quota"
+          }
+        }
+      }
+    },
+    "Quotas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quotas"
+          }
+        }
+      }
+    },
     "Raccourci": {
       "localizations": {
         "en": {
@@ -6505,6 +6655,16 @@
           "stringUnit": {
             "state": "new",
             "value": "Rappels n'a pas enregistré le rappel (%1$@ %2$lld)"
+          }
+        }
+      }
+    },
+    "Rebrancher": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reconnect"
           }
         }
       }
@@ -7531,6 +7691,16 @@
         }
       }
     },
+    "Tokens": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens"
+          }
+        }
+      }
+    },
     "Tokens lus (cache compris)": {
       "localizations": {
         "en": {
@@ -8435,6 +8605,16 @@
         }
       }
     },
+    "arrivent dès qu'une session Claude Code tourne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "arrive as soon as a Claude Code session runs"
+          }
+        }
+      }
+    },
     "atelier": {
       "localizations": {
         "en": {
@@ -8605,6 +8785,16 @@
         }
       }
     },
+    "ce que la journée aurait coûté sans abonnement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "what the day would have cost without a subscription"
+          }
+        }
+      }
+    },
     "ces fichiers": {
       "localizations": {
         "en": {
@@ -8691,6 +8881,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "commands"
+          }
+        }
+      }
+    },
+    "compté par Claude Code pendant les sessions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "counted by Claude Code during sessions"
           }
         }
       }
@@ -10323,6 +10523,16 @@
         }
       }
     },
+    "repart %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "resets %@"
+          }
+        }
+      }
+    },
     "rien cette semaine": {
       "localizations": {
         "en": {
@@ -10373,6 +10583,16 @@
         }
       }
     },
+    "semaine %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "week %@"
+          }
+        }
+      }
+    },
     "session ouverte": {
       "localizations": {
         "en": {
@@ -10409,6 +10629,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "site"
+          }
+        }
+      }
+    },
+    "statusLine après :": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "statusLine after:"
+          }
+        }
+      }
+    },
+    "statusLine avant :": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "statusLine before:"
           }
         }
       }
@@ -11101,6 +11341,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "not connected"
+          }
+        }
+      }
+    },
+    "à brancher dans Réglages › Claude Code › Quotas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "connect it in Settings › Claude Code › Quotas"
           }
         }
       }
