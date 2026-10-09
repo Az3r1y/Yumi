@@ -1979,6 +1979,16 @@
         }
       }
     },
+    "Apple Intelligence (sur ce Mac)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence (on this Mac)"
+          }
+        }
+      }
+    },
     "Apple ne sait pas traduire entre ces deux langues.": {
       "localizations": {
         "en": {
@@ -4387,6 +4397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "This needs Apple Intelligence."
+          }
+        }
+      }
+    },
+    "Il faut macOS 26 et Apple Intelligence activé.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs macOS 26 with Apple Intelligence turned on."
           }
         }
       }
@@ -7033,6 +7053,16 @@
         }
       }
     },
+    "Prêt, sur ce Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready, on this Mac."
+          }
+        }
+      }
+    },
     "Quand un agent bosse": {
       "localizations": {
         "en": {
@@ -7475,6 +7505,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing late."
+          }
+        }
+      }
+    },
+    "Rien ne quitte ton Mac : le modèle d'Apple Intelligence tourne en local, sans internet. Gratuit. Petit modèle : il comprend les demandes simples.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing leaves your Mac: Apple Intelligence's model runs locally, without the internet. Free. A small model: it understands simple requests."
           }
         }
       }

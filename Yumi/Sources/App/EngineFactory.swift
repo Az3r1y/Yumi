@@ -27,6 +27,8 @@ enum EngineFactory {
         case .ollama:
             let model = settings.models[.ollama]
             return OllamaLLMProvider(model: { model })
+        case .apple:
+            return AppleLLMProvider()
         }
     }
 

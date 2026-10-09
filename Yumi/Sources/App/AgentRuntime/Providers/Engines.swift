@@ -4,7 +4,7 @@ import Foundation
 /// goes through `PlanValidator`, the registry, `PermissionManager`, the executor and the
 /// verification, and whichever chats, the chat has no tool that changes the Mac.
 enum Engine: String, CaseIterable, Codable, Sendable {
-    case claudeCode, anthropic, openai, gemini, ollama
+    case claudeCode, anthropic, openai, gemini, ollama, apple
 
     var label: String {
         switch self {
@@ -13,6 +13,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .openai: loc("OpenAI (clé API)")
         case .gemini: loc("Google Gemini (clé API)")
         case .ollama: loc("Ollama (sur ce Mac)")
+        case .apple: loc("Apple Intelligence (sur ce Mac)")
         }
     }
 
@@ -22,7 +23,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .anthropic: "anthropic-api-key"
         case .openai: "openai-api-key"
         case .gemini: "gemini-api-key"
-        case .claudeCode, .ollama: nil
+        case .claudeCode, .ollama, .apple: nil
         }
     }
 
@@ -32,7 +33,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .anthropic: "claude-sonnet-4-6"
         case .openai: OpenAILLMProvider.defaultModel
         case .gemini: GeminiLLMProvider.defaultModel
-        case .claudeCode, .ollama: nil
+        case .claudeCode, .ollama, .apple: nil
         }
     }
 
@@ -44,6 +45,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .openai: loc("Tes messages et les demandes de plan partent chez OpenAI. Facturé par OpenAI à l'usage.")
         case .gemini: loc("Tes messages et les demandes de plan partent chez Google. Le palier gratuit suffit pour essayer ; au-delà, facturé par Google.")
         case .ollama: loc("Rien ne quitte ton Mac : le modèle tourne en local. Gratuit.")
+        case .apple: loc("Rien ne quitte ton Mac : le modèle d'Apple Intelligence tourne en local, sans internet. Gratuit. Petit modèle : il comprend les demandes simples.")
         }
     }
 }
@@ -118,6 +120,10 @@ enum EngineDetector {
             return models.contains(chosen)
                 ? EngineStatus(engine: engine, ready: true, detail: loc("Modèle \(chosen)."))
                 : EngineStatus(engine: engine, ready: false, detail: loc("\(chosen) n'est pas installé dans Ollama."))
+        case .apple:
+            return AppleLLMProvider.isAvailable
+                ? EngineStatus(engine: engine, ready: true, detail: loc("Prêt, sur ce Mac."))
+                : EngineStatus(engine: engine, ready: false, detail: loc("Il faut macOS 26 et Apple Intelligence activé."))
         }
     }
 
