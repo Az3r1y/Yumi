@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Testing
 
@@ -131,5 +132,40 @@ import Testing
             #expect(Feature.batteryMood.detail == "He's hungry below 15 %, happy when you plug the charger in.")
         }
         #expect(Feature.batteryMood.detail == "Il a faim sous 15 %, il est content quand tu branches le chargeur.")
+    }
+}
+
+// MARK: - The text of an image
+
+@Suite struct ImageTextTests {
+    /// A PNG with these words drawn in black on white.
+    private func picture(_ text: String) throws -> URL {
+        let size = NSSize(width: 900, height: 160)
+        let image = NSImage(size: size, flipped: false) { rect in
+            NSColor.white.setFill()
+            rect.fill()
+            (text as NSString).draw(at: NSPoint(x: 30, y: 60),
+                                    withAttributes: [.font: NSFont.systemFont(ofSize: 42), .foregroundColor: NSColor.black])
+            return true
+        }
+        let tiff = try #require(image.tiffRepresentation)
+        let png = try #require(NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]))
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("ocr-\(UUID().uuidString).png")
+        try png.write(to: url)
+        return url
+    }
+
+    @Test func theTextOfAScreenshotIsRead() async throws {
+        let text = try #require(await ImageText.read(try picture("Réunion budget jeudi")))
+        #expect(text.contains("budget"))
+        #expect(text.contains("jeudi"))
+    }
+
+    @Test func onlyImagesAreRead() async throws {
+        let notes = FileManager.default.temporaryDirectory.appendingPathComponent("notes-\(UUID().uuidString).txt")
+        try "texte".write(to: notes, atomically: true, encoding: .utf8)
+        #expect(!ImageText.isImage(notes))
+        #expect(await ImageText.read(notes) == nil)
+        #expect(ImageText.isImage(URL(fileURLWithPath: "/tmp/capture.PNG")))
     }
 }

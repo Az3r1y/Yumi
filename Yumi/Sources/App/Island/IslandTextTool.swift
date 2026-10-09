@@ -41,6 +41,24 @@ final class TextToolBoard: ObservableObject {
         target = TextLanguage.target(for: TextCorrector.language(of: source))
     }
 
+    /// The text of a dropped image, read on the Mac, ready to correct, translate or sum up.
+    func read(image url: URL) {
+        selection = nil
+        origin = nil
+        source = ""
+        note = loc("Je lis l'image…")
+        IslandActions.go(.textTool)
+        Task {
+            if let text = await ImageText.read(url) {
+                source = text
+                note = nil
+                target = TextLanguage.target(for: TextCorrector.language(of: text))
+            } else {
+                note = loc("Je ne vois pas de texte dans cette image.")
+            }
+        }
+    }
+
     /// Opened from the rail: the text stays, the app it came from is forgotten.
     func openedByHand() {
         selection = nil

@@ -4867,6 +4867,16 @@
         }
       }
     },
+    "Je lis l'image…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading the image…"
+          }
+        }
+      }
+    },
     "Je lis un fichier": {
       "localizations": {
         "en": {
@@ -5303,6 +5313,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't see any spelling mistake. I don't check grammar."
+          }
+        }
+      }
+    },
+    "Je ne vois pas de texte dans cette image.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't see any text in this image."
           }
         }
       }
@@ -5803,6 +5823,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Licences"
+          }
+        }
+      }
+    },
+    "Lire le texte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the text"
           }
         }
       }

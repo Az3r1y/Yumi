@@ -614,6 +614,9 @@ struct DropActivity: View {
                 RoundButton(style: .tint, symbol: "text.alignleft", label: loc("Résumer"), color: IslandTheme.blue) { IslandActions.summarize() }
                 RoundButton(symbol: "paperplane.fill", label: loc("Envoyer")) { IslandActions.sendByMail() }
                 RoundButton(symbol: "tray.and.arrow.down.fill", label: loc("Ranger")) { IslandActions.putAway() }
+                if Feature.isOn(.imageText), ImageText.isImage(file.url) {
+                    RoundButton(symbol: "text.viewfinder", label: loc("Lire le texte")) { TextToolBoard.shared.read(image: file.url) }
+                }
             }
         } else {
             VStack(alignment: .leading, spacing: 3) {
