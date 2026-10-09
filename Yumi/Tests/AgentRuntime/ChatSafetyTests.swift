@@ -144,6 +144,7 @@ private final class Home {
         for tool in ["Bash", "Edit", "Write", "NotebookEdit"] { #expect(refused.contains(tool)) }
         #expect(arguments.contains("--strict-mcp-config"))
         #expect(!arguments.contains("--mcp-config"))
+        #expect(arguments.firstIndex(of: "--setting-sources").map { arguments[$0 + 1] } == "")
         // A request for any other tool is refused without being shown.
         for tool in ["Bash", "Write", "Edit", "MultiEdit", "NotebookEdit", "Task", "mcp__files__write_file", "TodoWrite", ""] {
             #expect(!ChatTools.mayUse(tool), "\(tool)")

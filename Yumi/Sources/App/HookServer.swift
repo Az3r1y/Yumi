@@ -91,9 +91,13 @@ final class HookServer: @unchecked Sendable {
 
     private func handleClient(fd: Int32) {
         // Read newline-delimited JSON
+        // The relay writes its line at once: a client that stays silent or never ends its line
+        // must not hold this thread forever.
+        var timeout = timeval(tv_sec: 5, tv_usec: 0)
+        setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
         var raw = Data()
         var buf = [UInt8](repeating: 0, count: 4096)
-        outer: while true {
+        outer: while raw.count < 4_000_000 {
             let n = recv(fd, &buf, buf.count, 0)
             if n <= 0 { break }
             for i in 0..<n {
@@ -367,14 +371,20 @@ final class HookServer: @unchecked Sendable {
 
     // MARK: - Logging
 
+    /// Above this size the log starts over: it is for debugging, not a history.
+    private static let maxLogBytes = 1_000_000
+
     fileprivate func nbLog(_ message: String) {
         let logsDir = AppIdentity.logsDirectory
         try? FileManager.default.createDirectory(at: logsDir, withIntermediateDirectories: true)
         let logFile = logsDir.appendingPathComponent(AppIdentity.hookLogFileName)
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        let line = "\(formatter.string(from: Date())) \(message)\n"
+        // Commands of permission requests can carry keys and tokens: never written in clear.
+        let line = "\(formatter.string(from: Date())) \(SecretMask.mask(message))\n"
         guard let data = line.data(using: .utf8) else { return }
+        let size = (try? FileManager.default.attributesOfItem(atPath: logFile.path)[.size] as? Int) ?? 0
+        if size > Self.maxLogBytes { try? FileManager.default.removeItem(at: logFile) }
         if FileManager.default.fileExists(atPath: logFile.path) {
             if let handle = try? FileHandle(forWritingTo: logFile) {
                 handle.seekToEndOfFile()

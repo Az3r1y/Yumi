@@ -58,7 +58,7 @@ import Foundation
                               "--append-system-prompt", "Tu es Yumi.",
                               "--tools", "Read,Glob,Grep,WebSearch,WebFetch",
                               "--disallowedTools", "Bash,Edit,Write,NotebookEdit,Task",
-                              "--strict-mcp-config"])
+                              "--strict-mcp-config", "--setting-sources", ""])
     }
 
     @Test func laterMessagesResumeTheSession() {

@@ -19,7 +19,9 @@ enum ChatTools {
     static var arguments: [String] {
         ["--tools", conversational.joined(separator: ","),
          "--disallowedTools", refused.joined(separator: ","),
-         "--strict-mcp-config"]
+         "--strict-mcp-config",
+         // None of the person's settings: their allow rules would let Read or WebFetch run unasked.
+         "--setting-sources", ""]
     }
 
     /// Whether a permission request of the chat may even be shown to the person.
