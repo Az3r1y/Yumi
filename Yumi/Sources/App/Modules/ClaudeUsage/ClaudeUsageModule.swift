@@ -21,10 +21,7 @@ final class ClaudeUsageModule: YumiModule {
         self.folder = folder
     }
 
-    var snapshot: ModuleSnapshot {
-        let stored = UserDefaults.standard.double(forKey: ClaudeUsageReader.rateKey)
-        return ClaudeUsageReader.snapshot(day, rate: stored > 0 ? stored : ClaudeUsageReader.defaultRate)
-    }
+    var snapshot: ModuleSnapshot { ClaudeUsageReader.snapshot(day, rate: EuroRate.current()) }
 
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
@@ -62,6 +59,8 @@ final class ClaudeUsageModule: YumiModule {
             return day
         }.value
         var day = measured
+        // The day's euro, once a day
+        let rateChanged = await EuroRate.refresh()
         #if !APPSTORE
         // Anthropic's own figures, at most every five minutes; the status line's otherwise
         if Date().timeIntervalSince(quotasAsked) >= Self.quotasInterval {
@@ -78,7 +77,7 @@ final class ClaudeUsageModule: YumiModule {
             day.quotasConnected = true
         }
         #endif
-        guard day != self.day else { return }
+        guard day != self.day || rateChanged else { return }
         self.day = day
         onChange?()
     }

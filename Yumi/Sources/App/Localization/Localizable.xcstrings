@@ -3801,6 +3801,16 @@
         }
       }
     },
+    "En arrière-plan": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In the background"
+          }
+        }
+      }
+    },
     "En automatique, je parle la langue de ton Mac.": {
       "localizations": {
         "en": {
@@ -10759,6 +10769,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "you have no shortcut in the Shortcuts app"
+          }
+        }
+      }
+    },
+    "tâches lancées par un programme : comptées dans les tokens et le tarif API": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "tasks started by a program: counted in the tokens and the API price"
           }
         }
       }

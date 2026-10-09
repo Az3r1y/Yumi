@@ -206,3 +206,38 @@ private func transcript(_ lines: [String]) throws -> URL {
         #expect(ClaudeQuotaAPI.token(from: Data("{}".utf8), now: now) == nil)
     }
 }
+
+// MARK: - Background sessions, the euro
+
+@Suite struct ClaudeUsageOriginTests {
+    @Test func programsCountInTokensNotInTime() throws {
+        func entry(_ type: String, _ time: String, _ entrypoint: String, id: String? = nil) -> String {
+            var object: [String: Any] = ["type": type, "timestamp": "2026-10-09T\(time)Z", "sessionId": entrypoint, "entrypoint": entrypoint]
+            if let id { object["message"] = ["id": id, "usage": ["output_tokens": 10]] }
+            return String(decoding: try! JSONSerialization.data(withJSONObject: object), as: UTF8.self)
+        }
+        let mine = try transcript([entry("user", "09:00:00.000", "claude-desktop"), entry("assistant", "09:02:00.000", "claude-desktop", id: "a")])
+        let review = try transcript([entry("user", "09:00:00.000", "sdk-py"), entry("assistant", "09:04:00.000", "sdk-py", id: "b")])
+        let day = ClaudeUsageReader.day(files: [mine, review], since: midnight)
+        #expect(day.sessions == 1)
+        #expect(day.backgroundSessions == 1)
+        #expect(day.activeSeconds == 120)
+        #expect(day.outputTokens == 20)
+        let row = ClaudeUsageReader.snapshot(day).rows.first { $0.id == "background" }
+        #expect(row?.label == "1 session")
+    }
+
+    @Test func theBanksRateIsTurnedIntoEurosForADollar() throws {
+        let file = #"<gesmes:Envelope><Cube><Cube time='2026-10-09'><Cube currency='USD' rate='1.25'/><Cube currency='JPY' rate='160.1'/></Cube></Cube></gesmes:Envelope>"#
+        #expect(EuroRate.euros(perDollarIn: Data(file.utf8)) == 0.8)
+        #expect(EuroRate.euros(perDollarIn: Data("<html>maintenance</html>".utf8)) == nil)
+        #expect(EuroRate.euros(perDollarIn: Data("currency='USD' rate='0'".utf8)) == nil)
+    }
+
+    @Test func theBankIsAskedOnceADay() async throws {
+        let defaults = try #require(UserDefaults(suiteName: "euro-\(UUID().uuidString)"))
+        defaults.set(Date(), forKey: EuroRate.askedKey)
+        #expect(await EuroRate.refresh(defaults) == false)
+        #expect(EuroRate.current(defaults) == ClaudeUsageReader.defaultRate)
+    }
+}

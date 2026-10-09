@@ -8,10 +8,13 @@ import Foundation
 
 /// What a day of Claude Code amounts to.
 struct ClaudeUsageDay: Equatable, Sendable {
-    /// Sessions with at least one message today.
+    /// The person's own sessions with at least one message today (terminal, desktop app, editor).
     var sessions = 0
     /// Time spent in them: the gaps between two messages, when shorter than `ClaudeUsageReader.pause`.
     var activeSeconds: TimeInterval = 0
+    /// Sessions started by a program through the SDK (a review after a commit, a script): their
+    /// tokens and cost count, not their time.
+    var backgroundSessions = 0
     /// Tokens written by the model, and read by it (the cache included).
     var outputTokens = 0
     var inputTokens = 0
@@ -28,7 +31,8 @@ struct ClaudeUsageDay: Equatable, Sendable {
 enum ClaudeUsageReader {
     /// A longer silence is a break, not work.
     static let pause: TimeInterval = 5 * 60
-    /// Dollars to euros, for the API price: fixed, set with the `usdToEurRate` default.
+    /// Dollars to euros, for the API price: the European Central Bank's of the day (`EuroRate`),
+    /// kept under this default; `defaultRate` before the first one arrives.
     static let rateKey = "usdToEurRate"
     static let defaultRate = 0.86
 
@@ -49,6 +53,7 @@ enum ClaudeUsageReader {
     static func day(files: [URL], since midnight: Date, live: [String: Double] = [:]) -> ClaudeUsageDay {
         var day = ClaudeUsageDay()
         var times: [String: [Date]] = [:]
+        var background: Set<String> = []
         var countedMessages: Set<String> = []
         var cost: Double?
         let iso = ISO8601DateFormatter()
@@ -60,11 +65,13 @@ enum ClaudeUsageReader {
             guard let data = try? Data(contentsOf: file, options: .mappedIfSafe) else { continue }
             var latest: Date?
             var activeToday = false
+            var program = false
             /// The session's cost before midnight, and its last cost since.
             var before = 0.0, after: Double?
             for line in data.split(separator: UInt8(ascii: "\n")) {
                 guard let object = try? JSONSerialization.jsonObject(with: line) as? [String: Any] else { continue }
                 if let stamp = object["timestamp"] as? String, let date = iso.date(from: stamp) { latest = date }
+                if (object["entrypoint"] as? String)?.hasPrefix("sdk") == true { program = true }
                 if object["type"] as? String == "cost-state", let total = object["totalCostUSD"] as? Double {
                     if let latest, latest >= midnight { after = total } else { before = total }
                     continue
@@ -72,7 +79,7 @@ enum ClaudeUsageReader {
                 guard let latest, latest >= midnight, let session = object["sessionId"] as? String,
                       ["user", "assistant"].contains(object["type"] as? String) else { continue }
                 activeToday = true
-                times[session, default: []].append(latest)
+                if program { background.insert(session) } else { times[session, default: []].append(latest) }
                 // A reply is written once per block of content, with the same message and usage
                 guard let message = object["message"] as? [String: Any], let usage = message["usage"] as? [String: Any],
                       let id = message["id"] as? String, countedMessages.insert(id).inserted else { continue }
@@ -85,6 +92,7 @@ enum ClaudeUsageReader {
             }
         }
         day.sessions = times.count
+        day.backgroundSessions = background.subtracting(times.keys).count
         day.activeSeconds = times.values.reduce(0) { total, dates in
             let sorted = dates.sorted()
             return total + zip(sorted, sorted.dropFirst()).reduce(0) { sum, pair in
@@ -130,6 +138,13 @@ enum ClaudeUsageReader {
             ModuleRow(id: "tokens", title: loc("Tokens"),
                       detail: loc("\(tokens(day.outputTokens)) écrits, \(tokens(day.inputTokens)) lus (cache compris)"),
                       state: .neutral, label: tokens(day.outputTokens + day.inputTokens)),
+        ]
+        if day.backgroundSessions > 0 {
+            rows.append(ModuleRow(id: "background", title: loc("En arrière-plan"),
+                                  detail: loc("tâches lancées par un programme : comptées dans les tokens et le tarif API"),
+                                  state: .neutral, label: day.backgroundSessions == 1 ? loc("1 session") : loc("\(day.backgroundSessions) sessions")))
+        }
+        rows += [
             ModuleRow(id: "api", title: loc("Au tarif API"),
                       detail: euros == nil ? loc("compté par Claude Code pendant les sessions") : loc("ce que la journée aurait coûté sans abonnement"),
                       state: .neutral, label: euros.map { "≈ \($0)" } ?? "…"),
@@ -149,7 +164,7 @@ enum ClaudeUsageReader {
             if five.usedPercent >= 80 {
                 snapshot.live = ModuleLive(text: loc("Quota 5 h : \(percent)"), priority: ModuleLivePriority.ambient)
             }
-        } else if day.sessions == 0 {
+        } else if day.sessions == 0 && day.backgroundSessions == 0 {
             snapshot = ModuleSnapshot(id: moduleID, name: name, colorHex: color, status: "0",
                                       title: loc("Pas encore de Claude aujourd'hui"),
                                       subtitle: loc("Les sessions de Claude Code de la journée s'afficheront ici."),
