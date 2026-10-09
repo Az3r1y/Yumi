@@ -509,6 +509,90 @@ import Foundation
         // An open island narrower than the folded minimum: the minimum still holds
         #expect(FoldedIsland.ear(content: 500, minimum: 80, notchWidth: 184, openWidth: 300) == 80)
     }
+
+    // MARK: – The side of the notch (a 15-inch MacBook Air: notch from 763 to 948)
+
+    private func side(menuEnd: Double?, statusStart: Double?) -> FoldedSide {
+        FoldedIsland.side(menuEnd: menuEnd, statusStart: statusStart, notchLeft: 763, notchRight: 948, ear: 80)
+    }
+
+    @Test func fewMenusLeaveYumiOnTheLeft() {
+        #expect(side(menuEnd: 400, statusStart: 1275) == .left)
+    }
+
+    @Test func menusUpToTheNotchSendHimRight() {
+        #expect(side(menuEnd: 750, statusStart: 1275) == .right)
+        // Unknown menus (no Accessibility permission): the left, as before
+        #expect(side(menuEnd: nil, statusStart: 1275) == .left)
+    }
+
+    @Test func iconsCloseToTheNotchKeepHimOffTheRight() {
+        // Room for the left island's right ear, not for Yumi and what is live
+        #expect(side(menuEnd: 400, statusStart: 1048) == .left)
+        #expect(side(menuEnd: 750, statusStart: 1048) == .hidden)
+        #expect(side(menuEnd: 400, statusStart: 1000) == .hidden)
+    }
+
+    @Test func aLongTextIsCutToTheRoomLeft() {
+        func limit(_ side: FoldedSide, menuEnd: Double?, statusStart: Double?) -> Double {
+            FoldedIsland.earLimit(side: side, menuEnd: menuEnd, statusStart: statusStart, notchLeft: 763, notchRight: 948)
+        }
+        // Left: the narrower of the two sides (menus end at 474, icons from 1275), less the margin
+        #expect(limit(.left, menuEnd: 474, statusStart: 1275) == 281)
+        #expect(limit(.left, menuEnd: 600, statusStart: 1275) == 155)
+        // Right: Yumi and the text share the room up to the icons
+        #expect(limit(.right, menuEnd: 703, statusStart: 1275) == 155.5)
+        #expect(limit(.left, menuEnd: nil, statusStart: nil) == .infinity)
+    }
+
+    @Test func noIconsLeaveTheRightFree() {
+        #expect(side(menuEnd: 750, statusStart: nil) == .right)
+    }
+
+    @MainActor private func makeFSM() -> IslandStateMachine {
+        let fsm = IslandStateMachine()
+        fsm.petitToHiddenDelay = 60
+        return fsm
+    }
+
+    @Test @MainActor func withoutRoomTheFoldedIslandStaysInTheNotch() {
+        let fsm = makeFSM()
+        fsm.compactBlocked = true
+        fsm.reveal()
+        #expect(fsm.state == .hidden)
+        // Opened by an alert, it folds straight back into the notch
+        fsm.open()
+        fsm.collapse()
+        #expect(fsm.state == .hidden)
+    }
+
+    @Test @MainActor func roomAgainBringsHimBack() {
+        let fsm = makeFSM()
+        fsm.reveal()
+        #expect(fsm.state == .petit)
+        fsm.compactBlocked = true
+        #expect(fsm.state == .hidden)
+        fsm.compactBlocked = false
+        #expect(fsm.state == .petit)
+    }
+
+    @Test @MainActor func hiddenAfterRestStaysHiddenWhenRoomComesBack() {
+        let fsm = makeFSM()
+        fsm.compactBlocked = true
+        fsm.compactBlocked = false
+        #expect(fsm.state == .hidden)
+    }
+
+    @Test @MainActor func thePointerStillShowsHimWithoutRoom() async throws {
+        let fsm = makeFSM()
+        fsm.compactBlocked = true
+        fsm.mouseEntered()
+        #expect(fsm.state == .petit)
+        fsm.mouseLeft()
+        // Back in the notch a second after the pointer leaves, not after the usual minute
+        try await Task.sleep(for: .milliseconds(1500))
+        #expect(fsm.state == .hidden)
+    }
 }
 
 // MARK: – The chat answering live

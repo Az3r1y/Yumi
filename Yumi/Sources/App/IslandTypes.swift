@@ -87,6 +87,9 @@ struct IslandLayout: Equatable {
     /// How far the folded island sticks out on each side of the notch. It grows with what is
     /// live on the right (see `FoldedIsland.ear`).
     var compactEar: CGFloat = IslandConst.compactExtra / 2
+    /// The left of the notch holds the menus of the app in front: the folded island starts at
+    /// the notch and Yumi sits on its right (`FoldedIsland.side`).
+    var foldedRight = false
     /// Width of the island while Yumi speaks, and its height under the notch.
     var speakWidth: CGFloat = 0
     var speakBand: CGFloat = 0
@@ -111,6 +114,12 @@ struct IslandLayout: Equatable {
         }
     }
 
+    /// How far right of the notch's middle the island is drawn: same width, its left ear
+    /// slid under the notch.
+    func shift(_ stage: IslandStage) -> CGFloat {
+        stage == .compact && foldedRight ? compactEar : 0
+    }
+
     func cornerRadius(_ stage: IslandStage) -> CGFloat {
         switch stage {
         case .hidden, .compact: return IslandConst.roundedCorner
@@ -131,7 +140,10 @@ struct IslandLayout: Equatable {
         case .speak:
             return IslandSeat(x: 32 - speakWidth / 2, y: notchHeight + speakBand / 2 - 2, scale: 0.36, opacity: 1)
         case .compact:
-            return IslandSeat(x: 28 - (notchWidth + compactEar * 2) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
+            // On the right, the mirror of his place on the left: at the outer end, what is
+            // live between him and the notch
+            return IslandSeat(x: foldedRight ? notchWidth / 2 + compactEar * 2 - 28 : 28 - (notchWidth + compactEar * 2) / 2,
+                              y: notchHeight / 2, scale: 0.27, opacity: 1)
         case .open:
             return IslandSeat(x: (50 - IslandConst.expandedWidth / 2) * k, y: 56 * k + openInset, scale: 0.68 * k, opacity: 1)
         case .drip:
@@ -207,6 +219,8 @@ enum IslandConst {
     /// and the buttons that appear on hover.
     static let foldedLeading: CGFloat = 10
     static let foldedTrailing: CGFloat = 14
+    /// The black of the folded island fades out over this much at each end.
+    static let foldedFade: CGFloat = 26
     static let foldedDot: CGFloat = 7
     static let foldedGap: CGFloat = 7
     static let foldedTextMax: CGFloat = 190

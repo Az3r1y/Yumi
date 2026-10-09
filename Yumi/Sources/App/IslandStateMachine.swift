@@ -56,6 +56,24 @@ final class IslandStateMachine {
         }
     }
 
+    /// The folded island would cover the menus of the app in front, or the menu bar icons, on
+    /// both sides (`FoldedSide.hidden`): it stays in the notch unless the pointer is on it.
+    var compactBlocked = false {
+        didSet {
+            guard compactBlocked != oldValue else { return }
+            if compactBlocked, state == .petit, !hovered {
+                cancelTimers()
+                transition(to: .hidden)
+                hidForRoom = true
+            } else if !compactBlocked, hidForRoom, state == .hidden {
+                // Room again: he comes back out, as he was before hiding
+                enterPetit()
+            }
+        }
+    }
+    /// The island is in the notch only because there was no room for it.
+    private var hidForRoom = false
+
     /// The pointer is on the island. Kept here so that every way of reaching a state
     /// (click, alert, end of the launch) starts the right timer.
     private var hovered = false
@@ -151,6 +169,11 @@ final class IslandStateMachine {
 
     private func enterPetit() {
         cancelTimers()
+        if compactBlocked && !hovered {
+            transition(to: .hidden)
+            hidForRoom = true
+            return
+        }
         transition(to: .petit)
         if !hovered { schedulePetitHide() }
     }
@@ -164,7 +187,9 @@ final class IslandStateMachine {
             self.transition(to: .hidden)
         }
         petitHideWork = item
-        DispatchQueue.main.asyncAfter(deadline: .now() + petitToHiddenDelay, execute: item)
+        // Shown only because the pointer came: it goes back as soon as the pointer leaves
+        DispatchQueue.main.asyncAfter(deadline: .now() + (compactBlocked ? min(1, petitToHiddenDelay) : petitToHiddenDelay),
+                                      execute: item)
     }
 
     private func scheduleHomeCollapse() {
@@ -199,6 +224,7 @@ final class IslandStateMachine {
         guard new != state else { return }
         let old = state
         state = new
+        hidForRoom = false
         onTransition?(old, new)
     }
 
@@ -208,6 +234,13 @@ final class IslandStateMachine {
 
 /// Pure rules of the folded island (Contracts/ModuleTypes.swift): which module it shows on
 /// the right of the notch, and how wide it may grow for it. No view, no state.
+/// Which side of the notch Yumi sits on while the island is folded (`FoldedIsland.side`).
+enum FoldedSide: Equatable, Sendable {
+    case left, right
+    /// Both sides are taken: the island stays in the notch.
+    case hidden
+}
+
 enum FoldedIsland {
 
     /// The live module with the highest priority. With several at that priority, the one
@@ -235,6 +268,34 @@ enum FoldedIsland {
     /// The text without what ticks: every digit reads the same.
     static func skeleton(_ text: String) -> String {
         String(text.map { $0.isNumber ? "0" : $0 })
+    }
+
+    /// Where the folded island goes, given what the menu bar holds on each side of the notch
+    /// (x in screen points). On the left it sticks out by `ear` on each side; on the right it
+    /// starts at the notch and sticks out by `2 × ear` (Yumi, then what is live).
+    /// - Parameters:
+    ///   - menuEnd: right edge of the last menu of the app in front; nil when it cannot be read
+    ///     (no Accessibility permission): the left stays his place, as it was before.
+    ///   - statusStart: left edge of the first menu bar icon right of the notch; nil when none.
+    static func side(menuEnd: Double?, statusStart: Double?, notchLeft: Double, notchRight: Double,
+                     ear: Double) -> FoldedSide {
+        let rightRoom = statusStart.map { $0 - notchRight } ?? .infinity
+        if (menuEnd ?? -.infinity) <= notchLeft - ear, rightRoom >= ear { return .left }
+        if rightRoom >= 2 * ear { return .right }
+        return .hidden
+    }
+
+    /// The widest ear the menu bar leaves room for on that side, with a small margin: what is
+    /// live is cut to it rather than covering a menu or an icon. Infinite in the notch.
+    static func earLimit(side: FoldedSide, menuEnd: Double?, statusStart: Double?,
+                         notchLeft: Double, notchRight: Double, margin: Double = 8) -> Double {
+        let menuRoom = notchLeft - (menuEnd ?? -.infinity)
+        let iconRoom = statusStart.map { $0 - notchRight } ?? .infinity
+        switch side {
+        case .left:   return min(menuRoom, iconRoom) - margin
+        case .right:  return iconRoom / 2 - margin
+        case .hidden: return .infinity
+        }
     }
 
     /// Width of one ear (the island sticks out by this much on each side of the notch): wide

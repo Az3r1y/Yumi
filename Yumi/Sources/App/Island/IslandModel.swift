@@ -8,6 +8,8 @@ final class IslandModel: ObservableObject {
 
     /// Set once by the window controller, from the screen the island lives on.
     @Published var layout = IslandLayout()
+    /// The widest the folded island's ears may be without covering the menu bar (`FoldedIsland.earLimit`).
+    @Published var earLimit: CGFloat = .infinity
 
     // MARK: Launch
 

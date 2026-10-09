@@ -34,7 +34,8 @@ struct IslandScene: View {
         // What is live decides how wide the folded island is
         let folded = FoldedContent(module: FoldedIsland.live(in: state.modules, shown: model.liveModuleID),
                                    hover: model.foldedHover && stage == .compact)
-        let ear = folded.ear(notchWidth: model.layout.notchWidth)
+        // Never wider than the menu bar leaves room for: a long text is cut instead
+        let ear = min(folded.ear(notchWidth: model.layout.notchWidth), max(IslandConst.compactExtra / 2, model.earLimit))
         // What Yumi says on his own, and the room the folded island makes for it
         let remark = model.launchStage == nil ? model.remark(in: state) : nil
         let speak = remark.map { RemarkLine.size(for: $0, minimum: model.layout.notchWidth + IslandConst.compactExtra) }
@@ -73,12 +74,13 @@ struct IslandScene: View {
 
             // 0. The bubble of the second activity, which leaves the folded island like a drop
             FoldedBubble(module: stage == .compact ? FoldedIsland.second(in: state.modules, after: folded.module?.id) : nil,
-                         island: layout.size(.compact, openHeight: 0), middle: middle)
+                         island: layout.size(.compact, openHeight: 0), middle: middle + layout.shift(.compact))
                 .opacity(stage == .compact ? 1 : 0)
                 .environment(\.islandLayerShown, stage == .compact)
 
             // 1. The island: a black shape that cuts what it contains (`overflow: hidden`)
-            IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage)) {
+            IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage),
+                       fade: stage == .compact ? IslandConst.foldedFade : 0) {
                 ZStack(alignment: .topLeading) {
                     // The halo of the launch, or of the goodbye with its few words
                     IslandGreetingLayer(phase: model.greeting,
@@ -115,10 +117,14 @@ struct IslandScene: View {
                 // Laid out in the island's width of the instant, so that it stays against
                 // its right edge while the island widens or narrows
                 IslandCompactLayer(content: folded, ear: ear, height: layout.notchHeight)
+                    // Yumi on the right: what is live moves up against the notch, he takes the end
+                    .offset(x: layout.foldedRight ? -ear : 0)
                     .modifier(IslandLayer(on: stage == .compact))
                     .environment(\.islandLayerShown, stage == .compact)
             }
+            .offset(x: layout.shift(stage))
             .animation(model.snap ? nil : .islandSpring(), value: size)
+            .animation(model.snap ? nil : .islandSpring(), value: layout.shift(stage))
 
             // 2. Yumi, above the island: he travels between seats, and what he does may
             //    spill over its sides and below it.
@@ -204,16 +210,19 @@ struct IslandBody<Content: View, Edge: View>: View, Animatable {
     var width: CGFloat
     var height: CGFloat
     let radius: CGFloat
+    /// Points over which the black fades out at each side: the folded island floats.
+    var fade: CGFloat = 0
     /// Layers anchored to the top-left corner of the island, each with its own width.
     let content: Content
     /// A layer that takes the width the island has at this instant.
     let edge: Edge
 
-    init(width: CGFloat, height: CGFloat, radius: CGFloat,
+    init(width: CGFloat, height: CGFloat, radius: CGFloat, fade: CGFloat = 0,
          @ViewBuilder content: () -> Content, @ViewBuilder edge: () -> Edge) {
         self.width = width
         self.height = height
         self.radius = radius
+        self.fade = fade
         self.content = content()
         self.edge = edge()
     }
@@ -224,7 +233,7 @@ struct IslandBody<Content: View, Edge: View>: View, Animatable {
     }
 
     var body: some View {
-        IslandCorners(width: width, height: height, radius: radius, content: content, edge: edge)
+        IslandCorners(width: width, height: height, radius: radius, fade: fade, content: content, edge: edge)
             .animation(.islandEase(0.4), value: radius)
     }
 }
@@ -233,6 +242,7 @@ private struct IslandCorners<Content: View, Edge: View>: View, Animatable {
     let width: CGFloat
     let height: CGFloat
     var radius: CGFloat
+    let fade: CGFloat
     let content: Content
     let edge: Edge
 
@@ -245,6 +255,12 @@ private struct IslandCorners<Content: View, Edge: View>: View, Animatable {
         let shape = IslandShape(radius: radius)
         ZStack(alignment: .topLeading) {
             shape.fill(.black)
+                .mask {
+                    let f = width > 0 ? min(0.5, fade / width) : 0
+                    LinearGradient(stops: [.init(color: .clear, location: 0), .init(color: .black, location: f),
+                                           .init(color: .black, location: 1 - f), .init(color: .clear, location: 1)],
+                                   startPoint: .leading, endPoint: .trailing)
+                }
             content
                 .frame(width: max(0, width), height: max(0, height), alignment: .topLeading)
                 .overlay(alignment: .topTrailing) { edge }

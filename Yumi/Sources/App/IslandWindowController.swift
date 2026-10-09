@@ -214,6 +214,48 @@ final class IslandWindowController: NSWindowController {
             .store(in: &subscriptions)
         syncFoldSetting()
         pollFrame()
+
+        // Which side of the notch has room: again when another app comes in front, and every
+        // few seconds for menus and icons that change on their own.
+        NSWorkspace.shared.notificationCenter.publisher(for: NSWorkspace.didActivateApplicationNotification)
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in self?.checkRoom() }
+            .store(in: &subscriptions)
+        roomTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.checkRoom() }
+        }
+        checkRoom()
+    }
+
+    private var roomTimer: Timer?
+
+    /// Puts Yumi on the side of the notch where he covers nothing, or in the notch.
+    private func checkRoom() {
+        guard !IslandStudio.isOn, let screen = Self.notchScreen(),
+              let left = screen.auxiliaryTopLeftArea, let right = screen.auxiliaryTopRightArea,
+              let app = NSWorkspace.shared.frontmostApplication,
+              // Yumi in front (the chat): the app under him has not changed
+              app.processIdentifier != ProcessInfo.processInfo.processIdentifier else { return }
+        let notchLeft = screen.frame.minX + left.width, notchRight = screen.frame.maxX - right.width
+        let menuEnd = MenuBarRoom.menuEnd(of: app.processIdentifier)
+        let statusStart = MenuBarRoom.statusStart(after: notchRight, below: screen)
+        let side = FoldedIsland.side(menuEnd: menuEnd.map(Double.init), statusStart: statusStart.map(Double.init),
+                                     notchLeft: Double(notchLeft), notchRight: Double(notchRight),
+                                     // Chosen for the smallest island; what is live is cut to the room below
+                                     ear: Double(IslandConst.compactExtra / 2))
+        let limit = CGFloat(FoldedIsland.earLimit(side: side, menuEnd: menuEnd.map(Double.init),
+                                                  statusStart: statusStart.map(Double.init),
+                                                  notchLeft: Double(notchLeft), notchRight: Double(notchRight)))
+        if model.earLimit != limit { model.earLimit = limit }
+        #if DEBUG
+        // `YUMI_TRACE_ROOM=1` prints what the menu bar holds each time it is measured
+        if ProcessInfo.processInfo.environment["YUMI_TRACE_ROOM"] != nil {
+            fputs("YUMI room \(app.localizedName ?? "?"): trusted \(AXIsProcessTrusted()), menus end \(menuEnd.map { "\($0)" } ?? "?"), "
+                  + "icons from \(statusStart.map { "\($0)" } ?? "none"), notch \(notchLeft)…\(notchRight), ear \(model.layout.compactEar), limit \(limit) → \(side)\n", stderr)
+        }
+        #endif
+        if model.layout.foldedRight != (side == .right) { model.layout.foldedRight = side == .right }
+        fsm.compactBlocked = side == .hidden
     }
 
     private var settleCheck: DispatchWorkItem?
@@ -290,7 +332,8 @@ final class IslandWindowController: NSWindowController {
         let size = CGSize(width: model.islandSize(for: state.mode).width * scale,
                           height: model.islandSize(for: state.mode).height * scale)
         let panel = window?.frame.size ?? CGSize(width: IslandConst.panelWidth, height: IslandConst.panelHeight)
-        return CGRect(x: (panel.width - size.width) / 2, y: panel.height - size.height,
+        let shift = model.layout.shift(model.stage(for: state.mode)) * scale
+        return CGRect(x: (panel.width - size.width) / 2 + shift, y: panel.height - size.height,
                       width: size.width, height: size.height)
     }
 
@@ -300,7 +343,7 @@ final class IslandWindowController: NSWindowController {
         guard count > 0, model.foldedHover, model.stage(for: state.mode) == .compact else { return false }
         let island = islandFrame()
         let width = count * IslandConst.foldedControl + (count - 1) * IslandConst.foldedControlGap
-        let right = island.maxX - IslandConst.foldedTrailing
+        let right = island.maxX - IslandConst.foldedTrailing - (model.layout.foldedRight ? model.layout.compactEar : 0)
         return windowPoint.x >= right - width - IslandConst.foldedGap / 2
             && windowPoint.x <= island.maxX
             && windowPoint.y >= island.minY - 6
@@ -898,8 +941,10 @@ final class IslandWindowController: NSWindowController {
         let frame = panel.frame
         let origin = NSPoint(x: screen.frame.midX - frame.width / 2, y: screen.frame.maxY - frame.height)
         if frame.origin != origin { panel.setFrameOrigin(origin) }
-        let layout = IslandLayout(notchWidth: Self.notchWidth(for: screen), notchHeight: Self.notchHeight(for: screen),
+        var layout = IslandLayout(notchWidth: Self.notchWidth(for: screen), notchHeight: Self.notchHeight(for: screen),
                                   hasNotch: screen.safeAreaInsets.top > 0)
+        layout.compactEar = model.layout.compactEar
+        layout.foldedRight = model.layout.foldedRight
         guard layout != model.layout else { return }
         model.layout = layout
         state.notchWidth = layout.notchWidth
@@ -923,6 +968,58 @@ final class IslandWindowController: NSWindowController {
     static func notchHeight(for screen: NSScreen) -> CGFloat {
         let h = screen.safeAreaInsets.top
         return h > 0 ? h : IslandConst.notchHeight
+    }
+}
+
+// MARK: - Room in the menu bar
+
+/// What the menu bar holds on each side of the notch. x in screen points (the same for
+/// Accessibility, the window server and AppKit).
+enum MenuBarRoom {
+    /// Right edge of the last menu of an app left of the notch. nil without the Accessibility
+    /// permission, or when the app gives no menu bar.
+    static func menuEnd(of pid: pid_t) -> CGFloat? {
+        guard AXIsProcessTrusted() else { return nil }
+        let app = AXUIElementCreateApplication(pid)
+        var bar: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(app, kAXMenuBarAttribute as CFString, &bar) == .success, let bar,
+              CFGetTypeID(bar) == AXUIElementGetTypeID() else { return nil }
+        var children: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(bar as! AXUIElement, kAXChildrenAttribute as CFString, &children) == .success,
+              let items = children as? [AXUIElement] else { return nil }
+        // macOS leaves out the menus that would go under the notch: the last one shown is the end
+        return items.compactMap(frame(of:)).filter { $0.width > 0 }.map(\.maxX).max()
+    }
+
+    /// Left edge of the first menu bar icon right of the notch, on that screen. nil when there
+    /// is none. Reads only where windows are, never what they show.
+    static func statusStart(after notchRight: CGFloat, below screen: NSScreen) -> CGFloat? {
+        // The icons are not listed as on screen: all windows, kept to the top of this screen
+        guard let windows = CGWindowListCopyWindowInfo([.optionAll], kCGNullWindowID) as? [[String: Any]] else { return nil }
+        let own = ProcessInfo.processInfo.processIdentifier
+        let menuBar = screen.frame.maxY - screen.visibleFrame.maxY
+        // The window server counts y from the top of the main screen, downwards
+        let top = (NSScreen.screens.first?.frame.maxY ?? screen.frame.maxY) - screen.frame.maxY
+        return windows.compactMap { info -> CGFloat? in
+            guard info[kCGWindowLayer as String] as? Int == Int(CGWindowLevelForKey(.statusWindow)),
+                  info[kCGWindowOwnerPID as String] as? pid_t != own,
+                  let bounds = (info[kCGWindowBounds as String] as? NSDictionary).flatMap({ CGRect(dictionaryRepresentation: $0) }),
+                  abs(bounds.minY - top) < 1, bounds.height <= menuBar + 1,
+                  bounds.minX >= notchRight - 1, bounds.maxX <= screen.frame.maxX + 1
+            else { return nil }
+            return bounds.minX
+        }.min()
+    }
+
+    private static func frame(of element: AXUIElement) -> CGRect? {
+        var position: CFTypeRef?, size: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, kAXPositionAttribute as CFString, &position) == .success,
+              AXUIElementCopyAttributeValue(element, kAXSizeAttribute as CFString, &size) == .success,
+              let position, let size else { return nil }
+        var origin = CGPoint.zero, extent = CGSize.zero
+        guard AXValueGetValue(position as! AXValue, .cgPoint, &origin),
+              AXValueGetValue(size as! AXValue, .cgSize, &extent) else { return nil }
+        return CGRect(origin: origin, size: extent)
     }
 }
 
