@@ -669,6 +669,16 @@
         }
       }
     },
+    "%@ n'a pas voulu que je remplace : c'est copié, colle-le avec ⌘V.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ wouldn't let me replace it: it's copied, paste it with ⌘V."
+          }
+        }
+      }
+    },
     "%@ n'est pas installé dans Ollama.": {
       "localizations": {
         "en": {
@@ -1889,12 +1899,32 @@
         }
       }
     },
+    "Allemand": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "German"
+          }
+        }
+      }
+    },
     "Aléatoire": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Random"
+          }
+        }
+      }
+    },
+    "Anglais": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "English"
           }
         }
       }
@@ -1915,6 +1945,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Anthropic (API key)"
+          }
+        }
+      }
+    },
+    "Apple ne sait pas traduire entre ces deux langues.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple can't translate between these two languages."
           }
         }
       }
@@ -2513,6 +2553,16 @@
         }
       }
     },
+    "C'est remplacé dans %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replaced in %@."
+          }
+        }
+      }
+    },
     "C'est trop risqué : je ne le fais pas.": {
       "localizations": {
         "en": {
@@ -2721,6 +2771,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "These are granted in System Settings. I only ask when a module needs one."
+          }
+        }
+      }
+    },
+    "Ces langues ne sont pas encore sur ton Mac : ajoute-les dans Réglages Système › Général › Langue et région › Langues de traduction.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "These languages aren't on your Mac yet: add them in System Settings › General › Language & Region › Translation Languages."
           }
         }
       }
@@ -3325,6 +3385,56 @@
         }
       }
     },
+    "Copier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        }
+      }
+    },
+    "Copié.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copied."
+          }
+        }
+      }
+    },
+    "Corriger": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct"
+          }
+        }
+      }
+    },
+    "Corriger ou traduire la sélection avec un raccourci": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct or translate the selection with a shortcut"
+          }
+        }
+      }
+    },
+    "Corriger ou traduire un texte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correct or translate a text"
+          }
+        }
+      }
+    },
     "Couleurs": {
       "localizations": {
         "en": {
@@ -3891,6 +4001,16 @@
         }
       }
     },
+    "Espagnol": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Spanish"
+          }
+        }
+      }
+    },
     "Essayer plus tard": {
       "localizations": {
         "en": {
@@ -3951,6 +4071,16 @@
         }
       }
     },
+    "Français": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "French"
+          }
+        }
+      }
+    },
     "Fusion faite sur %@. Deux gouttes, une seule.": {
       "localizations": {
         "en": {
@@ -3967,6 +4097,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keep"
+          }
+        }
+      }
+    },
+    "Garder « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Keep “%@”"
           }
         }
       }
@@ -4237,6 +4377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Installed"
+          }
+        }
+      }
+    },
+    "Italien": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Italian"
           }
         }
       }
@@ -4987,6 +5137,16 @@
         }
       }
     },
+    "Je ne vois pas de faute d'orthographe. La grammaire, je ne la vérifie pas.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't see any spelling mistake. I don't check grammar."
+          }
+        }
+      }
+    },
     "Je ne vois pas tes sessions Claude Code.": {
       "localizations": {
         "en": {
@@ -5123,6 +5283,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'll call you back in %@."
+          }
+        }
+      }
+    },
+    "Je traduis…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translating…"
           }
         }
       }
@@ -5267,6 +5437,36 @@
         }
       }
     },
+    "La traduction a échoué : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The translation failed: %@"
+          }
+        }
+      }
+    },
+    "La traduction sur le Mac demande macOS 26.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translating on the Mac needs macOS 26."
+          }
+        }
+      }
+    },
+    "Laisser « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leave “%@”"
+          }
+        }
+      }
+    },
     "Lance": {
       "localizations": {
         "en": {
@@ -5363,6 +5563,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Feedback opens on GitHub with the Yumi version, the macOS version and your Mac's model already filled in. Nothing else."
+          }
+        }
+      }
+    },
+    "Le texte est déjà dans cette langue.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The text is already in this language."
           }
         }
       }
@@ -6403,6 +6613,16 @@
         }
       }
     },
+    "Portugais": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Portuguese"
+          }
+        }
+      }
+    },
     "Portée : %@": {
       "localizations": {
         "en": {
@@ -6779,6 +6999,16 @@
         }
       }
     },
+    "Remplacer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Replace"
+          }
+        }
+      }
+    },
     "Reprendre": {
       "localizations": {
         "en": {
@@ -6865,6 +7095,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing planned."
+          }
+        }
+      }
+    },
+    "Rien de sélectionné : colle ton texte ici.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing selected: paste your text here."
           }
         }
       }
@@ -7117,6 +7357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset to ⌥ Space"
+          }
+        }
+      }
+    },
+    "Rétablir ⌥⇧T": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reset to ⌥⇧T"
           }
         }
       }
@@ -7465,6 +7715,26 @@
         }
       }
     },
+    "Sélection de %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Selection from %@"
+          }
+        }
+      }
+    },
+    "Sélectionne un texte dans n'importe quelle app, tape le raccourci : je le corrige ou je le traduis sur ton Mac, rien ne part ailleurs. Je ne remplace ta sélection qu'après ton clic. Lire la sélection demande l'autorisation Accessibilité.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Select a text in any app and press the shortcut: I correct or translate it on your Mac, nothing goes anywhere else. I replace your selection only after your click. Reading the selection needs the Accessibility permission."
+          }
+        }
+      }
+    },
     "Série en cours": {
       "localizations": {
         "en": {
@@ -7681,6 +7951,16 @@
         }
       }
     },
+    "Texte": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text"
+          }
+        }
+      }
+    },
     "Texte ajouté": {
       "localizations": {
         "en": {
@@ -7857,6 +8137,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "See all"
+          }
+        }
+      }
+    },
+    "Traduire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Translate"
           }
         }
       }
@@ -9087,6 +9377,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "off"
+          }
+        }
+      }
+    },
+    "en %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "into %@"
           }
         }
       }

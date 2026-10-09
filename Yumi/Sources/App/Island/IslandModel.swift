@@ -385,7 +385,7 @@ final class IslandModel: ObservableObject {
         case .module where isMusic(moduleID): return nil   // his headphones bring their own face
         case .module where moduleID == "focus": return (.focused, .think)
         case .module where moduleID == "agenda": return (.neutral, .calm)
-        case .settings, .memory, .quickTask: return (.curious, .calm)
+        case .settings, .memory, .quickTask, .textTool: return (.curious, .calm)
         case .welcome: return (.happy, .joy)
         case .home:     return nil   // the state of the agent decides (neutral and calm at rest)
         case .working:  return (.focused, .work)
@@ -405,7 +405,7 @@ final class IslandModel: ObservableObject {
         case .error:    return .squash
         case .drop:     return .stretch
         case .welcome: return .wave
-        case .home, .working, .module, .talk, .settings, .memory, .quickTask: return .pop
+        case .home, .working, .module, .talk, .settings, .memory, .quickTask, .textTool: return .pop
         }
     }
 

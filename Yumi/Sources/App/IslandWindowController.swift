@@ -27,6 +27,7 @@ final class IslandWindowController: NSWindowController {
     private var tripleShift = TripleShift()
     /// The quick task shortcut (⌥ Espace by default), system-wide.
     private var quickTaskKey: GlobalHotKey?
+    private var textToolKey: GlobalHotKey?
     private var subscriptions: Set<AnyCancellable> = []
 
     /// The view the island opens on, when something other than a click opens it.
@@ -119,6 +120,7 @@ final class IslandWindowController: NSWindowController {
         startPolling()
         startMonitors()
         startQuickTaskKey()
+        startTextToolKey()
         startObservers()
         #if DEBUG
         IslandDemo.startIfRequested(controller: self)
@@ -518,6 +520,37 @@ final class IslandWindowController: NSWindowController {
             .store(in: &subscriptions)
     }
 
+    /// Registers the shortcut of the text tool, again each time the settings change it.
+    private func startTextToolKey() {
+        let key = GlobalHotKey { [weak self] in self?.textToolKeyPressed() }
+        textToolKey = key
+        let keys = QuickTaskShortcut.textTool
+        if !IslandStudio.isOn { key.set(QuickTaskShortcut.stored(.standard, keys)) }
+        NotificationCenter.default.publisher(for: .textToolShortcutChanged)
+            .receive(on: DispatchQueue.main)
+            .sink { _ in if !IslandStudio.isOn { key.set(QuickTaskShortcut.stored(.standard, keys)) } }
+            .store(in: &subscriptions)
+        NotificationCenter.default.publisher(for: .shortcutRecording)
+            .receive(on: DispatchQueue.main)
+            .sink { note in
+                guard !IslandStudio.isOn else { return }
+                key.set(note.object as? Bool == true ? nil : QuickTaskShortcut.stored(.standard, keys))
+            }
+            .store(in: &subscriptions)
+    }
+
+    /// Reads the text selected in the app in front, then opens the island on it; pressed again
+    /// there, folds it.
+    private func textToolKeyPressed() {
+        guard !frozen, !leaving else { return }
+        if fsm.state == .home, state.view == .textTool, !state.isPinned {
+            collapse()
+        } else {
+            TextToolBoard.shared.grabSelection()
+            expand(to: .textTool)
+        }
+    }
+
     /// Opens the island on the quick task field; pressed again there, folds it.
     private func quickTaskKeyPressed() {
         guard !frozen, !leaving else { return }
@@ -746,7 +779,7 @@ final class IslandWindowController: NSWindowController {
             .sink { [weak self] view in
                 guard let self, self.fsm.state == .home else { return }
                 let screen = IslandScreen.resolve(view: view, state: .idle, approvalPending: false)
-                if screen == .talk || screen == .welcome || screen == .memory || screen == .quickTask {
+                if screen == .talk || screen == .welcome || screen == .memory || screen == .quickTask || screen == .textTool {
                     self.islandPanel.makeKey()
                 } else if self.islandPanel.isKeyWindow {
                     self.islandPanel.resignKey()

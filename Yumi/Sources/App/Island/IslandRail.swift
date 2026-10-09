@@ -31,6 +31,11 @@ struct IslandRail: View {
                        color: IslandTheme.violet, on: screen == .talk, bright: true) {
                 IslandActions.go(.prompt)
             }
+            RailButton(symbol: "textformat.abc", name: loc("Texte"), label: loc("Corriger ou traduire un texte"),
+                       color: .white, on: screen == .textTool) {
+                TextToolBoard.shared.openedByHand()
+                IslandActions.go(.textTool)
+            }
             RailButton(symbol: "gearshape", name: loc("Réglages"), label: loc("Réglages"),
                        color: .white, on: screen == .settings) {
                 IslandActions.go(.settings)

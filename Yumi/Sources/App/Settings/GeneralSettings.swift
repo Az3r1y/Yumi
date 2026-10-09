@@ -58,6 +58,7 @@ struct GeneralSettings: View {
             }
 
             QuickTaskSettingsSection()
+            TextToolSettingsSection()
 
             Section {
                 Toggle("Regarder l'app au premier plan", isOn: $state.contextEnabled)
@@ -164,6 +165,57 @@ private struct QuickTaskSettingsSection: View {
 
     private func changed() {
         NotificationCenter.default.post(name: .quickTaskShortcutChanged, object: nil)
+    }
+}
+
+/// The text tool: its shortcut.
+private struct TextToolSettingsSection: View {
+    private static let keys = QuickTaskShortcut.textTool
+    @AppStorage(QuickTaskShortcut.textTool.enabled) private var enabled = true
+    @State private var flags = QuickTaskShortcut.stored(.standard, Self.keys)?.flags ?? Self.keys.standard.flags
+    @State private var code = QuickTaskShortcut.stored(.standard, Self.keys)?.keyCode ?? Self.keys.standard.keyCode
+
+    var body: some View {
+        Section {
+            Toggle("Corriger ou traduire la sélection avec un raccourci", isOn: $enabled)
+                .onChange(of: enabled) { _, _ in changed() }
+            if enabled {
+                LabeledContent("Raccourci") {
+                    HStack {
+                        ShortcutRecorderButton(flags: $flags, code: $code)
+                        if flags != Self.keys.standard.flags || code != Self.keys.standard.keyCode {
+                            Button("Rétablir ⌥⇧T") {
+                                flags = Self.keys.standard.flags
+                                code = Self.keys.standard.keyCode
+                            }
+                            .buttonStyle(.borderless)
+                        }
+                    }
+                }
+                .onChange(of: flags) { _, _ in save() }
+                .onChange(of: code) { _, _ in save() }
+            }
+        } header: {
+            Text("Texte")
+        } footer: {
+            SettingsHelp(loc("Sélectionne un texte dans n'importe quelle app, tape le raccourci : je le corrige ou je le traduis sur ton Mac, rien ne part ailleurs. Je ne remplace ta sélection qu'après ton clic. Lire la sélection demande l'autorisation Accessibilité."))
+        }
+    }
+
+    private func save() {
+        let shortcut = QuickTaskShortcut(flags: flags, keyCode: code)
+        guard shortcut.isValid else {
+            let stored = QuickTaskShortcut.stored(.standard, Self.keys) ?? Self.keys.standard
+            flags = stored.flags
+            code = stored.keyCode
+            return
+        }
+        shortcut.store(.standard, Self.keys)
+        changed()
+    }
+
+    private func changed() {
+        NotificationCenter.default.post(name: .textToolShortcutChanged, object: nil)
     }
 }
 

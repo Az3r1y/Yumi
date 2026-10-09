@@ -43,17 +43,30 @@ struct QuickTaskShortcut: Equatable, Sendable {
     static let flagsKey = "quickTaskShortcutFlags"
     static let codeKey = "quickTaskShortcutCode"
 
-    static func stored(_ defaults: UserDefaults = .standard) -> QuickTaskShortcut? {
-        guard defaults.object(forKey: enabledKey) as? Bool ?? true else { return nil }
-        let flags = (defaults.object(forKey: flagsKey) as? Int).map(UInt.init) ?? standard.flags
-        let code = (defaults.object(forKey: codeKey) as? Int).map(UInt16.init) ?? standard.keyCode
-        let shortcut = QuickTaskShortcut(flags: flags, keyCode: code)
-        return shortcut.isValid ? shortcut : standard
+    /// Where a shortcut of the settings is kept, and the one it has before any choice.
+    struct Keys: Sendable {
+        let enabled: String
+        let flags: String
+        let code: String
+        let standard: QuickTaskShortcut
     }
 
-    func store(_ defaults: UserDefaults = .standard) {
-        defaults.set(Int(flags), forKey: Self.flagsKey)
-        defaults.set(Int(keyCode), forKey: Self.codeKey)
+    static let quickTask = Keys(enabled: enabledKey, flags: flagsKey, code: codeKey, standard: standard)
+    /// ⌥⇧T: correct or translate the selected text.
+    static let textTool = Keys(enabled: "textToolShortcutEnabled", flags: "textToolShortcutFlags", code: "textToolShortcutCode",
+                               standard: QuickTaskShortcut(flags: option | (1 << 17), keyCode: 17))
+
+    static func stored(_ defaults: UserDefaults = .standard, _ keys: Keys = quickTask) -> QuickTaskShortcut? {
+        guard defaults.object(forKey: keys.enabled) as? Bool ?? true else { return nil }
+        let flags = (defaults.object(forKey: keys.flags) as? Int).map(UInt.init) ?? keys.standard.flags
+        let code = (defaults.object(forKey: keys.code) as? Int).map(UInt16.init) ?? keys.standard.keyCode
+        let shortcut = QuickTaskShortcut(flags: flags, keyCode: code)
+        return shortcut.isValid ? shortcut : keys.standard
+    }
+
+    func store(_ defaults: UserDefaults = .standard, _ keys: Keys = quickTask) {
+        defaults.set(Int(flags), forKey: keys.flags)
+        defaults.set(Int(keyCode), forKey: keys.code)
     }
 
     /// A global shortcut needs at least one of ⌘ ⌥ ⌃: Shift alone would eat a capital letter.
@@ -84,6 +97,8 @@ enum QuickTask {
 extension Notification.Name {
     /// Posted by the settings when the quick task shortcut changes or is turned on or off.
     static let quickTaskShortcutChanged = AppIdentity.notification("quickTaskShortcutChanged")
+    /// Posted by the settings when the shortcut of the text tool changes or is turned on or off.
+    static let textToolShortcutChanged = AppIdentity.notification("textToolShortcutChanged")
     /// Posted by a shortcut recorder of the settings: true while it listens, false after.
     static let shortcutRecording = AppIdentity.notification("shortcutRecording")
 }

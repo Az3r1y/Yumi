@@ -80,6 +80,7 @@ struct IslandOpenLayer: View {
         case .welcome:  WelcomeActivity()
         case .memory:   MemoryActivity(state: state)
         case .quickTask: QuickTaskActivity()
+        case .textTool: TextToolActivity()
         case .drop:     DropActivity(state: state)
         case .module:
             if let module {
