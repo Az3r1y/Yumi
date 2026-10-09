@@ -4621,6 +4621,16 @@
         }
       }
     },
+    "Je corrige…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Correcting…"
+          }
+        }
+      }
+    },
     "Je dois %@ %@%@.": {
       "localizations": {
         "en": {
@@ -5173,6 +5183,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I can't see your calendar."
+          }
+        }
+      }
+    },
+    "Je ne vois rien à corriger.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't see anything to correct."
           }
         }
       }

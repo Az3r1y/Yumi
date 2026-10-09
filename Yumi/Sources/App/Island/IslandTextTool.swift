@@ -1,9 +1,10 @@
 import SwiftUI
 
 // Correct or translate a text (Réglages > Général, ⌥⇧T by default, or « Texte » in the rail):
-// the text selected in the app in front comes in; macOS corrects it or Apple translates it, on
-// the Mac; the result is shown, each fix can be left out, and nothing changes in the app before
-// « Remplacer ». Escape folds the island.
+// the text selected in the app in front comes in; Apple Intelligence's model corrects or
+// translates it on the Mac (or, without it, macOS's spelling checker and Apple's translation);
+// the result is shown with what changed, and nothing changes in the app before « Remplacer ».
+// Escape folds the island.
 
 @MainActor
 final class TextToolBoard: ObservableObject {
@@ -18,6 +19,8 @@ final class TextToolBoard: ObservableObject {
     /// The fixes the person keeps, by id. All of them at first.
     @Published var kept: Set<Int> = []
     @Published private(set) var translation: String?
+    /// The text corrected by Apple Intelligence; nil when the spelling checker did the work.
+    @Published private(set) var corrected: String?
     @Published private(set) var note: String?
     @Published private(set) var busy = false
     /// Where the text came from: replacing puts the result there.
@@ -42,9 +45,30 @@ final class TextToolBoard: ObservableObject {
     }
 
     func correct() {
-        guard source.nonEmptyTrimmed != nil else { return }
+        guard source.nonEmptyTrimmed != nil, !busy else { return }
         mode = .correct
         translation = nil
+        corrected = nil
+        fixes = []
+        note = nil
+        guard TextAI.isAvailable else { return spellCheck() }
+        busy = true
+        let text = source
+        Task {
+            do throws(TextAI.Failure) {
+                let result = try await TextAI.correct(text)
+                guard source == text else { busy = false; return }
+                if result == text { note = loc("Je ne vois rien à corriger.") } else { corrected = result }
+            } catch {
+                // Apple Intelligence could not: the spelling checker, at least
+                spellCheck()
+            }
+            busy = false
+        }
+    }
+
+    /// macOS's spelling checker: typos and accents, each fix to keep or leave out.
+    private func spellCheck() {
         fixes = TextCorrector.fixes(for: source)
         kept = Set(fixes.map(\.id))
         note = fixes.isEmpty ? loc("Je ne vois pas de faute d'orthographe. La grammaire, je ne la vérifie pas.") : nil
@@ -59,10 +83,15 @@ final class TextToolBoard: ObservableObject {
         note = nil
         let text = source, target = target
         Task {
-            do throws(TextTranslator.Failure) {
-                translation = try await TextTranslator.translate(text, from: TextCorrector.language(of: text), to: target)
-            } catch {
-                note = error.reason
+            if TextAI.isAvailable, let done = try? await TextAI.translate(text, to: target) {
+                translation = done
+            } else {
+                // Without Apple Intelligence, or when it could not: Apple's translation
+                do throws(TextTranslator.Failure) {
+                    translation = try await TextTranslator.translate(text, from: TextCorrector.language(of: text), to: target)
+                } catch {
+                    note = error.reason
+                }
             }
             busy = false
         }
@@ -71,7 +100,7 @@ final class TextToolBoard: ObservableObject {
     /// What would replace the selection: the text with the kept fixes, or the translation.
     var output: String? {
         switch mode {
-        case .correct: fixes.isEmpty ? nil : TextCorrector.apply(fixes.filter { kept.contains($0.id) }, to: source)
+        case .correct: corrected ?? (fixes.isEmpty ? nil : TextCorrector.apply(fixes.filter { kept.contains($0.id) }, to: source))
         case .translate: translation
         case nil: nil
         }
@@ -103,6 +132,7 @@ final class TextToolBoard: ObservableObject {
         fixes = []
         kept = []
         translation = nil
+        corrected = nil
     }
 }
 
@@ -154,7 +184,21 @@ struct TextToolActivity: View {
 
     @ViewBuilder private var result: some View {
         if board.busy {
-            ActSub(text: loc("Je traduis…"))
+            ActSub(text: board.mode == .translate ? loc("Je traduis…") : loc("Je corrige…"))
+        }
+        if board.mode == .correct, let corrected = board.corrected {
+            // What changed, in green: read before replacing
+            ScrollView(.vertical, showsIndicators: false) {
+                TextDiff.words(from: board.source, to: corrected).reduce(Text("")) { line, word in
+                    line + Text(word.text).foregroundColor(word.changed ? IslandTheme.green : IslandTheme.fg)
+                        .fontWeight(word.changed ? .semibold : .regular)
+                }
+                .font(IslandTheme.text(13, .regular))
+                .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 96)
+            .fixedSize(horizontal: false, vertical: true)
         }
         if board.mode == .correct, !board.fixes.isEmpty {
             ScrollView(.vertical, showsIndicators: false) {

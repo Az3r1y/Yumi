@@ -48,3 +48,30 @@ import Testing
         #expect(QuickTaskShortcut.stored(defaults, QuickTaskShortcut.textTool) == nil)
     }
 }
+
+// MARK: - Apple Intelligence
+
+@Suite struct TextAITests {
+    @Test func theChangedWordsAreMarked() {
+        let words = TextDiff.words(from: "Je suis aller au marché, il fesait beau.", to: "Je suis allé au marché, il faisait beau.")
+        #expect(words.map(\.text).joined() == "Je suis allé au marché, il faisait beau.")
+        #expect(words.filter(\.changed).map { $0.text.trimmingCharacters(in: .whitespaces) } == ["allé", "faisait"])
+        #expect(TextDiff.words(from: "Rien", to: "Rien").allSatisfy { !$0.changed })
+    }
+
+    @Test func anAnswerThatIsNotTheTextIsRefused() throws {
+        #expect(try TextAI.usable("« Bonjour à tous. »", for: "Bonjour a tous.") == "Bonjour à tous.")
+        #expect(throws: TextAI.Failure.unusable) { try TextAI.usable("", for: "Bonjour") }
+        // A comment or a summary instead of the text
+        #expect(throws: TextAI.Failure.unusable) {
+            try TextAI.usable("Voici le texte corrigé avec toutes les explications de chaque faute, une par une, et pourquoi.", for: "Bonjour")
+        }
+    }
+
+    @Test(.enabled(if: TextAI.isAvailable, "Apple Intelligence is not on this Mac"))
+    func theModelOfTheMacCorrectsGrammar() async throws {
+        let corrected = try await TextAI.correct("Les enfant était contant.")
+        #expect(corrected.contains("enfants"))
+        #expect(corrected.contains("étaient"))
+    }
+}
