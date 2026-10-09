@@ -15,7 +15,8 @@ enum Occasion: Equatable, Sendable {
     /// Two hours of work or more without a break.
     case longStretch(hours: Int)
     /// An agent finished a task that took a while.
-    case agentDone(project: String, minutes: Int)
+    /// `summary`: one sentence of what it did, by Apple Intelligence, when the person wants it.
+    case agentDone(project: String, minutes: Int, summary: String? = nil)
     /// An appointment is close while an agent waits for an answer.
     case meetingWhileAgentWaits(title: String, minutes: Int)
     case late
@@ -268,8 +269,11 @@ enum InitiativePhrases {
                 Variant(key: "stretch.3", text: loc("\(span) sans souffler. Je te garde ta place cinq minutes ?"), mood: .curious, action: .takeBreak),
             ]
 
-        case .agentDone(let project, let minutes):
+        case .agentDone(let project, let minutes, let summary):
             let time = FrenchText.spokenMinutes(Double(minutes) * 60)
+            if let summary {
+                return [Variant(key: "done.summary", text: loc("Sur \(project), Claude \(summary)"), mood: .happy, action: .openSession)]
+            }
             return [
                 Variant(key: "done.1", text: loc("C'est passé, après \(time). Bien joué."), mood: .happy, action: .openSession),
                 Variant(key: "done.2", text: loc("Claude a fini sur \(project), en \(time)."), mood: .happy, action: .openSession),

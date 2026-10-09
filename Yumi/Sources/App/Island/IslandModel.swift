@@ -220,6 +220,13 @@ final class IslandModel: ObservableObject {
         if ambient != next { ambient = next }
     }
 
+    /// Tests of a Claude Code session just ran: a jump of joy, or a shake and a worried face.
+    func react(testsPassed: Bool) {
+        guard Feature.isOn(.testReactions) else { return }
+        pose(testsPassed ? .celebrate : .shake)
+        flashMood(testsPassed ? .happy : .worried)
+    }
+
     /// A click on him: a jump and a wink, or a happy face, in turn.
     private var petted = 0
     func pet() {

@@ -41,7 +41,8 @@ struct SessionNote: Equatable, Sendable {
             return SessionNote(session: session, kind: .toolFinished(ToolStep(tool: tool, input: input), failed: true))
         case "Stop":
             let message = (payload["transcript_path"] as? String).flatMap(lastMessage)
-            return SessionNote(session: session, kind: .stop(lastMessage: message.flatMap(SessionText.firstSentence)))
+            // Kept whole (masked, cut) for a summary of the turn; its first sentence shows in the module
+            return SessionNote(session: session, kind: .stop(lastMessage: message.map { String(SecretMask.mask($0).prefix(4_000)) }))
         case "Notification":
             guard let message = (payload["message"] as? String).flatMap { SessionText.oneLine($0) }, !message.isEmpty else { return nil }
             return SessionNote(session: session, kind: .notification(message))
@@ -131,6 +132,8 @@ struct SessionJournal: Equatable, Sendable {
     var started: Date
     /// Set when a turn ends, cleared by the next request.
     var summary: String?
+    /// Claude's last message of the turn, secrets masked: what a summary of the turn reads.
+    var lastMessage: String?
     var notification: String?
 
     static let historyLength = 6
@@ -168,7 +171,9 @@ struct SessionJournal: Equatable, Sendable {
             todos = list
         case .stop(let message):
             current = nil
-            summary = Self.summary(files: filesTouched.count, commands: commands, todos: todos, message: message)
+            lastMessage = message
+            summary = Self.summary(files: filesTouched.count, commands: commands, todos: todos,
+                                   message: message.flatMap(SessionText.firstSentence))
         case .notification(let text):
             notification = text
         case .ended:

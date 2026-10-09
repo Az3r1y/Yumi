@@ -72,6 +72,16 @@ enum TextAI {
             """, freeLength: tone == .shorter)
     }
 
+    /// One short sentence of what an agent just did, from its last message: what Yumi says when
+    /// a long task ends.
+    static func sessionLine(_ message: String) async throws(Failure) -> String {
+        let instructions = AppLanguage.isEnglish
+            ? "The given text is the last message of a coding assistant that just finished a task. Say in one short sentence of fifteen words at most, in English, what it did. Start with a verb in the past tense, without a subject or quotes."
+            : "Le texte donné est le dernier message d'un assistant de code qui vient de finir une tâche. Dis en une seule phrase courte, de quinze mots au plus, en français, ce qu'il a fait. Commence par un verbe au passé composé, sans sujet ni guillemets."
+        let line = try await answer(String(message.prefix(3_000)), instructions: instructions, freeLength: true)
+        return String(line.split(whereSeparator: \.isNewline).first ?? Substring(line))
+    }
+
     /// A draft answer to a message, in its language, for the person to read and change.
     static func reply(to text: String) async throws(Failure) -> String {
         try await answer(text, instructions: """

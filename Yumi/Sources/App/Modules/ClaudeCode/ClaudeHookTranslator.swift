@@ -107,6 +107,30 @@ enum ClaudeHookTranslator {
 }
 
 /// The wording for the tools Claude Code runs, in the language Yumi speaks.
+/// A command that runs tests, and how it ended: Yumi celebrates or gets dizzy.
+enum TestRun {
+    /// true: passed, false: failed, nil: not a test run (or not finished).
+    static func outcome(_ payload: [String: Any]) -> Bool? {
+        guard payload["tool_name"] as? String == "Bash",
+              let command = (payload["tool_input"] as? [String: Any])?["command"] as? String, isTests(command) else { return nil }
+        switch payload["hook_event_name"] as? String {
+        case "PostToolUse": return true
+        case "PostToolUseFailure": return false
+        default: return nil
+        }
+    }
+
+    static func isTests(_ command: String) -> Bool {
+        let line = command.lowercased()
+        return line.contains(/(^|[\s;&|(])(swift|cargo|go|mix|dotnet|deno|bun|flutter|dart)\s+test\b/)
+            || line.contains(/(^|[\s;&|(])(npm|pnpm|yarn)\s+(run\s+)?test\b/)
+            || line.contains(/xcodebuild\b.*\btest\b/)
+            || line.contains(/(^|[\s;&|(\/])(pytest|jest|vitest|rspec|phpunit|mocha|ava|tox|nox)\b/)
+            || line.contains(/(^|[\s;&|(])make\s+test\b/)
+            || line.contains(/(^|[\s;&|(])(python3?|uv run)\s+-m\s+(pytest|unittest)\b/)
+    }
+}
+
 enum ClaudeToolPhrase {
     /// Computed each time: the words follow the language Yumi speaks.
     private static var labels: [String: String] {

@@ -123,7 +123,18 @@ final class InitiativeDriver {
     /// A session event went through the engine.
     func session(_ event: YumiEvent, sessions: [SessionID: Session]) {
         let wasWaiting = saved.watch.agentWaiting
-        offer(saved.watch.session(event, sessions: sessions, now: Date()))
+        let occasion = saved.watch.session(event, sessions: sessions, now: Date())
+        // A long task done: one sentence of what Claude did, by Apple Intelligence, when wanted
+        if case .agentDone(let project, let minutes, nil) = occasion, case .taskCompleted(let id) = event,
+           Feature.isOn(.sessionSummary), TextAI.isAvailable,
+           let message = ClaudeSessionJournals.shared.journal(id.value)?.lastMessage {
+            Task { [weak self] in
+                let line = try? await TextAI.sessionLine(message)
+                self?.offer(.agentDone(project: project, minutes: minutes, summary: line))
+            }
+        } else {
+            offer(occasion)
+        }
         // Someone starts waiting: an appointment close by becomes worth a word.
         if saved.watch.agentWaiting != wasWaiting { clock() }
     }

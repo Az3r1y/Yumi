@@ -8227,6 +8227,16 @@
         }
       }
     },
+    "Sur %@, Claude %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "On %1$@, Claude %2$@"
+          }
+        }
+      }
+    },
     "Sur GitHub": {
       "localizations": {
         "en": {

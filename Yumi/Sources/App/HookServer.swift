@@ -114,6 +114,9 @@ final class HookServer: @unchecked Sendable {
         }
 
         let eventName = payload["hook_event_name"] as? String ?? ""
+        if let passed = TestRun.outcome(payload) {
+            Task { @MainActor in IslandModel.shared.react(testsPassed: passed) }
+        }
 
         // A session started by the chat is followed by the chat itself, through the output of its
         // process: its permission requests arrive there too. "ask" leaves that request undecided
