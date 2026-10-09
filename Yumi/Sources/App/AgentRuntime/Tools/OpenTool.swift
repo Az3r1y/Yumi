@@ -1,4 +1,5 @@
 import AppKit
+import UniformTypeIdentifiers
 
 /// Opening things on the Mac, seen from the agent. `WorkspaceOpener` uses `NSWorkspace`.
 protocol Opener: Sendable {
@@ -16,9 +17,21 @@ struct OpenTool: Tool {
     var home: String = NSHomeDirectory()
     /// Where a project named without its path is looked for, two levels down.
     var projectFolders = ["Developer", "Projects", "Work", "Code", "src", "Documents", "Desktop"]
-    /// What would run something rather than open it.
-    static let runnable: Set<String> = ["app", "command", "sh", "zsh", "bash", "tool", "pkg", "mpkg", "dmg", "terminal",
-                                        "scpt", "applescript", "workflow", "shortcut", "py", "rb", "pl", "jar", "prefpane"]
+    /// What would run something rather than open it, besides what the system types say runs
+    /// (`isRunnable`): links that can point at a program, plug-ins, installers.
+    static let runnable: Set<String> = ["app", "command", "sh", "zsh", "bash", "csh", "tool", "pkg", "mpkg", "dmg", "terminal",
+                                        "scpt", "scptd", "applescript", "workflow", "action", "shortcut", "py", "rb", "pl",
+                                        "jar", "prefpane", "fileloc", "inetloc", "webloc", "url", "desktop", "osax", "kext",
+                                        "plugin", "bundle", "framework", "xpc", "appex", "saver", "systemextension",
+                                        "dylib", "so", "exe", "msi", "iso", "configprofile", "mobileconfig"]
+    /// Apps that run the files they are given: a folder may open in them, never a file.
+    static let runners: Set<String> = ["com.apple.terminal", "com.googlecode.iterm2", "com.apple.scripteditor2",
+                                       "com.apple.automator", "com.apple.installer", "org.python.pythonlauncher",
+                                       "com.mitchellh.ghostty", "dev.warp.warp-stable", "net.kovidgoyal.kitty",
+                                       "org.alacritty", "com.github.wez.wezterm", "co.zeit.hyper", "com.apple.shortcuts"]
+    static let runnerNames: Set<String> = ["terminal", "iterm", "script editor", "éditeur de script", "automator", "installer",
+                                           "programme d'installation", "python launcher", "ghostty", "warp", "kitty",
+                                           "alacritty", "wezterm", "hyper", "shortcuts", "raccourcis"]
 
     var descriptor: ToolDescriptor {
         ToolDescriptor(
@@ -55,7 +68,9 @@ struct OpenTool: Tool {
         case nil:
             break
         }
-        if let app = plan.app { resources.append(ResourceRef(.unknown, loc("l'app \(app.name)"))) }
+        // Always one unknown resource: what opens a file depends on the app, so no answer is
+        // remembered for a whole project or site
+        resources.append(ResourceRef(.unknown, plan.app.map { loc("l'app \($0.name)") } ?? loc("avec l'app par défaut")))
         return ToolAction(kind: .run, resources: resources, reversible: true, content: content)
     }
 
@@ -107,6 +122,9 @@ struct OpenTool: Tool {
             plan.target = try resolve(target)
         }
         guard plan.target != nil || plan.app != nil else { throw .invalidInput(loc("il manque ce qu'il faut ouvrir")) }
+        if case .item(let path)? = plan.target, let app = plan.app, !isFolder(path), isRunner(app.url, name: app.name) {
+            throw .invalidInput(loc("je n'ouvre pas de fichier dans \(app.name) : il l'exécuterait"))
+        }
         return plan
     }
 
@@ -121,24 +139,48 @@ struct OpenTool: Tool {
         if lower.contains("://") || lower.hasPrefix("file:") || lower.hasPrefix("javascript:") {
             throw .invalidInput(loc("je n'ouvre que des pages web, des fichiers et des dossiers"))
         }
-        let path: String
+        let given: String
         if raw == "~" || raw.hasPrefix("~/") || raw.hasPrefix("/") {
-            path = URL(fileURLWithPath: raw.hasPrefix("~") ? home + raw.dropFirst() : raw).standardizedFileURL.path
+            given = raw.hasPrefix("~") ? home + raw.dropFirst() : raw
         } else if !raw.contains("/"), let project = project(named: raw) {
-            path = project
+            given = project
         } else {
             throw .invalidInput(loc("je ne trouve pas « \(raw) ». Donne-moi son chemin, par exemple ~/Work/\(raw)"))
         }
+        // What is checked and opened is what a link points to, not the link: a « notes.md » that
+        // leads to an app would launch it
+        let path = URL(fileURLWithPath: given).standardizedFileURL.resolvingSymlinksInPath().path
         var isFolder: ObjCBool = false
         guard FileManager.default.fileExists(atPath: path, isDirectory: &isFolder) else {
             throw .invalidInput(loc("\(display(path)) n'existe pas"))
         }
         // A folder that is a bundle (an app, an installer) would run, not open
-        let ext = (path as NSString).pathExtension.lowercased()
-        if Self.runnable.contains(ext) || (!isFolder.boolValue && FileManager.default.isExecutableFile(atPath: path)) {
+        if isRunnable(path, isFolder: isFolder.boolValue) {
             throw .invalidInput(loc("je n'ouvre pas \(display(path)) : il lancerait un programme. Pour une app, donne-moi son nom"))
         }
         return .item(path)
+    }
+
+    /// Opening it would run code: by its extension, its system type, or its execute permission.
+    private func isRunnable(_ path: String, isFolder: Bool) -> Bool {
+        let ext = (path as NSString).pathExtension.lowercased()
+        if Self.runnable.contains(ext) { return true }
+        if let type = UTType(filenameExtension: ext),
+           [UTType.executable, .application, .bundle, .script, .shellScript, .unixExecutable].contains(where: type.conforms(to:)) {
+            return true
+        }
+        return !isFolder && FileManager.default.isExecutableFile(atPath: path)
+    }
+
+    private func isFolder(_ path: String) -> Bool {
+        var folder: ObjCBool = false
+        return FileManager.default.fileExists(atPath: path, isDirectory: &folder) && folder.boolValue
+    }
+
+    private func isRunner(_ app: URL, name: String) -> Bool {
+        if let id = Bundle(url: app)?.bundleIdentifier?.lowercased(), Self.runners.contains(id) { return true }
+        let lower = name.lowercased()
+        return Self.runnerNames.contains { lower == $0 || lower.hasPrefix($0 + " ") }
     }
 
     /// A folder of that name in the usual places for projects, one or two levels down.

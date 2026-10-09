@@ -8405,6 +8405,16 @@
         }
       }
     },
+    "avec l'app par défaut": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "with the default app"
+          }
+        }
+      }
+    },
     "bloqué": {
       "localizations": {
         "en": {
@@ -9069,6 +9079,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't open %@: it would run a program. For an app, give me its name"
+          }
+        }
+      }
+    },
+    "je n'ouvre pas de fichier dans %@ : il l'exécuterait": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't open a file in %@: it would run it"
           }
         }
       }

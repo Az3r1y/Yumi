@@ -104,12 +104,16 @@ final class FakeOpener: Opener, @unchecked Sendable {
 
 /// A home with a project in ~/Work, a script and an app bundle.
 private func home() throws -> String {
-    let root = FileManager.default.temporaryDirectory.appendingPathComponent("open-\(UUID().uuidString)").path
+    // Resolved: /var is a link to /private/var, and the tool opens what links lead to
+    let root = FileManager.default.temporaryDirectory.appendingPathComponent("open-\(UUID().uuidString)").resolvingSymlinksInPath().path
     for folder in ["Work/Yumi/.git", "Work/Clients/Atlas", "Downloads/Outil.app"] {
         try FileManager.default.createDirectory(atPath: root + "/" + folder, withIntermediateDirectories: true)
     }
     FileManager.default.createFile(atPath: root + "/Downloads/installer.command", contents: Data("echo".utf8))
     FileManager.default.createFile(atPath: root + "/Downloads/notes.md", contents: Data("# Notes".utf8))
+    FileManager.default.createFile(atPath: root + "/Downloads/Raccourci.fileloc", contents: Data("<plist/>".utf8))
+    // A document's name, an app behind it
+    try FileManager.default.createSymbolicLink(atPath: root + "/Downloads/lisez-moi.md", withDestinationPath: root + "/Downloads/Outil.app")
     return root
 }
 
@@ -162,6 +166,26 @@ private func home() throws -> String {
         #expect(await tool.check(["target": .string("~/Downloads/notes.md")]) == nil)
         #expect(await tool.check(["app": .string("Photoshop")]) == "je ne trouve pas d'app « Photoshop » sur ce Mac")
         #expect(await tool.check([:]) != nil)
+    }
+
+    @Test func linksAndLocationFilesThatLeadToAProgramAreRefused() async throws {
+        let tool = OpenTool(opener: FakeOpener(), home: try home())
+        #expect(await tool.check(["target": .string("~/Downloads/lisez-moi.md")])?.contains("lancerait un programme") == true)
+        #expect(await tool.check(["target": .string("~/Downloads/Raccourci.fileloc")])?.contains("lancerait un programme") == true)
+    }
+
+    @Test func aTerminalOpensAFolderButNeverRunsAFile() async throws {
+        let tool = OpenTool(opener: FakeOpener(apps: ["Terminal", "Xcode"]), home: try home())
+        #expect(await tool.check(["target": .string("~/Downloads/notes.md"), "app": .string("terminal")])
+                == "je n'ouvre pas de fichier dans Terminal : il l'exécuterait")
+        #expect(await tool.check(["target": .string("Yumi"), "app": .string("Terminal")]) == nil)
+        #expect(await tool.check(["target": .string("~/Downloads/notes.md"), "app": .string("Xcode")]) == nil)
+    }
+
+    @Test func noAnswerIsRememberedForAWholeProject() throws {
+        let tool = OpenTool(opener: FakeOpener(), home: try home())
+        #expect(try !assessed(tool, ["target": .string("~/Downloads/notes.md")]).isScoped)
+        #expect(try !assessed(tool, ["target": .string("Yumi"), "app": .string("Xcode")]).isScoped)
     }
 }
 
