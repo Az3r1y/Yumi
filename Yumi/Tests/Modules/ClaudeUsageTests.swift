@@ -72,7 +72,7 @@ private func transcript(_ lines: [String]) throws -> URL {
                                  apiCostUSD: 10, quotasConnected: true)
         day.fiveHour = .init(usedPercent: 42.4, resetsAt: now.addingTimeInterval(3 * 3600))
         day.sevenDay = .init(usedPercent: 18, resetsAt: now.addingTimeInterval(3 * 86_400))
-        let snapshot = ClaudeUsageReader.snapshot(day, rate: 0.9, now: now)
+        let snapshot = ClaudeUsageReader.snapshot(day, rate: 0.9, now: now, onSide: false)
         #expect(snapshot.title == "Quota 5 h : 42 %")
         #expect(snapshot.status == "42 %")
         #expect(snapshot.rows.map(\.id) == ["five", "week", "sessions", "time", "tokens", "api"])
@@ -90,6 +90,18 @@ private func transcript(_ lines: [String]) throws -> URL {
         let snapshot = ClaudeUsageReader.snapshot(day)
         #expect(snapshot.live?.text == "Quota 5 h : 91 %")
         #expect(snapshot.rows.first?.state == .failure)
+    }
+
+    @Test func theQuotaCanStayOnTheSideAfterEverythingElse() {
+        var day = ClaudeUsageDay(sessions: 1)
+        day.fiveHour = .init(usedPercent: 65, resetsAt: nil)
+        let live = ClaudeUsageReader.snapshot(day, onSide: true).live
+        #expect(live?.text == "5 h · 65 %")
+        #expect((live?.priority ?? 99) < ModuleLivePriority.ambient)
+        #expect(ClaudeUsageReader.snapshot(day, onSide: false).live == nil)
+        // Close to the limit, it shows whatever the switch, before the next appointment
+        day.fiveHour = .init(usedPercent: 85, resetsAt: nil)
+        #expect((ClaudeUsageReader.snapshot(day, onSide: false).live?.priority ?? 0) > ModuleLivePriority.ambient)
     }
 
     @Test func itReadsInEnglish() {

@@ -110,7 +110,9 @@ enum ClaudeUsageReader {
     static let color = "#D97757"
     static let symbol = "chart.bar.fill"
 
-    static func snapshot(_ day: ClaudeUsageDay?, rate: Double = defaultRate, now: Date = Date()) -> ModuleSnapshot {
+    /// - Parameter onSide: the quota stays in the folded island (Réglages › Fonctions).
+    static func snapshot(_ day: ClaudeUsageDay?, rate: Double = defaultRate, now: Date = Date(),
+                         onSide: Bool = Feature.isOn(.quotaOnSide)) -> ModuleSnapshot {
         let name = loc("Usage Claude")
         guard let day else {
             return ModuleSnapshot(id: moduleID, name: name, colorHex: color, status: "…",
@@ -160,9 +162,12 @@ enum ClaudeUsageReader {
                                       primaryAction: loc("Actualiser"), secondaryAction: nil, rows: rows)
             snapshot.progress = ModuleProgress(fraction: min(1, max(0, five.usedPercent / 100)), leading: loc("5 h"),
                                                trailing: five.resetsAt.map { resets($0, now: now) } ?? percent)
-            // Close to the limit: the folded island says it
+            // Close to the limit the folded island says it, before the next appointment; with the
+            // switch on it shows it always, after everything else
             if five.usedPercent >= 80 {
-                snapshot.live = ModuleLive(text: loc("Quota 5 h : \(percent)"), priority: ModuleLivePriority.ambient)
+                snapshot.live = ModuleLive(text: loc("Quota 5 h : \(percent)"), priority: ModuleLivePriority.ambient + 5)
+            } else if onSide {
+                snapshot.live = ModuleLive(text: loc("5 h · \(percent)"), priority: ModuleLivePriority.ambient - 5)
             }
         } else if day.sessions == 0 && day.backgroundSessions == 0 {
             snapshot = ModuleSnapshot(id: moduleID, name: name, colorHex: color, status: "0",
