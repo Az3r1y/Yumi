@@ -25,6 +25,18 @@ private func assessed(_ tool: any Tool, _ arguments: ToolArguments) throws -> Ac
     return try RiskAssessor(home: "/Users/someone").assess(request).get()
 }
 
+/// What the island shows, from the real permission system.
+@MainActor
+private func approvalHeadline(_ tool: any Tool, _ arguments: ToolArguments) async -> String? {
+    let request = AgentPermissionRequest(runID: UUID(), stepID: "step-1", goal: "g", reason: "r", toolID: tool.descriptor.id,
+                                         toolName: tool.descriptor.name, risk: tool.descriptor.risk, arguments: arguments,
+                                         action: tool.action(for: arguments), requiresApproval: true)
+    // The manager keeps its presenter weakly: this one lives until the answer
+    let presenter = FakePresenter()
+    let evaluation = await Fixture.manager(presenter: presenter).evaluate(request, upcoming: [])
+    return withExtendedLifetime(presenter) { evaluation.approval?.headline }
+}
+
 // MARK: - Shortcuts
 
 final class FakeShortcuts: ShortcutsLibrary, @unchecked Sendable {
@@ -55,6 +67,11 @@ final class FakeShortcuts: ShortcutsLibrary, @unchecked Sendable {
         #expect(library.ran == ["Mode travail"])
         #expect(permissions.requests.count == 1)
         #expect(AgentLook.remark(for: result)?.text == "C'est fait, j'ai lancé « Mode travail ».")
+    }
+
+    @Test func theApprovalSaysWhichShortcut() async {
+        #expect(await approvalHeadline(RunShortcutTool(library: FakeShortcuts(["Café"])), ["name": .string("Café")])
+                == "Je dois lancer le raccourci « Café ».")
     }
 
     @Test func itIsAlwaysAskedAndNeverRemembered() throws {
@@ -138,6 +155,13 @@ private func home() throws -> String {
         #expect(AgentLook.remark(for: result)?.text == "J'ai ouvert ~/Work/Yumi dans Xcode.")
         let asked = try #require(permissions.requests.first)
         #expect(asked.action?.kind == .run)
+    }
+
+    @Test func theApprovalSaysWhatOpensInWhat() async throws {
+        let tool = OpenTool(opener: FakeOpener(), home: try home())
+        // The test home lives under /private, a system folder the real manager refuses: the tool's own sentence
+        #expect(tool.action(for: ["target": .string("Yumi"), "app": .string("Xcode")])?.headline == "Je dois ouvrir ~/Work/Yumi dans Xcode.")
+        #expect(await approvalHeadline(tool, ["target": .string("https://example.com/a")]) == "Je dois ouvrir example.com.")
     }
 
     @Test func aProjectTwoLevelsDownIsFoundToo() throws {

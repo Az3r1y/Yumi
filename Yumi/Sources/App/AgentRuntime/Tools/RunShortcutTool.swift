@@ -30,7 +30,8 @@ struct RunShortcutTool: Tool {
         guard case .string(let raw)? = arguments["name"], let name = raw.nonEmptyTrimmed else { return nil }
         // What it does is the shortcut's business: an unknown resource that cannot be undone,
         // asked every time
-        return ToolAction(kind: .other, resources: [ResourceRef(.unknown, loc("le raccourci « \(name) »"))], reversible: false)
+        return ToolAction(kind: .other, resources: [ResourceRef(.unknown, loc("le raccourci « \(name) »"))], reversible: false,
+                          headline: loc("Je dois lancer le raccourci « \(name) »."))
     }
 
     func check(_ arguments: ToolArguments) async -> String? {

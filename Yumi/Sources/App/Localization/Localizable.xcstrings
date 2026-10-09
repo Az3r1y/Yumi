@@ -4387,6 +4387,26 @@
         }
       }
     },
+    "Je dois lancer le raccourci « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I need to run the shortcut “%@”."
+          }
+        }
+      }
+    },
+    "Je dois ouvrir %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I need to open %@."
+          }
+        }
+      }
+    },
     "Je délègue :": {
       "localizations": {
         "en": {

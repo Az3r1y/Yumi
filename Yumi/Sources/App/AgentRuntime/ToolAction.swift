@@ -12,12 +12,17 @@ struct ToolAction: Equatable, Codable, Sendable {
     /// The text the action writes, when the person should read it before agreeing (what is
     /// added to a file). Written by the tool from its arguments, shown as it is.
     var content: String?
+    /// The sentence the approval opens with, when the tool says it better than a count of
+    /// resources ("Je dois ouvrir ~/Work/Yumi dans Xcode."). The risk never comes from it.
+    var headline: String?
 
-    init(kind: ActionKind, resources: [ResourceRef] = [], reversible: Bool = true, content: String? = nil) {
+    init(kind: ActionKind, resources: [ResourceRef] = [], reversible: Bool = true, content: String? = nil,
+         headline: String? = nil) {
         self.kind = kind
         self.resources = resources
         self.reversible = reversible
         self.content = content
+        self.headline = headline
     }
 }
 

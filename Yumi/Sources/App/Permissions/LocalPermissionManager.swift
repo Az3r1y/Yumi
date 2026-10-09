@@ -270,12 +270,14 @@ final class LocalPermissionManager: PermissionManager {
         }
         // Not on screen yet: the queue's limit until the presenter says it is shown.
         let expiresAt = now.addingTimeInterval(Self.seconds(queueLifetime))
-        return ApprovalRequest(agentRunID: request.runID, toolID: request.toolID, toolName: request.toolName,
+        var approval = ApprovalRequest(agentRunID: request.runID, toolID: request.toolID, toolName: request.toolName,
                                action: assessment.kind, goal: request.goal, reason: request.reason,
                                riskLevel: assessment.risk, offeredScopes: offered, resources: resources,
                                container: assessment.container, reversible: reversible,
                                content: items.count == 1 ? request.action?.content : nil, items: items,
                                createdAt: now, expiresAt: expiresAt)
+        approval.toolHeadline = items.count == 1 ? request.action?.headline : nil
+        return approval
     }
 
     /// The approval is on screen: the person has `approvalLifetime` from now. Only the first time counts.

@@ -40,6 +40,8 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
     var reversible: Bool
     /// What the action writes, from the tool (`ToolAction.content`): shown in full before agreeing.
     var content: String?
+    /// The tool's own sentence (`ToolAction.headline`), used instead of the generic one.
+    var toolHeadline: String?
     var items: [Item]
     let createdAt: Date
     var expiresAt: Date
@@ -73,6 +75,7 @@ struct ApprovalRequest: Identifiable, Equatable, Codable, Sendable {
 
     /// One sentence, in Yumi's voice: "Je dois modifier 2 fichiers dans le projet Yumi."
     var headline: String {
+        if let toolHeadline { return toolHeadline }
         let verb = switch action {
         case .read: loc("lire")
         case .create: loc("créer")

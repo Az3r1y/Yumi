@@ -73,7 +73,8 @@ struct OpenTool: Tool {
         // Always one unknown resource: what opens a file depends on the app, so no answer is
         // remembered for a whole project or site
         resources.append(ResourceRef(.unknown, plan.app.map { loc("l'app \($0.name)") } ?? loc("avec l'app par défaut")))
-        return ToolAction(kind: .run, resources: resources, reversible: true, content: content)
+        return ToolAction(kind: .run, resources: resources, reversible: true, content: content,
+                          headline: loc("Je dois ouvrir \(describe(plan))."))
     }
 
     func check(_ arguments: ToolArguments) async -> String? {
