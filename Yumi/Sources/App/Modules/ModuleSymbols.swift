@@ -25,6 +25,7 @@ enum ModuleSymbols {
         "Suivant": "forward.fill",
         "Recommencer": "arrow.counterclockwise",
         "Réessayer": "arrow.clockwise",
+        "Actualiser": "arrow.clockwise",
         "Fermer": "xmark",
         "Détail": "arrow.up.forward.app.fill",
         "Nouvelle note": "plus",

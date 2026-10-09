@@ -325,6 +325,11 @@ final class YumiCore {
             .map(ChatAnnouncement.init)
             .removeDuplicates()
             .sink { [weak claudeCode] in claudeCode?.announceChat($0) }
+        var usage: [any YumiModule] = []
+        #if !APPSTORE
+        // The transcripts of Claude Code, out of reach of the App Store build's sandbox
+        usage.append(ClaudeUsageModule())
+        #endif
         modules = ModuleRegistry(
             modules: [
                 claudeCode,
@@ -338,7 +343,7 @@ final class YumiCore {
                     token: { KeychainStore.shared.get("github-token") },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
                     onNews: { [initiative] event, count in initiative.notice(.repository(event, count: count)) }),
-            ],
+            ] + usage,
             onPublish: { snapshots in
                 state.modules = snapshots
                 Self.trace(snapshots)

@@ -371,6 +371,16 @@
         }
       }
     },
+    "%@ avec Claude aujourd'hui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ with Claude today"
+          }
+        }
+      }
+    },
     "%@ contributions sur un an": {
       "localizations": {
         "en": {
@@ -887,6 +897,16 @@
         }
       }
     },
+    "%@ tokens": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ tokens"
+          }
+        }
+      }
+    },
     "%@ tâches Notion, dont %@": {
       "localizations": {
         "en": {
@@ -1235,6 +1255,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld min"
+          }
+        }
+      }
+    },
+    "%lld sessions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sessions"
           }
         }
       }
@@ -1595,6 +1625,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Activity"
+          }
+        }
+      }
+    },
+    "Actualiser": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refresh"
           }
         }
       }
@@ -3225,6 +3265,16 @@
         }
       }
     },
+    "Coût au tarif API": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cost at API prices"
+          }
+        }
+      }
+    },
     "Create a file": {
       "localizations": {
         "en": {
@@ -4311,6 +4361,16 @@
         }
       }
     },
+    "Je compte ta journée avec Claude": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Counting your day with Claude"
+          }
+        }
+      }
+    },
     "Je dois %@ %@%@.": {
       "localizations": {
         "en": {
@@ -5207,6 +5267,16 @@
         }
       }
     },
+    "Les sessions de Claude Code de la journée s'afficheront ici.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Today's Claude Code sessions will show here."
+          }
+        }
+      }
+    },
     "Licences": {
       "localizations": {
         "en": {
@@ -6009,6 +6079,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Not asked"
+          }
+        }
+      }
+    },
+    "Pas encore de Claude aujourd'hui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No Claude yet today"
           }
         }
       }
@@ -7045,6 +7125,16 @@
         }
       }
     },
+    "Sessions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sessions"
+          }
+        }
+      }
+    },
     "Show the model what is on screen (application, window, document name)": {
       "localizations": {
         "en": {
@@ -7311,6 +7401,16 @@
         }
       }
     },
+    "Temps actif": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Active time"
+          }
+        }
+      }
+    },
     "Terminé": {
       "localizations": {
         "en": {
@@ -7407,6 +7507,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "You"
+          }
+        }
+      }
+    },
+    "Tokens lus (cache compris)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens read (cache included)"
+          }
+        }
+      }
+    },
+    "Tokens écrits par Claude": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tokens written by Claude"
           }
         }
       }
@@ -8021,6 +8141,16 @@
         }
       }
     },
+    "Usage Claude": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Claude usage"
+          }
+        }
+      }
+    },
     "Va prendre l'air, je garde la maison.": {
       "localizations": {
         "en": {
@@ -8541,6 +8671,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "commands"
+          }
+        }
+      }
+    },
+    "compté par Claude Code à la fin d'une session": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "counted by Claude Code when a session ends"
           }
         }
       }
