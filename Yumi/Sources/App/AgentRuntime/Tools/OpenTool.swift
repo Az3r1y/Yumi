@@ -8,6 +8,8 @@ protocol Opener: Sendable {
     /// Opens a page, a file or a folder, with an app when one is given; an app alone is launched.
     func open(_ target: URL?, with app: URL?) async throws
     func isRunning(_ app: URL) -> Bool
+    /// The app is one macOS lists as able to open this file.
+    func canOpen(_ file: URL, with app: URL) -> Bool
 }
 
 /// Opens an app, a web page, or a file or folder (a project) with an app. Never runs a program,
@@ -122,22 +124,29 @@ struct OpenTool: Tool {
             plan.target = try resolve(target)
         }
         guard plan.target != nil || plan.app != nil else { throw .invalidInput(loc("il manque ce qu'il faut ouvrir")) }
-        if case .item(let path)? = plan.target, let app = plan.app, !isFolder(path), isRunner(app.url, name: app.name) {
-            throw .invalidInput(loc("je n'ouvre pas de fichier dans \(app.name) : il l'exécuterait"))
+        if case .item(let path)? = plan.target, let app = plan.app, !isFolder(path) {
+            if isRunner(app.url, name: app.name) {
+                throw .invalidInput(loc("je n'ouvre pas de fichier dans \(app.name) : il l'exécuterait"))
+            }
+            // Only an app that says it opens this kind of file: any other could do with it what
+            // it does with what it is given
+            guard opener.canOpen(URL(fileURLWithPath: path), with: app.url) else {
+                throw .invalidInput(loc("\(app.name) ne sait pas ouvrir \(display(path))"))
+            }
         }
         return plan
     }
 
     private func resolve(_ raw: String) throws(ToolError) -> Plan.Target {
-        let lower = raw.lowercased()
-        if lower.hasPrefix("http://") || lower.hasPrefix("https://") {
-            guard let url = URL(string: raw), url.host?.isEmpty == false else {
+        // Judged on the address as it will be opened, not on how its text begins
+        if !raw.hasPrefix("/"), !raw.hasPrefix("~"), let url = URL(string: raw), let scheme = url.scheme?.lowercased() {
+            guard ["http", "https"].contains(scheme) else {
+                throw .invalidInput(loc("je n'ouvre que des pages web, des fichiers et des dossiers"))
+            }
+            guard url.host?.isEmpty == false, url.user == nil, url.password == nil else {
                 throw .invalidInput(loc("« \(raw) » n'est pas une adresse web valable"))
             }
             return .page(url)
-        }
-        if lower.contains("://") || lower.hasPrefix("file:") || lower.hasPrefix("javascript:") {
-            throw .invalidInput(loc("je n'ouvre que des pages web, des fichiers et des dossiers"))
         }
         let given: String
         if raw == "~" || raw.hasPrefix("~/") || raw.hasPrefix("/") {
@@ -153,6 +162,10 @@ struct OpenTool: Tool {
         var isFolder: ObjCBool = false
         guard FileManager.default.fileExists(atPath: path, isDirectory: &isFolder) else {
             throw .invalidInput(loc("\(display(path)) n'existe pas"))
+        }
+        // Like the other file tools: hidden files and folders are settings and secrets
+        if path.split(separator: "/").contains(where: { $0.hasPrefix(".") }) {
+            throw .invalidInput(loc("je n'ouvre pas les fichiers ni les dossiers cachés"))
         }
         // A folder that is a bundle (an app, an installer) would run, not open
         if isRunnable(path, isFolder: isFolder.boolValue) {
@@ -248,6 +261,10 @@ struct WorkspaceOpener: Opener {
         case let (nil, app?): _ = try await NSWorkspace.shared.openApplication(at: app, configuration: configuration)
         case (nil, nil): break
         }
+    }
+
+    func canOpen(_ file: URL, with app: URL) -> Bool {
+        NSWorkspace.shared.urlsForApplications(toOpen: file).contains { $0.standardizedFileURL == app.standardizedFileURL }
     }
 
     func isRunning(_ app: URL) -> Bool {

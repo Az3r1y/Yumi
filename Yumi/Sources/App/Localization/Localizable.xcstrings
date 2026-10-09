@@ -775,6 +775,16 @@
         }
       }
     },
+    "%@ ne sait pas ouvrir %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ can't open %2$@"
+          }
+        }
+      }
+    },
     "%@ ne tourne pas": {
       "localizations": {
         "en": {
@@ -9089,6 +9099,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't open a file in %@: it would run it"
+          }
+        }
+      }
+    },
+    "je n'ouvre pas les fichiers ni les dossiers cachés": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't open hidden files or folders"
           }
         }
       }

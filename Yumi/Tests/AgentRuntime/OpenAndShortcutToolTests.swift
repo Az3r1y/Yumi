@@ -90,6 +90,8 @@ final class FakeShortcuts: ShortcutsLibrary, @unchecked Sendable {
 final class FakeOpener: Opener, @unchecked Sendable {
     private let lock = NSLock()
     let apps: [String: URL]
+    /// Apps that say they open a file of that extension.
+    var handlers: [String: Set<String>] = ["md": ["Xcode", "TextEdit"]]
     private var calls: [(URL?, URL?)] = []
 
     init(apps: [String] = ["Xcode", "Safari"]) {
@@ -100,6 +102,9 @@ final class FakeOpener: Opener, @unchecked Sendable {
     func application(named name: String) -> URL? { apps[name.lowercased()] }
     func open(_ target: URL?, with app: URL?) async throws { lock.withLock { calls.append((target, app)) } }
     func isRunning(_ app: URL) -> Bool { lock.withLock { calls.contains { $0.1 == app } } }
+    func canOpen(_ file: URL, with app: URL) -> Bool {
+        handlers[file.pathExtension, default: []].contains(app.deletingPathExtension().lastPathComponent)
+    }
 }
 
 /// A home with a project in ~/Work, a script and an app bundle.
@@ -180,6 +185,32 @@ private func home() throws -> String {
                 == "je n'ouvre pas de fichier dans Terminal : il l'exécuterait")
         #expect(await tool.check(["target": .string("Yumi"), "app": .string("Terminal")]) == nil)
         #expect(await tool.check(["target": .string("~/Downloads/notes.md"), "app": .string("Xcode")]) == nil)
+    }
+
+    @Test func aFileOpensOnlyInAnAppThatSaysItOpensIt() async throws {
+        let tool = OpenTool(opener: FakeOpener(apps: ["Xcode", "Safari"]), home: try home())
+        #expect(await tool.check(["target": .string("~/Downloads/notes.md"), "app": .string("Safari")]) == "Safari ne sait pas ouvrir ~/Downloads/notes.md")
+        #expect(await tool.check(["target": .string("~/Downloads/notes.md"), "app": .string("Xcode")]) == nil)
+    }
+
+    @Test func anAddressIsJudgedAsItWillBeOpened() async throws {
+        let tool = OpenTool(opener: FakeOpener(), home: try home())
+        for address in ["HTTPS://example.com", "https://example.com/a?b=c"] {
+            #expect(await tool.check(["target": .string(address)]) == nil, "\(address)")
+        }
+        for address in ["https://moi:secret@example.com", "https://", "vnc://serveur", "x-apple.systempreferences:com.apple.preference.security",
+                        "mailto:a@b.c", "tel:0600000000"] {
+            #expect(await tool.check(["target": .string(address)]) != nil, "\(address)")
+        }
+    }
+
+    @Test func hiddenFilesAndFoldersAreLeftAlone() async throws {
+        let home = try home()
+        try FileManager.default.createDirectory(atPath: home + "/.config/app", withIntermediateDirectories: true)
+        FileManager.default.createFile(atPath: home + "/Downloads/.env", contents: Data("KEY=1".utf8))
+        let tool = OpenTool(opener: FakeOpener(), home: home)
+        #expect(await tool.check(["target": .string("~/.config/app")]) == "je n'ouvre pas les fichiers ni les dossiers cachés")
+        #expect(await tool.check(["target": .string("~/Downloads/.env")]) == "je n'ouvre pas les fichiers ni les dossiers cachés")
     }
 
     @Test func noAnswerIsRememberedForAWholeProject() throws {
