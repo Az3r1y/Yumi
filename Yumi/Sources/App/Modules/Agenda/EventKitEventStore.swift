@@ -7,17 +7,13 @@ final class EventKitEventStore: EventStore, @unchecked Sendable {
     private let store = EKEventStore()
     private let lock = NSLock()
 
-    var access: PermissionState {
-        switch EKEventStore.authorizationStatus(for: .event) {
-        case .fullAccess: .granted
-        case .notDetermined: .notDetermined
-        default: .denied
-        }
-    }
+    var access: PermissionState { EventKitAccess.state(for: .event) }
 
     func requestAccess() async -> Bool {
         guard access == .notDetermined else { return access == .granted }
-        return (try? await store.requestFullAccessToEvents()) ?? false
+        let granted = (try? await store.requestFullAccessToEvents()) ?? false
+        EventKitAccess.answered(granted, for: .event, store: store)
+        return granted
     }
 
     func defaultCalendar() -> EventCalendarInfo? {

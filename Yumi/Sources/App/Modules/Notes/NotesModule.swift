@@ -33,13 +33,7 @@ final class NotesModule: YumiModule {
         return reminders.filter { $0.due.map { calendar.isDate($0, inSameDayAs: day) } ?? false }
     }
 
-    private var access: PermissionState {
-        switch EKEventStore.authorizationStatus(for: .reminder) {
-        case .fullAccess:    return .granted
-        case .notDetermined: return .notDetermined
-        default:             return .denied
-        }
-    }
+    private var access: PermissionState { EventKitAccess.state(for: .reminder) }
 
     // MARK: Lifecycle
 
@@ -96,10 +90,12 @@ final class NotesModule: YumiModule {
     }
 
     private func requestAccess() {
-        eventStore.requestFullAccessToReminders { @Sendable [weak self] _, _ in
+        eventStore.requestFullAccessToReminders { @Sendable [weak self] granted, _ in
             Task { @MainActor in
-                self?.fetchReminders()
-                self?.onChange?()
+                guard let self else { return }
+                EventKitAccess.answered(granted, for: .reminder, store: self.eventStore)
+                self.fetchReminders()
+                self.onChange?()
             }
         }
     }

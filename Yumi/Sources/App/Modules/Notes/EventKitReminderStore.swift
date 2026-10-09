@@ -8,17 +8,13 @@ final class EventKitReminderStore: ReminderStore, @unchecked Sendable {
     private let store = EKEventStore()
     private let lock = NSLock()
 
-    var access: PermissionState {
-        switch EKEventStore.authorizationStatus(for: .reminder) {
-        case .fullAccess: .granted
-        case .notDetermined: .notDetermined
-        default: .denied
-        }
-    }
+    var access: PermissionState { EventKitAccess.state(for: .reminder) }
 
     func requestAccess() async -> Bool {
         guard access == .notDetermined else { return access == .granted }
-        return (try? await store.requestFullAccessToReminders()) ?? false
+        let granted = (try? await store.requestFullAccessToReminders()) ?? false
+        EventKitAccess.answered(granted, for: .reminder, store: store)
+        return granted
     }
 
     func defaultListName() -> String? {

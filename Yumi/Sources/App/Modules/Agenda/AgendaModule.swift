@@ -32,13 +32,7 @@ final class AgendaModule: YumiModule {
     /// Today's appointments still to come, nil while the module is stopped or without access.
     var upcomingTodayIfRunning: [AgendaEvent]? { onChange == nil ? nil : upcomingToday }
 
-    private var access: PermissionState {
-        switch EKEventStore.authorizationStatus(for: .event) {
-        case .fullAccess:    return .granted
-        case .notDetermined: return .notDetermined
-        default:             return .denied
-        }
-    }
+    private var access: PermissionState { EventKitAccess.state(for: .event) }
 
     // MARK: Lifecycle
 
@@ -81,8 +75,12 @@ final class AgendaModule: YumiModule {
         switch access {
         case .notDetermined:
             guard action == .primary else { return }
-            eventStore.requestFullAccessToEvents { @Sendable [weak self] _, _ in
-                Task { @MainActor in self?.reload() }
+            eventStore.requestFullAccessToEvents { @Sendable [weak self] granted, _ in
+                Task { @MainActor in
+                    guard let self else { return }
+                    EventKitAccess.answered(granted, for: .event, store: self.eventStore)
+                    self.reload()
+                }
             }
         case .denied:
             if action == .primary { NSWorkspace.shared.open(PrivacySettings.calendars) }
