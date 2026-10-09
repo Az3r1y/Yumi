@@ -65,7 +65,8 @@ struct IslandScene: View {
             music: folded.musicPlaying,
             chatActs: state.chatLive?.activity != nil,
             busy: busy,
-            remarkMood: remark?.mood)
+            remarkMood: remark?.mood,
+            ambient: model.ambient)
         let middle = IslandConst.panelWidth / 2
         let launching = model.launchStage != nil
 

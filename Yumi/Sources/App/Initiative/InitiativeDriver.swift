@@ -164,6 +164,9 @@ final class InitiativeDriver {
 
     private func offer(_ occasion: Occasion?) {
         guard let occasion else { return }
+        // Réglages › Fonctions: the person may not want these two
+        if occasion == .late, !Feature.isOn(.bedtime) { return }
+        if case .lowBattery = occasion, !Feature.isOn(.batteryMood) { return }
         let book = links.memory()
         var around = Surroundings(now: Date())
         around.talk = defaults.string(forKey: YumiTalk.defaultsKey).flatMap(YumiTalk.init(rawValue:)) ?? .discreet

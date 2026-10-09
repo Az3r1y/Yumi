@@ -25,6 +25,9 @@ final class WeatherModule: NSObject, YumiModule {
 
     var snapshot: ModuleSnapshot { WeatherSummary.snapshot(state, now: Date()) }
 
+    /// The WMO code of the sky now, while the module shows one: Yumi dresses for it.
+    static private(set) var currentCode: Int?
+
     /// The weather on screen, nil while there is none.
     var currentReport: WeatherReport? {
         guard onChange != nil, case .ready(let report) = state else { return nil }
@@ -65,11 +68,13 @@ final class WeatherModule: NSObject, YumiModule {
         locationManager?.delegate = nil
         locationManager = nil
         state = .loading
+        Self.currentCode = nil
     }
 
     private func set(_ newState: WeatherState) {
         guard newState != state, onChange != nil else { return }
         state = newState
+        if case .ready(let report) = newState { Self.currentCode = report.code }
         onChange?()
     }
 

@@ -1062,3 +1062,35 @@ import Foundation
         #expect(!HookOffer.offers(claudeCodeInstalled: true, hooksInstalled: false, alreadyOffered: false, filming: true))
     }
 }
+
+// MARK: - What Yumi wears when nothing else is going on
+
+@Suite struct AmbientHabitTests {
+    private func pick(_ hour: Int, battery: (Int, Bool)? = (80, false), weather: Int? = nil,
+                      off: Set<Feature> = []) -> YumiHabit? {
+        AmbientHabit.pick(hour: hour, battery: battery.map { (percent: $0.0, charging: $0.1) }, weatherCode: weather,
+                          isOn: { !off.contains($0) })
+    }
+
+    @Test func aLowBatteryComesFirstUnlessCharging() {
+        #expect(pick(14, battery: (12, false), weather: 0) == .exhausted)
+        #expect(pick(14, battery: (12, true), weather: 0) == .sunglasses)
+        #expect(pick(14, battery: (12, false), weather: 0, off: [.batteryMood]) == .sunglasses)
+    }
+
+    @Test func lateHeIsTiredThenAsleep() {
+        #expect(pick(23) == .exhausted)
+        #expect(pick(2) == .sleep)
+        #expect(pick(6) == nil)
+        #expect(pick(23, off: [.bedtime]) == nil)
+    }
+
+    @Test func byDayHeDressesForTheWeather() {
+        #expect(pick(12, weather: 1) == .sunglasses)
+        #expect(pick(12, weather: 63) == .cloud)
+        #expect(pick(12, weather: 3) == nil)          // overcast: nothing special
+        #expect(pick(21, weather: 0) == nil)          // no sunglasses at night
+        #expect(pick(12, weather: 0, off: [.weatherOutfit]) == nil)
+        #expect(pick(12, battery: nil, weather: 95) == .cloud)   // a Mac without a battery
+    }
+}

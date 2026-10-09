@@ -28,6 +28,7 @@ final class IslandWindowController: NSWindowController {
     /// The quick task shortcut (⌥ Espace by default), system-wide.
     private var quickTaskKey: GlobalHotKey?
     private var textToolKey: GlobalHotKey?
+    private var ambientTimer: Timer?
     private var subscriptions: Set<AnyCancellable> = []
 
     /// The view the island opens on, when something other than a click opens it.
@@ -121,6 +122,11 @@ final class IslandWindowController: NSWindowController {
         startMonitors()
         startQuickTaskKey()
         startTextToolKey()
+        // What he wears: battery, hour and weather, read again every minute
+        model.refreshAmbient()
+        ambientTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated { self?.model.refreshAmbient() }
+        }
         startObservers()
         #if DEBUG
         IslandDemo.startIfRequested(controller: self)
@@ -490,6 +496,8 @@ final class IslandWindowController: NSWindowController {
                 if self.inAttachDrag {
                     self.finishDrag()
                 } else {
+                    // Pressed and released on Yumi himself, without dragging: he likes it
+                    if hadPendingClick, self.attachDragStart != nil { self.model.pet() }
                     self.attachDragStart = nil
                     // A click on what Yumi says answers it; it does not open the island
                     if hadPendingClick, self.model.stage(for: self.state.mode) != .speak { self.fsm.click() }   // petit → home, ignored elsewhere

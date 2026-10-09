@@ -234,6 +234,26 @@ final class IslandStateMachine {
 
 /// Pure rules of the folded island (Contracts/ModuleTypes.swift): which module it shows on
 /// the right of the notch, and how wide it may grow for it. No view, no state.
+/// What Yumi wears when nothing else is going on: hungry when the battery runs low, tired late
+/// in the evening, asleep after midnight, dressed for the weather by day. Each one can be turned
+/// off in Réglages › Fonctions.
+enum AmbientHabit {
+    static func pick(hour: Int, battery: (percent: Int, charging: Bool)?, weatherCode: Int?,
+                     isOn: (Feature) -> Bool = { Feature.isOn($0) }) -> YumiHabit? {
+        if isOn(.batteryMood), let battery, !battery.charging, battery.percent <= 15 { return .exhausted }
+        if isOn(.bedtime) {
+            if hour >= 22 { return .exhausted }
+            if hour < 5 { return .sleep }
+        }
+        if isOn(.weatherOutfit), let code = weatherCode, (8..<20).contains(hour) {
+            // WMO codes: 0 clear, 1 mainly clear; drizzle, rain, showers and storms
+            if code <= 1 { return .sunglasses }
+            if (51...67).contains(code) || (80...82).contains(code) || code >= 95 { return .cloud }
+        }
+        return nil
+    }
+}
+
 /// Which side of the notch Yumi sits on while the island is folded (`FoldedIsland.side`).
 enum FoldedSide: Equatable, Sendable {
     case left, right

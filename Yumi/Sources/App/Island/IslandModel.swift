@@ -202,6 +202,39 @@ final class IslandModel: ObservableObject {
         if actorReady { work() } else { whenReady.append(work) }
     }
 
+    /// What he wears when nothing else is going on, read again every minute.
+    @Published var ambient: YumiHabit?
+    private var hungry = false
+
+    func refreshAmbient(now: Date = Date()) {
+        let battery = MacSurroundings.battery()
+        let next = AmbientHabit.pick(hour: Calendar.current.component(.hour, from: now), battery: battery,
+                                     weatherCode: WeatherModule.currentCode)
+        // The charger plugged in while he was hungry: a little jump of joy
+        let fed = hungry && battery?.charging == true
+        hungry = next == .exhausted && battery.map { !$0.charging && $0.percent <= 15 } == true
+        if fed, Feature.isOn(.batteryMood) {
+            pose(.celebrate)
+            flashMood(.happy)
+        }
+        if ambient != next { ambient = next }
+    }
+
+    /// A click on him: a jump and a wink, or a happy face, in turn.
+    private var petted = 0
+    func pet() {
+        guard Feature.isOn(.petting) else { return }
+        petted += 1
+        pose(petted.isMultiple(of: 2) ? .celebrate : .boing)
+        flashMood(petted.isMultiple(of: 2) ? .happy : .wink)
+    }
+
+    /// A face for a moment, then back to what the island says.
+    private func flashMood(_ mood: YumiMood) {
+        setMood(mood, force: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { [weak self] in self?.setMood(nil, force: true) }
+    }
+
     func pose(_ pose: YumiPose) {
         NotificationCenter.default.post(name: .yumiPose, object: pose)
     }
@@ -293,6 +326,8 @@ final class IslandModel: ObservableObject {
         var busy = false
         /// The face of what Yumi is saying on his own.
         var remarkMood: YumiMood?
+        /// What he wears when nothing else is going on (`AmbientHabit`).
+        var ambient: YumiHabit?
     }
 
     /// `STATES` of the mock-up: the face, the rim colour, the habit and the pose of each view.
@@ -350,7 +385,7 @@ final class IslandModel: ObservableObject {
             }
         default:
             cancelLateHabit()
-            setHabit(listening ? .headphones : nil)
+            setHabit(listening ? .headphones : new.ambient)
         }
 
         // A habit brings its own face: it steps aside while he says something on his own
