@@ -570,10 +570,14 @@ enum YumiRenderer {
         if let o = f.props[.sunglasses], o > 0.01 {
             // They drop onto his nose in 0.55 s
             let p = YumiCurve.spring(f.habitTime / 0.55)
+            // They sit on the eyes, which slide on the sphere when the head turns (drawFace)
+            let left = 50 + sin(-0.33 + f.yaw) * cos(f.pitch) * 40.1
+            let right = 50 + sin(0.33 + f.yaw) * cos(f.pitch) * 40.1
             var c = props
             c.opacity = o * max(0, min(1, p))
-            c.translateBy(x: 50, y: 44.5 - 34 * (1 - p))
+            c.translateBy(x: (left + right) / 2, y: 44.5 + sin(f.pitch) * 30 - 34 * (1 - p))
             c.rotate(by: .degrees(Double(-14 * (1 - p))))
+            c.scaleBy(x: (right - left) / (2 * sin(0.33) * 40.1), y: 1)
             c.translateBy(x: -50, y: -44.5)
             let dark = GraphicsContext.Shading.color(Color(.sRGB, red: 0.039, green: 0.043, blue: 0.063))
             for x: CGFloat in [24, 52] {
