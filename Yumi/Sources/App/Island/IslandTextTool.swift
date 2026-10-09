@@ -10,7 +10,7 @@ import SwiftUI
 final class TextToolBoard: ObservableObject {
     static let shared = TextToolBoard()
 
-    enum Mode: Equatable { case correct, translate }
+    enum Mode: Equatable { case correct, translate, summary, tone(TextAI.Tone), reply, event }
 
     @Published var source = "" { didSet { if source != oldValue { clearResult() } } }
     @Published var target: TextLanguage = .en
@@ -21,6 +21,10 @@ final class TextToolBoard: ObservableObject {
     @Published private(set) var translation: String?
     /// The text corrected by Apple Intelligence; nil when the spelling checker did the work.
     @Published private(set) var corrected: String?
+    /// A summary, a rewriting or a reply by Apple Intelligence.
+    @Published private(set) var generated: String?
+    /// A reminder or an appointment found in the text, to add after the person's approval.
+    @Published private(set) var event: TextEvent?
     @Published private(set) var note: String?
     @Published private(set) var busy = false
     /// Where the text came from: replacing puts the result there.
@@ -97,16 +101,74 @@ final class TextToolBoard: ObservableObject {
         }
     }
 
-    /// What would replace the selection: the text with the kept fixes, or the translation.
+    // MARK: Apple Intelligence
+
+    /// Summary, tone and reply: the model's answer, shown before anything is replaced.
+    func generate(_ mode: Mode) {
+        guard source.nonEmptyTrimmed != nil, !busy else { return }
+        clearResult()
+        self.mode = mode
+        busy = true
+        note = nil
+        let text = source
+        Task {
+            do throws(TextAI.Failure) {
+                let answer: String
+                switch mode {
+                case .summary: answer = try await TextAI.summarize(text)
+                case .tone(let tone): answer = try await TextAI.rewrite(text, tone: tone)
+                default: answer = try await TextAI.reply(to: text)
+                }
+                if source == text { generated = answer }
+            } catch {
+                note = error == .unavailable ? loc("Il faut Apple Intelligence pour ça.") : loc("Je n'ai pas réussi, réessaie.")
+            }
+            busy = false
+        }
+    }
+
+    func findEvent() {
+        guard source.nonEmptyTrimmed != nil, !busy else { return }
+        clearResult()
+        mode = .event
+        busy = true
+        note = nil
+        let text = source
+        Task {
+            event = await TextEvent.find(in: text)
+            if event == nil { note = loc("Je ne trouve rien à mettre dans l'agenda ou les rappels.") }
+            busy = false
+        }
+    }
+
+    /// Through the agent: its approval, its write, its check.
+    func addEvent() {
+        guard let event, let agent = AppState.shared.agent else { return }
+        busy = true
+        Task {
+            let (plan, request) = event.plan()
+            let result = await agent.execute(plan, for: request)
+            busy = false
+            // The approval took the island: come back to the text
+            NotificationCenter.default.post(name: .hookExpand, object: IslandView.textTool)
+            note = result.status.succeeded ? loc("C'est ajouté.") : loc("Pas ajouté.")
+            if result.status.succeeded { self.event = nil }
+        }
+    }
+
+    /// What would replace the selection: the text with the kept fixes, the translation, or what
+    /// Apple Intelligence wrote.
     var output: String? {
         switch mode {
         case .correct: corrected ?? (fixes.isEmpty ? nil : TextCorrector.apply(fixes.filter { kept.contains($0.id) }, to: source))
         case .translate: translation
-        case nil: nil
+        case .summary, .tone, .reply: generated
+        case .event, nil: nil
         }
     }
 
-    var canReplace: Bool { selection != nil && output != nil }
+    /// A summary or a reply goes beside the text, never in its place: only copied.
+    var canReplace: Bool { selection != nil && output != nil && mode != .summary && mode != .reply }
 
     func replace() {
         guard let output, let selection else { return }
@@ -133,6 +195,8 @@ final class TextToolBoard: ObservableObject {
         kept = []
         translation = nil
         corrected = nil
+        generated = nil
+        event = nil
     }
 }
 
@@ -176,15 +240,68 @@ struct TextToolActivity: View {
             }
             .riseIn(2)
 
+            if TextAI.isAvailable, !writingTools.isEmpty {
+                HStack(spacing: 6) {
+                    if writingTools.contains(.textSummary) {
+                        Pill(label: loc("Résumer"), symbol: "text.append", on: board.mode == .summary) { board.generate(.summary) }
+                    }
+                    if writingTools.contains(.textTone) {
+                        Menu {
+                            ForEach(TextAI.Tone.allCases) { tone in Button(tone.name) { board.generate(.tone(tone)) } }
+                        } label: {
+                            Label(loc("Ton"), systemImage: "theatermasks").font(IslandTheme.text(12, .semibold))
+                        }
+                        .menuStyle(.borderlessButton)
+                        .fixedSize()
+                    }
+                    if writingTools.contains(.textReply) {
+                        Pill(label: loc("Répondre"), symbol: "arrowshape.turn.up.left", on: board.mode == .reply) { board.generate(.reply) }
+                    }
+                    if writingTools.contains(.textToEvent) {
+                        Pill(label: loc("Agenda"), symbol: "calendar.badge.plus", on: board.mode == .event) { board.findEvent() }
+                    }
+                    Spacer()
+                }
+                .riseIn(3)
+            }
+
             result
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onAppear { focused = board.source.isEmpty }
     }
 
+    /// The Apple Intelligence actions the person kept (Réglages › Fonctions).
+    private var writingTools: [Feature] {
+        [.textSummary, .textTone, .textReply, .textToEvent].filter { Feature.isOn($0) }
+    }
+
     @ViewBuilder private var result: some View {
         if board.busy {
-            ActSub(text: board.mode == .translate ? loc("Je traduis…") : loc("Je corrige…"))
+            ActSub(text: board.mode == .translate ? loc("Je traduis…") : board.mode == .correct ? loc("Je corrige…") : loc("Je réfléchis…"))
+        }
+        if let generated = board.generated {
+            ScrollView(.vertical, showsIndicators: false) {
+                Text(generated)
+                    .font(IslandTheme.text(13, .regular))
+                    .foregroundStyle(IslandTheme.fg)
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(maxHeight: 120)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        if let event = board.event {
+            HStack(spacing: 8) {
+                Image(systemName: event.isAppointment ? "calendar" : "checklist")
+                    .foregroundStyle(IslandTheme.blue)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(event.title).font(IslandTheme.text(13, .semibold)).foregroundStyle(IslandTheme.fg)
+                    Text(describe(event)).font(IslandTheme.text(11.5, .regular)).foregroundStyle(IslandTheme.muted)
+                }
+                Spacer()
+                Pill(label: loc("Ajouter"), symbol: "plus", on: true, strong: true) { board.addEvent() }
+            }
         }
         if board.mode == .correct, let corrected = board.corrected {
             // What changed, in green: read before replacing
@@ -235,6 +352,15 @@ struct TextToolActivity: View {
                 Spacer()
             }
         }
+    }
+
+    /// "Événement · jeudi 8 octobre à 15:00", "Rappel · sans date".
+    private func describe(_ event: TextEvent) -> String {
+        let kind = event.isAppointment ? loc("Événement") : loc("Rappel")
+        guard let day = event.date, let date = ISO8601DateFormatter().date(from: day + "T12:00:00Z") else { return kind + " · " + loc("sans date") }
+        var when = date.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(AppLanguage.locale))
+        if let time = event.time { when += " " + loc("à \(time)") }
+        return kind + " · " + when
     }
 
     private func fixLine(_ fix: TextFix) -> some View {

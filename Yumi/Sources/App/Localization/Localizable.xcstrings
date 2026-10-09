@@ -1757,6 +1757,16 @@
         }
       }
     },
+    "Afficher le quota Claude sur le côté": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show the Claude quota on the side"
+          }
+        }
+      }
+    },
     "Afficher les outils de développeur": {
       "localizations": {
         "en": {
@@ -1865,6 +1875,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add a task with a shortcut"
+          }
+        }
+      }
+    },
+    "Ajouter « %@ » au calendrier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add “%@” to the calendar"
           }
         }
       }
@@ -2209,6 +2229,16 @@
         }
       }
     },
+    "Avoir faim quand la batterie est faible": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Get hungry when the battery is low"
+          }
+        }
+      }
+    },
     "Base Notion": {
       "localizations": {
         "en": {
@@ -2335,12 +2365,32 @@
         }
       }
     },
+    "Bâiller le soir, rappeler d'aller dormir": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yawn in the evening, remind you to sleep"
+          }
+        }
+      }
+    },
     "C'est ajouté à la fin de %@.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Added to the end of %@."
+          }
+        }
+      }
+    },
+    "C'est ajouté.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Added."
           }
         }
       }
@@ -2781,6 +2831,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "These languages aren't on your Mac yet: add them in System Settings › General › Language & Region › Translation Languages."
+          }
+        }
+      }
+    },
+    "Changer le ton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Change the tone"
           }
         }
       }
@@ -3481,6 +3541,16 @@
         }
       }
     },
+    "Créer des notes dans Notes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create notes in Notes"
+          }
+        }
+      }
+    },
     "Créer les événements dans": {
       "localizations": {
         "en": {
@@ -4071,6 +4141,16 @@
         }
       }
     },
+    "Fonctions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Features"
+          }
+        }
+      }
+    },
     "Français": {
       "localizations": {
         "en": {
@@ -4137,6 +4217,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Drag to change the order. The first %lld stay in the island."
+          }
+        }
+      }
+    },
+    "Glisse une image ou une capture sur Yumi : il en lit le texte, à corriger, traduire ou résumer.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop an image or a screenshot on Yumi: he reads its text, to correct, translate or sum up."
           }
         }
       }
@@ -4231,6 +4321,16 @@
         }
       }
     },
+    "Il a faim sous 15 %, il est content quand tu branches le chargeur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "He's hungry below 15 %, happy when you plug the charger in."
+          }
+        }
+      }
+    },
     "Il bosse dur": {
       "localizations": {
         "en": {
@@ -4241,12 +4341,32 @@
         }
       }
     },
+    "Il bâille après 22 h, et après minuit il te dit d'aller dormir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "He yawns after 10 pm, and after midnight tells you to go to sleep."
+          }
+        }
+      }
+    },
     "Il est tard. Je reste là, mais toi tu peux aller dormir.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "It's late. I'm staying, but you could go to bed."
+          }
+        }
+      }
+    },
+    "Il faut Apple Intelligence pour ça.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This needs Apple Intelligence."
           }
         }
       }
@@ -4927,6 +5047,16 @@
         }
       }
     },
+    "Je n'ai pas réussi, réessaie.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't manage, try again."
+          }
+        }
+      }
+    },
     "Je n'ai rien trouvé à dire. Redemande-moi.": {
       "localizations": {
         "en": {
@@ -5137,6 +5267,16 @@
         }
       }
     },
+    "Je ne trouve rien à mettre dans l'agenda ou les rappels.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't find anything to put in the calendar or the reminders."
+          }
+        }
+      }
+    },
     "Je ne vois ni ton agenda, ni tes rappels, ni la météo. Active-les dans mes réglages et je te dirai.": {
       "localizations": {
         "en": {
@@ -5263,6 +5403,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I'm thinking"
+          }
+        }
+      }
+    },
+    "Je réfléchis…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thinking…"
           }
         }
       }
@@ -5647,6 +5797,16 @@
         }
       }
     },
+    "Lire le texte d'une image glissée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the text of a dropped image"
+          }
+        }
+      }
+    },
     "Liste": {
       "localizations": {
         "en": {
@@ -5693,6 +5853,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Lueur · Halo Nord"
+          }
+        }
+      }
+    },
+    "Lunettes de soleil quand il fait beau, nuage quand il pleut.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sunglasses when it's sunny, a cloud when it rains."
           }
         }
       }
@@ -6543,6 +6713,16 @@
         }
       }
     },
+    "Personnage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Character"
+          }
+        }
+      }
+    },
     "Personne ne code en ce moment.": {
       "localizations": {
         "en": {
@@ -6569,6 +6749,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "Rain around 6 PM, take a jacket"
+          }
+        }
+      }
+    },
+    "Plus amical": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Friendlier"
+          }
+        }
+      }
+    },
+    "Plus court": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Shorter"
+          }
+        }
+      }
+    },
+    "Plus formel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More formal"
+          }
+        }
+      }
+    },
+    "Plus formel, plus court ou plus amical.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More formal, shorter or friendlier."
           }
         }
       }
@@ -6673,12 +6893,32 @@
         }
       }
     },
+    "Proposer une réponse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Suggest a reply"
+          }
+        }
+      }
+    },
     "Précédent": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Previous"
+          }
+        }
+      }
+    },
+    "Préparer ma journée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepare my day"
           }
         }
       }
@@ -6769,6 +7009,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Someone follows you"
+          }
+        }
+      }
+    },
+    "Quelques lignes pour un long texte sélectionné.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A few lines for a long selected text."
           }
         }
       }
@@ -7241,6 +7491,26 @@
         }
       }
     },
+    "Réagir aux tests": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "React to tests"
+          }
+        }
+      }
+    },
+    "Réagir quand on clique sur lui": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "React when clicked"
+          }
+        }
+      }
+    },
     "Récent": {
       "localizations": {
         "en": {
@@ -7341,6 +7611,26 @@
         }
       }
     },
+    "Répondre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reply"
+          }
+        }
+      }
+    },
+    "Répondre à voix haute": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer out loud"
+          }
+        }
+      }
+    },
     "Résume-moi %@ en trois points": {
       "localizations": {
         "en": {
@@ -7371,6 +7661,16 @@
         }
       }
     },
+    "Résumer une session terminée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sum up a finished session"
+          }
+        }
+      }
+    },
     "Rétablir ⌥ Espace": {
       "localizations": {
         "en": {
@@ -7387,6 +7687,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reset to ⌥T"
+          }
+        }
+      }
+    },
+    "S'habiller selon la météo": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dress for the weather"
           }
         }
       }
@@ -7815,6 +8125,16 @@
         }
       }
     },
+    "Tape ⌥V, parle, retape ⌥V : Yumi s'en occupe. Tout est transcrit sur le Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press ⌥V, speak, press ⌥V again: Yumi takes it from there. Everything is transcribed on the Mac."
+          }
+        }
+      }
+    },
     "Te revoilà. Claude a fini pendant que tu étais parti.": {
       "localizations": {
         "en": {
@@ -7981,6 +8301,16 @@
         }
       }
     },
+    "Texte (⌥T)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Text (⌥T)"
+          }
+        }
+      }
+    },
     "Texte ajouté": {
       "localizations": {
         "en": {
@@ -8027,6 +8357,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tokens written by Claude"
+          }
+        }
+      }
+    },
+    "Ton": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tone"
           }
         }
       }
@@ -8167,6 +8507,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Translate"
+          }
+        }
+      }
+    },
+    "Transformer en rappel ou en événement": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Turn into a reminder or an event"
           }
         }
       }
@@ -8323,12 +8673,32 @@
         }
       }
     },
+    "Un brouillon de réponse à un message sélectionné.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A draft reply to a selected message."
+          }
+        }
+      }
+    },
     "Un bug, une idée": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "A bug, an idea"
+          }
+        }
+      }
+    },
+    "Un clic sur Yumi : un clin d'œil ou un cœur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A click on Yumi: a wink or a heart."
           }
         }
       }
@@ -8475,6 +8845,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "A new version of Yumi is out"
+          }
+        }
+      }
+    },
+    "Une phrase dans l'encoche quand une session Claude Code se termine.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One sentence in the notch when a Claude Code session ends."
           }
         }
       }
@@ -8771,6 +9151,16 @@
         }
       }
     },
+    "Voix et images": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Voice and images"
+          }
+        }
+      }
+    },
     "Volontiers": {
       "localizations": {
         "en": {
@@ -8871,6 +9261,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Yumi: character sheet"
+          }
+        }
+      }
+    },
+    "Yumi fête des tests qui passent, et a le tournis quand ils échouent.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yumi celebrates passing tests, and gets dizzy when they fail."
+          }
+        }
+      }
+    },
+    "Yumi lit ses réponses avec la voix du Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yumi reads his answers with the Mac's voice."
           }
         }
       }
@@ -10893,6 +11303,16 @@
         }
       }
     },
+    "sans date": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no date"
+          }
+        }
+      }
+    },
     "sans titre": {
       "localizations": {
         "en": {
@@ -11395,12 +11815,52 @@
         }
       }
     },
+    "« 5 h · 65 % » dans l'île repliée quand rien de plus important ne s'y passe.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“5 h · 65 %” in the folded island when nothing more important is going on."
+          }
+        }
+      }
+    },
+    "« Note que… » crée une note dans l'app Notes, après ton accord.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Note that…” creates a note in the Notes app, after your approval."
+          }
+        }
+      }
+    },
+    "« Prépare ma journée » : l'agenda et les rappels du jour, et un plan proposé.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Prepare my day”: today's calendar and reminders, and a suggested plan."
+          }
+        }
+      }
+    },
     "« Quand ça compte » : quelques fois par jour au plus. « Volontiers » : aussi pour dire bonjour.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "\"When it matters\": a few times a day at most. \"Gladly\": also to say hello."
+          }
+        }
+      }
+    },
+    "« Réunion jeudi 15 h » devient un événement prêt à ajouter, après ton accord.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Meeting Thursday 3 pm” becomes an event ready to add, after your approval."
           }
         }
       }
@@ -11661,6 +12121,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Island"
+          }
+        }
+      }
+    },
+    "Île repliée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Folded island"
           }
         }
       }

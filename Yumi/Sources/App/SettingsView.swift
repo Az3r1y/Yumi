@@ -35,6 +35,7 @@ struct SettingsView: View {
         switch page {
         case .general:     GeneralSettings()
         case .yumi:        YumiSettings()
+        case .features:    FeaturesSettings()
         case .modules:     ModulesSettings()
         case .engines:     EnginesSettings()
         case .claudeCode:  ClaudeCodeSettings()

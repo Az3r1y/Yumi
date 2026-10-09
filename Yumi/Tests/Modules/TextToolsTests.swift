@@ -75,3 +75,61 @@ import Testing
         #expect(corrected.contains("étaient"))
     }
 }
+
+// MARK: - Summary, tone, reply, agenda
+
+@Suite struct TextEventTests {
+    @Test func onlyWellFormedFieldsAreKept() {
+        #expect(TextEvent.checked(title: "Réunion avec Paul", date: "2026-10-15", time: "15:00")
+                == TextEvent(title: "Réunion avec Paul", date: "2026-10-15", time: "15:00"))
+        // An hour without a day means nothing: a reminder without date
+        #expect(TextEvent.checked(title: "Appeler Paul", date: "jeudi", time: "15:00") == TextEvent(title: "Appeler Paul", date: nil, time: nil))
+        #expect(TextEvent.checked(title: "Appeler", date: "2026-10-15", time: "25:00")?.time == nil)
+        #expect(TextEvent.checked(title: "  ", date: "", time: "") == nil)
+    }
+
+    @Test func aDayAndAnHourMakeAnAppointmentAskedFirst() throws {
+        let (plan, _) = TextEvent(title: "Réunion", date: "2026-10-15", time: "15:00").plan()
+        let step = try #require(plan.steps.first)
+        #expect(step.toolID == "add_event")
+        #expect(step.requiresApproval)
+        #expect(step.arguments["time"] == .string("15:00"))
+        #expect(TextEvent(title: "Pain", date: nil, time: nil).plan().0.steps.first?.toolID == "add_reminder")
+    }
+
+    @Test(.enabled(if: TextAI.isAvailable, "Apple Intelligence is not on this Mac"))
+    func theModelFindsAnAppointmentInAMessage() async throws {
+        let now = ISO8601DateFormatter().date(from: "2026-10-12T09:00:00Z")!   // a Monday
+        let event = try #require(await TextEvent.find(in: "Salut ! On se voit le 15 octobre 2026 à 15h pour la réunion budget ?", now: now))
+        #expect(event.date == "2026-10-15")
+        #expect(event.time == "15:00")
+    }
+
+    @Test(.enabled(if: TextAI.isAvailable, "Apple Intelligence is not on this Mac"))
+    func theModelSummarizesAndAnswers() async throws {
+        let message = "Bonjour, je voulais savoir si tu pouvais m'envoyer le rapport trimestriel avant vendredi, nous en avons besoin pour la réunion du conseil. Merci beaucoup et bonne journée."
+        let article = String(repeating: "Le conseil municipal a voté hier soir le budget de la ville pour l'année prochaine, avec une hausse des dépenses pour les écoles, les transports en commun et l'entretien des parcs, tandis que les impôts locaux restent stables pour la troisième année consécutive. ", count: 4)
+        #expect(try await TextAI.summarize(article).count < article.count)
+        #expect(try await !TextAI.reply(to: message).isEmpty)
+    }
+}
+
+@Suite struct FeatureTests {
+    @Test func everyFeatureReadsInBothLanguagesAndCanBeTurnedOff() throws {
+        let defaults = try #require(UserDefaults(suiteName: "features-\(UUID().uuidString)"))
+        for feature in Feature.allCases {
+            #expect(Feature.isOn(feature, defaults) == feature.defaultOn)
+            defaults.set(false, forKey: feature.key)
+            #expect(!Feature.isOn(feature, defaults))
+            #expect(feature.title != feature.detail)
+            AppLanguage.$forced.withValue("en") {
+                #expect(!feature.title.isEmpty && !feature.detail.contains("%@"), "\(feature)")
+            }
+        }
+        #expect(!Feature.voiceReplies.defaultOn)
+        AppLanguage.$forced.withValue("en") {
+            #expect(Feature.batteryMood.detail == "He's hungry below 15 %, happy when you plug the charger in.")
+        }
+        #expect(Feature.batteryMood.detail == "Il a faim sous 15 %, il est content quand tu branches le chargeur.")
+    }
+}

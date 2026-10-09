@@ -38,6 +38,68 @@ enum TextAI {
             """)
     }
 
+    /// A few lines for a long text, in its own language.
+    static func summarize(_ text: String) async throws(Failure) -> String {
+        try await answer(text, instructions: """
+            Tu résumes le texte donné en quelques lignes, dans sa propre langue, sans rien inventer. \
+            Réponds uniquement avec le résumé.
+            """, freeLength: true)
+    }
+
+    enum Tone: String, CaseIterable, Identifiable, Sendable {
+        case formal, shorter, friendly
+        var id: String { rawValue }
+        var name: String {
+            switch self {
+            case .formal: loc("Plus formel")
+            case .shorter: loc("Plus court")
+            case .friendly: loc("Plus amical")
+            }
+        }
+        fileprivate var instruction: String {
+            switch self {
+            case .formal: "plus formel et professionnel"
+            case .shorter: "plus court et plus direct, en gardant l'essentiel"
+            case .friendly: "plus chaleureux et amical"
+            }
+        }
+    }
+
+    static func rewrite(_ text: String, tone: Tone) async throws(Failure) -> String {
+        try await answer(text, instructions: """
+            Tu réécris le texte donné, dans sa propre langue, sur un ton \(tone.instruction). \
+            Tu gardes le sens et les informations. Réponds uniquement avec le texte réécrit, sans commentaire.
+            """, freeLength: tone == .shorter)
+    }
+
+    /// A draft answer to a message, in its language, for the person to read and change.
+    static func reply(to text: String) async throws(Failure) -> String {
+        try await answer(text, instructions: """
+            Le texte donné est un message reçu. Tu rédiges une réponse courte et polie, dans la langue du message, \
+            à la première personne, sans inventer de faits ni d'engagements précis. \
+            Réponds uniquement avec la réponse, sans objet ni commentaire.
+            """, freeLength: true)
+    }
+
+    /// For an answer whose length has nothing to do with the text's (a summary, a reply): only
+    /// an empty one is refused.
+    private static func answer(_ text: String, instructions: String, freeLength: Bool) async throws(Failure) -> String {
+        guard freeLength else { return try await answer(text, instructions: instructions) }
+        #if canImport(FoundationModels)
+        guard #available(macOS 26.0, *), isAvailable else { throw .unavailable }
+        let reply: String
+        do {
+            reply = try await LanguageModelSession(instructions: instructions).respond(to: text).content
+        } catch {
+            throw .failed(error.localizedDescription)
+        }
+        guard let answer = reply.nonEmptyTrimmed else { throw .unusable }
+        return answer
+        #else
+        throw .unavailable
+        #endif
+    }
+
     private static func answer(_ text: String, instructions: String) async throws(Failure) -> String {
         #if canImport(FoundationModels)
         guard #available(macOS 26.0, *), isAvailable else { throw .unavailable }

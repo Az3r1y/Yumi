@@ -549,7 +549,7 @@ enum Feedback {
 
 /// The pages of the settings window, in the order of its sidebar.
 enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
-    case general, yumi, modules, engines, claudeCode, permissions, memory, about, developer
+    case general, yumi, features, modules, engines, claudeCode, permissions, memory, about, developer
 
     var id: String { rawValue }
 
@@ -557,6 +557,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .general:     return loc("Général")
         case .yumi:        return "Yumi"
+        case .features:    return loc("Fonctions")
         case .modules:     return "Modules"
         case .engines:     return loc("Moteurs")
         case .claudeCode:  return "Claude Code"
@@ -571,6 +572,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
         switch self {
         case .general:     return "gearshape"
         case .yumi:        return "face.smiling"
+        case .features:    return "switch.2"
         case .modules:     return "square.grid.2x2"
         case .engines:     return "cpu"
         case .claudeCode:  return "terminal"
@@ -599,6 +601,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
                        "absenceInterval", "contextEngineEnabled", "quickTaskShortcutEnabled", "quickTaskShortcutFlags",
                        "quickTaskShortcutCode", "quickTaskDestination", "quickTaskNotionBase"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
+        .features:    Feature.allCases.map(\.key),
         .modules:     ["github-token", "agendaHiddenCalendars", "agendaTargetCalendar"],
         .engines:     ["engineSettings", "engineKeys"],
         .claudeCode:  ["hooks", "claudeDirectoryBookmark"],
