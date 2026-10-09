@@ -29,6 +29,7 @@ final class IslandWindowController: NSWindowController {
     private var quickTaskKey: GlobalHotKey?
     private var textToolKey: GlobalHotKey?
     private var ambientTimer: Timer?
+    private var voiceKey: GlobalHotKey?
     private var subscriptions: Set<AnyCancellable> = []
 
     /// The view the island opens on, when something other than a click opens it.
@@ -122,6 +123,7 @@ final class IslandWindowController: NSWindowController {
         startMonitors()
         startQuickTaskKey()
         startTextToolKey()
+        startVoice()
         // What he wears: battery, hour and weather, read again every minute
         model.refreshAmbient()
         ambientTimer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
@@ -545,6 +547,39 @@ final class IslandWindowController: NSWindowController {
                 key.set(note.object as? Bool == true ? nil : QuickTaskShortcut.stored(.standard, keys))
             }
             .store(in: &subscriptions)
+    }
+
+    /// ⌥V while « Parler à Yumi » is on, and his answers read aloud when that is on. The shortcut
+    /// is only held while the feature is on: otherwise the key types what it always typed.
+    private func startVoice() {
+        let key = GlobalHotKey { [weak self] in self?.voiceKeyPressed() }
+        voiceKey = key
+        func sync() {
+            guard !IslandStudio.isOn else { return }
+            key.set(Feature.isOn(.voiceInput) ? QuickTaskShortcut.stored(.standard, QuickTaskShortcut.voice) : nil)
+        }
+        sync()
+        NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)
+            .receive(on: DispatchQueue.main)
+            .map { _ in Feature.isOn(.voiceInput) }
+            .removeDuplicates()
+            .sink { _ in sync() }
+            .store(in: &subscriptions)
+        var spoken = state.chatHistory.count
+        state.$chatHistory
+            .receive(on: DispatchQueue.main)
+            .sink { history in
+                defer { spoken = history.count }
+                guard history.count > spoken, let last = history.last, last.role == .assistant else { return }
+                VoiceReplies.say(last.content)
+            }
+            .store(in: &subscriptions)
+    }
+
+    private func voiceKeyPressed() {
+        guard !frozen, !leaving, Feature.isOn(.voiceInput) else { return }
+        if !VoiceInput.shared.listening { expand(to: .prompt) }
+        VoiceInput.shared.toggle()
     }
 
     /// Reads the text selected in the app in front, then opens the island on it; pressed again

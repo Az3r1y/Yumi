@@ -55,6 +55,9 @@ struct QuickTaskShortcut: Equatable, Sendable {
     /// ⌥T: correct or translate the selected text.
     static let textTool = Keys(enabled: "textToolShortcutEnabled", flags: "textToolShortcutFlags", code: "textToolShortcutCode",
                                standard: QuickTaskShortcut(flags: option, keyCode: 17))
+    /// ⌥V: talk to Yumi.
+    static let voice = Keys(enabled: Feature.voiceInput.key, flags: "voiceShortcutFlags", code: "voiceShortcutCode",
+                            standard: QuickTaskShortcut(flags: option, keyCode: 9))
 
     static func stored(_ defaults: UserDefaults = .standard, _ keys: Keys = quickTask) -> QuickTaskShortcut? {
         guard defaults.object(forKey: keys.enabled) as? Bool ?? true else { return nil }

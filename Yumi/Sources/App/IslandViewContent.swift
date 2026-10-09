@@ -96,6 +96,7 @@ struct IslandOpenLayer: View {
 
 struct IslandTalkView: View {
     @ObservedObject var state: AppState
+    @ObservedObject private var voice = VoiceInput.shared
     @State private var text = ""
     @State private var listHeight: CGFloat = 0
     /// The reader is at the bottom of the conversation: it follows what arrives.
@@ -203,6 +204,11 @@ struct IslandTalkView: View {
                     .foregroundStyle(IslandTheme.fg)
                     .focused($focused)
                     .onSubmit(send)
+                if Feature.isOn(.voiceInput) {
+                    RoundButton(style: voice.listening ? .tint : .plain, symbol: voice.listening ? "waveform" : "mic.fill",
+                                label: voice.listening ? loc("Envoyer ce que j'ai dit") : loc("Parler"),
+                                color: IslandTheme.red, small: true) { VoiceInput.shared.toggle() }
+                }
                 RoundButton(style: .white, symbol: "arrow.up", label: loc("Envoyer"), small: true, action: send)
             }
             .padding(.leading, 14)
@@ -210,7 +216,13 @@ struct IslandTalkView: View {
             .padding(.vertical, 4)
             .background(RoundedRectangle(cornerRadius: 19).fill(Color.white.opacity(0.1)))
             .riseIn(2)
+            if let problem = voice.problem {
+                ActSub(text: problem)
+            }
         }
+        // What is being said shows in the field as it comes
+        .onChange(of: voice.heard) { _, heard in if voice.listening { text = heard } }
+        .onChange(of: voice.listening) { _, on in if !on { text = "" } }
         .frame(maxWidth: .infinity, alignment: .leading)
         .onChange(of: state.chatLive) { _, new in
             if let new {

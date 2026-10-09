@@ -4051,6 +4051,16 @@
         }
       }
     },
+    "Envoyer ce que j'ai dit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Send what I said"
+          }
+        }
+      }
+    },
     "Envoyer un retour": {
       "localizations": {
         "en": {
@@ -4387,6 +4397,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Loving it"
+          }
+        }
+      }
+    },
+    "Il me faut le micro et la reconnaissance vocale : Réglages Système › Confidentialité et sécurité.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I need the microphone and speech recognition: System Settings › Privacy & Security."
           }
         }
       }
@@ -5617,6 +5637,16 @@
         }
       }
     },
+    "La reconnaissance vocale n'est pas disponible.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Speech recognition isn't available."
+          }
+        }
+      }
+    },
     "La semaine est finie%@. Je garde tout au chaud jusqu'à lundi.": {
       "localizations": {
         "en": {
@@ -5713,6 +5743,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The thread"
+          }
+        }
+      }
+    },
+    "Le micro ne répond pas.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The microphone isn't answering."
           }
         }
       }
@@ -8407,6 +8447,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tone"
+          }
+        }
+      }
+    },
+    "Ton Mac ne sait pas transcrire cette langue sans internet : ajoute la dictée dans Réglages Système › Clavier.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Mac can't transcribe this language without the internet: add dictation in System Settings › Keyboard."
           }
         }
       }

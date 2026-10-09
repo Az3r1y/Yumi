@@ -138,6 +138,23 @@
         }
       }
     },
+    "NSMicrophoneUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "J'écoute ce que tu me dictes, seulement quand tu me le demandes avec ⌥V. Ta voix est transcrite sur le Mac."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I listen to what you dictate, only when you ask me with ⌥V. Your voice is transcribed on the Mac."
+          }
+        }
+      }
+    },
     "NSRemindersFullAccessUsageDescription": {
       "extractionState": "manual",
       "localizations": {
@@ -151,6 +168,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "I show you today's reminders, tick the ones you finish, and add some when you ask."
+          }
+        }
+      }
+    },
+    "NSSpeechRecognitionUsageDescription": {
+      "extractionState": "manual",
+      "localizations": {
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Je transcris ta voix en texte, sur le Mac, quand tu me parles avec ⌥V."
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I turn your voice into text, on the Mac, when you talk to me with ⌥V."
           }
         }
       }
