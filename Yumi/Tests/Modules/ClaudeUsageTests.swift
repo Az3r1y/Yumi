@@ -171,3 +171,38 @@ private func transcript(_ lines: [String]) throws -> URL {
         #expect(left == ["abc-123.json"])
     }
 }
+
+// MARK: - Asking Anthropic
+
+@Suite struct ClaudeQuotaAPITests {
+    @Test func theUsualAnswerIsReadInPercent() throws {
+        let answer = #"{"five_hour": {"utilization": 42.0, "resets_at": "2026-10-09T14:50:00.123+00:00"}, "seven_day": {"utilization": 18, "resets_at": "2026-10-12T09:00:00Z"}, "seven_day_opus": null}"#
+        let read = try #require(ClaudeQuotaAPI.allowances(from: Data(answer.utf8)))
+        #expect(read.fiveHour?.usedPercent == 42)
+        let resets = try #require(read.fiveHour?.resetsAt)
+        #expect(abs(resets.timeIntervalSince(ISO8601DateFormatter().date(from: "2026-10-09T14:50:00Z")!) - 0.123) < 0.001)
+        #expect(read.sevenDay?.usedPercent == 18)
+    }
+
+    @Test func theListOfLimitsIsReadToo() throws {
+        let answer = #"{"limits": [{"kind": "spend", "group": "monthly", "percent": 54}, {"kind": "rate", "group": "five_hour", "percent": 7, "resets_at": "2026-10-09T14:50:00Z"}]}"#
+        let read = try #require(ClaudeQuotaAPI.allowances(from: Data(answer.utf8)))
+        #expect(read.fiveHour?.usedPercent == 7)
+        #expect(read.sevenDay == nil)
+    }
+
+    @Test func anAnswerWithoutAllowancesGivesNothing() {
+        #expect(ClaudeQuotaAPI.allowances(from: Data(#"{"error": "nope"}"#.utf8)) == nil)
+        #expect(ClaudeQuotaAPI.allowances(from: Data("<html>".utf8)) == nil)
+    }
+
+    @Test func anExpiredTokenIsNotUsedNorRenewed() {
+        let now = Date(timeIntervalSince1970: 1_790_000_000)
+        func stored(expires: Double) -> Data {
+            Data(#"{"claudeAiOauth": {"accessToken": "sk-ant-oat01-x", "refreshToken": "r", "expiresAt": \#(expires)}}"#.utf8)
+        }
+        #expect(ClaudeQuotaAPI.token(from: stored(expires: (now.timeIntervalSince1970 + 600) * 1000), now: now) == "sk-ant-oat01-x")
+        #expect(ClaudeQuotaAPI.token(from: stored(expires: (now.timeIntervalSince1970 - 1) * 1000), now: now) == nil)
+        #expect(ClaudeQuotaAPI.token(from: Data("{}".utf8), now: now) == nil)
+    }
+}

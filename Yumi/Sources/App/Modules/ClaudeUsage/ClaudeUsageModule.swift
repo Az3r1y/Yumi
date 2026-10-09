@@ -12,6 +12,10 @@ final class ClaudeUsageModule: YumiModule {
     private var day: ClaudeUsageDay?
     private var onChange: (@MainActor () -> Void)?
     private var refreshing: Task<Void, Never>?
+    /// The last allowances Anthropic gave, and when they were asked.
+    private var quotas: (fiveHour: StatusLineRelay.Report.Allowance?, sevenDay: StatusLineRelay.Report.Allowance?)?
+    private var quotasAsked = Date.distantPast
+    private static let quotasInterval: TimeInterval = 5 * 60
 
     init(folder: URL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".claude/projects")) {
         self.folder = folder
@@ -40,13 +44,15 @@ final class ClaudeUsageModule: YumiModule {
     }
 
     func perform(_ action: ModuleAction) {
+        // « Actualiser » asks Anthropic again, even within the five minutes
+        quotasAsked = .distantPast
         Task { await refresh() }
     }
 
     private func refresh() async {
         let folder = folder
         let midnight = Calendar.current.startOfDay(for: Date())
-        let day = await Task.detached(priority: .utility) {
+        let measured = await Task.detached(priority: .utility) {
             let report = StatusLineRelay.report(in: StatusLineRelay.folder, since: midnight)
             var day = ClaudeUsageReader.day(files: ClaudeUsageReader.files(in: folder, since: midnight), since: midnight,
                                             live: report.sessionCosts)
@@ -55,6 +61,23 @@ final class ClaudeUsageModule: YumiModule {
             day.quotasConnected = StatusLineRelay.isInstalled
             return day
         }.value
+        var day = measured
+        #if !APPSTORE
+        // Anthropic's own figures, at most every five minutes; the status line's otherwise
+        if Date().timeIntervalSince(quotasAsked) >= Self.quotasInterval {
+            quotasAsked = Date()
+            let fetched = await Task.detached(priority: .utility) { () -> (fiveHour: StatusLineRelay.Report.Allowance?, sevenDay: StatusLineRelay.Report.Allowance?)? in
+                guard let token = ClaudeQuotaAPI.accessToken() else { return nil }
+                return await ClaudeQuotaAPI.fetch(token: token)
+            }.value
+            if let fetched { quotas = fetched }
+        }
+        if let quotas {
+            day.fiveHour = quotas.fiveHour ?? measured.fiveHour
+            day.sevenDay = quotas.sevenDay ?? measured.sevenDay
+            day.quotasConnected = true
+        }
+        #endif
         guard day != self.day else { return }
         self.day = day
         onChange?()
