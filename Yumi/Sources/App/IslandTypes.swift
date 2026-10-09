@@ -220,7 +220,7 @@ enum IslandConst {
     static let foldedLeading: CGFloat = 10
     static let foldedTrailing: CGFloat = 14
     /// The black of the folded island fades out over this much at each end.
-    static let foldedFade: CGFloat = 26
+    static let foldedFade: CGFloat = 10
     static let foldedDot: CGFloat = 7
     static let foldedGap: CGFloat = 7
     static let foldedTextMax: CGFloat = 190
