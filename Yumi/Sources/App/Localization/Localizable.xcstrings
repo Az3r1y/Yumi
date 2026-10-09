@@ -2537,6 +2537,16 @@
         }
       }
     },
+    "C'est noté dans Notes : « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Noted in Notes: “%@”."
+          }
+        }
+      }
+    },
     "C'est noté dans tes Rappels : %@%@.": {
       "localizations": {
         "en": {
@@ -3547,6 +3557,22 @@
           "stringUnit": {
             "state": "translated",
             "value": "Créer un fichier"
+          }
+        }
+      }
+    },
+    "Create a note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create a note"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Créer une note"
           }
         }
       }
@@ -4817,6 +4843,16 @@
         }
       }
     },
+    "Je dois créer la note « %@ » dans Notes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I need to create the note “%@” in Notes."
+          }
+        }
+      }
+    },
     "Je dois lancer le raccourci « %@ ».": {
       "localizations": {
         "en": {
@@ -5867,6 +5903,16 @@
         }
       }
     },
+    "Les notes dans Notes sont coupées dans Réglages › Fonctions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes in Notes are turned off in Settings › Features"
+          }
+        }
+      }
+    },
     "Les sessions de Claude Code de la journée s'afficheront ici.": {
       "localizations": {
         "en": {
@@ -6203,6 +6249,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Edits a notebook"
+          }
+        }
+      }
+    },
+    "Notes n'a pas créé la note : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Notes didn't create the note: %@"
           }
         }
       }
@@ -6993,6 +7049,22 @@
         }
       }
     },
+    "Prepare the day": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Prepare the day"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Préparer la journée"
+          }
+        }
+      }
+    },
     "Proposer une réponse": {
       "localizations": {
         "en": {
@@ -7465,6 +7537,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing pushed lately."
+          }
+        }
+      }
+    },
+    "Rien de prévu aujourd'hui : ta journée est à toi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing planned today: your day is yours."
           }
         }
       }
@@ -8783,6 +8865,16 @@
         }
       }
     },
+    "Tâche : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task: %@"
+          }
+        }
+      }
+    },
     "Tâche rapide": {
       "localizations": {
         "en": {
@@ -9231,6 +9323,16 @@
         }
       }
     },
+    "Voici ta journée :": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Here is your day:"
+          }
+        }
+      }
+    },
     "Voir": {
       "localizations": {
         "en": {
@@ -9581,6 +9683,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "no duration to check"
+          }
+        }
+      }
+    },
+    "aucune note à vérifier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "no note to check"
           }
         }
       }
@@ -10183,6 +10295,16 @@
         }
       }
     },
+    "il manque le titre ou le texte de la note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the note's title or text is missing"
+          }
+        }
+      }
+    },
     "il me faut l'heure de début de l'événement": {
       "localizations": {
         "en": {
@@ -10625,6 +10747,26 @@
         }
       }
     },
+    "la note « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the note “%@”"
+          }
+        }
+      }
+    },
+    "la note « %@ » n'est pas dans Notes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the note “%@” isn't in Notes"
+          }
+        }
+      }
+    },
     "la page enregistrée s'appelle « %@ », pas « %@ »": {
       "localizations": {
         "en": {
@@ -10903,6 +11045,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "the text is over %lld characters"
+          }
+        }
+      }
+    },
+    "le texte est trop long pour une note": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the text is too long for a note"
           }
         }
       }
@@ -11971,6 +12123,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "“Prepare my day”: today's calendar and reminders, and a suggested plan."
+          }
+        }
+      }
+    },
+    "« Préparer ma journée » est coupé dans Réglages › Fonctions": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Prepare my day” is turned off in Settings › Features"
           }
         }
       }

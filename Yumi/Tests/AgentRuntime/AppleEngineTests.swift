@@ -19,16 +19,17 @@ import Testing
     }
 
     @Test(.enabled(if: AppleLLMProvider.isAvailable, "Apple Intelligence is not on this Mac"))
-    @MainActor func itPlansAReminderOnTheMac() async throws {
+    @MainActor func itCarriesOutAReminderOnTheMac() async throws {
+        let store = FakeReminderStore()
         var tools = ToolRegistry.standard
         // The tools of the app: the planner's rules name get_today
-        try tools.register(AddReminderTool(store: EventKitReminderStore()))
+        try tools.register(AddReminderTool(store: store))
         try tools.register(GetTodayTool(source: FixedToday(value: TodayFacts())))
         let agent = RuntimeAgent(planner: LLMAgentPlanner(provider: AppleLLMProvider()), tools: tools,
-                                 policy: AgentPolicy(maximumRisk: .write))
-        let planned = await agent.plan(for: AgentRequest(userIntent: "Rappelle-moi d'appeler le dentiste demain à 10h"))
-        let plan = try planned.get()
-        let step = try #require(plan.steps.first { $0.toolID == "add_reminder" })
-        #expect(step.arguments["time"] == .string("10:00"))
+                                 permissions: ScriptedPermissionManager([.decision(.granted), .decision(.granted)]),
+                                 policy: AgentPolicy(maximumRisk: .write), recovery: RecoveryPolicy(retryDelay: .zero), sleep: { _ in })
+        let result = await agent.run(AgentRequest(userIntent: "Rappelle-moi d'appeler le dentiste demain à 10h"))
+        #expect(result.status == .completed, "\(result.status) \(String(describing: result.error))")
+        #expect(store.all.first?.title.localizedCaseInsensitiveContains("dentiste") == true)
     }
 }

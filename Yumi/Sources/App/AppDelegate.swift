@@ -445,6 +445,8 @@ final class YumiCore {
         try? tools.register(GetTodayTool(source: modules))
         try? tools.register(RunShortcutTool(library: SystemShortcuts()))
         try? tools.register(OpenTool(opener: WorkspaceOpener()))
+        try? tools.register(PrepareDayTool(source: modules, writer: provider))
+        try? tools.register(AddNoteTool(notes: ScriptedNotes()))
         return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), tools: tools, permissions: permissions,
                             policy: AgentPolicy(maximumRisk: .write))
         #endif

@@ -17,7 +17,7 @@ enum ChatRoute: Equatable, Sendable {
 
     /// Tools that do their job without changing anything risky, but that only the runtime can
     /// run: a plan using one of them goes to the runtime too.
-    static let runtimeTools: Set<String> = ["start_focus", "get_today"]
+    static let runtimeTools: Set<String> = ["start_focus", "get_today", "prepare_day"]
 
     static func route(_ planned: Result<AgentPlan, AgentError>) -> ChatRoute {
         switch planned {

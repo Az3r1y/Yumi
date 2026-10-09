@@ -105,7 +105,7 @@ enum PlannerPrompt {
         }
         user += "<request>\n\(dataOnly(request.trimmedIntent))\n</request>"
         return LLMRequest(system: system, messages: [LLMMessage(role: .user, content: user)],
-                          expectsJSON: true, maxOutputTokens: 1500)
+                          expectsJSON: true, maxOutputTokens: 1500, tools: tools)
     }
 
     /// "2026-10-03 Saturday 14:05", in the Mac's time zone.

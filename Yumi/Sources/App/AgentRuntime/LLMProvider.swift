@@ -17,6 +17,9 @@ struct LLMRequest: Equatable, Sendable {
     /// The answer must be a single JSON object. Providers with a JSON mode can turn it on.
     var expectsJSON: Bool
     var maxOutputTokens: Int
+    /// The tools a plan may use, when the request asks for a plan: a provider that can guide
+    /// its model (Apple Intelligence) keeps it to these ids and these arguments.
+    var tools: [ToolDescriptor]? = nil
 }
 
 struct LLMMessage: Equatable, Sendable {
