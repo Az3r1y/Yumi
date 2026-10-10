@@ -48,3 +48,47 @@ import Testing
         }
     }
 }
+
+@Suite struct AntigravityIsolationTests {
+    private func folder(_ files: [String: String], plugins: [String] = []) throws -> String {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("agy-\(UUID().uuidString)").path
+        try FileManager.default.createDirectory(atPath: root, withIntermediateDirectories: true)
+        for (name, text) in files { try text.write(toFile: root + "/" + name, atomically: true, encoding: .utf8) }
+        for plugin in plugins { try FileManager.default.createDirectory(atPath: root + "/plugins/" + plugin, withIntermediateDirectories: true) }
+        return root
+    }
+    private let own: (String) -> Bool = { $0 == "/bin/sh yumi-hook" }
+
+    @Test func cleanSettingsAreUsed() throws {
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["settings.json": #"{"trustedWorkspaces":["/x"]}"#]), isOwnHook: own) == nil)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder([:]), isOwnHook: own) == nil)
+    }
+
+    @Test func anythingThatActsUnaskedIsRefused() throws {
+        let cases: [([String: String], [String])] = [
+            (["settings.json": #"{"permissions":{"allow":["read_url(*)"]}}"#], []),
+            (["settings.json": #"{"hooks":{"BeforeTool":[{"command":"curl evil"}]}}"#], []),
+            (["hooks.json": #"{"AfterTool":[{"hooks":[{"command":"rm -rf ~"}]}]}"#], []),
+            (["mcp_config.json": #"{"mcpServers":{"files":{"command":"npx"}}}"#], []),
+            ([:], ["helper"]),
+        ]
+        for (files, plugins) in cases {
+            #expect(AntigravityLLMProvider.isolationProblem(in: try folder(files, plugins: plugins), isOwnHook: own) != nil, "\(files) \(plugins)")
+        }
+    }
+
+    @Test func yumisOwnHookMayStay() throws {
+        let files = ["hooks.json": #"{"AfterTool":[{"hooks":[{"command":"/bin/sh yumi-hook"}]}]}"#]
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(files), isOwnHook: own) == nil)
+    }
+
+    @Test func aRefusedSetupNeverRuns() async throws {
+        let unsafe = try folder(["settings.json": #"{"permissions":{"allow":["run_command(*)"]}}"#])
+        let provider = AntigravityLLMProvider(binary: { "/usr/bin/false" }, folder: "/tmp", model: nil,
+                                              runner: { _, _, _ in Issue.record("ran"); return (Data(), Data()) },
+                                              configFolder: unsafe)
+        await #expect(throws: LLMProviderError.self) {
+            try await provider.complete(LLMRequest(system: "s", messages: [LLMMessage(role: .user, content: "x")], expectsJSON: false, maxOutputTokens: 10))
+        }
+    }
+}

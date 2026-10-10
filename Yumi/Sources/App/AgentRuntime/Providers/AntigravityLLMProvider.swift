@@ -10,6 +10,11 @@ import Foundation
 /// - it runs in an empty folder of Yumi's.
 /// A plan is kept to the tools' ids and exact arguments by `--json-schema`, and goes through
 /// `PlanValidator` like any other engine's.
+///
+/// Unlike Claude Code, `agy` has no switch to leave the person's own settings out: an allow rule,
+/// a hook, an MCP server or a plugin of theirs would act in Yumi's session too, where a page met
+/// in a search could steer it. So it is only used while none is set (`isolationProblem`): then
+/// the web search alone is left, and it goes to Google, which has the request anyway.
 struct AntigravityLLMProvider: LLMProvider {
     typealias Runner = @Sendable (_ binary: String, _ arguments: [String], _ folder: String) async throws -> (output: Data, errors: Data)
 
@@ -36,8 +41,14 @@ struct AntigravityLLMProvider: LLMProvider {
         return arguments
     }
 
+    /// Antigravity's own folder of settings.
+    var configFolder: String = NSHomeDirectory() + "/.gemini/antigravity-cli"
+    /// A hook command that may stay: Yumi's own relay.
+    var isOwnHook: @Sendable (String) -> Bool = { _ in false }
+
     func complete(_ request: LLMRequest) async throws -> LLMResponse {
         guard let binary = binary() else { throw LLMProviderError.unavailable }
+        if let problem = Self.isolationProblem(in: configFolder, isOwnHook: isOwnHook) { throw LLMProviderError.failed(problem) }
         // No flag for the rules: they open the prompt
         let prompt = request.system + "\n\n" + AppleLLMProvider.prompt(request.messages, budget: 60_000)
         let schema = request.expectsJSON ? request.tools.flatMap(Self.planSchema) : nil
@@ -63,6 +74,43 @@ struct AntigravityLLMProvider: LLMProvider {
             throw LLMProviderError.failed("Antigravity did not run")
         }
         return try Self.read(result.output, errors: result.errors)
+    }
+
+    /// What, in the person's Antigravity settings, would act without asking in Yumi's session;
+    /// nil when nothing does.
+    static func isolationProblem(in folder: String, isOwnHook: (String) -> Bool) -> String? {
+        let manager = FileManager.default
+        func json(_ name: String) -> Any? {
+            (try? Data(contentsOf: URL(fileURLWithPath: folder).appendingPathComponent(name)))
+                .flatMap { try? JSONSerialization.jsonObject(with: $0) }
+        }
+        let settings = json("settings.json") as? [String: Any] ?? [:]
+        if let allowed = (settings["permissions"] as? [String: Any])?["allow"] as? [Any], !allowed.isEmpty {
+            return loc("Antigravity : tes réglages autorisent des outils sans demander (permissions.allow). Retire-les pour l'utiliser comme moteur de Yumi.")
+        }
+        let hookCommands = commands(in: settings["hooks"] as Any) + commands(in: json("hooks.json") as Any)
+        if hookCommands.contains(where: { !isOwnHook($0) }) {
+            return loc("Antigravity : des hooks à toi tourneraient aussi pour Yumi. Retire-les pour l'utiliser comme moteur.")
+        }
+        let inSettings = (settings["mcpServers"] as? [String: Any])?.count ?? 0
+        let inConfig = ((json("mcp_config.json") as? [String: Any])?["mcpServers"] as? [String: Any])?.count ?? 0
+        let servers = inSettings + inConfig
+        if servers > 0 { return loc("Antigravity : des serveurs MCP sont configurés. Retire-les pour l'utiliser comme moteur de Yumi.") }
+        let plugins = (try? manager.contentsOfDirectory(atPath: folder + "/plugins"))?.filter { !$0.hasPrefix(".") } ?? []
+        if !plugins.isEmpty { return loc("Antigravity : des plugins sont installés. Retire-les pour l'utiliser comme moteur de Yumi.") }
+        return nil
+    }
+
+    /// Every `command` string anywhere in a JSON value.
+    private static func commands(in value: Any) -> [String] {
+        switch value {
+        case let object as [String: Any]:
+            return object.flatMap { key, inner in key == "command" ? [inner as? String].compactMap { $0 } : commands(in: inner) }
+        case let list as [Any]:
+            return list.flatMap(commands(in:))
+        default:
+            return []
+        }
     }
 
     /// The answer: the structured output of a plan (an empty `cannotPlan` dropped, it is not a

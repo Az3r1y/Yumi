@@ -1989,6 +1989,46 @@
         }
       }
     },
+    "Antigravity : des hooks à toi tourneraient aussi pour Yumi. Retire-les pour l'utiliser comme moteur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: hooks of yours would run for Yumi too. Remove them to use it as an engine."
+          }
+        }
+      }
+    },
+    "Antigravity : des plugins sont installés. Retire-les pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: plugins are installed. Remove them to use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : des serveurs MCP sont configurés. Retire-les pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: MCP servers are configured. Remove them to use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : tes réglages autorisent des outils sans demander (permissions.allow). Retire-les pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: your settings allow tools without asking (permissions.allow). Remove them to use it as Yumi's engine."
+          }
+        }
+      }
+    },
     "Apple Intelligence (sur ce Mac)": {
       "localizations": {
         "en": {
