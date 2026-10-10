@@ -113,7 +113,7 @@ struct ResearchActivity: View {
             if let answer = board.answer {
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text((try? AttributedString(markdown: answer.text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace))) ?? AttributedString(answer.text))
+                        Text(WebResearch.displayed(answer.text))
                             .font(IslandTheme.text(13, .regular))
                             .foregroundStyle(IslandTheme.fg)
                             .textSelection(.enabled)
@@ -122,7 +122,8 @@ struct ResearchActivity: View {
                             VStack(alignment: .leading, spacing: 3) {
                                 ForEach(answer.sources, id: \.self) { source in
                                     Link(destination: source.url) {
-                                        Label(source.name, systemImage: "link")
+                                        // The real site always shows: a name alone could say anything
+                                        Label(WebResearch.label(source), systemImage: "link")
                                             .font(IslandTheme.text(11.5, .medium))
                                             .foregroundStyle(IslandTheme.blue)
                                             .lineLimit(1)

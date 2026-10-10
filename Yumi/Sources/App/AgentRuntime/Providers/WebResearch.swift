@@ -84,7 +84,8 @@ enum WebResearch {
         for line in tail.components(separatedBy: .newlines) {
             for match in line.matches(of: /https?:\/\/[^\s)\]>"'«»]+/) {
                 let address = String(match.output).trimmingCharacters(in: CharacterSet(charactersIn: ".,;:"))
-                guard seen.insert(address).inserted, let url = URL(string: address), let host = url.host else { continue }
+                guard seen.insert(address).inserted, let url = URL(string: address), let host = url.host,
+                  ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { continue }
                 // « - Wikipédia : https://… » or « [Wikipédia](https://…) »: the name before the address
                 let before = line[..<match.range.lowerBound]
                     .replacingOccurrences(of: "](", with: "")
@@ -94,6 +95,21 @@ enum WebResearch {
             }
         }
         return Answer(text: body.trimmingCharacters(in: .whitespacesAndNewlines), sources: sources)
+    }
+
+    /// The answer as shown: bold and italics kept, no link. What a model writes from pages it
+    /// read could dress any address as anything; only the listed sources can be opened.
+    static func displayed(_ text: String) -> AttributedString {
+        var shown = (try? AttributedString(markdown: text, options: .init(interpretedSyntax: .inlineOnlyPreservingWhitespace)))
+            ?? AttributedString(text)
+        for run in shown.runs where run.link != nil { shown[run.range].link = nil }
+        return shown
+    }
+
+    /// "Wikipédia · fr.wikipedia.org": the name the engine gave, and the site it really opens.
+    static func label(_ source: Source) -> String {
+        let host = (source.url.host ?? source.url.absoluteString).replacingOccurrences(of: "www.", with: "")
+        return source.name.caseInsensitiveCompare(host) == .orderedSame ? host : "\(source.name) · \(host)"
     }
 
     /// Asks, and gives the answer or why there is none.

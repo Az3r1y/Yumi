@@ -25,6 +25,15 @@ import Testing
         #expect(WebResearch.parse("Rien de clair.").sources.isEmpty)
     }
 
+    @Test func linksInTheAnswerCannotBeOpenedAndSourcesShowTheirSite() {
+        let shown = WebResearch.displayed("Voir **ceci** et [Wikipédia](file:///etc/passwd) ou [doc](x-apple.systempreferences:x)")
+        #expect(!shown.runs.contains { $0.link != nil })
+        #expect(String(shown.characters) == "Voir ceci et Wikipédia ou doc")
+        let spoofed = WebResearch.Source(name: "Wikipédia", url: URL(string: "https://evil.example/login")!)
+        #expect(WebResearch.label(spoofed) == "Wikipédia · evil.example")
+        #expect(WebResearch.label(.init(name: "apple.com", url: URL(string: "https://www.apple.com")!)) == "apple.com")
+    }
+
     @Test func claudeIsGivenTheWebSearchAndNothingElse() {
         let arguments = ClaudeCodeLLMProvider.arguments(system: "s", model: "sonnet", tools: ["WebSearch", "Bash", "Write"])
         #expect(arguments.firstIndex(of: "--tools").map { arguments[$0 + 1] } == "WebSearch")
