@@ -209,7 +209,7 @@ final class ClaudeService {
                     await chatWithAPI(query: query, context: context, state: state)
                     return
                 }
-            case .openai, .gemini, .ollama, .apple:
+            case .openai, .gemini, .ollama, .antigravity, .apple:
                 if let provider = EngineFactory.provider(engine, settings),
                    await chatWithProvider(provider, engine: engine, query: query, context: context, state: state) {
                     return

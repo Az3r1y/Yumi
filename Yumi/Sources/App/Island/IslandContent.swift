@@ -78,6 +78,7 @@ extension ModuleSnapshot {
         guard symbol == "circle.fill" else { return symbol }
         switch id {
         case "claude-code":       return "terminal"
+        case "antigravity":       return "sparkles"
         case "agenda":            return "calendar"
         case "notes":             return "note.text"
         case "focus":             return "timer"

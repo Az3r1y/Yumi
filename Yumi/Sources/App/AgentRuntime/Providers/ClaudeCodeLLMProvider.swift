@@ -23,17 +23,25 @@ struct ClaudeCodeLLMProvider: LLMProvider {
     var folder: String
     var model: String?
     var runner: Runner = ClaudeCodeLLMProvider.runProcess
+    /// Built-in tools it may use without asking, read-only ones only (`WebSearch` for a search).
+    /// None by default: a model, not an agent.
+    var readOnlyTools: [String] = []
     /// A planner that does not answer in this time is stopped: a request never waits forever.
     var timeout: Duration = .seconds(120)
 
     var name: String { "claude-code" }
 
-    static func arguments(system: String, model: String?) -> [String] {
+    /// Only tools that read and leave the Mac nothing to change: a search engine's.
+    static let readOnly: Set<String> = ["WebSearch"]
+
+    static func arguments(system: String, model: String?, tools: [String] = []) -> [String] {
+        let tools = tools.filter(readOnly.contains)
         var arguments = ["-p", "--output-format", "json", "--no-session-persistence",
-                         "--tools", "", "--strict-mcp-config", "--disable-slash-commands",
+                         "--tools", tools.joined(separator: ","), "--strict-mcp-config", "--disable-slash-commands",
                          "--setting-sources", "", "--permission-mode", "default",
                          "--system-prompt", system]
         if let model { arguments += ["--model", model] }
+        if !tools.isEmpty { arguments += ["--allowedTools", tools.joined(separator: ",")] }
         return arguments
     }
 
@@ -46,7 +54,7 @@ struct ClaudeCodeLLMProvider: LLMProvider {
             try FileManager.default.createDirectory(atPath: folder, withIntermediateDirectories: true)
             output = try await withThrowingTaskGroup(of: Data?.self) { group in
                 group.addTask { [runner, model, folder] in
-                    try await runner(binary, Self.arguments(system: request.system, model: model), Data(text.utf8), folder)
+                    try await runner(binary, Self.arguments(system: request.system, model: model, tools: readOnlyTools), Data(text.utf8), folder)
                 }
                 group.addTask { [timeout] in
                     try await Task.sleep(for: timeout)

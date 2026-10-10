@@ -27,6 +27,13 @@ enum EngineFactory {
         case .ollama:
             let model = settings.models[.ollama]
             return OllamaLLMProvider(model: { model })
+        case .antigravity:
+            #if APPSTORE
+            return nil // The App Store build may not launch programs.
+            #else
+            return AntigravityLLMProvider(folder: AppIdentity.supportDirectory.appendingPathComponent("antigravity").path,
+                                          model: settings.model(.antigravity), isOwnHooks: { AntigravityHooks.isOwn($0) })
+            #endif
         case .apple:
             return AppleLLMProvider()
         }

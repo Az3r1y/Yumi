@@ -5,6 +5,15 @@ import SwiftUI
 // into its name; a dot marks what is live; hovering shows the name in a label.
 
 struct IslandRail: View {
+    /// The App Store build may not launch Antigravity nor Claude Code.
+    private static var canSearch: Bool {
+        #if APPSTORE
+        false
+        #else
+        true
+        #endif
+    }
+
     @ObservedObject var state: AppState
     @ObservedObject var model: IslandModel
     let screen: IslandScreen
@@ -30,6 +39,13 @@ struct IslandRail: View {
             RailButton(symbol: "bubble.left", name: loc("Parler"), label: loc("Parler à Yumi"),
                        color: IslandTheme.violet, on: screen == .talk, bright: true) {
                 IslandActions.go(.prompt)
+            }
+            // The App Store build may not launch Antigravity nor Claude Code
+            if Self.canSearch, Feature.isOn(.research) {
+                RailButton(symbol: "magnifyingglass", name: loc("Recherche"), label: loc("Chercher sur le web"),
+                           color: .white, on: screen == .research) {
+                    IslandActions.go(.research)
+                }
             }
             RailButton(symbol: "textformat.abc", name: loc("Texte"), label: loc("Corriger ou traduire un texte"),
                        color: .white, on: screen == .textTool) {

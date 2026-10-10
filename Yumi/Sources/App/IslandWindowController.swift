@@ -822,7 +822,7 @@ final class IslandWindowController: NSWindowController {
             .sink { [weak self] view in
                 guard let self, self.fsm.state == .home else { return }
                 let screen = IslandScreen.resolve(view: view, state: .idle, approvalPending: false)
-                if screen == .talk || screen == .welcome || screen == .memory || screen == .quickTask || screen == .textTool {
+                if screen == .talk || screen == .welcome || screen == .memory || screen == .quickTask || screen == .textTool || screen == .research {
                     self.islandPanel.makeKey()
                 } else if self.islandPanel.isKeyWindow {
                     self.islandPanel.resignKey()

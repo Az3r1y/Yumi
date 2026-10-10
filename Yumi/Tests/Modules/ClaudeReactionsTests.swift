@@ -45,10 +45,17 @@ import Testing
         #expect(variants.map(\.text) == ["Sur yumi, Claude a corrigé le bug du login."])
     }
 
+    @Test func aLongAnswerIsCutToOneShortSentence() {
+        #expect(TextAI.shortSentence("a corrigé le bug. Puis il a ajouté des tests.") == "a corrigé le bug.")
+        let long = Array(repeating: "mot", count: 30).joined(separator: " ")
+        #expect(TextAI.shortSentence(long) == Array(repeating: "mot", count: 20).joined(separator: " ") + "…")
+        #expect(TextAI.shortSentence("a mis à jour la version 1.2 du README") == "a mis à jour la version 1.2 du README")
+    }
+
     @Test(.enabled(if: TextAI.isAvailable, "Apple Intelligence is not on this Mac"))
     func theModelSaysItInOneShortSentence() async throws {
         let line = try await TextAI.sessionLine("J'ai corrigé le bug qui empêchait la connexion avec Google, ajouté trois tests unitaires pour le cas d'un jeton expiré, et mis à jour le README.")
-        #expect(line.split(separator: " ").count <= 22)
+        #expect(line.split(separator: " ").count <= 20)
         #expect(!line.contains("\n"))
     }
 }

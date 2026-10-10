@@ -1979,6 +1979,146 @@
         }
       }
     },
+    "Antigravity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity"
+          }
+        }
+      }
+    },
+    "Antigravity (compte Google)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity (Google account)"
+          }
+        }
+      }
+    },
+    "Antigravity : des hooks à toi tourneraient aussi pour Yumi. Retire-les pour l'utiliser comme moteur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: hooks of yours would run for Yumi too. Remove them to use it as an engine."
+          }
+        }
+      }
+    },
+    "Antigravity : des plugins sont installés. Retire-les pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: plugins are installed. Remove them to use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : des réglages d'administration s'appliquent, je ne l'utilise donc pas comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: administrator settings apply, so I don't use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : des serveurs MCP sont configurés. Retire-les pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: MCP servers are configured. Remove them to use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : je n'arrive pas à lire tes réglages, je ne l'utilise donc pas comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: I can't read your settings, so I don't use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : tes réglages autorisent des outils sans demander (permissions.allow). Retire-les pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: your settings allow tools without asking (permissions.allow). Remove them to use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : tes réglages contiennent %@, qui pourrait agir sans demander. Retire-le pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: your settings contain %@, which could act without asking. Remove it to use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity attend ton message sur %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity is waiting for your message on %@."
+          }
+        }
+      }
+    },
+    "Antigravity avance sur %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity is moving on %@."
+          }
+        }
+      }
+    },
+    "Antigravity n'est pas installé ou pas connecté (agy, puis connecte-toi).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity isn't installed or signed in (agy, then sign in)."
+          }
+        }
+      }
+    },
+    "Antigravity réfléchit sur %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity is thinking on %@."
+          }
+        }
+      }
+    },
+    "Antigravity sur %@ : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity on %1$@: %2$@"
+          }
+        }
+      }
+    },
     "Apple Intelligence (sur ce Mac)": {
       "localizations": {
         "en": {
@@ -1995,6 +2135,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apple can't translate between these two languages."
+          }
+        }
+      }
+    },
+    "Approfondie": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In depth"
           }
         }
       }
@@ -2431,6 +2581,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connected. The quotas arrive as soon as a Claude Code session runs."
+          }
+        }
+      }
+    },
+    "C'est branché. Tes prochaines sessions agy apparaîtront dans le module Antigravity.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected. Your next agy sessions will show up in the Antigravity module."
           }
         }
       }
@@ -2917,6 +3077,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Searches the web"
+          }
+        }
+      }
+    },
+    "Chercher": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        }
+      }
+    },
+    "Chercher sur le web": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search the web"
           }
         }
       }
@@ -3947,6 +4127,16 @@
         }
       }
     },
+    "Débranché.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnected."
+          }
+        }
+      }
+    },
     "Débranché. Ta ligne de statut d'avant est remise.": {
       "localizations": {
         "en": {
@@ -4243,6 +4433,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Keep “%@”"
+          }
+        }
+      }
+    },
+    "Gemini (Antigravity)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemini (Antigravity)"
           }
         }
       }
@@ -4807,6 +5007,16 @@
         }
       }
     },
+    "Je cherche… « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searching… “%@”"
+          }
+        }
+      }
+    },
     "Je compte ta journée avec Claude": {
       "localizations": {
         "en": {
@@ -5153,6 +5363,16 @@
         }
       }
     },
+    "Je n'ai rien trouvé de clair.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't find anything clear."
+          }
+        }
+      }
+    },
     "Je n'ai rien trouvé à dire. Redemande-moi.": {
       "localizations": {
         "en": {
@@ -5399,6 +5619,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I don't see any text in this image."
+          }
+        }
+      }
+    },
+    "Je ne vois pas tes sessions Antigravity.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't see your Antigravity sessions."
           }
         }
       }
@@ -5693,6 +5923,16 @@
         }
       }
     },
+    "La recherche n'a pas abouti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The search didn't work out."
+          }
+        }
+      }
+    },
     "La reconnaissance vocale n'est pas disponible.": {
       "localizations": {
         "en": {
@@ -5769,6 +6009,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Start Claude Code, I'll watch."
+          }
+        }
+      }
+    },
+    "Lance agy, je regarderai.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start agy, I'll watch."
           }
         }
       }
@@ -6059,6 +6309,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tell me about new versions"
+          }
+        }
+      }
+    },
+    "Mes hooks dans Antigravity me montrent tes sessions agy dans l'encoche. Ils ne décident de rien. Seule l'entrée « yumi » change dans ~/.gemini/antigravity-cli/hooks.json, avec une copie de l'ancien fichier.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My hooks in Antigravity show me your agy sessions in the notch. They decide nothing. Only the “yumi” entry changes in ~/.gemini/antigravity-cli/hooks.json, with a copy of the old file."
           }
         }
       }
@@ -6789,6 +7049,16 @@
         }
       }
     },
+    "Pas installé (curl -fsSL https://antigravity.google/cli/install.sh | bash).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not installed (curl -fsSL https://antigravity.google/cli/install.sh | bash)."
+          }
+        }
+      }
+    },
     "Pas installé.": {
       "localizations": {
         "en": {
@@ -7165,6 +7435,16 @@
         }
       }
     },
+    "Que veux-tu savoir ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What do you want to know?"
+          }
+        }
+      }
+    },
     "Quelqu'un a copié Atelier pour y travailler.": {
       "localizations": {
         "en": {
@@ -7285,6 +7565,16 @@
         }
       }
     },
+    "Rapide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick"
+          }
+        }
+      }
+    },
     "Rappel": {
       "localizations": {
         "en": {
@@ -7357,6 +7647,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Searches"
+          }
+        }
+      }
+    },
+    "Recherche sur le web": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web search"
           }
         }
       }
@@ -7607,6 +7907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing leaves your Mac: the model runs locally. Free."
+          }
+        }
+      }
+    },
+    "Rien ne tourne sur Antigravity.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing is running on Antigravity."
           }
         }
       }
@@ -8469,6 +8779,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your messages and plan requests go to OpenAI. Billed by OpenAI per use."
+          }
+        }
+      }
+    },
+    "Tes messages partent chez Google par ton Antigravity, sous ton compte Google (ton abonnement Gemini). Il tourne en lecture seule : il peut chercher sur le web, il ne modifie rien.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your messages go to Google through your Antigravity, under your Google account (your Gemini subscription). It runs read-only: it can search the web, it changes nothing."
           }
         }
       }
@@ -10261,6 +10581,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "yesterday"
+          }
+        }
+      }
+    },
+    "hooks.json après :": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hooks.json after:"
+          }
+        }
+      }
+    },
+    "hooks.json d'Antigravity n'est pas un JSON valide. Je n'y ai pas touché.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity's hooks.json isn't valid JSON. I didn't touch it."
           }
         }
       }
@@ -12153,6 +12493,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "\"When it matters\": a few times a day at most. \"Gladly\": also to say hello."
+          }
+        }
+      }
+    },
+    "« Recherche » dans l'île : une question, une réponse courte et ses sources, par Gemini (Antigravity) ou Claude.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Search” in the island: a question, a short answer and its sources, by Gemini (Antigravity) or Claude."
           }
         }
       }

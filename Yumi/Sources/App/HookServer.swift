@@ -114,6 +114,14 @@ final class HookServer: @unchecked Sendable {
         }
 
         let eventName = payload["hook_event_name"] as? String ?? ""
+        // Antigravity's sessions: shown only, nothing to answer
+        if payload["source"] as? String == "antigravity" {
+            ingress?.post(AntigravityHookTranslator.events(for: payload))
+            sendLine(fd: fd, text: #"{"ok":true}"#)
+            close(fd)
+            return
+        }
+
         if let passed = TestRun.outcome(payload) {
             Task { @MainActor in IslandModel.shared.react(testsPassed: passed) }
         }
@@ -935,6 +943,12 @@ def main():
     if 'cwd' not in payload or not payload['cwd']:
         payload['cwd'] = os.getcwd()
 
+    # Another agent's hooks (Antigravity) name their source and event in the command
+    source = env.get('YUMI_HOOK_SOURCE', '')
+    if source:
+        payload['source'] = source
+        payload['hook_event_name'] = env.get('YUMI_HOOK_EVENT', '')
+
     event = payload.get('hook_event_name', '')
     socket_path = os.path.expanduser(
         '\(socketPath)'
@@ -1008,6 +1022,10 @@ def main():
         s.close()
     except Exception:
         pass  # Always exit cleanly, never block Claude Code
+    # Antigravity reads an answer after its hooks: an empty object changes nothing.
+    # Before a tool, nothing at all (checked: the tool runs).
+    if source and event != 'PreToolUse':
+        sys.stdout.write('{}\\n')
 
 main()
 sys.exit(0)

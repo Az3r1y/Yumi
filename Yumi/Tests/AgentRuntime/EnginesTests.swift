@@ -179,12 +179,12 @@ private func providers(answering text: String, wire: Wire) -> [any LLMProvider] 
 
 @Suite struct EngineSettingsTests {
     @Test func automaticTriesEveryEngineInOrder() {
-        #expect(EngineSettings().sequence == [.claudeCode, .anthropic, .openai, .gemini, .ollama, .apple])
+        #expect(EngineSettings().sequence == [.claudeCode, .anthropic, .openai, .gemini, .ollama, .antigravity, .apple])
         var settings = EngineSettings(order: [.ollama, .gemini])
-        #expect(settings.sequence == [.ollama, .gemini, .claudeCode, .anthropic, .openai, .apple])
+        #expect(settings.sequence == [.ollama, .gemini, .claudeCode, .anthropic, .openai, .antigravity, .apple])
         settings.choice = .gemini
         #expect(settings.sequence == [.gemini])
-        #expect(EngineSettings.normalised([.openai, .openai, .claudeCode]) == [.openai, .claudeCode, .anthropic, .gemini, .ollama, .apple])
+        #expect(EngineSettings.normalised([.openai, .openai, .claudeCode]) == [.openai, .claudeCode, .anthropic, .gemini, .ollama, .antigravity, .apple])
     }
 
     @Test func savedAndReadBack() throws {
@@ -221,7 +221,7 @@ private func providers(answering text: String, wire: Wire) -> [any LLMProvider] 
             case .openai: OpenAILLMProvider(apiKey: { nil }, transport: reply(200, "", wire: wire))
             case .gemini: GeminiLLMProvider(apiKey: { "g" }, transport: reply(200, geminiAnswer("from gemini"), wire: wire))
             case .ollama: OllamaLLMProvider(model: { "m" }, transport: reply(200, ollamaAnswer("from ollama"), wire: wire))
-            case .apple: nil // not on the test machine
+            case .antigravity, .apple: nil // not on the test machine
             }
         }
         let auto = EngineLLMProvider(settings: { EngineSettings() }, make: make)

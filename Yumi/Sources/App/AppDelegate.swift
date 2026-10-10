@@ -329,6 +329,7 @@ final class YumiCore {
         #if !APPSTORE
         // The transcripts of Claude Code, out of reach of the App Store build's sandbox
         usage.append(ClaudeUsageModule())
+        usage.append(AntigravityModule(onInstallHooks: { IslandActions.openSettings(.engines) }))
         #endif
         modules = ModuleRegistry(
             modules: [
