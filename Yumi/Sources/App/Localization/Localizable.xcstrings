@@ -1979,6 +1979,16 @@
         }
       }
     },
+    "Antigravity (compte Google)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity (Google account)"
+          }
+        }
+      }
+    },
     "Apple Intelligence (sur ce Mac)": {
       "localizations": {
         "en": {
@@ -6789,6 +6799,16 @@
         }
       }
     },
+    "Pas installé (curl -fsSL https://antigravity.google/cli/install.sh | bash).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not installed (curl -fsSL https://antigravity.google/cli/install.sh | bash)."
+          }
+        }
+      }
+    },
     "Pas installé.": {
       "localizations": {
         "en": {
@@ -8469,6 +8489,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Your messages and plan requests go to OpenAI. Billed by OpenAI per use."
+          }
+        }
+      }
+    },
+    "Tes messages partent chez Google par ton Antigravity, sous ton compte Google (ton abonnement Gemini). Il tourne en lecture seule : il peut chercher sur le web, il ne modifie rien.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your messages go to Google through your Antigravity, under your Google account (your Gemini subscription). It runs read-only: it can search the web, it changes nothing."
           }
         }
       }
