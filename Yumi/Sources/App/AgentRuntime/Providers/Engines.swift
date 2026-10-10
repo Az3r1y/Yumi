@@ -4,7 +4,7 @@ import Foundation
 /// goes through `PlanValidator`, the registry, `PermissionManager`, the executor and the
 /// verification, and whichever chats, the chat has no tool that changes the Mac.
 enum Engine: String, CaseIterable, Codable, Sendable {
-    case claudeCode, anthropic, openai, gemini, ollama, apple
+    case claudeCode, anthropic, openai, gemini, ollama, antigravity, apple
 
     var label: String {
         switch self {
@@ -13,6 +13,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .openai: loc("OpenAI (clé API)")
         case .gemini: loc("Google Gemini (clé API)")
         case .ollama: loc("Ollama (sur ce Mac)")
+        case .antigravity: loc("Antigravity (compte Google)")
         case .apple: loc("Apple Intelligence (sur ce Mac)")
         }
     }
@@ -23,7 +24,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .anthropic: "anthropic-api-key"
         case .openai: "openai-api-key"
         case .gemini: "gemini-api-key"
-        case .claudeCode, .ollama, .apple: nil
+        case .claudeCode, .ollama, .apple, .antigravity: nil
         }
     }
 
@@ -33,6 +34,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .anthropic: "claude-sonnet-4-6"
         case .openai: OpenAILLMProvider.defaultModel
         case .gemini: GeminiLLMProvider.defaultModel
+        case .antigravity: AntigravityLLMProvider.defaultModel
         case .claudeCode, .ollama, .apple: nil
         }
     }
@@ -45,6 +47,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .openai: loc("Tes messages et les demandes de plan partent chez OpenAI. Facturé par OpenAI à l'usage.")
         case .gemini: loc("Tes messages et les demandes de plan partent chez Google. Le palier gratuit suffit pour essayer ; au-delà, facturé par Google.")
         case .ollama: loc("Rien ne quitte ton Mac : le modèle tourne en local. Gratuit.")
+        case .antigravity: loc("Tes messages partent chez Google par ton Antigravity, sous ton compte Google (ton abonnement Gemini). Il tourne en lecture seule : il peut chercher sur le web, il ne modifie rien.")
         case .apple: loc("Rien ne quitte ton Mac : le modèle d'Apple Intelligence tourne en local, sans internet. Gratuit. Petit modèle : il comprend les demandes simples.")
         }
     }
@@ -120,6 +123,10 @@ enum EngineDetector {
             return models.contains(chosen)
                 ? EngineStatus(engine: engine, ready: true, detail: loc("Modèle \(chosen)."))
                 : EngineStatus(engine: engine, ready: false, detail: loc("\(chosen) n'est pas installé dans Ollama."))
+        case .antigravity:
+            return AntigravityLLMProvider.find() != nil
+                ? EngineStatus(engine: engine, ready: true, detail: loc("Installé. La connexion se vérifie avec « Tester »."))
+                : EngineStatus(engine: engine, ready: false, detail: loc("Pas installé (curl -fsSL https://antigravity.google/cli/install.sh | bash)."))
         case .apple:
             return AppleLLMProvider.isAvailable
                 ? EngineStatus(engine: engine, ready: true, detail: loc("Prêt, sur ce Mac."))
