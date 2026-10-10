@@ -106,7 +106,8 @@ struct EngineStatus: Equatable, Sendable {
 
 enum EngineDetector {
     static func status(of engine: Engine, claudeCodeInstalled: Bool, hasKey: (Engine) -> Bool,
-                       ollamaModels: [String]?, ollamaModel: String?) -> EngineStatus {
+                       ollamaModels: [String]?, ollamaModel: String?,
+                       isOwnAntigravityHooks: (Any) -> Bool = { _ in false }) -> EngineStatus {
         switch engine {
         case .claudeCode:
             return claudeCodeInstalled
@@ -125,7 +126,7 @@ enum EngineDetector {
                 : EngineStatus(engine: engine, ready: false, detail: loc("\(chosen) n'est pas installé dans Ollama."))
         case .antigravity:
             if AntigravityLLMProvider.find() != nil,
-               let problem = AntigravityLLMProvider.isolationProblem(in: NSHomeDirectory() + "/.gemini/antigravity-cli", isOwnHooks: { _ in false }) {
+               let problem = AntigravityLLMProvider.isolationProblem(in: NSHomeDirectory() + "/.gemini/antigravity-cli", isOwnHooks: isOwnAntigravityHooks) {
                 return EngineStatus(engine: engine, ready: false, detail: problem)
             }
             return AntigravityLLMProvider.find() != nil

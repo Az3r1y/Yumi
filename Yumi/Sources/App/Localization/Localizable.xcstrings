@@ -1979,6 +1979,16 @@
         }
       }
     },
+    "Antigravity": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity"
+          }
+        }
+      }
+    },
     "Antigravity (compte Google)": {
       "localizations": {
         "en": {
@@ -2059,12 +2069,52 @@
         }
       }
     },
+    "Antigravity attend ton message sur %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity is waiting for your message on %@."
+          }
+        }
+      }
+    },
+    "Antigravity avance sur %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity is moving on %@."
+          }
+        }
+      }
+    },
     "Antigravity n'est pas installé ou pas connecté (agy, puis connecte-toi).": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Antigravity isn't installed or signed in (agy, then sign in)."
+          }
+        }
+      }
+    },
+    "Antigravity réfléchit sur %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity is thinking on %@."
+          }
+        }
+      }
+    },
+    "Antigravity sur %@ : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity on %1$@: %2$@"
           }
         }
       }
@@ -2531,6 +2581,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Connected. The quotas arrive as soon as a Claude Code session runs."
+          }
+        }
+      }
+    },
+    "C'est branché. Tes prochaines sessions agy apparaîtront dans le module Antigravity.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected. Your next agy sessions will show up in the Antigravity module."
           }
         }
       }
@@ -4067,6 +4127,16 @@
         }
       }
     },
+    "Débranché.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnected."
+          }
+        }
+      }
+    },
     "Débranché. Ta ligne de statut d'avant est remise.": {
       "localizations": {
         "en": {
@@ -5553,6 +5623,16 @@
         }
       }
     },
+    "Je ne vois pas tes sessions Antigravity.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can't see your Antigravity sessions."
+          }
+        }
+      }
+    },
     "Je ne vois pas tes sessions Claude Code.": {
       "localizations": {
         "en": {
@@ -5933,6 +6013,16 @@
         }
       }
     },
+    "Lance agy, je regarderai.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start agy, I'll watch."
+          }
+        }
+      }
+    },
     "Lance un morceau, j'écoute avec toi.": {
       "localizations": {
         "en": {
@@ -6219,6 +6309,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tell me about new versions"
+          }
+        }
+      }
+    },
+    "Mes hooks dans Antigravity me montrent tes sessions agy dans l'encoche. Ils ne décident de rien. Seule l'entrée « yumi » change dans ~/.gemini/antigravity-cli/hooks.json, avec une copie de l'ancien fichier.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "My hooks in Antigravity show me your agy sessions in the notch. They decide nothing. Only the “yumi” entry changes in ~/.gemini/antigravity-cli/hooks.json, with a copy of the old file."
           }
         }
       }
@@ -7807,6 +7907,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing leaves your Mac: the model runs locally. Free."
+          }
+        }
+      }
+    },
+    "Rien ne tourne sur Antigravity.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing is running on Antigravity."
           }
         }
       }
@@ -10471,6 +10581,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "yesterday"
+          }
+        }
+      }
+    },
+    "hooks.json après :": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "hooks.json after:"
+          }
+        }
+      }
+    },
+    "hooks.json d'Antigravity n'est pas un JSON valide. Je n'y ai pas touché.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity's hooks.json isn't valid JSON. I didn't touch it."
           }
         }
       }

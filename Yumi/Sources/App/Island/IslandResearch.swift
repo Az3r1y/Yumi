@@ -30,7 +30,8 @@ final class ResearchBoard: ObservableObject {
         let folder = AppIdentity.supportDirectory.appendingPathComponent("research").path
         running = Task {
             do {
-                let found = try await WebResearch.ask(text, engine: engine, depth: depth, folder: folder, english: AppLanguage.isEnglish)
+                let found = try await WebResearch.ask(text, engine: engine, depth: depth, folder: folder, english: AppLanguage.isEnglish,
+                                                         isOwnHooks: { AntigravityHooks.isOwn($0) })
                 if found.text.isEmpty { note = loc("Je n'ai rien trouvé de clair.") } else { answer = found }
                 question = ""
             } catch LLMProviderError.unavailable {

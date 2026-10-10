@@ -36,6 +36,9 @@ struct EnginesSettings: View {
             ForEach(Array(order.enumerated()), id: \.element) { index, engine in
                 section(engine, index: index, last: index == order.count - 1)
             }
+            #if !APPSTORE
+            AntigravityHooksSection()
+            #endif
         }
         .task { await refreshOllama() }
     }
@@ -44,7 +47,8 @@ struct EnginesSettings: View {
     private func section(_ engine: Engine, index: Int, last: Bool) -> some View {
         let status = EngineDetector.status(of: engine, claudeCodeInstalled: EngineFactory.hasClaudeCode,
                                            hasKey: { !(keys[$0] ?? "").isEmpty && KeychainStore.shared.get($0.keychainKey ?? "") != nil },
-                                           ollamaModels: ollamaModels, ollamaModel: settings.models[.ollama])
+                                           ollamaModels: ollamaModels, ollamaModel: settings.models[.ollama],
+                                           isOwnAntigravityHooks: { AntigravityHooks.isOwn($0) })
         Section {
             LabeledContent("État") {
                 SettingsStatus(text: status.detail, tone: status.ready ? .ok : .off)

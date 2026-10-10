@@ -79,7 +79,7 @@ enum HookSettings {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.dateFormat = "yyyyMMdd-HHmm"
-        let base = settings.deletingLastPathComponent().appendingPathComponent("settings.json.bak-\(formatter.string(from: now))")
+        let base = settings.deletingLastPathComponent().appendingPathComponent("\(settings.lastPathComponent).bak-\(formatter.string(from: now))")
         var candidate = base
         var index = 2
         while exists(candidate) {

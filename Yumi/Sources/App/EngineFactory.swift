@@ -32,7 +32,7 @@ enum EngineFactory {
             return nil // The App Store build may not launch programs.
             #else
             return AntigravityLLMProvider(folder: AppIdentity.supportDirectory.appendingPathComponent("antigravity").path,
-                                          model: settings.model(.antigravity))
+                                          model: settings.model(.antigravity), isOwnHooks: { AntigravityHooks.isOwn($0) })
             #endif
         case .apple:
             return AppleLLMProvider()

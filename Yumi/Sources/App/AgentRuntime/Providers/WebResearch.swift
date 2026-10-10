@@ -113,10 +113,12 @@ enum WebResearch {
     }
 
     /// Asks, and gives the answer or why there is none.
-    static func ask(_ question: String, engine: Engine, depth: Depth, folder: String, english: Bool) async throws -> Answer {
+    /// - Parameter isOwnHooks: recognises Yumi's own hooks in Antigravity's settings (`AntigravityHooks.isOwn`).
+    static func ask(_ question: String, engine: Engine, depth: Depth, folder: String, english: Bool,
+                    isOwnHooks: @escaping @Sendable (Any) -> Bool = { _ in false }) async throws -> Answer {
         let provider: any LLMProvider = switch engine {
         case .antigravity:
-            AntigravityLLMProvider(folder: folder, model: depth.antigravityModel)
+            AntigravityLLMProvider(folder: folder, model: depth.antigravityModel, isOwnHooks: isOwnHooks)
         case .claude:
             ClaudeCodeLLMProvider(binary: { ClaudeCLI.find() }, folder: folder, model: depth.claudeModel, readOnlyTools: ["WebSearch"])
         }
