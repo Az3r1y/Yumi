@@ -10,7 +10,8 @@ enum EngineFactory {
             return nil // The App Store build may not launch programs.
             #else
             return ClaudeCodeLLMProvider(binary: { ClaudeCLI.find() },
-                                         folder: AppIdentity.supportDirectory.appendingPathComponent("planner").path)
+                                         folder: AppIdentity.supportDirectory.appendingPathComponent("planner").path,
+                                         model: settings.models[.claudeCode]?.nonEmptyTrimmed)
             #endif
         case .anthropic:
             return AnthropicLLMProvider(model: settings.model(.anthropic) ?? "claude-sonnet-4-6", apiKey: key(.anthropic))

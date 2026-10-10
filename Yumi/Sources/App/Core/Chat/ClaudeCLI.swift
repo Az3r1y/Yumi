@@ -108,7 +108,7 @@ enum ClaudeCLI {
     /// `--permission-mode default` is explicit so that nothing is ever accepted without being asked.
     /// `ChatTools.arguments` leaves the chat only tools that read.
     static func arguments(session: Session, systemPrompt: String, readableFolders: [String] = [],
-                          extra: [String] = []) -> [String] {
+                          model: String? = nil, extra: [String] = []) -> [String] {
         var arguments = ["-p",
                          "--input-format", "stream-json",
                          "--output-format", "stream-json",
@@ -124,6 +124,7 @@ enum ClaudeCLI {
         // The chat talks and reads; acting on the Mac is the agent runtime's (ChatTools).
         arguments += ChatTools.arguments
         for folder in readableFolders { arguments += ["--add-dir", folder] }
+        if let model { arguments += ["--model", model] }
         return arguments + extra
     }
 

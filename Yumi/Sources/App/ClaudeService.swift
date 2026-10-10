@@ -161,7 +161,6 @@ final class ClaudeService {
     func clearConversation(remember: Bool = true) {
         guard LaunchPlan.current.chat else { return }
         conversationMessages = []
-        providerConversation = []
         unseenTurns = []
         #if !APPSTORE
         if remember, answeredTurns >= 1, turn == nil, let session, let binary = ClaudeCLI.find() {
@@ -191,16 +190,46 @@ final class ClaudeService {
     func chat(query: String, context: PromptContext?, state: AppState) async {
         // While filming the chat is the island's to stage: nothing is launched, nothing is sent.
         guard LaunchPlan.current.chat else { return }
+        let (route, query) = await route(for: query)
+        state.chatVia = route?.label
+        await TaskRouter.$current.withValue(route) {
+            await answer(query: query, route: route, context: context, state: state)
+        }
+    }
+
+    /// The route of a message: the one named with `@`, or the router's. nil when the router is
+    /// off. Each message may go to another engine: the history follows (`chatWithProvider`).
+    private func route(for query: String) async -> (TaskRouter.Route?, String) {
+        if let forced = TaskRouter.forced(query), !forced.message.isEmpty {
+            return (forced.route, forced.message)
+        }
+        let router = RouterSettings.load()
+        guard router.enabled else { return (nil, query) }
+        let kind = await TaskRouter.classify(query, ask: AppleLLMProvider.isAvailable ? Self.askApple : nil)
+        return (router.route(kind), query)
+    }
+
+    /// Apple Intelligence names the kind of a request, on this Mac.
+    private static let askApple: @Sendable (String) async -> String? = { text in
+        let request = LLMRequest(system: TaskRouter.classifierPrompt,
+                                 messages: [LLMMessage(role: .user, content: String(text.prefix(1500)))],
+                                 expectsJSON: false, maxOutputTokens: 8)
+        return try? await AppleLLMProvider().complete(request).text
+    }
+
+    private func answer(query: String, route: TaskRouter.Route?, context: PromptContext?, state: AppState) async {
         if await runAsAgent(query: query, state: state) { return }
-        // The engine of the settings, or the first available in their order (EngineSettings).
-        // Whichever answers, the chat has no tool that changes the Mac.
+        // The routed engine first, then the engine of the settings, or the first available in
+        // their order (EngineSettings). Whichever answers, the chat has no tool that changes the Mac.
         let settings = EngineSettings.load()
-        for engine in settings.sequence {
+        for (engine, routed) in settings.routed(route) {
             switch engine {
             case .claudeCode:
                 #if !APPSTORE
                 if let binary = ClaudeCLI.find() {
-                    await chatWithClaudeCode(binary: binary, query: query, context: context, state: state)
+                    state.chatVia = route?.engine == engine ? route?.label : nil
+                    await chatWithClaudeCode(binary: binary, query: query, context: context, state: state,
+                                             model: routed.models[.claudeCode]?.nonEmptyTrimmed)
                     return
                 }
                 #endif
@@ -210,8 +239,9 @@ final class ClaudeService {
                     return
                 }
             case .openai, .gemini, .ollama, .antigravity, .apple:
-                if let provider = EngineFactory.provider(engine, settings),
+                if let provider = EngineFactory.provider(engine, routed),
                    await chatWithProvider(provider, engine: engine, query: query, context: context, state: state) {
+                    if route?.engine != engine || routed.models[engine] != route?.model { state.chatVia = nil }
                     return
                 }
             }
@@ -222,17 +252,20 @@ final class ClaudeService {
     // MARK: - Chat through another engine
 
     /// The conversation with OpenAI, Gemini or Ollama: text only, no tool of any kind.
-    private var providerConversation: [LLMMessage] = []
 
     /// One turn with a provider. False when it is not configured (the next engine is tried);
     /// any other failure is said to the person.
     private func chatWithProvider(_ provider: any LLMProvider, engine: Engine, query: String,
                                   context: PromptContext?, state: AppState) async -> Bool {
-        let attached = providerConversation.isEmpty ? Self.chatContext(from: context) : nil
+        // The whole chat so far, whichever engine answered it
+        var earlier = state.chatHistory
+        if earlier.last?.role == .user { earlier.removeLast() }
+        let history = earlier.map { LLMMessage(role: $0.role == .user ? .user : .assistant, content: $0.content) }
+        let attached = history.isEmpty ? Self.chatContext(from: context) : nil
         let message = LLMMessage(role: .user, content: ChatPhrases.message(query: query, context: attached))
         let system = ChatPhrases.engineSystemPrompt(characterName: AppIdentity.characterName)
             + (memory.map { "\n\n" + MemoryPrompt.knowledge($0.book) + "\n\n" + MemoryNotes.instructions } ?? "")
-        let request = LLMRequest(system: system, messages: providerConversation + [message], expectsJSON: false, maxOutputTokens: 1500)
+        let request = LLMRequest(system: system, messages: history + [message], expectsJSON: false, maxOutputTokens: 1500)
         do {
             let answer = try await provider.complete(request)
             let (visible, learnt) = MemoryNotes.extract(from: answer.text)
@@ -241,7 +274,8 @@ final class ClaudeService {
                 await showError(ChatPhrases.noAnswer, state: state)
                 return true
             }
-            providerConversation += [message, LLMMessage(role: .assistant, content: visible)]
+            // Claude Code's session hears about it with the next message it answers
+            unseenTurns.append((query, visible))
             state.chatHistory.append(ChatMessage(role: .assistant, content: visible))
             state.stateOverride = nil
             state.view = .prompt
@@ -316,7 +350,6 @@ final class ClaudeService {
     /// An exchange the runtime answered joins the conversation the chat model keeps.
     private func remember(_ query: String, answeredWith text: String) {
         unseenTurns.append((query, text))
-        providerConversation += [LLMMessage(role: .user, content: query), LLMMessage(role: .assistant, content: text)]
         // The API conversation alternates user and assistant: the pair goes in whole.
         if (conversationMessages.last?["role"] as? String) != "user" {
             conversationMessages.append(["role": "user", "content": [["type": "text", "text": query]]])
@@ -327,7 +360,7 @@ final class ClaudeService {
     // MARK: - Chat through Claude Code
 
     #if !APPSTORE
-    private func chatWithClaudeCode(binary: String, query: String, context: PromptContext?, state: AppState) async {
+    private func chatWithClaudeCode(binary: String, query: String, context: PromptContext?, state: AppState, model: String? = nil) async {
         // A message sent while the previous one is still being answered replaces it.
         turn?.cancel()
 
@@ -353,12 +386,12 @@ final class ClaudeService {
         }
         let message = ChatPhrases.earlierTurns(unseenTurns, before: ChatPhrases.message(query: query, context: attached == sentContext ? nil : attached))
 
-        var outcome = await runTurn(binary: binary, message: message, folder: folder, state: state)
+        var outcome = await runTurn(binary: binary, message: message, folder: folder, state: state, model: model)
         if outcome == .unknownSession {
             // The session to resume is gone (its history was removed): start again, attachment included.
             session = nil
             outcome = await runTurn(binary: binary, message: ChatPhrases.earlierTurns(unseenTurns, before: ChatPhrases.message(query: query, context: attached)),
-                                    folder: folder, state: state)
+                                    folder: folder, state: state, model: model)
         }
         if outcome == .answered {
             sentContext = attached
@@ -408,7 +441,7 @@ final class ClaudeService {
     private enum TurnOutcome { case answered, failed, cancelled, unknownSession }
 
     /// Sends one message to Claude Code and follows the answer until the turn ends.
-    private func runTurn(binary: String, message: String, folder: String, state: AppState) async -> TurnOutcome {
+    private func runTurn(binary: String, message: String, folder: String, state: AppState, model: String? = nil) async -> TurnOutcome {
         let target: ClaudeCLI.Session = session.map { .resume($0.id) } ?? .new(UUID().uuidString.lowercased())
         // From now on the hooks of this session are left to the chat (see HookServer).
         ChatSessionRegistry.shared.insert(target.id)
@@ -424,7 +457,7 @@ final class ClaudeService {
                 session: target,
                 systemPrompt: ChatPhrases.systemPrompt(characterName: AppIdentity.characterName, folder: folder,
                                                        memory: memory?.book),
-                readableFolders: readableFolders, extra: extra),
+                readableFolders: readableFolders, model: model, extra: extra),
             environment: ClaudeCLI.environment(from: ProcessInfo.processInfo.environment, binary: binary),
             folder: folder)
         self.turn = turn

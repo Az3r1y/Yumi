@@ -160,7 +160,8 @@ struct EngineLLMProvider: LLMProvider {
 
     func complete(_ request: LLMRequest) async throws -> LLMResponse {
         let current = settings()
-        let providers = current.sequence.compactMap { make($0, current) }
+        // The route of the request being answered, when the chat decided one (TaskRouter)
+        let providers = current.routed(TaskRouter.current).compactMap { make($0.engine, $0.settings) }
         return try await FallbackLLMProvider(providers: providers).complete(request)
     }
 }

@@ -116,6 +116,8 @@ final class AppState: ObservableObject {
     // The answer in progress, word by word and action by action (see Contracts/ChatLive.swift).
     // nil when the chat is idle.
     @Published var chatLive: ChatLive? = nil
+    /// The model the router sent the last message to ("Claude Haiku"), nil when it did not route.
+    @Published var chatVia: String? = nil
 
     // What Yumi remembers (see Contracts/MemoryTypes.swift). Filled by the core's memory store.
     @Published var memory: [MemoryEntry] = []
