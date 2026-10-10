@@ -2009,6 +2009,16 @@
         }
       }
     },
+    "Antigravity : des réglages d'administration s'appliquent, je ne l'utilise donc pas comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: administrator settings apply, so I don't use it as Yumi's engine."
+          }
+        }
+      }
+    },
     "Antigravity : des serveurs MCP sont configurés. Retire-les pour l'utiliser comme moteur de Yumi.": {
       "localizations": {
         "en": {
@@ -2019,12 +2029,32 @@
         }
       }
     },
+    "Antigravity : je n'arrive pas à lire tes réglages, je ne l'utilise donc pas comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: I can't read your settings, so I don't use it as Yumi's engine."
+          }
+        }
+      }
+    },
     "Antigravity : tes réglages autorisent des outils sans demander (permissions.allow). Retire-les pour l'utiliser comme moteur de Yumi.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Antigravity: your settings allow tools without asking (permissions.allow). Remove them to use it as Yumi's engine."
+          }
+        }
+      }
+    },
+    "Antigravity : tes réglages contiennent %@, qui pourrait agir sans demander. Retire-le pour l'utiliser comme moteur de Yumi.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity: your settings contain %@, which could act without asking. Remove it to use it as Yumi's engine."
           }
         }
       }

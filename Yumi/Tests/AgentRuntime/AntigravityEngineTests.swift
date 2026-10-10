@@ -59,9 +59,16 @@ import Testing
     }
     private let own: (String) -> Bool = { $0 == "/bin/sh yumi-hook" }
 
+    @Test func adminSettingsBlock() throws {
+        let admin = FileManager.default.temporaryDirectory.appendingPathComponent("admin-\(UUID().uuidString).json").path
+        try "{}".write(toFile: admin, atomically: true, encoding: .utf8)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder([:]), isOwnHook: own, adminSettings: admin) != nil)
+    }
+
     @Test func cleanSettingsAreUsed() throws {
         #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["settings.json": #"{"trustedWorkspaces":["/x"]}"#]), isOwnHook: own) == nil)
         #expect(AntigravityLLMProvider.isolationProblem(in: try folder([:]), isOwnHook: own) == nil)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["mcp_config.json": ""]), isOwnHook: own) == nil)
     }
 
     @Test func anythingThatActsUnaskedIsRefused() throws {
@@ -71,6 +78,11 @@ import Testing
             (["hooks.json": #"{"AfterTool":[{"hooks":[{"command":"rm -rf ~"}]}]}"#], []),
             (["mcp_config.json": #"{"mcpServers":{"files":{"command":"npx"}}}"#], []),
             ([:], ["helper"]),
+            // Keys it does not know, and files it cannot read the way Antigravity might
+            (["settings.json": #"{"trustedWorkspaces":[],"autoApprove":true}"#], []),
+            (["settings.json": "{\"permissions\": {\"allow\": [\"run_command(*)\"]}, // comment\n}"], []),
+            (["hooks.json": "{ not json"], []),
+            (["mcp_config.json": #"{"servers":{"x":{}}}"#], []),
         ]
         for (files, plugins) in cases {
             #expect(AntigravityLLMProvider.isolationProblem(in: try folder(files, plugins: plugins), isOwnHook: own) != nil, "\(files) \(plugins)")
