@@ -2059,6 +2059,16 @@
         }
       }
     },
+    "Antigravity n'est pas installé ou pas connecté (agy, puis connecte-toi).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antigravity isn't installed or signed in (agy, then sign in)."
+          }
+        }
+      }
+    },
     "Apple Intelligence (sur ce Mac)": {
       "localizations": {
         "en": {
@@ -2075,6 +2085,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Apple can't translate between these two languages."
+          }
+        }
+      }
+    },
+    "Approfondie": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In depth"
           }
         }
       }
@@ -2997,6 +3017,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Searches the web"
+          }
+        }
+      }
+    },
+    "Chercher": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search"
+          }
+        }
+      }
+    },
+    "Chercher sur le web": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Search the web"
           }
         }
       }
@@ -4327,6 +4367,16 @@
         }
       }
     },
+    "Gemini (Antigravity)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gemini (Antigravity)"
+          }
+        }
+      }
+    },
     "GitHub": {
       "localizations": {
         "en": {
@@ -4887,6 +4937,16 @@
         }
       }
     },
+    "Je cherche… « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Searching… “%@”"
+          }
+        }
+      }
+    },
     "Je compte ta journée avec Claude": {
       "localizations": {
         "en": {
@@ -5229,6 +5289,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I didn't manage, try again."
+          }
+        }
+      }
+    },
+    "Je n'ai rien trouvé de clair.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I didn't find anything clear."
           }
         }
       }
@@ -5769,6 +5839,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The pull request \"Calmer home\" is merged."
+          }
+        }
+      }
+    },
+    "La recherche n'a pas abouti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The search didn't work out."
           }
         }
       }
@@ -7255,6 +7335,16 @@
         }
       }
     },
+    "Que veux-tu savoir ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What do you want to know?"
+          }
+        }
+      }
+    },
     "Quelqu'un a copié Atelier pour y travailler.": {
       "localizations": {
         "en": {
@@ -7375,6 +7465,16 @@
         }
       }
     },
+    "Rapide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quick"
+          }
+        }
+      }
+    },
     "Rappel": {
       "localizations": {
         "en": {
@@ -7447,6 +7547,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Searches"
+          }
+        }
+      }
+    },
+    "Recherche sur le web": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web search"
           }
         }
       }
@@ -12253,6 +12363,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "\"When it matters\": a few times a day at most. \"Gladly\": also to say hello."
+          }
+        }
+      }
+    },
+    "« Recherche » dans l'île : une question, une réponse courte et ses sources, par Gemini (Antigravity) ou Claude.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“Search” in the island: a question, a short answer and its sources, by Gemini (Antigravity) or Claude."
           }
         }
       }

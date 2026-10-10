@@ -12,7 +12,7 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
     // Voice and images
     case imageText, voiceInput, voiceReplies
     // The agent
-    case planDay, appleNotes
+    case planDay, appleNotes, research
     // Claude Code
     case sessionSummary, testReactions
 
@@ -40,7 +40,7 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
         case .weatherOutfit, .petting, .batteryMood, .bedtime: .character
         case .quotaOnSide: .island
         case .imageText, .voiceInput, .voiceReplies: .senses
-        case .planDay, .appleNotes: .agent
+        case .planDay, .appleNotes, .research: .agent
         case .sessionSummary, .testReactions: .claude
         }
     }
@@ -64,6 +64,7 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
         case .voiceReplies: loc("Répondre à voix haute")
         case .planDay: loc("Préparer ma journée")
         case .appleNotes: loc("Créer des notes dans Notes")
+        case .research: loc("Recherche sur le web")
         case .sessionSummary: loc("Résumer une session terminée")
         case .testReactions: loc("Réagir aux tests")
         }
@@ -85,6 +86,7 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
         case .voiceReplies: loc("Yumi lit ses réponses avec la voix du Mac.")
         case .planDay: loc("« Prépare ma journée » : l'agenda et les rappels du jour, et un plan proposé.")
         case .appleNotes: loc("« Note que… » crée une note dans l'app Notes, après ton accord.")
+        case .research: loc("« Recherche » dans l'île : une question, une réponse courte et ses sources, par Gemini (Antigravity) ou Claude.")
         case .sessionSummary: loc("Une phrase dans l'encoche quand une session Claude Code se termine.")
         case .testReactions: loc("Yumi fête des tests qui passent, et a le tournis quand ils échouent.")
         }
