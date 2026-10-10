@@ -79,7 +79,17 @@ enum TextAI {
             ? "The given text is the last message of a coding assistant that just finished a task. Say in one short sentence of fifteen words at most, in English, what it did. Start with a verb in the past tense, without a subject or quotes."
             : "Le texte donné est le dernier message d'un assistant de code qui vient de finir une tâche. Dis en une seule phrase courte, de quinze mots au plus, en français, ce qu'il a fait. Commence par un verbe au passé composé, sans sujet ni guillemets."
         let line = try await answer(String(message.prefix(3_000)), instructions: instructions, freeLength: true)
-        return String(line.split(whereSeparator: \.isNewline).first ?? Substring(line))
+        return shortSentence(line)
+    }
+
+    /// The first sentence, twenty words at most: a model asked for a short one does not always
+    /// stop there, and the notch has room for one line.
+    static func shortSentence(_ text: String, maxWords: Int = 20) -> String {
+        let firstLine = text.split(whereSeparator: \.isNewline).first.map(String.init) ?? text
+        let sentence = firstLine.firstMatch(of: /^.*?[.!?](?=\s|$)/).map { String($0.output) } ?? firstLine
+        let words = sentence.split(separator: " ")
+        guard words.count > maxWords else { return sentence.trimmingCharacters(in: .whitespaces) }
+        return words.prefix(maxWords).joined(separator: " ").trimmingCharacters(in: CharacterSet(charactersIn: ",;: ")) + "…"
     }
 
     /// A draft answer to a message, in its language, for the person to read and change.
