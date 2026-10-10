@@ -43,12 +43,12 @@ struct AntigravityLLMProvider: LLMProvider {
 
     /// Antigravity's own folder of settings.
     var configFolder: String = NSHomeDirectory() + "/.gemini/antigravity-cli"
-    /// A hook command that may stay: Yumi's own relay.
-    var isOwnHook: @Sendable (String) -> Bool = { _ in false }
+    /// The hooks file that may stay: the one Yumi wrote itself, exactly.
+    var isOwnHooks: @Sendable (Any) -> Bool = { _ in false }
 
     func complete(_ request: LLMRequest) async throws -> LLMResponse {
         guard let binary = binary() else { throw LLMProviderError.unavailable }
-        if let problem = Self.isolationProblem(in: configFolder, isOwnHook: isOwnHook) { throw LLMProviderError.failed(problem) }
+        if let problem = Self.isolationProblem(in: configFolder, isOwnHooks: isOwnHooks) { throw LLMProviderError.failed(problem) }
         // No flag for the rules: they open the prompt
         let prompt = request.system + "\n\n" + AppleLLMProvider.prompt(request.messages, budget: 60_000)
         let schema = request.expectsJSON ? request.tools.flatMap(Self.planSchema) : nil
@@ -84,7 +84,7 @@ struct AntigravityLLMProvider: LLMProvider {
     /// Where an administrator's settings for Antigravity would be.
     static let adminSettings = "/Library/Application Support/Antigravity/admin_settings.json"
 
-    static func isolationProblem(in folder: String, isOwnHook: (String) -> Bool,
+    static func isolationProblem(in folder: String, isOwnHooks: (Any) -> Bool,
                                  adminSettings: String = AntigravityLLMProvider.adminSettings) -> String? {
         let manager = FileManager.default
         let unreadable = loc("Antigravity : je n'arrive pas à lire tes réglages, je ne l'utilise donc pas comme moteur de Yumi.")
@@ -102,20 +102,28 @@ struct AntigravityLLMProvider: LLMProvider {
         }
         // Settings: only the harmless keys, a file it cannot read the way Antigravity might counting as unsafe
         guard let settingsFile = read("settings.json") else { return unreadable }
+        // Other files of settings Antigravity might read
+        for other in ["settings.local.json", "settings.jsonc", "settings.json5"] where manager.fileExists(atPath: folder + "/" + other) {
+            return loc("Antigravity : tes réglages contiennent \(other), qui pourrait agir sans demander. Retire-le pour l'utiliser comme moteur de Yumi.")
+        }
         if case .value(let value) = settingsFile {
             guard let settings = value as? [String: Any] else { return unreadable }
+            // The harmless keys only with their harmless form: a list of folders, a model's name
+            if let folders = settings["trustedWorkspaces"], !(folders is [String]) { return unreadable }
+            if let model = settings["model"], !(model is String) { return unreadable }
             let unknown = settings.keys.filter { !harmlessSettings.contains($0) }.sorted()
             if !unknown.isEmpty {
                 return loc("Antigravity : tes réglages contiennent \(unknown.joined(separator: ", ")), qui pourrait agir sans demander. Retire-le pour l'utiliser comme moteur de Yumi.")
             }
         }
         guard let hooksFile = read("hooks.json") else { return unreadable }
-        if case .value(let hooks) = hooksFile, commands(in: hooks).contains(where: { !isOwnHook($0) }) {
+        // Only none, or exactly Yumi's: a hook has more forms than Yumi can tell apart
+        if case .value(let hooks) = hooksFile, !((hooks as? [String: Any])?.isEmpty ?? false), !isOwnHooks(hooks) {
             return loc("Antigravity : des hooks à toi tourneraient aussi pour Yumi. Retire-les pour l'utiliser comme moteur.")
         }
         guard let mcpFile = read("mcp_config.json") else { return unreadable }
-        if case .value(let mcp) = mcpFile, !((mcp as? [String: Any])?["mcpServers"] as? [String: Any] ?? [:]).isEmpty
-            || ((mcp as? [String: Any]).map { $0.keys.contains { $0 != "mcpServers" } } ?? true) {
+        // Only nothing, or an empty list of servers in the form expected
+        if case .value(let mcp) = mcpFile, !Self.isEmptyMCP(mcp) {
             return loc("Antigravity : des serveurs MCP sont configurés. Retire-les pour l'utiliser comme moteur de Yumi.")
         }
         let plugins = (try? manager.contentsOfDirectory(atPath: folder + "/plugins"))?.filter { !$0.hasPrefix(".") } ?? []
@@ -123,16 +131,12 @@ struct AntigravityLLMProvider: LLMProvider {
         return nil
     }
 
-    /// Every `command` string anywhere in a JSON value.
-    private static func commands(in value: Any) -> [String] {
-        switch value {
-        case let object as [String: Any]:
-            return object.flatMap { key, inner in key == "command" ? [inner as? String].compactMap { $0 } : commands(in: inner) }
-        case let list as [Any]:
-            return list.flatMap(commands(in:))
-        default:
-            return []
-        }
+    /// `{}` or `{"mcpServers": {}}`, nothing else.
+    private static func isEmptyMCP(_ value: Any) -> Bool {
+        guard let object = value as? [String: Any] else { return false }
+        if object.isEmpty { return true }
+        guard object.count == 1, let servers = object["mcpServers"] as? [String: Any] else { return false }
+        return servers.isEmpty
     }
 
     /// The answer: the structured output of a plan (an empty `cannotPlan` dropped, it is not a

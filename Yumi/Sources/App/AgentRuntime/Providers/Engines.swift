@@ -125,7 +125,7 @@ enum EngineDetector {
                 : EngineStatus(engine: engine, ready: false, detail: loc("\(chosen) n'est pas installé dans Ollama."))
         case .antigravity:
             if AntigravityLLMProvider.find() != nil,
-               let problem = AntigravityLLMProvider.isolationProblem(in: NSHomeDirectory() + "/.gemini/antigravity-cli", isOwnHook: { _ in false }) {
+               let problem = AntigravityLLMProvider.isolationProblem(in: NSHomeDirectory() + "/.gemini/antigravity-cli", isOwnHooks: { _ in false }) {
                 return EngineStatus(engine: engine, ready: false, detail: problem)
             }
             return AntigravityLLMProvider.find() != nil

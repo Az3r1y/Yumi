@@ -57,18 +57,20 @@ import Testing
         for plugin in plugins { try FileManager.default.createDirectory(atPath: root + "/plugins/" + plugin, withIntermediateDirectories: true) }
         return root
     }
-    private let own: (String) -> Bool = { $0 == "/bin/sh yumi-hook" }
+    /// Yumi's own file: in these tests, exactly one hook running "/bin/sh yumi-hook".
+    private let own: (Any) -> Bool = { ($0 as? [String: [[String: String]]]) == ["AfterTool": [["command": "/bin/sh yumi-hook"]]] }
 
     @Test func adminSettingsBlock() throws {
         let admin = FileManager.default.temporaryDirectory.appendingPathComponent("admin-\(UUID().uuidString).json").path
         try "{}".write(toFile: admin, atomically: true, encoding: .utf8)
-        #expect(AntigravityLLMProvider.isolationProblem(in: try folder([:]), isOwnHook: own, adminSettings: admin) != nil)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder([:]), isOwnHooks: own, adminSettings: admin) != nil)
     }
 
     @Test func cleanSettingsAreUsed() throws {
-        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["settings.json": #"{"trustedWorkspaces":["/x"]}"#]), isOwnHook: own) == nil)
-        #expect(AntigravityLLMProvider.isolationProblem(in: try folder([:]), isOwnHook: own) == nil)
-        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["mcp_config.json": ""]), isOwnHook: own) == nil)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["settings.json": #"{"trustedWorkspaces":["/x"]}"#]), isOwnHooks: own) == nil)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder([:]), isOwnHooks: own) == nil)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["mcp_config.json": ""]), isOwnHooks: own) == nil)
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(["mcp_config.json": #"{"mcpServers":{}}"#, "hooks.json": "{}"]), isOwnHooks: own) == nil)
     }
 
     @Test func anythingThatActsUnaskedIsRefused() throws {
@@ -83,15 +85,22 @@ import Testing
             (["settings.json": "{\"permissions\": {\"allow\": [\"run_command(*)\"]}, // comment\n}"], []),
             (["hooks.json": "{ not json"], []),
             (["mcp_config.json": #"{"servers":{"x":{}}}"#], []),
+            // Other forms of the same things
+            (["mcp_config.json": #"{"mcpServers":[{"name":"x","command":"npx"}]}"#], []),
+            (["settings.json": #"{"model":{"name":"x","tools":["run_command"]}}"#], []),
+            (["settings.json": #"{"trustedWorkspaces":"/"}"#], []),
+            (["hooks.json": #"{"AfterTool":[{"cmd":["sh","-c","curl evil"]}]}"#], []),
+            (["hooks.json": #"{"AfterTool":[{"command":"/bin/sh yumi-hook"},{"command":"curl evil"}]}"#], []),
+            (["settings.local.json": "{}"], []),
         ]
         for (files, plugins) in cases {
-            #expect(AntigravityLLMProvider.isolationProblem(in: try folder(files, plugins: plugins), isOwnHook: own) != nil, "\(files) \(plugins)")
+            #expect(AntigravityLLMProvider.isolationProblem(in: try folder(files, plugins: plugins), isOwnHooks: own) != nil, "\(files) \(plugins)")
         }
     }
 
     @Test func yumisOwnHookMayStay() throws {
-        let files = ["hooks.json": #"{"AfterTool":[{"hooks":[{"command":"/bin/sh yumi-hook"}]}]}"#]
-        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(files), isOwnHook: own) == nil)
+        let files = ["hooks.json": #"{"AfterTool":[{"command":"/bin/sh yumi-hook"}]}"#]
+        #expect(AntigravityLLMProvider.isolationProblem(in: try folder(files), isOwnHooks: own) == nil)
     }
 
     @Test func aRefusedSetupNeverRuns() async throws {
