@@ -33,6 +33,8 @@ struct EnginesSettings: View {
                 SettingsHelp(loc("Le moteur pense pour moi : il discute dans le chat et propose les plans. Quel qu'il soit, chaque plan est vérifié, et rien ne touche ton Mac sans ton accord. En automatique, je prends le premier prêt, dans l'ordre ci-dessous."))
             }
 
+            RouterSection()
+
             ForEach(Array(order.enumerated()), id: \.element) { index, engine in
                 section(engine, index: index, last: index == order.count - 1)
             }
@@ -132,6 +134,30 @@ struct EnginesSettings: View {
            model != settings.models[.ollama] {
             settings.models[.ollama] = model
             settings.save()
+        }
+    }
+}
+
+/// Routage: which engine and model answer each kind of request (TaskRouter).
+struct RouterSection: View {
+    @State private var router = RouterSettings.load()
+
+    var body: some View {
+        Section {
+            Toggle("Choisir le modèle selon la demande", isOn: Binding(get: { router.enabled },
+                                                                        set: { router.enabled = $0; router.save() }))
+            if router.enabled {
+                ForEach(TaskRouter.Kind.allCases, id: \.self) { kind in
+                    Picker(kind.label, selection: Binding(get: { router.route(kind) },
+                                                          set: { router.routes[kind] = $0; router.save() })) {
+                        ForEach(TaskRouter.Route.choices, id: \.route) { Text($0.label).tag($0.route) }
+                    }
+                }
+            }
+        } header: {
+            Text("Routage")
+        } footer: {
+            SettingsHelp(loc("Je choisis le modèle à chaque message : d'après ses mots, et avec Apple Intelligence sur ce Mac quand ce n'est pas clair. La conversation suit d'un modèle à l'autre. Commence par @haiku, @sonnet, @opus, @flash, @pro ou @apple pour choisir toi-même. Si le moteur choisi ne répond pas, je prends le suivant de ton ordre."))
         }
     }
 }

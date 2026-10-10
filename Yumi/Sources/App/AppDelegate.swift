@@ -204,6 +204,7 @@ extension AppDelegate {
                 watcher.cancel()
                 printNew()
                 if let note = state.noteMessage { print("[chat] erreur : \(note)") }
+                print("[chat] via : \(state.chatVia ?? "pas de routage")")
                 print("[chat] après la réponse, chatLive : \(state.chatLive == nil ? "nil" : "encore renseigné")")
             }
             if ProcessInfo.processInfo.environment["YUMI_CHAT_END"] != nil {

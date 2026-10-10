@@ -3101,6 +3101,16 @@
         }
       }
     },
+    "Choisir le modèle selon la demande": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose the model for each request"
+          }
+        }
+      }
+    },
     "Choisir…": {
       "localizations": {
         "en": {
@@ -3511,6 +3521,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Tick “%@” in Notion"
+          }
+        }
+      }
+    },
+    "Code": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code"
           }
         }
       }
@@ -4007,6 +4027,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Move down"
+          }
+        }
+      }
+    },
+    "Design, créatif": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Design, creative"
           }
         }
       }
@@ -5017,6 +5047,16 @@
         }
       }
     },
+    "Je choisis le modèle à chaque message : d'après ses mots, et avec Apple Intelligence sur ce Mac quand ce n'est pas clair. La conversation suit d'un modèle à l'autre. Commence par @haiku, @sonnet, @opus, @flash, @pro ou @apple pour choisir toi-même. Si le moteur choisi ne répond pas, je prends le suivant de ton ordre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I pick the model for each message: from its words, and with Apple Intelligence on this Mac when they're unclear. The conversation follows from one model to another. Start with @haiku, @sonnet, @opus, @flash, @pro or @apple to choose yourself. If the chosen engine doesn't answer, I take the next one in your order."
+          }
+        }
+      }
+    },
     "Je compte ta journée avec Claude": {
       "localizations": {
         "en": {
@@ -5223,6 +5263,26 @@
         }
       }
     },
+    "Raisonnement long": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long reasoning"
+          }
+        }
+      }
+    },
+    "Routage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routing"
+          }
+        }
+      }
+    },
     "Silencieux": {
       "localizations": {
         "en": {
@@ -5249,6 +5309,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Chatty"
+          }
+        }
+      }
+    },
+    "Simple": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple"
+          }
+        }
+      }
+    },
+    "Web, actualité": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web, news"
           }
         }
       }
@@ -12403,6 +12483,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "use"
+          }
+        }
+      }
+    },
+    "via %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "via %@"
           }
         }
       }

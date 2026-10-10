@@ -193,6 +193,9 @@ struct IslandTalkView: View {
                     .onAppear { proxy.scrollTo(Self.bottomID, anchor: .bottom) }
                 }
                 .riseIn(1)
+                if let via = state.chatVia, live == nil {
+                    ActMeta(color: IslandTheme.muted, text: loc("via \(via)"))
+                }
             }
 
             // `.ask`

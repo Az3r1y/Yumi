@@ -310,6 +310,7 @@ enum IslandActions {
     static func newConversation() {
         ClaudeService.shared.clearConversation()
         state.chatHistory = []
+        state.chatVia = nil
         state.noteMessage = nil
     }
 }
