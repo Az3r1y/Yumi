@@ -37,7 +37,7 @@ npm run lint
 | `Couverture` | The cover, a still image | |
 | `Story1-Yeux` to `Story5-Salut` | The five stories | 4 to 6 s each |
 | `Accroche`, `Pov`, `Fonctions`, `Humeurs`, `Fin` | The shots of the film, one by one | |
-| `Demo-9x16` | Short demo for TikTok, Reels and Shorts around a **real screen recording**: hook, take, zoom on the strong moment, proof, end card. Props in `src/demo/Demo.tsx` | clip + 2.6 s |
+| `Short-01`, `Short-02`… | The shorts for TikTok, Reels and Shorts, built from real captures (see below) | 18 s or less |
 | `Og` | Social preview of the site and the repository, 1200 × 630. Render it to `site/media/og.jpg` | |
 | `Planche` | Reference sheet of the character, landscape | 8 s |
 
@@ -64,11 +64,77 @@ python3 outils/musique.py public/musique/ambiance.wav
 
 All rights reserved, see [LICENSE.md](LICENSE.md). This folder is not covered by the MIT License of the app. Remotion has its own terms: a company license is needed for some entities, [read them here](https://github.com/remotion-dev/remotion/blob/main/LICENSE.md).
 
-## Making a demo
+## Shorts: the content machine
 
-1. Record the real app with ⌘⇧5, full screen, English interface. One take, no cut at the important moment.
-2. Put the file in `public/demo/` (for instance `public/demo/rappel.mov`).
-3. In the studio (`npm run dev`), open `Demo-9x16` and set its props: `clip`, `clipStart`, `clipLength`, the `crop` (the part of the screen to keep), the `highlight` (zoom on the approval card), the `proof` and the `captions`.
-4. Render: `npx remotion render Demo-9x16 out/demo.mp4 --props=props.json`.
+Vertical videos (1080 × 1920, 60 fps, like every film here) for TikTok, Instagram Reels and YouTube Shorts. Each short is **data**: a list of beats with their texts, lengths and captures. The scenes draw them.
 
-Never stage the take: the demo must show the real app doing the real thing. The social preview is rendered with `npx remotion still Og ../site/media/og.jpg --image-format=jpeg`.
+```
+src/shorts/
+  system.ts        types (Episode, Beat, Capture), frame size, safe zones
+  scenes.tsx       HookScene, CaptureScene (with camera, click and proof), EndCardScene, SafeZones
+  Episode.tsx      plays the beats in order, one transition for every cut, sounds and music
+  episodes/        one file per short, and index.ts that lists them
+public/shorts/<nn>/  the real recordings of each short
+```
+
+Reused from the films: Yumi (`src/yumi`), the theme and easings (`src/theme.ts`), his sounds (`src/son/Son.tsx`, `public/sons`), the click ring (`Clic` in `src/linkedin/masterclass/kit.tsx`).
+
+### Run it
+
+```console
+npm i --loglevel=error
+npm run dev
+```
+
+The studio lists the shorts in the **Shorts** folder. Turn on the `safeZones` prop to see, in red, what TikTok and Instagram cover with their buttons and captions.
+
+### Beats
+
+| Kind | What it draws |
+| --- | --- |
+| `hook` | The words, readable from the first frame, and Yumi under a notch. No logo, no intro. |
+| `capture` | A real recording, cropped, framed, with a `title` at the top, an optional `caption` under it, a `camera` move (keys: time, point of the crop, zoom), a `click` (ring and a small push), and `proof: true` for the result seen in the real app (green tick and frame). |
+| `end` | The line to remember, then the name and the tagline. |
+
+### Add a new short
+
+1. Copy `src/shorts/episodes/01-asks-before-it-acts.ts` to `02-<name>.ts`, change `id` (`Short-02`), the title and the beats.
+2. Add it to `EPISODES` in `src/shorts/episodes/index.ts`. It appears in the studio.
+3. Put its recordings in `public/shorts/02/`.
+
+**Texts** are the `text`, `title`, `caption`, `line` and `tagline` fields. **Timings**: each beat has a `length`; inside a beat, `camera`, `click` and the capture's `start` are in seconds. Sounds (`sounds`) are in seconds of the whole short, and `music` is optional: every short must read without sound.
+
+### Filming a capture
+
+- ⌘⇧5, **full screen**, the real app, **English interface**, one take with no cut at the important moment.
+- On a 14-inch MacBook Pro at its default size the file is 3024 × 1964; set `source` to the real size of yours.
+- Show the pointer. Nothing private on screen (other apps, notifications, names).
+- Save as `public/shorts/<nn>/<name>.mov`. Before committing, compress it to H.264 `.mp4` so the repository stays light, and update `file`.
+- Each capture of an episode lists what it must show in `required`. While the file is missing, the short renders a striped **PROOF_ASSET_REQUIRED** panel with that list, never a mock.
+
+### Render
+
+```console
+npx remotion render Short-01 out/short-01.mp4
+```
+
+One frame, to check: `npx remotion still Short-01 out/check.jpg --frame=120 --props='{"safeZones":true}'`.
+
+### Video principles
+
+- Show the product within 2 seconds.
+- Real product proof beats animation.
+- One idea per video.
+- No fake product results.
+- Hook first.
+- Keep videos short.
+- Every video should have a reason to watch until the end.
+
+And for Yumi:
+
+- Remotion stages, zooms, cuts and writes; the proof is always a real recording of Yumi or macOS.
+- Texts stay inside the safe zones; one line at the top, at most one under the capture.
+- One transition for every cut. No logo intro, no « hey guys ».
+- Never film the cigarette habit.
+
+The social preview is rendered with `npx remotion still Og ../site/media/og.jpg --image-format=jpeg`.
