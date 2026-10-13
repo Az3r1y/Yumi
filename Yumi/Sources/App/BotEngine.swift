@@ -547,7 +547,10 @@ final class BotEngine: ObservableObject {
     private var tilt = YumiTransition(0)
     private var lx = YumiTransition(0), ly = YumiTransition(0)
     private var eyes = YumiTransition(1)
-    private var rimStops: [[YumiTransition]] = YumiRimTone.calm.stops.map { [YumiTransition($0.r), YumiTransition($0.g), YumiTransition($0.b)] }
+    private var rimStops: [[YumiTransition]] = BotEngine.stops(.calm, accent: .current()).map { [YumiTransition($0.r), YumiTransition($0.g), YumiTransition($0.b)] }
+    /// The island's colour (his rim at rest) and what he wears, from the settings.
+    private var accent = IslandAccent.current()
+    private var costume = YumiCostume.current()
     private var rimWidth = YumiTransition(2.6)
     private var rimWidthSet = false
     private var drawn = YumiTransition(1)
@@ -597,6 +600,19 @@ final class BotEngine: ObservableObject {
         blob.tempFace = nil
         emote = nil
         wake()
+    }
+
+    /// The colour of the island or what he wears changed in the settings.
+    func setLook(accent: IslandAccent, costume: YumiCostume) {
+        guard accent != self.accent || costume != self.costume else { return }
+        self.accent = accent
+        self.costume = costume
+        wake()
+    }
+
+    /// The stops of his rim for a tone: at rest, the island's colour; the tones of a state stay.
+    static func stops(_ tone: YumiRimTone, accent: IslandAccent) -> [YumiRGB] {
+        tone == .calm ? accent.restStops.map { YumiRGB(hex: $0) } : tone.stops
     }
 
     func setRim(_ tone: YumiRimTone?) {
@@ -803,7 +819,7 @@ final class BotEngine: ObservableObject {
         lx.set(look.x, at: now, over: fixed != nil ? 0.3 : 0.14, fixed != nil ? .spring : .easeOut)
         ly.set(look.y, at: now, over: fixed != nil ? 0.3 : 0.14, fixed != nil ? .spring : .easeOut)
         eyes.set(tgEs, at: now, over: 0.25, .spring)
-        for (i, stop) in tone.stops.enumerated() {
+        for (i, stop) in BotEngine.stops(tone, accent: accent).enumerated() {
             rimStops[i][0].set(stop.r, at: now, over: 0.5, .ease)
             rimStops[i][1].set(stop.g, at: now, over: 0.5, .ease)
             rimStops[i][2].set(stop.b, at: now, over: 0.5, .ease)
@@ -1059,6 +1075,7 @@ final class BotEngine: ObservableObject {
         f.puffs = blob.puffs
         f.time = CGFloat(now)
         if let s = scene { f.scene = YumiSceneMoment(scene: s.kind, t: CGFloat(now - s.start), amount: s.amount) }
+        f.costume = costume
         f.storedLight = storedLight(for: f, unit: unit)
         YumiRenderer.draw(f, in: ctx)
     }
