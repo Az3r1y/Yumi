@@ -454,7 +454,9 @@ enum YumiRenderer {
         var tops = context
         tops.translateBy(x: f.lean, y: 68 - 68 * f.h)
 
-        if f.costume.onHead { YumiCostumes.drawHead(f.costume, accent: f.rim[0].color, in: tops) }
+        if f.costume.onHead {
+            YumiCostumes.drawHead(f.costume, .init(time: f.time, lean: f.lean, accent: f.rim[0].color), in: tops)
+        }
 
         if let o = f.props[.headphones], o > 0.01 {
             var c = tops
@@ -501,7 +503,10 @@ enum YumiRenderer {
         props.scaleBy(x: f.faceScale.width, y: f.faceScale.height)
         props.translateBy(x: -50, y: -45)
 
-        if f.costume.onFace { YumiCostumes.drawFace(f.costume, yaw: f.yaw, pitch: f.pitch, eyesScale: f.eyesScale, in: props) }
+        if f.costume.onFace {
+            YumiCostumes.drawFace(f.costume, .init(time: f.time, lean: f.lean, accent: f.rim[0].color),
+                                  yaw: f.yaw, pitch: f.pitch, eyesScale: f.eyesScale, in: props)
+        }
 
         if let o = f.props[.smoke], o > 0.01 {
             var c = props

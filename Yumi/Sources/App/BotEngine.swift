@@ -905,6 +905,8 @@ final class BotEngine: ObservableObject {
         default: break
         }
         if !blob.isSettled { return .full }
+        // A costume lives on its own (a pompom, a glint): thirty a second, like a lasting habit
+        if costume.moves, !isMini, !isDeepAsleep { return .habit }
 
         var easing = [esl, esr, ps, tl, tr, al, ar, bl, br, cl, cr, tilt, lx, ly, eyes,
                       rimWidth, drawn, light, ember, sip, sleepFx]

@@ -54,20 +54,23 @@ enum IslandAccent: String, CaseIterable, Sendable {
 /// What Yumi wears, on top of his habits and scenes. The head ones follow the top of his body,
 /// the face ones follow his face.
 enum YumiCostume: String, CaseIterable, Sendable {
-    case none, beanie, crown, cat, witch, halo, flower, glasses, mustache
+    case none, beanie, crown, cat, witch, halo, flower, glasses, mustache, party, unicorn, antennae, bow, pirate
 
     static let defaultsKey = "yumiCostume"
 
     /// Worn on the head: it rides the top of the body as it squashes and stretches.
     var onHead: Bool {
         switch self {
-        case .beanie, .crown, .cat, .witch, .halo, .flower: return true
+        case .beanie, .crown, .cat, .witch, .halo, .flower, .party, .unicorn, .antennae, .bow, .pirate: return true
         case .none, .glasses, .mustache:                    return false
         }
     }
 
     /// Something on the face (the cat's whiskers, the glasses, the moustache).
-    var onFace: Bool { self == .cat || self == .glasses || self == .mustache }
+    var onFace: Bool { self == .cat || self == .glasses || self == .mustache || self == .pirate }
+
+    /// Every costume lives a little (a bounce, a glint, a twitch): Yumi keeps drawing while he wears one.
+    var moves: Bool { self != .none }
 
     var label: String {
         switch self {
@@ -80,6 +83,11 @@ enum YumiCostume: String, CaseIterable, Sendable {
         case .flower:   return loc("Fleur")
         case .glasses:  return loc("Lunettes rondes")
         case .mustache: return loc("Moustache")
+        case .party:    return loc("Fête")
+        case .unicorn:  return loc("Licorne")
+        case .antennae: return loc("Antennes")
+        case .bow:      return loc("Nœud")
+        case .pirate:   return loc("Pirate")
         }
     }
 

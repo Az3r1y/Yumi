@@ -76,6 +76,7 @@ import Foundation
         }
         #expect(YumiCostume.cat.onHead && YumiCostume.cat.onFace)
         #expect(YumiCostume.glasses.onFace && !YumiCostume.glasses.onHead)
-        #expect(YumiCostume.allCases.count == 9)
+        #expect(YumiCostume.allCases.count == 14)
+        #expect(YumiCostume.pirate.onHead && YumiCostume.pirate.onFace)
     }
 }
