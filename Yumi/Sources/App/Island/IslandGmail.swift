@@ -32,6 +32,15 @@ struct GmailSheet: View {
             IslandModel.shared.hasDraft = [.thinking, .editing, .sending].contains(step)
         }
         .onDisappear { IslandModel.shared.hasDraft = false }
+        // The filming mode plays the sheet's steps with example mails, without reading or sending
+        .onReceive(NotificationCenter.default.publisher(for: .yumiStudioGmail)) { note in
+            guard IslandStudio.isOn, let step = note.object as? StudioGmail else { return }
+            switch step {
+            case .choose(let uid): if let mail = inbox.mails.first(where: { $0.uid == uid }) { choose(mail) }
+            case .think: withAnimation(.islandSpring(0.4)) { self.step = .thinking }
+            case .draft(let text): draft = text; if self.step != .editing { withAnimation(.islandSpring(0.4)) { self.step = .editing } }
+            }
+        }
     }
 
     // MARK: The inbox
