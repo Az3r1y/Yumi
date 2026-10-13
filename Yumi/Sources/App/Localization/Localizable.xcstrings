@@ -11338,6 +11338,136 @@
           }
         }
       }
+    },
+    "%lld fich.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld files"
+          }
+        }
+      }
+    },
+    "%lld cmd": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld cmd"
+          }
+        }
+      }
+    },
+    "%lld échec(s)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld failed"
+          }
+        }
+      }
+    },
+    "Une étoile de plus sur %@. Va voir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more star on %@. Go and see."
+          }
+        }
+      }
+    },
+    "Hé, quelqu'un vient d'étoiler %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, someone just starred %@."
+          }
+        }
+      }
+    },
+    "%@ prend une étoile. Ça brille.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ gets a star. Shiny."
+          }
+        }
+      }
+    },
+    "Hé, %@ vient d'être forké.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, %@ was just forked."
+          }
+        }
+      }
+    },
+    "Un fork de plus pour %@. Ton code voyage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more fork of %@. Your code travels."
+          }
+        }
+      }
+    },
+    " par %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " by %@"
+          }
+        }
+      }
+    },
+    "Hé, il y a eu un push sur %@%@. Regarde.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, there was a push on %@%@. Take a look."
+          }
+        }
+      }
+    },
+    "Ça bouge sur %@ : du nouveau code%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Things are moving on %@: new code%@."
+          }
+        }
+      }
+    },
+    "Nouveau commit sur %@%@ : « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New commit on %@%@: “%@”."
+          }
+        }
+      }
+    },
+    "Hé, un push sur %@ : « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, a push on %@: “%@”."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

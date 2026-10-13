@@ -330,8 +330,6 @@ struct SessionSteps: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .onTapGesture { if let action = row.action { IslandActions.row(IslandModel.agentModuleID, action) } }
     }
 
     private func line(symbol: String, text: String, bright: Bool) -> some View {

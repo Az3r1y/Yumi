@@ -149,13 +149,23 @@ struct IslandOpenLayer: View {
         } else if let module, module.id == IslandModel.agentModuleID, !module.rows.isEmpty {
             let chosen = module.rows.first { $0.id == model.selectedSessionID } ?? module.rows[0]
             VStack(alignment: .leading, spacing: 10) {
-                HStack(spacing: 14) {
-                    YumiSlot(width: 74)
-                    SessionSteps(row: chosen)
+                HStack(alignment: .top, spacing: 14) {
+                    YumiSlot(width: 70)
+                    SessionLive(row: chosen, journal: ClaudeSessionJournals.shared.journal(chosen.id))
                 }
-                FlowLayout(spacing: 6) {
-                    ForEach(module.rows.filter { $0.id != chosen.id }) { row in
-                        SessionPill(row: row) { model.selectedSessionID = row.id; IslandActions.tap() }
+                HStack(spacing: 6) {
+                    // The other sessions: a click shows theirs here, it does not leave Yumi
+                    FlowLayout(spacing: 6) {
+                        ForEach(module.rows.filter { $0.id != chosen.id }) { row in
+                            SessionPill(row: row) {
+                                withAnimation(.islandSpring(0.4)) { model.selectedSessionID = row.id }
+                                IslandActions.tap()
+                            }
+                        }
+                    }
+                    if let action = chosen.action {
+                        TextButton(label: loc("Ouvrir le terminal")) { IslandActions.row(IslandModel.agentModuleID, action) }
+                            .fixedSize()
                     }
                 }
             }
