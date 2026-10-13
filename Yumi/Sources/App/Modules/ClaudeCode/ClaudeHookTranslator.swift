@@ -52,7 +52,15 @@ enum ClaudeHookTranslator {
             specific.append(.taskCompleted(id))
 
         case "StopFailure":
-            specific = [.sessionErrored(id, YumiError(message: payload["message"] as? String ?? ""))]
+            // Out of usage is not a bug of the session: it waits for its limit to come back
+            let message = payload["message"] as? String ?? ""
+            let kind = "\(payload["error"] ?? "") \(payload["error_type"] ?? "") \(message)".lowercased()
+            if kind.contains("rate_limit") || kind.contains("rate limit") || kind.contains("usage limit")
+                || kind.contains("limit reached") || kind.contains("limite d") {
+                specific = [.rateLimited(id)]
+            } else {
+                specific = [.sessionErrored(id, YumiError(message: message))]
+            }
 
         case "SubagentStart":
             specific = [.activityNoted(id, loc("Un sous-agent démarre"))]

@@ -72,6 +72,11 @@ import Foundation
         #expect(Array(events.suffix(2)) == [.activityNoted(id, "Done."), .taskCompleted(id)])
     }
 
+    @Test func runningOutOfUsageIsALimitNotAnError() {
+        #expect(ClaudeHookTranslator.events(for: payload("StopFailure", ["error": "rate_limit", "message": "Claude usage limit reached"])).last == .rateLimited(id))
+        #expect(ClaudeHookTranslator.events(for: payload("StopFailure", ["message": "Claude usage limit reached. Your limit will reset at 5pm."])).last == .rateLimited(id))
+    }
+
     @Test func failuresAndSubagents() {
         #expect(ClaudeHookTranslator.events(for: payload("StopFailure", ["message": "boom"])).last == .sessionErrored(id, YumiError(message: "boom")))
         #expect(ClaudeHookTranslator.events(for: payload("SubagentStart")).last == .activityNoted(id, "Un sous-agent démarre"))
