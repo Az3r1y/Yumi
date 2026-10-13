@@ -382,6 +382,11 @@ final class IslandWindowController: NSWindowController {
                 }
                 // A letter typed on the open island, outside any field: the chat opens with it
                 if typing, self.fsm.state == .home, self.startsChat(with: letters) { return true }
+                // Escape on a sheet goes back to the tab's bento first
+                if keyCode == 53, self.fsm.state == .home, self.state.view == .module {
+                    withAnimation(.islandSpring(0.5)) { IslandActions.go(.overview) }
+                    return true
+                }
                 guard keyCode == 53, self.fsm.state == .home, !self.state.isPinned else { return false }
                 self.collapse()
                 return true

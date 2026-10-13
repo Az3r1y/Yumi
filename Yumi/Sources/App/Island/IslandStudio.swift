@@ -637,9 +637,11 @@ extension IslandStudio {
         }
         let shots: [(String, @MainActor () -> Void)] = [
             ("01-repliee", { show(sessions()); controller?.collapse() }),
-            ("02-travail", { show(sessions()); model.selectedSessionID = nil; IslandActions.showTab(.work); controller?.expand(to: .module) }),
-            ("03-journee", { show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .module) }),
-            ("04-detente", { show(modules(musicPlaying: true)); IslandActions.showModule("music"); controller?.expand(to: .module) }),
+            ("02-travail", { show(sessions()); model.selectedSessionID = nil; IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("02b-fiche-claude", { show(sessions()); model.selectedSessionID = nil; IslandActions.showModule("claude-code"); controller?.expand(to: .module) }),
+            ("03-journee", { show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("04-detente", { show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("04b-fiche-musique", { show(modules(musicPlaying: true)); IslandActions.showModule("music"); controller?.expand(to: .module) }),
             ("05-accord", {
                 show(sessions())
                 state.stateOverride = .approval
@@ -652,9 +654,14 @@ extension IslandStudio {
                 controller?.expand(to: .prompt)
             }),
             ("07-reglages", { controller?.expand(to: .settings) }),
-            ("08-skin-couronne", { wear(.crown, .yumi); show(sessions()); IslandActions.showTab(.work); controller?.expand(to: .module) }),
-            ("09-skin-chat", { wear(.cat, .pink); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .module) }),
-            ("10-skin-sorciere", { wear(.witch, .green); show(modules(musicPlaying: true)); IslandActions.showModule("music"); controller?.expand(to: .module) }),
+            ("08-skin-couronne", { wear(.crown, .yumi); show(sessions()); IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("09-skin-chat", { wear(.cat, .pink); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("10-skin-sorciere", { wear(.witch, .green); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("12-skin-licorne", { wear(.unicorn, .sky); show(sessions()); IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("13-skin-antennes", { wear(.antennae, .orange); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("14-skin-pirate", { wear(.pirate, .yumi); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("15-skin-fete", { wear(.party, .pink); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("16-skin-noeud", { wear(.bow, .yumi); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
             ("11-skin-repliee", { wear(.witch, .green); show(modules(musicPlaying: true)); controller?.collapse() }),
         ]
         Task { @MainActor in

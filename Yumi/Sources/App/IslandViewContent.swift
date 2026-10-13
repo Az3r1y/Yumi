@@ -12,6 +12,8 @@ struct IslandOpenLayer: View {
     let screen: IslandScreen
     /// The width, in content units (IslandOpenWidth).
     let width: CGFloat
+    /// A tile and the sheet it grows into share their ground.
+    @Namespace private var bento
 
     /// The top row takes the height of the notch, or of a menu bar without one.
     private var topHeight: CGFloat {
@@ -32,15 +34,6 @@ struct IslandOpenLayer: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             IslandTopBar(state: state, model: model, screen: screen, height: topHeight)
-
-            if isTab {
-                let ids = model.entries(in: model.category, modules: state.modules)
-                if ids.count > 1 {
-                    ModuleChips(ids: ids, current: model.current(in: model.category, modules: state.modules),
-                                modules: state.modules)
-                        .riseIn(0)
-                }
-            }
 
             content
                 .id(contentID)
@@ -70,7 +63,7 @@ struct IslandOpenLayer: View {
 
     /// A new view plays `rise` again; what changes inside one does not.
     private var contentID: String {
-        isTab ? "tab-\(model.category.rawValue)-\(currentID ?? "")" : screen.rawValue
+        screen == .home ? "bento-\(model.category.rawValue)" : isTab ? "sheet-\(currentID ?? "")" : screen.rawValue
     }
 
     private var agent: ModuleSnapshot? { state.modules.first { $0.id == IslandModel.agentModuleID } }
@@ -123,21 +116,56 @@ struct IslandOpenLayer: View {
         }
     }
 
-    /// The module of the tab on screen.
+    /// The tab: its bento, or the sheet of the tile that was opened.
     @ViewBuilder private var tab: some View {
-        let id = currentID
-        if id == IslandModel.tasksID {
-            card(slot: 48, top: true) { QuickTaskActivity() }
-        } else if let module = state.modules.first(where: { $0.id == id }) {
-            if module.id == IslandModel.agentModuleID, !module.rows.isEmpty {
-                ClaudeCodeCards(module: module, model: model)
-            } else if module.id == IslandModel.agentModuleID, IslandModel.isBusy(state.effectiveState) {
-                card(slot: 64) { WorkingActivity(state: state, model: model) }
-            } else {
-                card(slot: 60) { ModuleActivity(module: module) }
-            }
+        if screen == .home {
+            IslandBento(state: state, model: model, namespace: bento)
         } else {
-            card(slot: 52) {
+            sheet(currentID)
+        }
+    }
+
+    /// A tile grown into its sheet: back to the bento on top, Yumi beside what the module says.
+    private func sheet(_ id: String?) -> some View {
+        let module = state.modules.first { $0.id == id }
+        let color = module?.color ?? IslandTheme.violet
+        return VStack(alignment: .leading, spacing: 10) {
+            SheetHeader(name: module?.name ?? loc("À faire"), color: color)
+            sheetBody(id: id, module: module)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background {
+            BentoSurface(color: color)
+                .matchedGeometryEffect(id: "sheet-\(id ?? "")", in: bento)
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    @ViewBuilder private func sheetBody(id: String?, module: ModuleSnapshot?) -> some View {
+        if id == IslandModel.tasksID {
+            HStack(alignment: .top, spacing: 14) { YumiSlot(width: 52); QuickTaskActivity() }
+        } else if let module, module.id == IslandModel.agentModuleID, !module.rows.isEmpty {
+            let chosen = module.rows.first { $0.id == model.selectedSessionID } ?? module.rows[0]
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 14) {
+                    YumiSlot(width: 74)
+                    SessionSteps(row: chosen)
+                }
+                FlowLayout(spacing: 6) {
+                    ForEach(module.rows.filter { $0.id != chosen.id }) { row in
+                        SessionPill(row: row) { model.selectedSessionID = row.id; IslandActions.tap() }
+                    }
+                }
+            }
+        } else if let module, module.id == IslandModel.agentModuleID, IslandModel.isBusy(state.effectiveState) {
+            HStack(spacing: 14) { YumiSlot(width: 64); WorkingActivity(state: state, model: model) }
+        } else if let module {
+            HStack(spacing: 14) { YumiSlot(width: 60); ModuleActivity(module: module) }
+        } else {
+            HStack(spacing: 14) {
+                YumiSlot(width: 52)
                 VStack(alignment: .leading, spacing: 3) {
                     ActTitle(text: loc("Je ne surveille rien pour l'instant."))
                     ActSub(text: loc("Choisis mes modules dans les réglages de l'app."))

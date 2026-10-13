@@ -11268,6 +11268,76 @@
           }
         }
       }
+    },
+    "Une idée, une tâche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An idea, a task"
+          }
+        }
+      }
+    },
+    "Retour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "Fête": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Party"
+          }
+        }
+      }
+    },
+    "Licorne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unicorn"
+          }
+        }
+      }
+    },
+    "Antennes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antennae"
+          }
+        }
+      }
+    },
+    "Nœud": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bow"
+          }
+        }
+      }
+    },
+    "Pirate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pirate"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

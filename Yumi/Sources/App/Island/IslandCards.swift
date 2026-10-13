@@ -300,7 +300,7 @@ struct ClaudeCodeCards: View {
 }
 
 /// The session in the large card: its name, where it is, and its last steps.
-private struct SessionSteps: View {
+struct SessionSteps: View {
     let row: ModuleRow
 
     private var color: Color {
@@ -347,7 +347,7 @@ private struct SessionSteps: View {
 }
 
 /// `.pill`: a small character in the session's colour, its name, and what it waits for.
-private struct SessionPill: View {
+struct SessionPill: View {
     let row: ModuleRow
     let action: () -> Void
 

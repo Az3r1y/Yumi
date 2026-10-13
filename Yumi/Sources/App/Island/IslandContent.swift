@@ -141,8 +141,7 @@ enum IslandActions {
         let model = IslandModel.shared
         model.category = category
         IslandModel.shared.pose(.pop)
-        guard let id = model.current(in: category, modules: state.modules) else { return go(.overview) }
-        showModule(id)
+        go(.overview)
     }
 
     /// Opens the chat, with what was typed already in its field.
