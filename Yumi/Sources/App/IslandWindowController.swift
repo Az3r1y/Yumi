@@ -368,6 +368,8 @@ final class IslandWindowController: NSWindowController {
             let keyCode = event.keyCode
             let command = event.modifierFlags.intersection([.command, .control, .option, .shift]) == .command
             let plain = event.modifierFlags.intersection([.command, .control, .option, .shift]).isEmpty
+            let typing = event.modifierFlags.intersection([.command, .control, .option]).isEmpty
+            let letters = event.characters ?? ""
             let handled = MainActor.assumeIsolated { () -> Bool in
                 self.tripleShift.keyTyped()
                 // Without the menu bar item (hidden by the notch on a small screen): ⌘, and ⌘Q
@@ -378,6 +380,8 @@ final class IslandWindowController: NSWindowController {
                    GitHubPagerKeys.handle(keyCode: keyCode, plain: plain) {
                     return true
                 }
+                // A letter typed on the open island, outside any field: the chat opens with it
+                if typing, self.fsm.state == .home, self.startsChat(with: letters) { return true }
                 guard keyCode == 53, self.fsm.state == .home, !self.state.isPinned else { return false }
                 self.collapse()
                 return true
@@ -483,6 +487,18 @@ final class IslandWindowController: NSWindowController {
         } else {
             expand(to: .quickTask)
         }
+    }
+
+    /// Opens the chat with `letters` in its field, when they are a letter or a digit and no
+    /// field of the island already takes the keyboard. ⌥ Space keeps the quick task.
+    private func startsChat(with letters: String) -> Bool {
+        guard letters.count == 1, let scalar = letters.unicodeScalars.first,
+              CharacterSet.alphanumerics.contains(scalar),
+              !(window?.firstResponder is NSText),
+              IslandScreen.resolve(view: state.view, state: state.effectiveState,
+                                   approvalPending: state.pendingApproval != nil) != .talk else { return false }
+        IslandActions.talk(seed: letters)
+        return true
     }
 
     private func keyDown(keyCode: UInt16, flags: UInt) {

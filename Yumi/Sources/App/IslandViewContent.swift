@@ -1,45 +1,49 @@
 import SwiftUI
 
-// MARK: - The open island (`.open` in design/yumi/maquette/reference.html, version 13)
+// MARK: - The open island, in cards (the island demo, version "2 · Coucou")
 //
-// One activity at a time, each with its own layout, then the rail that is always there.
-// Yumi sits on the left (he is drawn above the island by IslandRootView, not here); a
-// click on him opens the chat.
+// The tabs sit in the height of the menu bar, beside the notch; under them, the chips of the
+// tab's modules, then the cards. Yumi is drawn above the island by IslandRootView, at the
+// slot the view keeps for him (`YumiSlot`); a click on him opens the chat.
 
 struct IslandOpenLayer: View {
     @ObservedObject var state: AppState
     @ObservedObject var model: IslandModel
     let screen: IslandScreen
+    /// The width, in content units (IslandOpenWidth).
+    let width: CGFloat
 
-    /// The module the screen is about: the one chosen in the rail, or the agent's.
-    private var module: ModuleSnapshot? {
+    /// The top row takes the height of the notch, or of a menu bar without one.
+    private var topHeight: CGFloat {
+        let notch = model.layout.hasNotch ? model.layout.notchHeight / IslandConst.openScale : 0
+        return max(28, notch)
+    }
+
+    /// The width the open island takes for a screen and a tab.
+    static func widthKind(for screen: IslandScreen, category: ModuleCategory) -> IslandOpenWidth {
         switch screen {
-        case .module: return model.selectedModule(in: state.modules)
-        case .working, .alert, .finished, .error:
-            return state.modules.first { $0.id == IslandModel.agentModuleID }
-        default: return nil
+        case .home, .module, .working:            return .tab(category)
+        case .alert, .finished, .error:           return .alert
+        case .settings:                           return .settings
+        case .talk, .memory, .quickTask, .drop, .welcome: return .chat
         }
     }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // `.act { grid-template-columns: 92px 1fr auto; gap: 0 14px; padding: 18px 22px 8px 0; min-height: 102px }`
-            HStack(alignment: .center, spacing: wide ? 6 : 14) {
-                // Yumi's place
-                Color.clear
-                    .frame(width: IslandConst.seatColumn)
-                    .frame(maxHeight: .infinity)
-                    .contentShape(Rectangle())
-                    .onTapGesture { IslandActions.pokeYumi(talking: screen == .talk) }
+        VStack(alignment: .leading, spacing: 8) {
+            IslandTopBar(state: state, model: model, screen: screen, height: topHeight)
 
-                activity
-                    .id(activityID)
-                    .frame(maxWidth: .infinity, alignment: screen == .talk ? .topLeading : .leading)
+            if isTab {
+                let ids = model.entries(in: model.category, modules: state.modules)
+                if ids.count > 1 {
+                    ModuleChips(ids: ids, current: model.current(in: model.category, modules: state.modules),
+                                modules: state.modules)
+                        .riseIn(0)
+                }
             }
-            .frame(minHeight: IslandConst.actMinHeight)
-            .padding(.top, (wide ? 14 : IslandConst.openPaddingTop) + model.layout.openInset / IslandConst.openScale)
-            .padding(.trailing, wide ? 14 : IslandConst.openPaddingTrailing)
-            .padding(.bottom, IslandConst.openPaddingBottom)
+
+            content
+                .id(contentID)
 
             // What Yumi says on his own: beside the activity, never in its place
             if let remark = model.remark(in: state) {
@@ -48,46 +52,111 @@ struct IslandOpenLayer: View {
                     .padding(.leading, 14)
                     .padding(.trailing, 10)
                     .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.08)))
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 6)
                     .transition(.opacity.combined(with: .offset(y: 6)))
             }
-
-            IslandRail(state: state, model: model, screen: screen, moduleID: module?.id)
         }
+        .padding(.horizontal, 12)
+        .padding(.bottom, 12)
         .animation(.islandSpring(0.42), value: model.remark(in: state)?.id)
-        .frame(width: IslandConst.expandedWidth)
+        .frame(width: width, alignment: .topLeading)
         .foregroundStyle(IslandTheme.fg)
+        .coordinateSpace(name: islandOpenSpace)
     }
 
-    /// `.act.wide`: the overview and the settings use the whole width.
-    private var wide: Bool { screen == .home || screen == .settings || screen == .memory || screen == .quickTask }
+    private var isTab: Bool { screen == .home || screen == .module || screen == .working }
 
-    /// A new activity plays `rise` again; what changes inside one does not.
-    private var activityID: String {
-        screen == .module ? "module-\(module?.id ?? "")" : screen.rawValue
+    /// The module on screen in the tab, or the tasks.
+    private var currentID: String? { model.current(in: model.category, modules: state.modules) }
+
+    /// A new view plays `rise` again; what changes inside one does not.
+    private var contentID: String {
+        isTab ? "tab-\(model.category.rawValue)-\(currentID ?? "")" : screen.rawValue
     }
 
-    @ViewBuilder private var activity: some View {
+    private var agent: ModuleSnapshot? { state.modules.first { $0.id == IslandModel.agentModuleID } }
+
+    @ViewBuilder private var content: some View {
         switch screen {
-        case .home:     OverviewActivity(state: state)
-        case .working:  WorkingActivity(state: state, model: model)
-        case .alert:    AlertActivity(state: state, model: model)
-        case .finished: FinishedActivity(state: state, model: model)
-        case .error:    ErrorActivity(state: state)
-        case .talk:     IslandTalkView(state: state)
-        case .settings: SettingsActivity(state: state)
-        case .welcome:  WelcomeActivity()
-        case .memory:   MemoryActivity(state: state)
-        case .quickTask: QuickTaskActivity()
-        case .drop:     DropActivity(state: state)
-        case .module:
-            if let module {
-                ModuleActivity(module: module)
+        case .home, .module, .working:
+            tab
+        case .alert:
+            HStack(alignment: .center, spacing: 10) {
+                IslandCard(tint: IslandTheme.amber) {
+                    HStack(spacing: 14) {
+                        YumiSlot(width: 64)
+                        AlertActivity(state: state, model: model)
+                    }
+                }
+                let others = IslandSessions.rows(state.modules).filter { $0.state != .waiting }
+                if !others.isEmpty { SessionColumn(rows: others) }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        case .finished:
+            card(slot: 64, tint: IslandTheme.green) { FinishedActivity(state: state, model: model) }
+        case .error:
+            card(slot: 64, tint: IslandTheme.red) { ErrorActivity(state: state) }
+        case .talk:
+            card(slot: 44, top: true) { IslandTalkView(state: state) }
+        case .settings:
+            IslandCard {
+                HStack(alignment: .top, spacing: 14) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        YumiSlot(width: 60)
+                        TextButton(label: state.memory.isEmpty ? loc("Ce que Yumi sait de toi")
+                                                               : loc("Ce que Yumi sait de toi (\(state.memory.count))")) {
+                            IslandActions.go(.memory)
+                        }
+                    }
+                    .frame(width: 104, alignment: .leading)
+                    SettingsActivity(state: state)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+        case .welcome:
+            card(slot: 60) { WelcomeActivity() }
+        case .memory:
+            card(slot: 48, top: true) { MemoryActivity(state: state) }
+        case .quickTask:
+            card(slot: 48, top: true) { QuickTaskActivity() }
+        case .drop:
+            card(slot: 56) { DropActivity(state: state) }
+        }
+    }
+
+    /// The module of the tab on screen.
+    @ViewBuilder private var tab: some View {
+        let id = currentID
+        if id == IslandModel.tasksID {
+            card(slot: 48, top: true) { QuickTaskActivity() }
+        } else if let module = state.modules.first(where: { $0.id == id }) {
+            if module.id == IslandModel.agentModuleID, !module.rows.isEmpty {
+                ClaudeCodeCards(module: module, model: model)
+            } else if module.id == IslandModel.agentModuleID, IslandModel.isBusy(state.effectiveState) {
+                card(slot: 64) { WorkingActivity(state: state, model: model) }
             } else {
-                OverviewActivity(state: state)
+                card(slot: 60) { ModuleActivity(module: module) }
+            }
+        } else {
+            card(slot: 52) {
+                VStack(alignment: .leading, spacing: 3) {
+                    ActTitle(text: loc("Je ne surveille rien pour l'instant."))
+                    ActSub(text: loc("Choisis mes modules dans les réglages de l'app."))
+                }
             }
         }
+    }
+
+    /// One card: Yumi on the left, the activity beside him.
+    private func card<Inner: View>(slot: CGFloat, tint: Color? = nil, top: Bool = false,
+                                   @ViewBuilder _ inner: () -> Inner) -> some View {
+        let built = inner()
+        return IslandCard(tint: tint) {
+            HStack(alignment: top ? .top : .center, spacing: 14) {
+                YumiSlot(width: slot)
+                built.frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -221,7 +290,14 @@ struct IslandTalkView: View {
                 }
             }
         }
-        .onAppear { focused = true }
+        .onAppear {
+            // A letter typed on the open island opened the chat: it is the start of the message
+            if let seed = IslandModel.shared.chatSeed {
+                text += seed
+                IslandModel.shared.chatSeed = nil
+            }
+            focused = true
+        }
     }
 
     private func send() {

@@ -90,6 +90,11 @@ struct IslandLayout: Equatable {
     /// Width of the island while Yumi speaks, and its height under the notch.
     var speakWidth: CGFloat = 0
     var speakBand: CGFloat = 0
+    /// Width of the open island, in points: it follows the tab and the view (IslandOpenWidth).
+    var openWidth: CGFloat = IslandConst.expandedWidth * IslandConst.openScale
+    /// The slot the open view keeps for Yumi, in points from the island's top-left corner.
+    /// nil until the open view has been laid out once.
+    var openSlot: CGRect?
 
     /// The mock-up has a 32 pt notch. A taller one pushes the launch shapes down by the difference.
     var notchDelta: CGFloat { max(0, notchHeight - IslandConst.mockNotchHeight) }
@@ -104,7 +109,7 @@ struct IslandLayout: Equatable {
         case .hidden:  return CGSize(width: notchWidth, height: notchHeight)
         case .compact: return CGSize(width: notchWidth + compactEar * 2, height: notchHeight)
         case .speak:   return CGSize(width: speakWidth, height: notchHeight + speakBand)
-        case .open:    return CGSize(width: IslandConst.expandedWidth * IslandConst.openScale, height: openHeight)
+        case .open:    return CGSize(width: openWidth, height: openHeight)
         case .drip:    return CGSize(width: (notchWidth + IslandConst.dripExtra) * l, height: IslandConst.dripHeight * l + notchDelta)
         case .greet:   return CGSize(width: IslandConst.greetWidth * l, height: IslandConst.greetHeight * l + notchDelta)
         case .bye:     return CGSize(width: IslandConst.byeWidth * l, height: IslandConst.byeHeight * l + notchDelta)
@@ -133,7 +138,10 @@ struct IslandLayout: Equatable {
         case .compact:
             return IslandSeat(x: 28 - (notchWidth + compactEar * 2) / 2, y: notchHeight / 2, scale: 0.27, opacity: 1)
         case .open:
-            return IslandSeat(x: (50 - IslandConst.expandedWidth / 2) * k, y: 56 * k + openInset, scale: 0.68 * k, opacity: 1)
+            guard let slot = openSlot else {
+                return IslandSeat(x: 60 * k - openWidth / 2, y: 80 * k + openInset, scale: 0.68 * k, opacity: 1)
+            }
+            return IslandSeat(x: slot.midX - openWidth / 2, y: slot.midY, scale: slot.width / 100, opacity: 1)
         case .drip:
             return IslandSeat(x: 0, y: 62 * l + notchDelta, scale: 0.42 * l, opacity: 1)
         case .greet:
@@ -222,7 +230,7 @@ enum IslandConst {
     /// Zoom of the launch (the drop and the greeting).
     static let launchScale: CGFloat = 1.25
     static let openHeightDefault: CGFloat = 150
-    static let openHeightMax: CGFloat = 340
+    static let openHeightMax: CGFloat = 380
     /// Left column of the open island: Yumi's seat and his caption.
     static let seatColumn: CGFloat = 92
     /// `.act { padding: 18px 22px 8px 0; min-height: 102px }`
