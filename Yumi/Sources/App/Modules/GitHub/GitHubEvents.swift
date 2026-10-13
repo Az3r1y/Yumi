@@ -19,7 +19,7 @@ struct GitHubEvent: Equatable, Sendable {
         }
 
         /// The events Yumi says a word about; the others only get their scene.
-        var isWorthAWord: Bool { [.star, .fork, .merge, .release].contains(self) }
+        var isWorthAWord: Bool { [.star, .fork, .merge, .release, .push].contains(self) }
     }
 
     /// GitHub's identifier of the event: they grow with time.
@@ -31,6 +31,8 @@ struct GitHubEvent: Equatable, Sendable {
     var actor: String
     /// Title of the pull request or issue, name of the release, branch of the push.
     var detail: String = ""
+    /// A push: the first line of its newest commit, when known.
+    var headline: String = ""
     var url: URL? = nil
     /// When it happened (`created_at`), when GitHub says.
     var date: Date? = nil

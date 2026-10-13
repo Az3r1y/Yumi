@@ -36,6 +36,10 @@ final class GitHubModule: YumiModule {
     private var onChange: (@MainActor () -> Void)?
     private var polling: Task<Void, Never>?
     private var tracker: GitHubTracker
+    /// Stars, forks and latest commits of the followed repositories, every look.
+    private var quick = GitHubQuickWatch()
+    /// Repositories watched closely each look; the others wait for the event feeds.
+    static let quickRepos = 8
     private var etags: [String: String] = [:]
     private var login: String?
     private var connection = GitHubSummary.Connection.noToken
@@ -242,13 +246,14 @@ final class GitHubModule: YumiModule {
                 defaults.set(login, forKey: GitHubRepos.loginKey)
             }
         }
+        await quickLook(token: token)
         for (feed, received) in [("events", false), ("received_events", true)] {
             if case .fresh(let data) = await get("/users/\(login)/\(feed)?per_page=50", token: token, paced: true) {
                 let events = GitHubFeed.events(from: data, login: login, received: received, repos: repos)
                 remember(events)
                 await readCommits(of: events.filter { $0.kind == .push }, token: token)
                 let hidden = GitHubRepos.hidden(in: defaults)
-                announce(tracker.fresh(events, feed: feed).filter { !hidden.contains($0.repo) })
+                announce(quick.swallow(tracker.fresh(events, feed: feed).filter { !hidden.contains($0.repo) }))
             }
         }
         if slow {
@@ -262,6 +267,24 @@ final class GitHubModule: YumiModule {
         }
         if let data = try? JSONEncoder().encode(tracker) { defaults.set(data, forKey: Self.trackerKey) }
         onChange?()
+    }
+
+    /// Stars, forks and the latest commit of the followed repositories: asked with their tag,
+    /// they cost nothing while nothing changes, and they do not wait for the event feeds.
+    private func quickLook(token: String) async {
+        var found: [GitHubEvent] = []
+        for name in followed.prefix(Self.quickRepos) {
+            if case .fresh(let data) = await get("/repos/\(name)", token: token),
+               let counts = GitHubQuickWatch.counts(from: data) {
+                found += quick.counts(of: name, stars: counts.stars, forks: counts.forks)
+            }
+            if case .fresh(let data) = await get("/repos/\(name)/commits?per_page=1", token: token),
+               let head = GitHubQuickWatch.head(from: data),
+               let push = quick.head(of: name, sha: head.sha, message: head.message, author: head.author) {
+                found.append(push)
+            }
+        }
+        if !found.isEmpty { announce(found) }
     }
 
     /// The exact commits of the pushes not read yet, through compare: each push once, a few per look.
@@ -336,7 +359,11 @@ final class GitHubModule: YumiModule {
         }
         last = (latest, events.filter { $0.kind == latest.kind }.count)
         // One word at most for a batch: about the latest event that counts.
-        if let worth = events.last(where: { $0.kind.isWorthAWord }) {
+        if var worth = events.last(where: { $0.kind.isWorthAWord }) {
+            // A push read from the feed: its newest commit, when its commits were read
+            if worth.kind == .push, worth.headline.isEmpty, let push = pushes.first(where: { $0.eventID == worth.id }) {
+                worth.headline = push.commits.first?.message ?? ""
+            }
             onNews(worth, events.filter { $0.kind == worth.kind }.count)
         }
         onChange?()

@@ -49,6 +49,13 @@ enum Occasion: Equatable, Sendable {
         }
     }
 
+    /// News the person asked to hear as it comes (what happens on their repositories): the
+    /// twenty-minute rule and the daily count do not apply, and it does not delay the others.
+    var isNews: Bool {
+        if case .repository = self { return true }
+        return false
+    }
+
     /// True when someone is waiting for an answer: the twenty-minute rule does not apply.
     var someoneWaits: Bool {
         switch self {
@@ -122,7 +129,7 @@ struct InitiativeEngine: Codable, Equatable, Sendable {
 
         let remark = YumiRemark(id: UUID().uuidString, text: chosen.text, mood: chosen.mood,
                                 action: chosen.action?.label, duration: chosen.text.count > 60 ? 10 : 8)
-        lastRemarkAt = around.now
+        if !occasion.isNews { lastRemarkAt = around.now }
         said.append(Said(day: day, phrase: chosen.key))
         said.removeAll { $0.day != day && $0.day != yesterday }
         pending = Pending(id: remark.id, topic: occasion.topic, action: chosen.action)
@@ -138,10 +145,11 @@ struct InitiativeEngine: Codable, Equatable, Sendable {
         if around.doNotDisturb { return .doNotDisturb }
         if around.talk == .discreet, !occasion.matters { return .smallTalk }
         if let until = silentUntil[occasion.topic], around.now < until { return .ignoredTooOften }
-        if !occasion.someoneWaits {
+        if !occasion.someoneWaits, !occasion.isNews {
             if let last = lastRemarkAt, around.now.timeIntervalSince(last) < Self.quietTime { return .tooSoon }
             let day = Self.day(around.now, around.calendar)
-            if said.filter({ $0.day == day }).count >= (Self.dailyLimit[around.talk] ?? 0) { return .enoughForToday }
+            // GitHub news (`gh.`) do not use up the remarks of the day
+            if said.filter({ $0.day == day && !$0.phrase.hasPrefix("gh.") }).count >= (Self.dailyLimit[around.talk] ?? 0) { return .enoughForToday }
         }
         return nil
     }
@@ -307,6 +315,30 @@ enum InitiativePhrases {
                     Variant(key: "gh.stars.1", text: loc("\(cap(stars)) d'un coup sur \(repo). Ça brille."), mood: .happy),
                     Variant(key: "gh.stars.2", text: loc("\(repo) vient de prendre \(stars)."), mood: .happy),
                     Variant(key: "gh.stars.3", text: loc("\(cap(stars)) de plus pour \(repo). Je les ai comptées."), mood: .wink),
+                ]
+            case .star where event.actor.isEmpty:
+                return [
+                    Variant(key: "gh.star.q1", text: loc("Une étoile de plus sur \(repo). Va voir."), mood: .happy),
+                    Variant(key: "gh.star.q2", text: loc("Hé, quelqu'un vient d'étoiler \(repo)."), mood: .wink),
+                    Variant(key: "gh.star.q3", text: loc("\(repo) prend une étoile. Ça brille."), mood: .happy),
+                ]
+            case .fork where event.actor.isEmpty:
+                return [
+                    Variant(key: "gh.fork.q1", text: loc("Hé, \(repo) vient d'être forké."), mood: .curious),
+                    Variant(key: "gh.fork.q2", text: loc("Un fork de plus pour \(repo). Ton code voyage."), mood: .happy),
+                ]
+            case .push:
+                let who = event.actor.isEmpty ? "" : loc(" par \(event.actor)")
+                if event.headline.isEmpty {
+                    return [
+                        Variant(key: "gh.push.1", text: loc("Hé, il y a eu un push sur \(repo)\(who). Regarde."), mood: .curious),
+                        Variant(key: "gh.push.2", text: loc("Ça bouge sur \(repo) : du nouveau code\(who)."), mood: .happy),
+                    ]
+                }
+                let line = event.headline.count > 70 ? String(event.headline.prefix(68)) + "…" : event.headline
+                return [
+                    Variant(key: "gh.commit.1", text: loc("Nouveau commit sur \(repo)\(who) : « \(line) »."), mood: .curious),
+                    Variant(key: "gh.commit.2", text: loc("Hé, un push sur \(repo) : « \(line) »."), mood: .happy),
                 ]
             case .star:
                 return [
