@@ -347,7 +347,7 @@ final class YumiCore {
                     onNewMail: { [initiative] mail, count in
                         initiative.notice(.mail(from: mail.from, subject: mail.subject, count: count))
                     },
-                    onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) }),
+                    onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: SettingsPage.modules) }),
             ],
             onPublish: { snapshots in
                 state.modules = snapshots

@@ -463,11 +463,21 @@ struct AccentSwatches: View {
 
 /// "Skin": what he wears.
 struct CostumeChips: View {
+    /// All on one line (in a horizontal scroll), instead of wrapping.
+    var oneRow = false
     @AppStorage(YumiCostume.defaultsKey) private var costume = YumiCostume.none.rawValue
     @Environment(\.islandAccent) private var accent
 
     var body: some View {
-        FlowLayout(spacing: 5) {
+        if oneRow {
+            HStack(spacing: 5) { chips }
+        } else {
+            FlowLayout(spacing: 5) { chips }
+        }
+    }
+
+    @ViewBuilder private var chips: some View {
+        Group {
             ForEach(YumiCostume.allCases, id: \.self) { choice in
                 let on = costume == choice.rawValue
                 Button {

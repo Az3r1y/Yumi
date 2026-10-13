@@ -41,7 +41,7 @@ struct GmailSheet: View {
         let others = inbox.mails.filter { !$0.important }
         return VStack(alignment: .leading, spacing: 8) {
             if inbox.mails.isEmpty {
-                ActSub(text: credentials == nil ? loc("Branche Gmail dans les réglages, Plus de réglages.") : loc("Rien de neuf dans ta boîte."))
+                ActSub(text: credentials == nil ? loc("Branche Gmail dans Réglages, Modules.") : loc("Rien de neuf dans ta boîte."))
             }
             if !important.isEmpty {
                 section(loc("Importants"), important.prefix(4), color: IslandTheme.amber)

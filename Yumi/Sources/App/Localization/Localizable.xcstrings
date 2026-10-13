@@ -11788,6 +11788,106 @@
           }
         }
       }
+    },
+    "Branché : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected: %@"
+          }
+        }
+      }
+    },
+    "Pas branché": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected"
+          }
+        }
+      }
+    },
+    "Débrancher Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnect Gmail"
+          }
+        }
+      }
+    },
+    "Adresse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Address"
+          }
+        }
+      }
+    },
+    "Il faut la validation en deux étapes sur ton compte Google. Je lis ta boîte sans rien marquer comme lu ; une réponse ne part que quand tu cliques sur Envoyer dans l'île.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Google account needs 2-Step Verification. I read your inbox without marking anything as read; an answer only leaves when you click Send in the island."
+          }
+        }
+      }
+    },
+    "Tous les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All settings"
+          }
+        }
+      }
+    },
+    "Modules et comptes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modules and accounts"
+          }
+        }
+      }
+    },
+    "Branche Gmail dans Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Gmail in Settings, Modules."
+          }
+        }
+      }
+    },
+    "Dans Réglages, Modules : ton adresse et un mot de passe d'application.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Settings, Modules: your address and an app password."
+          }
+        }
+      }
+    },
+    "Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

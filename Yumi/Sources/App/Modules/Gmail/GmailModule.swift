@@ -268,7 +268,7 @@ enum GmailSummary {
         switch connection {
         case .notSet:
             snapshot.title = loc("Branche ta boîte Gmail")
-            snapshot.subtitle = loc("Une adresse et un mot de passe d'application, dans les réglages.")
+            snapshot.subtitle = loc("Dans Réglages, Modules : ton adresse et un mot de passe d'application.")
             snapshot.primaryAction = loc("Brancher")
             snapshot.primarySymbol = "link"
             return snapshot
