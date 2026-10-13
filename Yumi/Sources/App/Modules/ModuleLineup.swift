@@ -19,6 +19,7 @@ final class ModuleLineup: ObservableObject {
             var plain = ModuleSnapshot(id: module.id, name: module.name, colorHex: module.colorHex, status: "",
                                        title: "", subtitle: "", primaryAction: "", secondaryAction: nil)
             plain.symbol = module.symbol
+            plain.category = module.category
             snapshot = plain
             self.selected = selected
         }
@@ -41,6 +42,9 @@ final class ModuleLineup: ObservableObject {
     }
 
     var selected: [Entry] { entries.filter(\.selected) }
+
+    /// The shown modules of one tab, in the person's order.
+    func selected(in category: ModuleCategory) -> [Entry] { selected.filter { $0.snapshot.tab == category } }
     var hidden: [Entry] { entries.filter { !$0.selected } }
 
     static func place(of index: Int, selected: Bool) -> Place {
