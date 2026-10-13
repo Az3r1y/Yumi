@@ -17,7 +17,7 @@ struct IslandBento: View {
     }
 
     /// Height of a small tile; the large one is two of them and the gap.
-    static let row: CGFloat = 88
+    static let row: CGFloat = 96
     static let gap: CGFloat = 8
 
     var body: some View {
@@ -44,18 +44,25 @@ struct IslandBento: View {
     /// The tiles beside the large one: one fills the column, two stack, three put the first
     /// across the top, four make a square; more go on as small tiles in pairs.
     @ViewBuilder private func side(_ ids: [String]) -> some View {
+        // Every row has its exact height: a tile never pushes the others up under the notch or
+        // down out of the island, whatever it shows
         switch ids.count {
         case 1:
             tile(ids[0], index: 1)
         case 2:
-            VStack(spacing: Self.gap) { tile(ids[0], index: 1); tile(ids[1], index: 2) }
+            VStack(spacing: Self.gap) {
+                tile(ids[0], index: 1).frame(height: Self.row)
+                tile(ids[1], index: 2).frame(height: Self.row)
+            }
         case 3:
             VStack(spacing: Self.gap) {
-                tile(ids[0], index: 1)
+                tile(ids[0], index: 1).frame(height: Self.row)
                 HStack(spacing: Self.gap) { tile(ids[1], index: 2); tile(ids[2], index: 3) }
+                    .frame(height: Self.row)
             }
         default:
             let pairs = stride(from: 0, to: ids.count, by: 2).map { Array(ids[$0..<min($0 + 2, ids.count)]) }
+            let height = (Self.row * 2 + Self.gap - CGFloat(pairs.count - 1) * Self.gap) / CGFloat(pairs.count)
             VStack(spacing: Self.gap) {
                 ForEach(Array(pairs.enumerated()), id: \.offset) { row, pair in
                     HStack(spacing: Self.gap) {
@@ -63,6 +70,7 @@ struct IslandBento: View {
                             tile(id, index: 1 + row * 2 + column)
                         }
                     }
+                    .frame(height: height)
                 }
             }
         }

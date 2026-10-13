@@ -97,7 +97,7 @@ private struct GitHubTile: View {
     @State private var day: ContributionDay?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 7) {
+        VStack(alignment: .leading, spacing: 5) {
             if let figures = GitHubFigures.parse(module.status) {
                 HStack(spacing: 12) {
                     figure("star.fill", figures.stars, IslandTheme.amber)
@@ -109,7 +109,7 @@ private struct GitHubTile: View {
             }
             if let calendar = contributions.calendar {
                 // The last weeks, as many as the tile can hold
-                ContributionGrid(calendar: calendar.lastWeeks(large ? 26 : 18), cell: large ? 5.5 : 4.6, gap: 1.4, selected: $day)
+                ContributionGrid(calendar: calendar.lastWeeks(large ? 26 : 30), cell: large ? 5.5 : 3.6, gap: 1.2, selected: $day)
                     .allowsHitTesting(false)
             } else {
                 Faint(text: module.title)

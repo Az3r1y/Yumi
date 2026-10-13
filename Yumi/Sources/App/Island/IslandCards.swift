@@ -55,16 +55,27 @@ let islandOpenSpace = "islandOpen"
 struct YumiSlot: View {
     let width: CGFloat
     @ObservedObject private var model = IslandModel.shared
+    @AppStorage(YumiCostume.defaultsKey) private var costume = YumiCostume.none.rawValue
+
+    /// Room kept above him for what he wears on his head (a hat, a horn, antennae): it never
+    /// covers the text above the slot.
+    private var headroom: CGFloat {
+        (YumiCostume(rawValue: costume) ?? .none).onHead ? width * 0.36 : 0
+    }
 
     var body: some View {
-        Color.clear
-            .frame(width: width, height: width * 0.84)
-            .contentShape(Rectangle())
-            .onTapGesture { IslandActions.pokeYumi(talking: AppState.shared.view == .prompt) }
-            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(islandOpenSpace)) } action: { rect in
-                model.seatOpen(in: rect)
-            }
-            .accessibilityLabel("Yumi")
+        VStack(spacing: 0) {
+            Color.clear.frame(width: width, height: headroom)
+            Color.clear
+                .frame(width: width, height: width * 0.84)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(islandOpenSpace)) } action: { rect in
+                    model.seatOpen(in: rect)
+                }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { IslandActions.pokeYumi(talking: AppState.shared.view == .prompt) }
+        .accessibilityLabel("Yumi")
+        .animation(.islandSpring(0.4), value: headroom)
     }
 }
 
