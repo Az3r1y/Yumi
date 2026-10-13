@@ -117,6 +117,8 @@ final class ClaudeCodeModule: YumiModule {
             if approvalPending || !Self.bringToFront(sessions.first?.origin) { onShow() }
         case .secondary:
             Self.bringToFront(sessions.first?.origin)
+        case .previous:
+            break
         }
     }
 

@@ -177,6 +177,8 @@ final class GitHubModule: YumiModule {
             etags = [:]
             login = nil
             restart()
+        case .previous:
+            break
         }
     }
 

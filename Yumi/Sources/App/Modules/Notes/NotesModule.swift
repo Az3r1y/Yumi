@@ -92,6 +92,8 @@ final class NotesModule: YumiModule {
                 store.ensureFileExists()
                 NSWorkspace.shared.open(store.fileURL)
             }
+        case .previous:
+            break
         }
     }
 

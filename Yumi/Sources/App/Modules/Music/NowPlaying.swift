@@ -1,16 +1,79 @@
 import Foundation
 
-/// The apps Yumi can follow. Both announce their track changes to the whole system,
-/// so no permission and no polling is needed to know what is playing.
+/// The apps Yumi can follow. Music and Spotify announce their track changes to the whole
+/// system; Deezer and YouTube Music are read from the title of their window (the app, or a
+/// browser tab on top), and are driven with the Mac's media keys.
 enum MusicPlayer: String, CaseIterable, Sendable {
     case music = "com.apple.Music"
     case spotify = "com.spotify.client"
+    case deezer = "com.deezer.deezer-desktop"
+    /// The web player or its installed app: not one bundle, so a name of our own.
+    case youtubeMusic = "music.youtube.com"
 
-    var name: String { self == .music ? "Musique" : "Spotify" }
+    var name: String {
+        switch self {
+        case .music:        return "Musique"
+        case .spotify:      return "Spotify"
+        case .deezer:       return "Deezer"
+        case .youtubeMusic: return "YouTube Music"
+        }
+    }
+
+    /// Answers AppleScript and posts its playback changes.
+    var isScriptable: Bool { self == .music || self == .spotify }
 
     /// Name of the distributed notification the app posts when its playback changes.
-    var notificationName: String {
-        self == .music ? "com.apple.Music.playerInfo" : "com.spotify.client.PlaybackStateChanged"
+    var notificationName: String? {
+        switch self {
+        case .music:   return "com.apple.Music.playerInfo"
+        case .spotify: return "com.spotify.client.PlaybackStateChanged"
+        case .deezer, .youtubeMusic: return nil
+        }
+    }
+
+    /// Where it lives on the web, to open it when it is not running.
+    var webURL: URL? {
+        switch self {
+        case .deezer:       return URL(string: "https://www.deezer.com")
+        case .youtubeMusic: return URL(string: "https://music.youtube.com")
+        case .music, .spotify: return nil
+        }
+    }
+}
+
+/// The track a window title shows, for the players that only say it there.
+enum MusicTitles {
+    /// The browsers and their window suffixes, removed before reading.
+    static let browserSuffixes = [" - Google Chrome", " - Microsoft Edge", " - Brave", " — Mozilla Firefox", " - Mozilla Firefox",
+                                  " - Arc", " - Safari", " — Safari", " - Opera", " - Vivaldi"]
+
+    /// "Lueur - Halo Nord - YouTube Music" → YouTube Music, "Lueur", "Halo Nord". nil when the
+    /// title is not a track of a known player (or only the player's own name, nothing playing).
+    static func parse(_ windowTitle: String, appName: String = "") -> (player: MusicPlayer, title: String, artist: String)? {
+        var text = windowTitle.trimmingCharacters(in: .whitespaces)
+        for suffix in browserSuffixes where text.hasSuffix(suffix) { text = String(text.dropLast(suffix.count)) }
+        // A tab marked as playing sound
+        text = text.replacingOccurrences(of: "🔊", with: "").replacingOccurrences(of: "▶ ", with: "").trimmingCharacters(in: .whitespaces)
+        let players: [(MusicPlayer, [String])] = [
+            (.youtubeMusic, [" - YouTube Music", " | YouTube Music"]),
+            (.deezer, [" - Deezer", " | Deezer", " – Deezer"]),
+        ]
+        for (player, suffixes) in players {
+            let isApp = appName.localizedCaseInsensitiveContains(player.name)
+            guard let suffix = suffixes.first(where: { text.hasSuffix($0) }) ?? (isApp ? "" : nil) else { continue }
+            let track = String(text.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
+            guard !track.isEmpty, track.caseInsensitiveCompare(player.name) != .orderedSame,
+                  !["home", "accueil", "explore", "explorer", "library", "bibliothèque"].contains(track.lowercased()) else { return nil }
+            for separator in [" • ", " · ", " - ", " — ", " – "] {
+                let parts = track.components(separatedBy: separator)
+                if parts.count >= 2 {
+                    return (player, parts[0].trimmingCharacters(in: .whitespaces),
+                            parts[1...].joined(separator: separator).trimmingCharacters(in: .whitespaces))
+                }
+            }
+            return (player, track, "")
+        }
+        return nil
     }
 }
 

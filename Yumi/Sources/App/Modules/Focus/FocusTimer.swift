@@ -197,6 +197,7 @@ extension FocusTimer {
         case (.paused, .primary):                      resume(now: now)
         case (.idle, .secondary):                      break
         case (_, .secondary):                          stop()
+        case (_, .previous):                           break
         }
     }
 }
