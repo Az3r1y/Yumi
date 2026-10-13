@@ -274,7 +274,7 @@ enum GmailSummary {
             return snapshot
         case .refused:
             snapshot.title = loc("Gmail refuse le mot de passe")
-            snapshot.subtitle = loc("Vérifie le mot de passe d'application dans les réglages.")
+            snapshot.subtitle = loc("Il faut un mot de passe d'application de 16 lettres, pas ton mot de passe Google : Réglages, Modules.")
             snapshot.primaryAction = loc("Réglages")
             return snapshot
         case .offline where mails.isEmpty:

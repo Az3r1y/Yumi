@@ -678,6 +678,18 @@ extension IslandStudio {
             ("14-skin-pirate", { wear(.pirate, .yumi); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
             ("15-skin-fete", { wear(.party, .pink); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
             ("16-skin-noeud", { wear(.bow, .yumi); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("98-stress-onglets", {
+                // Views switched faster than their animations: Yumi must end in the last one's place
+                show(sessions()); controller?.expand(to: .overview)
+                let steps: [@MainActor () -> Void] = [
+                    { IslandActions.showTab(.day) }, { IslandActions.showModule("claude-code") }, { IslandActions.go(.settings) },
+                    { IslandActions.showTab(.relax) }, { IslandActions.showModule("music") }, { IslandActions.go(.prompt) },
+                    { IslandActions.showTab(.work) }, { IslandActions.showModule("agenda") }, { IslandActions.showTab(.day) },
+                ]
+                for (i, step) in steps.enumerated() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25 + Double(i) * 0.12) { MainActor.assumeIsolated { step() } }
+                }
+            }),
             ("11-skin-repliee", { wear(.witch, .green); show(modules(musicPlaying: true)); controller?.collapse() }),
         ]
         Task { @MainActor in

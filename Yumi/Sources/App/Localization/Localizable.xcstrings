@@ -11888,6 +11888,26 @@
           }
         }
       }
+    },
+    "Ce n'est pas un mot de passe d'application : Google en donne un de 16 lettres. Ton mot de passe habituel ne marche pas ici.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is not an app password: Google gives one of 16 letters. Your usual password does not work here."
+          }
+        }
+      }
+    },
+    "Il faut un mot de passe d'application de 16 lettres, pas ton mot de passe Google : Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It needs a 16-letter app password, not your Google password: Settings, Modules."
+          }
+        }
+      }
     }
   },
   "version": "1.0"
