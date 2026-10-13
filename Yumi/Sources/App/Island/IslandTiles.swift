@@ -378,3 +378,66 @@ private struct PlainTile: View {
         }
     }
 }
+
+// MARK: - Focus: choosing the length by hand
+
+/// Ready-made lengths, and minutes to the minute with − and +. "Démarrer" starts it at once;
+/// Yumi can also be asked in the chat ("un focus de 50 minutes").
+struct FocusLengthPicker: View {
+    @AppStorage("focus.chosenMinutes") private var minutes = 25
+    @Environment(\.islandAccent) private var accent
+    private static let presets = [15, 25, 45, 60, 90]
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ForEach(Self.presets, id: \.self) { preset in
+                let on = minutes == preset
+                Button { minutes = preset; IslandActions.tap() } label: {
+                    Text("\(preset)")
+                        .font(IslandTheme.round(12, on ? .bold : .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(on ? Color.white : IslandTheme.muted)
+                        .frame(width: 32, height: 24)
+                        .background(Capsule().fill(on ? accent.opacity(0.45) : Color.white.opacity(0.07)))
+                        .contentShape(Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer(minLength: 6)
+            HStack(spacing: 2) {
+                stepButton("minus") { minutes = max(1, minutes - 5) }
+                Text(loc("\(minutes) min"))
+                    .font(IslandTheme.round(13, .bold))
+                    .monospacedDigit()
+                    .frame(minWidth: 52)
+                stepButton("plus") { minutes = min(240, minutes + 5) }
+            }
+            .padding(2)
+            .background(Capsule().fill(Color.white.opacity(0.07)))
+            Button {
+                NotificationCenter.default.post(name: .focusStartMinutes, object: nil, userInfo: ["minutes": minutes])
+                SoundEngine.shared.play("approve")
+                IslandModel.shared.pose(.pop)
+            } label: {
+                Label(loc("Démarrer"), systemImage: "play.fill")
+                    .font(IslandTheme.text(11.5, .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 5)
+                    .background(Capsule().fill(accent))
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(RoundPress())
+        }
+    }
+
+    private func stepButton(_ symbol: String, _ action: @escaping () -> Void) -> some View {
+        Button { action(); IslandActions.tap() } label: {
+            Image(systemName: symbol)
+                .font(.system(size: 9, weight: .bold))
+                .frame(width: 22, height: 22)
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+    }
+}

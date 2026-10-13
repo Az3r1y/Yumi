@@ -19,7 +19,7 @@ enum ModuleCategory: String, CaseIterable, Sendable {
     static func of(moduleID id: String) -> ModuleCategory {
         switch id {
         case "claude-code", "github", "notion", "tasks", "taches": return .work
-        case "agenda", "weather", "meteo", "notes":                return .day
+        case "agenda", "weather", "meteo", "notes", "gmail":       return .day
         case "music", "musique", "focus":                          return .relax
         default:                                                   return .day
         }

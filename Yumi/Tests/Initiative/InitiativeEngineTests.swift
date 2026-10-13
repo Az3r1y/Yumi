@@ -303,3 +303,12 @@ private func around(_ now: Date, talk: YumiTalk = .chatty, name: String? = "Este
         #expect(engine.consider(push(), in: around(at(10), talk: .silent)) == nil)
     }
 }
+
+@Suite struct InitiativeMailTests {
+    @Test func anImportantMailIsSaidWithItsSender() {
+        var engine = InitiativeEngine()
+        let remark = engine.consider(.mail(from: "Léa", subject: "Contrat signé", count: 1), in: around(at(10), talk: .discreet))
+        #expect(remark?.text.contains("Léa") == true && remark?.text.contains("Contrat signé") == true)
+        #expect(engine.consider(.mail(from: "Paul", subject: "", count: 3), in: around(at(10, 1), talk: .discreet))?.text.contains("3") == true)
+    }
+}

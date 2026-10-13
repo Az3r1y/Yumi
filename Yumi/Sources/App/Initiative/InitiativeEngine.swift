@@ -23,6 +23,8 @@ enum Occasion: Equatable, Sendable {
     case weekEnd
     /// Something that counts happened on one of the person's repositories.
     case repository(GitHubEvent, count: Int)
+    /// New mail arrived in the Gmail inbox: the newest one, and how many came.
+    case mail(from: String, subject: String, count: Int)
 
     /// The subject, for the rule about being ignored: one per kind of occasion.
     var topic: String {
@@ -36,6 +38,7 @@ enum Occasion: Equatable, Sendable {
         case .lowBattery: return "lowBattery"
         case .weekEnd: return "weekEnd"
         case .repository(let event, _): return "github.\(event.kind.rawValue)"
+        case .mail: return "mail"
         }
     }
 
@@ -45,15 +48,17 @@ enum Occasion: Equatable, Sendable {
         case .firstWake(let events, _): return (events ?? 0) > 0
         case .back(let finished, let waiting): return finished || waiting
         case .weekEnd: return false
-        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery, .repository: return true
+        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery, .repository, .mail: return true
         }
     }
 
     /// News the person asked to hear as it comes (what happens on their repositories): the
     /// twenty-minute rule and the daily count do not apply, and it does not delay the others.
     var isNews: Bool {
-        if case .repository = self { return true }
-        return false
+        switch self {
+        case .repository, .mail: return true
+        default: return false
+        }
     }
 
     /// True when someone is waiting for an answer: the twenty-minute rule does not apply.
@@ -367,6 +372,19 @@ enum InitiativePhrases {
                     Variant(key: "gh.merge.3", text: loc("Fusion faite sur \(repo). Deux gouttes, une seule."), mood: .wink),
                 ]
             }
+
+        case .mail(let from, let subject, let count):
+            let what = subject.isEmpty ? "" : " : « \(subject.count > 60 ? String(subject.prefix(58)) + "…" : subject) »"
+            if count > 1 {
+                return [
+                    Variant(key: "gh.mail.many.1", text: loc("\(count) nouveaux mails, dont un de \(from)\(what)."), mood: .curious),
+                    Variant(key: "gh.mail.many.2", text: loc("Ta boîte se remplit : \(count) mails, le dernier de \(from)."), mood: .surprised),
+                ]
+            }
+            return [
+                Variant(key: "gh.mail.1", text: loc("Hé, un mail de \(from)\(what)."), mood: .curious),
+                Variant(key: "gh.mail.2", text: loc("Nouveau mail de \(from)\(what)."), mood: .happy),
+            ]
 
         case .weekEnd:
             var end = [

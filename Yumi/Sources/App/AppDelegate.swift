@@ -338,6 +338,16 @@ final class YumiCore {
                     token: { KeychainStore.shared.get("github-token") },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
                     onNews: { [initiative] event, count in initiative.notice(.repository(event, count: count)) }),
+                GmailModule(
+                    credentials: {
+                        guard let address = UserDefaults.standard.string(forKey: GmailModule.addressKey), !address.isEmpty,
+                              let password = KeychainStore.shared.get(GmailModule.passwordKey), !password.isEmpty else { return nil }
+                        return (address, password)
+                    },
+                    onNewMail: { [initiative] mail, count in
+                        initiative.notice(.mail(from: mail.from, subject: mail.subject, count: count))
+                    },
+                    onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) }),
             ],
             onPublish: { snapshots in
                 state.modules = snapshots

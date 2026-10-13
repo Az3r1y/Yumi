@@ -112,6 +112,8 @@ struct SettingsActivity: View {
                     }
                 }
                 .riseIn(4)
+                GmailSettingsRow()
+                    .riseIn(5)
                 row("Yumi \(YumiUpdates.installed)") {
                     if let newer = updates.newer {
                         TextButton(label: loc("\(newer.tag) est là")) { updates.openRelease() }
@@ -208,5 +210,62 @@ struct SegmentButton: View {
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Gmail: the address and an app password (Google account, Security, App passwords). The
+/// password goes to the Keychain, the address to the defaults; the module reads the inbox only.
+struct GmailSettingsRow: View {
+    @State private var address = UserDefaults.standard.string(forKey: GmailModule.addressKey) ?? ""
+    @State private var password = ""
+    @State private var connected = KeychainStore.shared.get(GmailModule.passwordKey)?.isEmpty == false
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Text("Gmail")
+                .font(IslandTheme.text(12.5, .medium))
+                .foregroundStyle(IslandTheme.fg)
+            Spacer(minLength: 0)
+            if connected {
+                Text(address)
+                    .font(IslandTheme.text(11.5, .medium))
+                    .foregroundStyle(IslandTheme.green)
+                    .lineLimit(1)
+                TextButton(label: loc("Retirer")) {
+                    KeychainStore.shared.remove(GmailModule.passwordKey)
+                    connected = false
+                    NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
+                    IslandActions.tap()
+                }
+            } else {
+                TextField("", text: $address, prompt: Text(verbatim: "toi@gmail.com").foregroundStyle(IslandTheme.faint))
+                    .textFieldStyle(.plain)
+                    .font(IslandTheme.text(12, .regular))
+                    .frame(width: 120)
+                SecureField("", text: $password, prompt: Text("Mot de passe d'application").foregroundStyle(IslandTheme.faint))
+                    .textFieldStyle(.plain)
+                    .font(IslandTheme.text(12, .regular))
+                    .frame(width: 150)
+                    .onSubmit(connect)
+                RoundButton(style: .white, symbol: "checkmark", label: loc("Brancher"), small: true, action: connect)
+                    .scaleEffect(0.8)
+                Link(destination: URL(string: "https://myaccount.google.com/apppasswords")!) {
+                    Image(systemName: "questionmark.circle").font(.system(size: 12)).foregroundStyle(IslandTheme.muted)
+                }
+                .help(loc("Créer un mot de passe d'application Google"))
+            }
+        }
+    }
+
+    private func connect() {
+        let mail = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let secret = password.replacingOccurrences(of: " ", with: "")
+        guard mail.contains("@"), !secret.isEmpty else { return }
+        UserDefaults.standard.set(mail, forKey: GmailModule.addressKey)
+        KeychainStore.shared.set(GmailModule.passwordKey, value: secret)
+        password = ""
+        connected = true
+        NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
+        SoundEngine.shared.play("approve")
     }
 }

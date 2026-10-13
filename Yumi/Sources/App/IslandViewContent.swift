@@ -171,6 +171,13 @@ struct IslandOpenLayer: View {
             }
         } else if let module, module.id == IslandModel.agentModuleID, IslandModel.isBusy(state.effectiveState) {
             HStack(spacing: 14) { YumiSlot(width: 64); WorkingActivity(state: state, model: model) }
+        } else if let module, module.id == "gmail" {
+            HStack(alignment: .top, spacing: 14) { YumiSlot(width: 56); GmailSheet() }
+        } else if let module, module.id == "focus" {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 14) { YumiSlot(width: 60); ModuleActivity(module: module) }
+                FocusLengthPicker()
+            }
         } else if let module {
             HStack(spacing: 14) { YumiSlot(width: 60); ModuleActivity(module: module) }
         } else {
