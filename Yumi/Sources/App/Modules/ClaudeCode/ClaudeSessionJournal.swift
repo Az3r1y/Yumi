@@ -133,7 +133,7 @@ struct SessionJournal: Equatable, Sendable {
     var summary: String?
     var notification: String?
 
-    static let historyLength = 6
+    static let historyLength = 12
 
     init(started: Date) { self.started = started }
 

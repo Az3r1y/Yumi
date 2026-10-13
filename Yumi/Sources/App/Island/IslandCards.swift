@@ -55,26 +55,72 @@ let islandOpenSpace = "islandOpen"
 struct YumiSlot: View {
     let width: CGFloat
     @ObservedObject private var model = IslandModel.shared
+    @AppStorage(YumiCostume.defaultsKey) private var costume = YumiCostume.none.rawValue
+    /// Who this slot is, among the ones on screen during a change of view.
+    @State private var owner = UUID()
+
+    /// Room kept above him for what he wears on his head (a hat, a horn, antennae): it never
+    /// covers the text above the slot.
+    private var headroom: CGFloat {
+        (YumiCostume(rawValue: costume) ?? .none).onHead ? width * 0.36 : 0
+    }
 
     var body: some View {
-        Color.clear
-            .frame(width: width, height: width * 0.84)
-            .contentShape(Rectangle())
-            .onTapGesture { IslandActions.pokeYumi(talking: AppState.shared.view == .prompt) }
-            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(islandOpenSpace)) } action: { rect in
-                model.seatOpen(in: rect)
-            }
-            .accessibilityLabel("Yumi")
+        VStack(spacing: 0) {
+            Color.clear.frame(width: width, height: headroom)
+            Color.clear
+                .frame(width: width, height: width * 0.84)
+                .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(islandOpenSpace)) } action: { rect in
+                    model.seatSlot(owner, at: rect)
+                }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture { IslandActions.pokeYumi(talking: AppState.shared.view == .prompt) }
+        .onAppear { model.slotAppeared(owner) }
+        .onDisappear { model.slotLeft(owner) }
+        .accessibilityLabel("Yumi")
+        .animation(.islandSpring(0.4), value: headroom)
     }
 }
 
 extension IslandModel {
-    /// The slot kept for Yumi moved: his seat in the open island follows it.
-    func seatOpen(in rect: CGRect) {
+    /// While one view gives way to another, both keep a place for Yumi for a moment: only the
+    /// newest one decides where he sits, and the one leaving can never pull him back.
+    func slotAppeared(_ owner: UUID) {
+        YumiSlots.shared.order.removeAll { $0 == owner }
+        YumiSlots.shared.order.append(owner)
+        settle()
+    }
+
+    func slotLeft(_ owner: UUID) {
+        YumiSlots.shared.order.removeAll { $0 == owner }
+        YumiSlots.shared.rects[owner] = nil
+        settle()
+    }
+
+    func seatSlot(_ owner: UUID, at rect: CGRect) {
+        // A frame that is not real yet (zero size, nothing laid out) is not a seat
+        guard rect.width > 1, rect.height > 1, rect.minX.isFinite, rect.minY.isFinite else { return }
+        YumiSlots.shared.rects[owner] = rect
+        settle()
+    }
+
+    /// Yumi sits in the newest slot still on screen.
+    private func settle() {
+        let slots = YumiSlots.shared
+        guard let owner = slots.order.last(where: { slots.rects[$0] != nil }), let rect = slots.rects[owner] else { return }
         let k = IslandConst.openScale
         let slot = CGRect(x: rect.minX * k, y: rect.minY * k, width: rect.width * k, height: rect.height * k)
         if layout.openSlot != slot { layout.openSlot = slot }
     }
+}
+
+/// The places kept for Yumi in the open island, newest last.
+@MainActor
+final class YumiSlots {
+    static let shared = YumiSlots()
+    var order: [UUID] = []
+    var rects: [UUID: CGRect] = [:]
 }
 
 // MARK: - The row in the menu bar
@@ -330,8 +376,6 @@ struct SessionSteps: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .onTapGesture { if let action = row.action { IslandActions.row(IslandModel.agentModuleID, action) } }
     }
 
     private func line(symbol: String, text: String, bright: Bool) -> some View {
@@ -454,11 +498,21 @@ struct AccentSwatches: View {
 
 /// "Skin": what he wears.
 struct CostumeChips: View {
+    /// All on one line (in a horizontal scroll), instead of wrapping.
+    var oneRow = false
     @AppStorage(YumiCostume.defaultsKey) private var costume = YumiCostume.none.rawValue
     @Environment(\.islandAccent) private var accent
 
     var body: some View {
-        FlowLayout(spacing: 5) {
+        if oneRow {
+            HStack(spacing: 5) { chips }
+        } else {
+            FlowLayout(spacing: 5) { chips }
+        }
+    }
+
+    @ViewBuilder private var chips: some View {
+        Group {
             ForEach(YumiCostume.allCases, id: \.self) { choice in
                 let on = costume == choice.rawValue
                 Button {

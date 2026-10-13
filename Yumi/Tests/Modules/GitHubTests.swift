@@ -133,8 +133,8 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         let pairs: [(GitHubEvent.Kind, YumiScene)] = [(.star, .star), (.fork, .fork), (.pullRequest, .pullRequest), (.merge, .merge),
                                                       (.push, .push), (.issue, .issue), (.release, .release), (.follower, .follower)]
         for (kind, scene) in pairs { #expect(kind.scene == scene) }
-        #expect(Set([GitHubEvent.Kind.star, .fork, .merge, .release].map(\.isWorthAWord)) == [true])
-        #expect(Set([GitHubEvent.Kind.push, .issue, .pullRequest, .follower].map(\.isWorthAWord)) == [false])
+        #expect(Set([GitHubEvent.Kind.star, .fork, .merge, .release, .push].map(\.isWorthAWord)) == [true])
+        #expect(Set([GitHubEvent.Kind.issue, .pullRequest, .follower].map(\.isWorthAWord)) == [false])
     }
 
     @Test func aCommitIsRecognisedInACommand() {
@@ -381,15 +381,15 @@ private let noReview = #"{"total_count":0,"items":[]}"#
 }
 
 @Suite struct GitHubInitiativeTests {
-    @Test func aStarIsSaidWithTheSameGuardsAsEverythingElse() {
+    @Test func aStarIsSaidAtOnceButFocusAndSilenceStillHoldIt() {
         let star = GitHubEvent(id: 1, kind: .star, repo: "estebanbaigts/Yumi", actor: "louis")
         var engine = InitiativeEngine()
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         var around = Surroundings(now: now, talk: .discreet)
         let said = engine.consider(.repository(star, count: 1), in: around)
         #expect(said?.text == "Une étoile de plus sur Yumi, de la part de louis.")
-        // Twenty minutes, focus, silence: the same rules.
-        #expect(engine.refusal(of: .repository(star, count: 1), in: around) == .tooSoon)
+        // News come as they happen: no twenty minutes. Focus and silence still hold them.
+        #expect(engine.refusal(of: .repository(star, count: 1), in: around) == nil)
         around.now = now.addingTimeInterval(3600)
         around.focusRunning = true
         #expect(engine.refusal(of: .repository(star, count: 1), in: around) == .focus)

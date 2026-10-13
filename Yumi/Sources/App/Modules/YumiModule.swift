@@ -9,6 +9,8 @@ import Foundation
 enum ModuleAction: String, Sendable {
     case primary
     case secondary
+    /// Back one step: the previous track. Modules without one treat it as nothing.
+    case previous
 }
 
 @MainActor

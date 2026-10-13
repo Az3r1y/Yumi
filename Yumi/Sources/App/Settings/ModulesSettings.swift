@@ -46,6 +46,8 @@ struct ModulesSettings: View {
             ContributionsSection()
             if githubConnected { GitHubReposSection() }
 
+            GmailSettingsSection()
+                .id("module-settings-gmail")
             NotionSettingsSection()
                 .id("module-settings-notion")
 
@@ -230,5 +232,75 @@ private struct ContributionsSection: View {
         } footer: {
             SettingsHelp(loc("Comme sur ton profil GitHub. Je les relis au plus toutes les trente minutes."))
         }
+    }
+}
+
+/// Gmail: an address and an app password (Google account, Security, App passwords). The
+/// password goes to the Keychain, the address to the defaults. Reading is all the module does;
+/// an answer leaves only when the person clicks "Envoyer" in the island.
+struct GmailSettingsSection: View {
+    @State private var address = UserDefaults.standard.string(forKey: GmailModule.addressKey) ?? ""
+    @State private var password = ""
+    @State private var connected = KeychainStore.shared.get(GmailModule.passwordKey)?.isEmpty == false
+    @State private var problem: String?
+
+    var body: some View {
+        Section {
+            if let problem {
+                Text(problem).foregroundStyle(.red).font(.callout)
+            }
+            LabeledContent("État") {
+                SettingsStatus(text: connected ? loc("Branché : \(address)") : loc("Pas branché"), tone: connected ? .ok : .off)
+            }
+            if connected {
+                Button("Débrancher Gmail") {
+                    KeychainStore.shared.remove(GmailModule.passwordKey)
+                    connected = false
+                    NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
+                }
+            } else {
+                LabeledContent("Adresse") {
+                    TextField("", text: $address, prompt: Text(verbatim: "toi@gmail.com"))
+                        .labelsHidden()
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 280)
+                }
+                LabeledContent("Mot de passe d'application") {
+                    HStack {
+                        SecureField("", text: $password, prompt: Text(verbatim: "abcd efgh ijkl mnop"))
+                            .labelsHidden()
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 280)
+                            .onSubmit(connect)
+                        Button("Brancher", action: connect)
+                            .disabled(!address.contains("@") || password.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+                Link(loc("Créer un mot de passe d'application Google"), destination: URL(string: "https://myaccount.google.com/apppasswords")!)
+            }
+        } header: {
+            Text("Gmail")
+        } footer: {
+            SettingsHelp(loc("Il faut la validation en deux étapes sur ton compte Google. Je lis ta boîte sans rien marquer comme lu ; une réponse ne part que quand tu cliques sur Envoyer dans l'île."))
+        }
+    }
+
+    private func connect() {
+        let mail = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let secret = password.replacingOccurrences(of: " ", with: "")
+        guard mail.contains("@"), !secret.isEmpty else { return }
+        // An app password is exactly 16 letters: anything else is the account's own password,
+        // which Gmail refuses
+        guard secret.count == 16, secret.allSatisfy(\.isLetter) else {
+            problem = loc("Ce n'est pas un mot de passe d'application : Google en donne un de 16 lettres. Ton mot de passe habituel ne marche pas ici.")
+            return
+        }
+        problem = nil
+        UserDefaults.standard.set(mail, forKey: GmailModule.addressKey)
+        KeychainStore.shared.set(GmailModule.passwordKey, value: secret)
+        password = ""
+        address = mail
+        connected = true
+        NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
     }
 }

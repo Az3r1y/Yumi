@@ -11338,6 +11338,576 @@
           }
         }
       }
+    },
+    "%lld fich.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld files"
+          }
+        }
+      }
+    },
+    "%lld cmd": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld cmd"
+          }
+        }
+      }
+    },
+    "%lld échec(s)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld failed"
+          }
+        }
+      }
+    },
+    "Une étoile de plus sur %@. Va voir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more star on %@. Go and see."
+          }
+        }
+      }
+    },
+    "Hé, quelqu'un vient d'étoiler %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, someone just starred %@."
+          }
+        }
+      }
+    },
+    "%@ prend une étoile. Ça brille.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ gets a star. Shiny."
+          }
+        }
+      }
+    },
+    "Hé, %@ vient d'être forké.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, %@ was just forked."
+          }
+        }
+      }
+    },
+    "Un fork de plus pour %@. Ton code voyage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more fork of %@. Your code travels."
+          }
+        }
+      }
+    },
+    " par %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " by %@"
+          }
+        }
+      }
+    },
+    "Hé, il y a eu un push sur %@%@. Regarde.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, there was a push on %@%@. Take a look."
+          }
+        }
+      }
+    },
+    "Ça bouge sur %@ : du nouveau code%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Things are moving on %@: new code%@."
+          }
+        }
+      }
+    },
+    "Nouveau commit sur %@%@ : « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New commit on %@%@: “%@”."
+          }
+        }
+      }
+    },
+    "Hé, un push sur %@ : « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, a push on %@: “%@”."
+          }
+        }
+      }
+    },
+    "Ouvrir Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Gmail"
+          }
+        }
+      }
+    },
+    "Branche ta boîte Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect your Gmail inbox"
+          }
+        }
+      }
+    },
+    "Une adresse et un mot de passe d'application, dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An address and an app password, in the settings."
+          }
+        }
+      }
+    },
+    "Gmail refuse le mot de passe": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail refuses the password"
+          }
+        }
+      }
+    },
+    "Vérifie le mot de passe d'application dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the app password in the settings."
+          }
+        }
+      }
+    },
+    "Gmail ne répond pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail does not answer"
+          }
+        }
+      }
+    },
+    "Je réessaie dans deux minutes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'll try again in two minutes."
+          }
+        }
+      }
+    },
+    "%lld importants": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld important"
+          }
+        }
+      }
+    },
+    "à jour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "up to date"
+          }
+        }
+      }
+    },
+    "%lld non lus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld unread"
+          }
+        }
+      }
+    },
+    "(sans objet)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(no subject)"
+          }
+        }
+      }
+    },
+    "Boîte vide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty inbox"
+          }
+        }
+      }
+    },
+    "%lld nouveaux mails, dont un de %@%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld new mails, one from %@%@."
+          }
+        }
+      }
+    },
+    "Ta boîte se remplit : %lld mails, le dernier de %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your inbox is filling up: %lld mails, the latest from %@."
+          }
+        }
+      }
+    },
+    "Hé, un mail de %@%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, a mail from %@%@."
+          }
+        }
+      }
+    },
+    "Nouveau mail de %@%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New mail from %@%@."
+          }
+        }
+      }
+    },
+    "Mot de passe d'application": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App password"
+          }
+        }
+      }
+    },
+    "Créer un mot de passe d'application Google": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create a Google app password"
+          }
+        }
+      }
+    },
+    "Branche Gmail dans les réglages, Plus de réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Gmail in the settings, More settings."
+          }
+        }
+      }
+    },
+    "Rien de neuf dans ta boîte.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing new in your inbox."
+          }
+        }
+      }
+    },
+    "Importants": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Important"
+          }
+        }
+      }
+    },
+    "Le reste": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The rest"
+          }
+        }
+      }
+    },
+    "De %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From %@"
+          }
+        }
+      }
+    },
+    "Ouvrir dans Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Gmail"
+          }
+        }
+      }
+    },
+    "Yumi propose une réponse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yumi suggests an answer"
+          }
+        }
+      }
+    },
+    "Mail automatique : pas besoin de répondre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic mail: no need to answer."
+          }
+        }
+      }
+    },
+    "Je lis le mail et j'écris une réponse…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading the mail and writing an answer…"
+          }
+        }
+      }
+    },
+    "À %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To %@"
+          }
+        }
+      }
+    },
+    "Envoi…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sending…"
+          }
+        }
+      }
+    },
+    "Envoyé à %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent to %@."
+          }
+        }
+      }
+    },
+    "Aucun moteur ne répond : écris ta réponse ici.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No engine answers: write your answer here."
+          }
+        }
+      }
+    },
+    "L'envoi a échoué, rien n'est parti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sending failed, nothing went out."
+          }
+        }
+      }
+    },
+    "Branché : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected: %@"
+          }
+        }
+      }
+    },
+    "Pas branché": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected"
+          }
+        }
+      }
+    },
+    "Débrancher Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnect Gmail"
+          }
+        }
+      }
+    },
+    "Adresse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Address"
+          }
+        }
+      }
+    },
+    "Il faut la validation en deux étapes sur ton compte Google. Je lis ta boîte sans rien marquer comme lu ; une réponse ne part que quand tu cliques sur Envoyer dans l'île.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Google account needs 2-Step Verification. I read your inbox without marking anything as read; an answer only leaves when you click Send in the island."
+          }
+        }
+      }
+    },
+    "Tous les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All settings"
+          }
+        }
+      }
+    },
+    "Modules et comptes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modules and accounts"
+          }
+        }
+      }
+    },
+    "Branche Gmail dans Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Gmail in Settings, Modules."
+          }
+        }
+      }
+    },
+    "Dans Réglages, Modules : ton adresse et un mot de passe d'application.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Settings, Modules: your address and an app password."
+          }
+        }
+      }
+    },
+    "Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail"
+          }
+        }
+      }
+    },
+    "Ce n'est pas un mot de passe d'application : Google en donne un de 16 lettres. Ton mot de passe habituel ne marche pas ici.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is not an app password: Google gives one of 16 letters. Your usual password does not work here."
+          }
+        }
+      }
+    },
+    "Il faut un mot de passe d'application de 16 lettres, pas ton mot de passe Google : Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It needs a 16-letter app password, not your Google password: Settings, Modules."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

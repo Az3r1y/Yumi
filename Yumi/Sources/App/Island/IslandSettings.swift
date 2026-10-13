@@ -26,14 +26,16 @@ struct SettingsActivity: View {
         VStack(spacing: 9) {
             row(loc("Couleur")) { AccentSwatches() }
                 .riseIn(0)
-            HStack(alignment: .firstTextBaseline, spacing: 12) {
+            HStack(spacing: 12) {
                 Text("Skin")
                     .font(IslandTheme.text(12.5, .medium))
                     .foregroundStyle(IslandTheme.fg)
                 Spacer(minLength: 0)
-                CostumeChips().frame(maxWidth: 300)
+                // One row that scrolls: every costume, without making the island taller
+                ScrollView(.horizontal, showsIndicators: false) { CostumeChips(oneRow: true) }
+                    .frame(maxWidth: 330)
             }
-            .riseIn(0)
+            .riseIn(1)
             row(loc("Habitude")) {
                 HStack(spacing: 0) {
                     ForEach(YumiWorkHabit.allCases, id: \.self) { choice in
@@ -60,78 +62,16 @@ struct SettingsActivity: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(3)
-            if more {
-                row(loc("Mes sons")) {
-                    Slider(value: $state.soundVolume, in: 0...0.2) { editing in
-                        if !editing { SoundEngine.shared.play("pop") }
-                    }
-                    .controlSize(.mini)
-                    .tint(.white)
-                    .frame(width: 96)
-                    .disabled(!state.soundEnabled)
-                    .opacity(state.soundEnabled ? 1 : 0.35)
-                    .accessibilityLabel("Volume")
-                    IslandToggle(isOn: $state.soundEnabled, label: loc("Sons"))
+            HStack(spacing: 14) {
+                if let newer = updates.newer {
+                    TextButton(label: loc("\(newer.tag) est là")) { updates.openRelease() }
                 }
-                .riseIn(0)
-                row(loc("Je me replie après")) {
-                    HStack(spacing: 0) {
-                        ForEach(Self.delays, id: \.seconds) { delay in
-                            SegmentButton(label: delay.label, on: selected == delay.seconds) {
-                                state.autoCloseInterval = delay.seconds
-                                IslandActions.tap()
-                            }
-                        }
-                    }
-                    .padding(2)
-                    .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
-                }
-                .riseIn(1)
-                row("GitHub") {
-                    if githubConnected {
-                        Text("Branché")
-                            .font(IslandTheme.text(11.5, .medium))
-                            .foregroundStyle(IslandTheme.green)
-                        TextButton(label: loc("Retirer")) {
-                            IslandActions.connectGitHub(nil)
-                            githubConnected = false
-                        }
-                    } else {
-                        HStack(spacing: 4) {
-                            SecureField("", text: $githubToken, prompt: Text("Colle ton jeton d'accès").foregroundStyle(IslandTheme.faint))
-                                .textFieldStyle(.plain)
-                                .font(IslandTheme.text(12, .regular))
-                                .foregroundStyle(IslandTheme.fg)
-                                .frame(width: 170)
-                                .onSubmit(connectGitHub)
-                            RoundButton(style: .white, symbol: "checkmark", label: loc("Brancher"), small: true, action: connectGitHub)
-                                .scaleEffect(0.8)
-                        }
-                        .padding(.leading, 10)
-                        .background(RoundedRectangle(cornerRadius: 16).fill(Color.white.opacity(0.1)))
-                    }
-                }
-                .riseIn(4)
-                row("Yumi \(YumiUpdates.installed)") {
-                    if let newer = updates.newer {
-                        TextButton(label: loc("\(newer.tag) est là")) { updates.openRelease() }
-                    }
-                    TextButton(label: loc("Envoyer un retour")) {
-                        if let url = YumiUpdates.feedbackURL() { NSWorkspace.shared.open(url) }
-                    }
-                }
-                .riseIn(5)
-                row(loc("Préviens-moi des nouvelles versions")) {
-                    IslandToggle(isOn: Binding(get: { updates.enabled }, set: { updates.enabled = $0 }), label: loc("Nouvelles versions"))
-                }
-                .riseIn(6)
-            }
-            HStack {
                 Spacer(minLength: 0)
-                TextButton(label: more ? loc("Moins de réglages") : loc("Plus de réglages")) {
-                    withAnimation(.islandSpring(0.35)) { more.toggle() }
-                }
+                // Sounds, folding, modules and their accounts (GitHub, Gmail, Notion): the app's settings
+                TextButton(label: loc("Tous les réglages")) { IslandActions.openSettings() }
+                TextButton(label: loc("Modules et comptes")) { IslandActions.openSettings(.modules) }
             }
+            .riseIn(4)
         }
         .padding(.top, 2)
         .frame(maxWidth: .infinity)

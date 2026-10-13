@@ -17,7 +17,7 @@ struct IslandBento: View {
     }
 
     /// Height of a small tile; the large one is two of them and the gap.
-    static let row: CGFloat = 88
+    static let row: CGFloat = 96
     static let gap: CGFloat = 8
 
     var body: some View {
@@ -44,18 +44,25 @@ struct IslandBento: View {
     /// The tiles beside the large one: one fills the column, two stack, three put the first
     /// across the top, four make a square; more go on as small tiles in pairs.
     @ViewBuilder private func side(_ ids: [String]) -> some View {
+        // Every row has its exact height: a tile never pushes the others up under the notch or
+        // down out of the island, whatever it shows
         switch ids.count {
         case 1:
             tile(ids[0], index: 1)
         case 2:
-            VStack(spacing: Self.gap) { tile(ids[0], index: 1); tile(ids[1], index: 2) }
+            VStack(spacing: Self.gap) {
+                tile(ids[0], index: 1).frame(height: Self.row)
+                tile(ids[1], index: 2).frame(height: Self.row)
+            }
         case 3:
             VStack(spacing: Self.gap) {
-                tile(ids[0], index: 1)
+                tile(ids[0], index: 1).frame(height: Self.row)
                 HStack(spacing: Self.gap) { tile(ids[1], index: 2); tile(ids[2], index: 3) }
+                    .frame(height: Self.row)
             }
         default:
             let pairs = stride(from: 0, to: ids.count, by: 2).map { Array(ids[$0..<min($0 + 2, ids.count)]) }
+            let height = (Self.row * 2 + Self.gap - CGFloat(pairs.count - 1) * Self.gap) / CGFloat(pairs.count)
             VStack(spacing: Self.gap) {
                 ForEach(Array(pairs.enumerated()), id: \.offset) { row, pair in
                     HStack(spacing: Self.gap) {
@@ -63,6 +70,7 @@ struct IslandBento: View {
                             tile(id, index: 1 + row * 2 + column)
                         }
                     }
+                    .frame(height: height)
                 }
             }
         }
@@ -92,8 +100,9 @@ struct BentoTile: View {
                 if lead { LeadTileContent(id: id, module: module) } else { SmallTileContent(id: id, module: module) }
             }
             .padding(.horizontal, 13)
-            .padding(.vertical, 12)
+            .padding(.vertical, lead ? 12 : 10)
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .clipped()
             .background {
                 BentoSurface(color: color, lifted: hover, accent: accent)
                     .matchedGeometryEffect(id: "sheet-\(id)", in: namespace)
@@ -101,6 +110,7 @@ struct BentoTile: View {
             .contentShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
         }
         .buttonStyle(TilePress())
+        .frame(maxHeight: .infinity)
         .scaleEffect(hover ? 1.012 : 1)
         .offset(y: hover ? -1.5 : 0)
         .animation(.islandSpring(0.35), value: hover)
@@ -133,8 +143,12 @@ struct BentoSurface: View {
         let shape = RoundedRectangle(cornerRadius: 18, style: .continuous)
         shape
             .fill(LinearGradient(colors: [Color(hex: "#1B1B20"), Color(hex: "#141417")], startPoint: .topLeading, endPoint: .bottomTrailing))
-            .overlay(shape.fill(RadialGradient(colors: [color.opacity(0.22), .clear], center: .topTrailing,
-                                               startRadius: 0, endRadius: 170)))
+            // A thin line of the module's colour along the top, nothing blurred behind the content
+            .overlay(alignment: .top) {
+                LinearGradient(colors: [color.opacity(0), color.opacity(0.7), color.opacity(0)], startPoint: .leading, endPoint: .trailing)
+                    .frame(height: 1)
+                    .padding(.horizontal, 22)
+            }
             .overlay(shape.strokeBorder(lifted ? accent.opacity(0.6) : Color.white.opacity(0.075), lineWidth: 1))
             .shadow(color: .black.opacity(lifted ? 0.45 : 0), radius: 12, y: 6)
     }
@@ -159,7 +173,7 @@ struct BentoEyebrow: View {
     }
 }
 
-/// The large tile: Yumi, and the lead module as he would tell it.
+/// The large tile: Yumi, and the lead module beside him with its real elements.
 private struct LeadTileContent: View {
     let id: String
     let module: ModuleSnapshot?
@@ -173,20 +187,7 @@ private struct LeadTileContent: View {
                 if let module, module.id == IslandModel.agentModuleID, let first = module.rows.first {
                     SessionSteps(row: first)
                 } else if let module {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(module.title)
-                            .font(IslandTheme.round(19, .bold))
-                            .foregroundStyle(IslandTheme.fg)
-                            .lineLimit(2)
-                            .minimumScaleFactor(0.8)
-                        Text(module.subtitle)
-                            .font(IslandTheme.text(11.5))
-                            .foregroundStyle(IslandTheme.muted)
-                            .lineLimit(1)
-                        if let progress = module.progress {
-                            ProgressLine(fraction: progress.fraction, color: module.color).padding(.top, 4)
-                        }
-                    }
+                    ModuleTileBody(module: module, large: true)
                 } else {
                     TasksSummary()
                 }
@@ -199,51 +200,25 @@ private struct LeadTileContent: View {
                             .allowsHitTesting(false)
                     }
                 }
-            } else if let module, !module.primaryAction.isEmpty {
-                // The module's own button works from the tile: no need to open the sheet for it
-                Button { IslandActions.module(module.id, "primary") } label: {
-                    Text(module.primaryAction)
-                        .font(IslandTheme.text(11.5, .semibold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 5)
-                        .background(Capsule().fill(module.color.opacity(0.35)))
-                        .contentShape(Capsule())
-                }
-                .buttonStyle(.plain)
             }
         }
     }
 }
 
-/// A small tile: the key figure big, one line under it.
+/// A small tile: the module's name, then its real elements.
 private struct SmallTileContent: View {
     let id: String
     let module: ModuleSnapshot?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: 7) {
             BentoEyebrow(color: module?.color ?? IslandTheme.violet, text: module?.name ?? loc("À faire"))
             if let module {
-                if !module.status.isEmpty {
-                    Text(module.status)
-                        .font(IslandTheme.round(22, .bold))
-                        .monospacedDigit()
-                        .foregroundStyle(module.color)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.6)
-                }
-                Text(module.title)
-                    .font(IslandTheme.text(11.5, .medium))
-                    .foregroundStyle(IslandTheme.fg.opacity(0.85))
-                    .lineLimit(module.status.isEmpty ? 2 : 1)
-                if let progress = module.progress {
-                    Spacer(minLength: 0)
-                    ProgressLine(fraction: progress.fraction, color: module.color)
-                }
+                ModuleTileBody(module: module)
             } else {
                 TasksSummary()
             }
+            Spacer(minLength: 0)
         }
     }
 }

@@ -60,12 +60,12 @@ private var todos: [String: Any] { ["todos": [
         #expect(j.current == nil)
         #expect(j.history.map(\.sentence) == ["Modifie Model.swift"])
         #expect(j.filesTouched == ["/a/Model.swift"])
-        for n in 0..<10 {
+        for n in 0..<20 {
             if let kind = note(hook("PostToolUse", ["tool_name": "Bash", "tool_input": ["command": "echo \(n)"]])) { j.apply(kind, now: start) }
         }
         #expect(j.history.count == SessionJournal.historyLength)
-        #expect(j.history.last?.sentence == "Lance echo 9")
-        #expect(j.commands == 10)
+        #expect(j.history.last?.sentence == "Lance echo 19")
+        #expect(j.commands == 20)
     }
 
     @Test func theEndOfATurnSaysWhatWasDone() {

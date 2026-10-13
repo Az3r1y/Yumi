@@ -45,12 +45,14 @@ enum IslandScreen: String, CaseIterable {
         case .memory:                                   return .memory
         case .quickTask:                                return .quickTask
         case .overview, .empty, .confused, .greeting:
+            // Only what waits for the person takes the home's place. An error or a finished
+            // session is shown once, when it happens (`view` .error or .finished): it must never
+            // stand between the person and the rest of the island until the session moves again
+            // (a Claude Code session out of usage stays in error until the limit comes back).
             if approvalPending { return .alert }
             switch state {
             case .approval, .question:                  return .alert
-            case .error:                                return .error
-            case .finished:                             return .finished
-            case .working, .thinking, .searching, .idle, .ratelimit, .sleeping, .dizzy:
+            case .error, .finished, .working, .thinking, .searching, .idle, .ratelimit, .sleeping, .dizzy:
                 return .home
             }
         }

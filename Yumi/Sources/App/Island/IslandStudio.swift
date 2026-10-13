@@ -638,7 +638,23 @@ extension IslandStudio {
         let shots: [(String, @MainActor () -> Void)] = [
             ("01-repliee", { show(sessions()); controller?.collapse() }),
             ("02-travail", { show(sessions()); model.selectedSessionID = nil; IslandActions.showTab(.work); controller?.expand(to: .overview) }),
-            ("02b-fiche-claude", { show(sessions()); model.selectedSessionID = nil; IslandActions.showModule("claude-code"); controller?.expand(to: .module) }),
+            ("02b-fiche-claude", {
+                let journals = ClaudeSessionJournals.shared
+                let notes: [SessionNote.Kind] = [
+                    .prompt(loc("Refais l'écran d'accueil, plus calme")),
+                    .todos([SessionTodo(text: loc("Lire l'écran d'accueil"), state: .completed),
+                            SessionTodo(text: loc("Simplifier la mise en page"), state: .completed),
+                            SessionTodo(text: loc("Modifie Accueil.swift"), state: .inProgress),
+                            SessionTodo(text: loc("Lancer les tests"), state: .pending)]),
+                    .toolFinished(ToolStep(tool: "Read", input: ["file_path": "/atelier/AccueilView.swift"]), failed: false),
+                    .toolFinished(ToolStep(tool: "Grep", input: ["pattern": "Theme.spacing"]), failed: false),
+                    .toolFinished(ToolStep(tool: "Edit", input: ["file_path": "/atelier/Theme.swift"]), failed: false),
+                    .toolFinished(ToolStep(tool: "Bash", input: ["command": "swift build"]), failed: false),
+                    .toolStarted(ToolStep(tool: "Edit", input: ["file_path": "/atelier/AccueilView.swift"])),
+                ]
+                for kind in notes { journals.apply(SessionNote(session: "s2", kind: kind), now: Date.now.addingTimeInterval(-540)) }
+                show(sessions()); model.selectedSessionID = nil; IslandActions.showModule("claude-code"); controller?.expand(to: .module)
+            }),
             ("03-journee", { show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
             ("04-detente", { show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
             ("04b-fiche-musique", { show(modules(musicPlaying: true)); IslandActions.showModule("music"); controller?.expand(to: .module) }),
@@ -662,6 +678,18 @@ extension IslandStudio {
             ("14-skin-pirate", { wear(.pirate, .yumi); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
             ("15-skin-fete", { wear(.party, .pink); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
             ("16-skin-noeud", { wear(.bow, .yumi); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("98-stress-onglets", {
+                // Views switched faster than their animations: Yumi must end in the last one's place
+                show(sessions()); controller?.expand(to: .overview)
+                let steps: [@MainActor () -> Void] = [
+                    { IslandActions.showTab(.day) }, { IslandActions.showModule("claude-code") }, { IslandActions.go(.settings) },
+                    { IslandActions.showTab(.relax) }, { IslandActions.showModule("music") }, { IslandActions.go(.prompt) },
+                    { IslandActions.showTab(.work) }, { IslandActions.showModule("agenda") }, { IslandActions.showTab(.day) },
+                ]
+                for (i, step) in steps.enumerated() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25 + Double(i) * 0.12) { MainActor.assumeIsolated { step() } }
+                }
+            }),
             ("11-skin-repliee", { wear(.witch, .green); show(modules(musicPlaying: true)); controller?.collapse() }),
         ]
         Task { @MainActor in
