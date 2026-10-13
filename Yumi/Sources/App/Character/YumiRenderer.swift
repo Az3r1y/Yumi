@@ -501,7 +501,7 @@ enum YumiRenderer {
         props.scaleBy(x: f.faceScale.width, y: f.faceScale.height)
         props.translateBy(x: -50, y: -45)
 
-        if f.costume.onFace { YumiCostumes.drawFace(f.costume, in: props) }
+        if f.costume.onFace { YumiCostumes.drawFace(f.costume, yaw: f.yaw, pitch: f.pitch, eyesScale: f.eyesScale, in: props) }
 
         if let o = f.props[.smoke], o > 0.01 {
             var c = props

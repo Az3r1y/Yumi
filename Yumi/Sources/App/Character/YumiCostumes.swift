@@ -88,8 +88,16 @@ enum YumiCostumes {
         }
     }
 
-    /// On the face.
-    static func drawFace(_ costume: YumiCostume, in c: GraphicsContext) {
+    /// On the face. The eyes sit on a sphere and slide when the head turns (`drawFace`):
+    /// what is worn on the face slides with them.
+    static func drawFace(_ costume: YumiCostume, yaw: CGFloat, pitch: CGFloat, eyesScale: CGFloat,
+                         in context: GraphicsContext) {
+        var c = context
+        // The middle of the face moves as the middle of the eyes does
+        c.translateBy(x: sin(yaw) * cos(pitch) * 40.1 * 0.94, y: sin(pitch) * 30)
+        c.translateBy(x: 50, y: 45)
+        c.scaleBy(x: max(0.6, cos(yaw)), y: max(0.6, cos(pitch)))
+        c.translateBy(x: -50, y: -45)
         switch costume {
         case .cat:
             var whiskers = Path()
@@ -102,9 +110,19 @@ enum YumiCostumes {
             w.stroke(whiskers, with: .color(.white), style: StrokeStyle(lineWidth: 1.2, lineCap: .round))
 
         case .glasses:
+            // Each lens on its eye, exactly where `drawFace` puts it
             let style = StrokeStyle(lineWidth: 2.2)
-            c.stroke(circle(37, 45, 12), with: .color(white), style: style)
-            c.stroke(circle(63, 45, 12), with: .color(white), style: style)
+            for sd: CGFloat in [-1, 1] {
+                let ya = sd * 0.33 + yaw
+                let x = 50 + sin(ya) * cos(pitch) * 40.1, y = 45 + sin(pitch) * 30
+                var lens = context
+                lens.translateBy(x: 50, y: 45)
+                lens.scaleBy(x: eyesScale, y: eyesScale)
+                lens.translateBy(x: -50, y: -45)
+                lens.translateBy(x: x, y: y)
+                lens.scaleBy(x: max(0.35, cos(ya)), y: max(0.6, cos(pitch)))
+                lens.stroke(circle(0, 0, 12), with: .color(white), style: style)
+            }
             var bridge = Path()
             bridge.move(to: CGPoint(x: 49, y: 44))
             bridge.addQuadCurve(to: CGPoint(x: 51, y: 44), control: CGPoint(x: 50, y: 42))
