@@ -55,7 +55,7 @@
 
 He can also tell the time and see which app and window are in front, when you let him.
 
-He does **not** control your whole Mac. He never deletes, moves, sends a message or an email, runs a command, or edits a file he did not create. A request he cannot do is refused, and he says why. New tricks come with each release.
+He does **not** control your whole Mac. He never deletes, moves, sends a message or an email on his own, runs a command, or edits a file he did not create. A request he cannot do is refused, and he says why. (In the Gmail module, a reply he suggests leaves only when you press **Send** yourself.) New tricks come with each release.
 
 ## Why Yumi?
 
@@ -116,6 +116,8 @@ Yumi tells you when a new version is out, at most once a day. He never downloads
 
 Yumi is a public alpha, **0.1.0-alpha.9**: free, open source, and moving fast.
 
+- **New in alpha 9:** a redesigned island in three tabs (Work, Day, Unwind) with bento cards, the island colour of your choice, costumes for Yumi, a Gmail module, Deezer and YouTube Music, a focus length you choose, and GitHub news told as they happen.
+
 - **Works today:** the actions above, with approval and verification; Claude Code sessions and approvals; the modules (calendar, reminders, focus, music, weather, GitHub, Notion, Gmail); memory; English and French.
 - **Still rough:** see [Known limitations](#known-limitations). Not notarized, not tested on Macs without a notch, and one request cannot yet read then act (« prepare my day »).
 - **Something broke?** [Open a bug report](https://github.com/estebanbaigts/Yumi/issues/new?template=bug.yml), or use **Send feedback** in Yumi's menu ([form](https://tally.so/r/Me9lvA), no account needed).
@@ -142,7 +144,7 @@ Want to build one yourself? Every action is a small Swift tool with the same con
 
 ## Modules
 
-The open island files modules under three tabs in the menu bar, **Travail**, **Journée** and **Détente**, each laid out as a bento of cards. Pick the island colour and Yumi's costume in the island settings.
+The open island files modules under three tabs in the menu bar, **Work**, **Day** and **Unwind**, each laid out as a bento of cards. Pick the island colour and Yumi's costume in the island settings.
 
 You choose which modules appear and in which order: drag and drop in **Settings › Modules**, or right in the island with **Edit**.
 
@@ -166,6 +168,8 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 | **⌘,** / **⌘Q** | Settings / Quit, when the island is active |
 | **Triple Shift** | Opens or folds the island (needs Accessibility outside the island) |
 | **Click outside** | Folds the open island, unless an approval is waiting or the chat has unsent text |
+| **Work · Day · Unwind** | The tabs of the open island, in the menu bar next to the notch |
+| **Start typing** in the open island | Opens the chat with Yumi |
 | **Drag a file or a window onto Yumi** | Ask about it in the chat |
 
 ## Engines
@@ -231,6 +235,7 @@ This is an alpha. Here is what we know is missing or rough today.
 - **Read then act is not there yet.** The agent can read (your day) or act (create, add), but not read and then act on what it read in one request, like « prepare my day ».
 - **Notion** lists twelve tasks at most in the island. Ticking needs a "done" property (checkbox or status) chosen in the settings, and is only offered in the direct build.
 - **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
+- **Gmail** needs a Google app password (two-step verification on), shows the latest mails of the inbox only, and never changes your mailbox.
 - **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
 - **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
 - **The App Store build** is not shipped and cannot use Claude Code or the hooks.
