@@ -103,20 +103,20 @@ Yumi tells you when a new version is out, at most once a day. He never downloads
 **Check the download.** Every release is built by GitHub Actions from the public code, not on a personal machine. The release page lists `SHA256SUMS.txt` and a build provenance attestation:
 
 ```bash
-shasum -a 256 Yumi-0.1.0-alpha.8.zip
+shasum -a 256 Yumi-0.1.0-alpha.9.zip
 ```
 
 ```bash
-gh attestation verify Yumi-0.1.0-alpha.8.zip --repo estebanbaigts/Yumi
+gh attestation verify Yumi-0.1.0-alpha.9.zip --repo estebanbaigts/Yumi
 ```
 
 Yumi tells you when a new version is out, at most once a day. He never downloads or installs anything by himself.
 
 ## Alpha
 
-Yumi is a public alpha, **0.1.0-alpha.8**: free, open source, and moving fast.
+Yumi is a public alpha, **0.1.0-alpha.9**: free, open source, and moving fast.
 
-- **Works today:** the actions above, with approval and verification; Claude Code sessions and approvals; the modules (calendar, reminders, focus, music, weather, GitHub, Notion); memory; English and French.
+- **Works today:** the actions above, with approval and verification; Claude Code sessions and approvals; the modules (calendar, reminders, focus, music, weather, GitHub, Notion, Gmail); memory; English and French.
 - **Still rough:** see [Known limitations](#known-limitations). Not notarized, not tested on Macs without a notch, and one request cannot yet read then act (« prepare my day »).
 - **Something broke?** [Open a bug report](https://github.com/estebanbaigts/Yumi/issues/new?template=bug.yml), or use **Send feedback** in Yumi's menu ([form](https://tally.so/r/Me9lvA), no account needed).
 
@@ -142,6 +142,8 @@ Want to build one yourself? Every action is a small Swift tool with the same con
 
 ## Modules
 
+The open island files modules under three tabs in the menu bar, **Travail**, **Journée** and **Détente**, each laid out as a bento of cards. Pick the island colour and Yumi's costume in the island settings.
+
 You choose which modules appear and in which order: drag and drop in **Settings › Modules**, or right in the island with **Edit**.
 
 | Module | What it shows | What it needs |
@@ -151,8 +153,9 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 | **Notion** | Today's and late tasks from the databases you choose: title, database, a date pill, late ones first. Click to open the page; tick the circle to mark it done in Notion (asked every time) | An internal integration key, and the databases shared with it |
 | **Agenda** | Your next event of the day | Calendar access |
 | **Notes** | Today's reminders, ticked from the notch | Reminders access |
-| **Focus** | A work timer and its breaks | Nothing |
-| **Music** | The track playing, pause, next, previous | Automation, for Music or Spotify |
+| **Gmail** | Your latest mails, the important ones apart, and answers Yumi suggests. Nothing is sent until you press Send | Your Gmail address and a Google app password (kept in the Keychain) |
+| **Focus** | A work timer and its breaks, the length you choose | Nothing |
+| **Music** | The track playing, pause, next, previous | Automation, for Music, Spotify, Deezer or YouTube Music |
 | **Weather** | The sky where you are | Location, or a city typed by hand |
 
 ## Getting around
