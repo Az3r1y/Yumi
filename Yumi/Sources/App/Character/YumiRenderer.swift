@@ -51,6 +51,9 @@ struct YumiFrame {
     /// The scene being played for an outside event, if any (Character/YumiScenes.swift).
     var scene: YumiSceneMoment?
 
+    /// What he wears, chosen in the settings (Contracts/IslandLookTypes.swift).
+    var costume: YumiCostume = .none
+
     /// The blurred light, already drawn for a shape close to this one (see YumiLight).
     /// nil: it is drawn again for this picture.
     var storedLight: YumiLight?
@@ -451,6 +454,10 @@ enum YumiRenderer {
         var tops = context
         tops.translateBy(x: f.lean, y: 68 - 68 * f.h)
 
+        if f.costume.onHead {
+            YumiCostumes.drawHead(f.costume, .init(time: f.time, lean: f.lean, accent: f.rim[0].color), in: tops)
+        }
+
         if let o = f.props[.headphones], o > 0.01 {
             var c = tops
             c.opacity = o
@@ -495,6 +502,11 @@ enum YumiRenderer {
         props.translateBy(x: 50, y: 45)
         props.scaleBy(x: f.faceScale.width, y: f.faceScale.height)
         props.translateBy(x: -50, y: -45)
+
+        if f.costume.onFace {
+            YumiCostumes.drawFace(f.costume, .init(time: f.time, lean: f.lean, accent: f.rim[0].color),
+                                  yaw: f.yaw, pitch: f.pitch, eyesScale: f.eyesScale, in: props)
+        }
 
         if let o = f.props[.smoke], o > 0.01 {
             var c = props

@@ -10918,6 +10918,426 @@
           }
         }
       }
+    },
+    "Travail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Work"
+          }
+        }
+      }
+    },
+    "Journée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day"
+          }
+        }
+      }
+    },
+    "Détente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unwind"
+          }
+        }
+      }
+    },
+    "Bonnet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beanie"
+          }
+        }
+      }
+    },
+    "Couronne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crown"
+          }
+        }
+      }
+    },
+    "Chat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cat"
+          }
+        }
+      }
+    },
+    "Sorcière": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Witch"
+          }
+        }
+      }
+    },
+    "Auréole": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halo"
+          }
+        }
+      }
+    },
+    "Fleur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flower"
+          }
+        }
+      }
+    },
+    "Lunettes rondes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round glasses"
+          }
+        }
+      }
+    },
+    "Moustache": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moustache"
+          }
+        }
+      }
+    },
+    "Bleu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue"
+          }
+        }
+      }
+    },
+    "Rose": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pink"
+          }
+        }
+      }
+    },
+    "Orange": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orange"
+          }
+        }
+      }
+    },
+    "Vert": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        }
+      }
+    },
+    "Ciel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky"
+          }
+        }
+      }
+    },
+    "Gris": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grey"
+          }
+        }
+      }
+    },
+    "%lld attend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld waiting"
+          }
+        }
+      }
+    },
+    "%lld en cours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld running"
+          }
+        }
+      }
+    },
+    " · à toi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · your turn"
+          }
+        }
+      }
+    },
+    " · fini": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · done"
+          }
+        }
+      }
+    },
+    " · erreur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · error"
+          }
+        }
+      }
+    },
+    "étape %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "step %@"
+          }
+        }
+      }
+    },
+    "Couleur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour %@"
+          }
+        }
+      }
+    },
+    "Couleur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour"
+          }
+        }
+      }
+    },
+    "Habitude": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habit"
+          }
+        }
+      }
+    },
+    "À faire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To do"
+          }
+        }
+      }
+    },
+    "Ce que Yumi sait de toi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What Yumi knows about you"
+          }
+        }
+      }
+    },
+    "Ce que Yumi sait de toi (%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What Yumi knows about you (%lld)"
+          }
+        }
+      }
+    },
+    "Plus de réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More settings"
+          }
+        }
+      }
+    },
+    "Moins de réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fewer settings"
+          }
+        }
+      }
+    },
+    "Rappelle-moi d'appeler Paul demain à 15 h": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remind me to call Paul tomorrow at 3 PM"
+          }
+        }
+      }
+    },
+    "C'est noté, je te le rappelle demain à 15 h.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it, I'll remind you tomorrow at 3 PM."
+          }
+        }
+      }
+    },
+    "Lire l'écran d'accueil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the home screen"
+          }
+        }
+      }
+    },
+    "Lancer les tests": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run the tests"
+          }
+        }
+      }
+    },
+    "Une idée, une tâche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An idea, a task"
+          }
+        }
+      }
+    },
+    "Retour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "Fête": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Party"
+          }
+        }
+      }
+    },
+    "Licorne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unicorn"
+          }
+        }
+      }
+    },
+    "Antennes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antennae"
+          }
+        }
+      }
+    },
+    "Nœud": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bow"
+          }
+        }
+      }
+    },
+    "Pirate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pirate"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

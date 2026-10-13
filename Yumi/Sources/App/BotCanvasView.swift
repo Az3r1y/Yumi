@@ -67,6 +67,9 @@ private extension View {
             .onReceive(NotificationCenter.default.publisher(for: .yumiGaze)) { notif in
                 engine.setGaze(notif.object as? CGPoint)
             }
+            .onReceive(NotificationCenter.default.publisher(for: .yumiLook)) { _ in
+                engine.setLook(accent: .current(), costume: .current())
+            }
     }
 
     /// Notifications the island was already sending before the contract existed.

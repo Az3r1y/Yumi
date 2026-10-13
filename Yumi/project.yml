@@ -171,6 +171,8 @@ targets:
       - path: Sources/App/Permissions
       - path: Sources/App/Contracts/RemarkTypes.swift
         group: Tests/UnderTest
+      - path: Sources/App/Contracts/IslandLookTypes.swift
+        group: Tests/UnderTest
       - path: Sources/App/Contracts/CharacterCommands.swift
         group: Tests/UnderTest
       - path: Sources/App/Character/YumiWorkHabit.swift

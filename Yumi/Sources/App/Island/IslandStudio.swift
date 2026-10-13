@@ -276,6 +276,7 @@ enum IslandStudio {
         }) { monitors.append(monitor) }
 
         if let folder = ProcessInfo.processInfo.environment["YUMI_STUDIO_SHOTS"] { rehearse(into: folder) }
+        if let folder = ProcessInfo.processInfo.environment["YUMI_ISLAND_V2_SHOTS"] { shootIsland(into: folder) }
     }
 
     /// `YUMI_STUDIO_SHOTS=<folder>` plays every shot in turn and saves a picture of the island
@@ -595,6 +596,86 @@ enum IslandStudio {
 
         default:
             break
+        }
+    }
+}
+
+// MARK: - Pictures of the island in cards
+
+extension IslandStudio {
+    /// `YUMI_ISLAND_V2_SHOTS=<folder>`: one picture of each view of the island in cards (folded,
+    /// the three tabs, a Claude approval, the chat, the settings, three costumes), then quits.
+    /// The colour, the costume and the tab of the person are put back before quitting.
+    private static func shootIsland(into folder: String) {
+        let defaults = UserDefaults.standard
+        let kept = [IslandAccent.defaultsKey, YumiCostume.defaultsKey, IslandPrefs.categoryKey]
+            .map { ($0, defaults.object(forKey: $0)) }
+        let state = AppState.shared
+        let model = IslandModel.shared
+
+        func wear(_ costume: YumiCostume, _ accent: IslandAccent) {
+            costume.save()
+            accent.save()
+            NotificationCenter.default.post(name: .yumiLook, object: nil)
+        }
+        func save(_ name: String) {
+            guard let view = controller?.window?.contentView,
+                  let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+            view.cacheDisplay(in: view.bounds, to: rep)
+            try? rep.representation(using: .png, properties: [:])?
+                .write(to: URL(fileURLWithPath: folder).appendingPathComponent(name + ".png"))
+        }
+        func sessions() -> [ModuleSnapshot] {
+            var all = IslandStudio.sessions(.waiting)
+            if let i = all.firstIndex(where: { $0.id == "claude-code" }) {
+                all[i].rows[1].progress = "3/7"
+                all[i].rows[1].detail = loc("Modifie Accueil.swift")
+                all[i].rows[1].details = [loc("Lire l'écran d'accueil"), loc("Lancer les tests")]
+                all[i].rows.swapAt(0, 1)
+            }
+            return all
+        }
+        let shots: [(String, @MainActor () -> Void)] = [
+            ("01-repliee", { show(sessions()); controller?.collapse() }),
+            ("02-travail", { show(sessions()); model.selectedSessionID = nil; IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("02b-fiche-claude", { show(sessions()); model.selectedSessionID = nil; IslandActions.showModule("claude-code"); controller?.expand(to: .module) }),
+            ("03-journee", { show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("04-detente", { show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("04b-fiche-musique", { show(modules(musicPlaying: true)); IslandActions.showModule("music"); controller?.expand(to: .module) }),
+            ("05-accord", {
+                show(sessions())
+                state.stateOverride = .approval
+                state.pendingApproval = ApprovalInfo(sessionId: "studio", tool: "Bash", command: "npm test -- --watch=false")
+                controller?.expand(to: .approval)
+            }),
+            ("06-chat", {
+                state.chatHistory = [ChatMessage(role: .user, content: loc("Rappelle-moi d'appeler Paul demain à 15 h")),
+                                     ChatMessage(role: .assistant, content: loc("C'est noté, je te le rappelle demain à 15 h."))]
+                controller?.expand(to: .prompt)
+            }),
+            ("07-reglages", { controller?.expand(to: .settings) }),
+            ("08-skin-couronne", { wear(.crown, .yumi); show(sessions()); IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("09-skin-chat", { wear(.cat, .pink); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("10-skin-sorciere", { wear(.witch, .green); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("12-skin-licorne", { wear(.unicorn, .sky); show(sessions()); IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("13-skin-antennes", { wear(.antennae, .orange); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("14-skin-pirate", { wear(.pirate, .yumi); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("15-skin-fete", { wear(.party, .pink); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("16-skin-noeud", { wear(.bow, .yumi); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("11-skin-repliee", { wear(.witch, .green); show(modules(musicPlaying: true)); controller?.collapse() }),
+        ]
+        Task { @MainActor in
+            wear(.none, .yumi)
+            try? await Task.sleep(for: .seconds(7))
+            for (name, setUp) in shots {
+                rest()
+                try? await Task.sleep(for: .seconds(1.2))
+                setUp()
+                try? await Task.sleep(for: .seconds(2.6))
+                save(name)
+            }
+            for (key, value) in kept { defaults.set(value, forKey: key) }
+            NSApp.terminate(nil)
         }
     }
 }

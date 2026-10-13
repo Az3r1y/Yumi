@@ -39,7 +39,7 @@ final class ModuleRegistry {
         let byID = Dictionary(modules.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
         let hidden = availableIDs.filter { !selection.contains($0) }
         return (selection.ids + hidden).compactMap { id in
-            byID[id].map { ModuleLineup.Entry(module: $0.snapshot, selected: selection.contains(id)) }
+            byID[id].map { ModuleLineup.Entry(module: Self.filed($0), selected: selection.contains(id)) }
         }
     }
 
@@ -49,6 +49,19 @@ final class ModuleRegistry {
         lineup.attach(entries: self.lineup,
                       move: { [weak self] id, index in self?.move(id, to: index); return self?.lineup ?? [] },
                       select: { [weak self] id, on in self?.setSelected(id, on); return self?.lineup ?? [] })
+    }
+
+    /// The snapshot of a module, with the tab it belongs to.
+    private static func filed(_ module: any YumiModule) -> ModuleSnapshot {
+        var snapshot = module.snapshot
+        snapshot.category = module.category
+        return snapshot
+    }
+
+    /// The selected modules of one tab, in the person's order.
+    func selected(in category: ModuleCategory) -> [String] {
+        let byID = Dictionary(modules.map { ($0.id, $0.category) }, uniquingKeysWith: { first, _ in first })
+        return ModuleCategory.ids(selection.ids, in: category) { byID[$0] ?? ModuleCategory.of(moduleID: $0) }
     }
 
     /// Identifiers of every module of this build, in catalogue order.
@@ -125,7 +138,7 @@ final class ModuleRegistry {
     /// Rebuilds the snapshots. Publishes only on a real change, so views are not invalidated for nothing.
     func publish() {
         let byID = Dictionary(modules.map { ($0.id, $0) }, uniquingKeysWith: { first, _ in first })
-        let snapshots = selection.ids.compactMap { byID[$0]?.snapshot }
+        let snapshots = selection.ids.compactMap { byID[$0].map(Self.filed) }
         guard snapshots != published else { return }
         published = snapshots
         shared?.refresh(lineup)

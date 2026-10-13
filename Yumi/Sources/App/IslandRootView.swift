@@ -26,6 +26,7 @@ struct IslandScene: View {
     @ObservedObject var state: AppState
     @ObservedObject var model: IslandModel
     @AppStorage(IslandPrefs.workHabitKey) private var workHabit = YumiWorkHabit.current().rawValue
+    @AppStorage(IslandAccent.defaultsKey) private var accentName = IslandAccent.yumi.rawValue
     /// Counts the openings, so that the content rises again each time the island opens.
     @State private var openings = 0
 
@@ -47,15 +48,26 @@ struct IslandScene: View {
             }
             return layout
         }()
-        let size = layout.size(stage, openHeight: model.openHeight)
-        let seat = layout.seat(stage)
         let approval = state.pendingApproval != nil
         let busy = IslandModel.isBusy(state.effectiveState)
         let resolved = IslandScreen.resolve(view: state.view, state: state.effectiveState, approvalPending: approval)
         // The agent's module shows the agent at work while it works
         let screen: IslandScreen = resolved == .module && busy
             && model.selectedModule(in: state.modules)?.id == IslandModel.agentModuleID ? .working : resolved
+        // The open island is as wide as its tab or its view asks, never narrower than the notch allows
+        let notchUnits = layout.hasNotch ? layout.notchWidth / IslandConst.openScale : 0
+        let openUnits = IslandOpenLayer.widthKind(for: screen, category: model.category).width(notch: notchUnits)
+        let accent = (IslandAccent(rawValue: accentName) ?? .yumi).color
+        let border: Color? = stage == .open
+            ? (screen == .alert ? IslandTheme.amber : accent.opacity(0.7))
+            : nil
         let drop = layout.notchDelta / IslandConst.launchScale
+        let size: CGSize = {
+            var open = layout
+            open.openWidth = openUnits * IslandConst.openScale
+            return open.size(stage, openHeight: model.openHeight)
+        }()
+        let seat = layout.seat(stage)
         let situation = IslandModel.Situation(
             stage: stage,
             screen: stage == .open ? screen : IslandScreen.resolve(view: .overview, state: state.effectiveState, approvalPending: approval),
@@ -78,7 +90,7 @@ struct IslandScene: View {
                 .environment(\.islandLayerShown, stage == .compact)
 
             // 1. The island: a black shape that cuts what it contains (`overflow: hidden`)
-            IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage)) {
+            IslandBody(width: size.width, height: size.height, radius: layout.cornerRadius(stage), border: border) {
                 ZStack(alignment: .topLeading) {
                     // The halo of the launch, or of the goodbye with its few words
                     IslandGreetingLayer(phase: model.greeting,
@@ -100,12 +112,12 @@ struct IslandScene: View {
                                      notchHeight: layout.notchHeight, model: model)
                         .modifier(IslandLayer(on: stage == .speak))
 
-                    IslandOpenLayer(state: state, model: model, screen: screen)
+                    IslandOpenLayer(state: state, model: model, screen: screen, width: openUnits)
                         .id(openings)
                         .fixedSize(horizontal: false, vertical: true)
                         .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
                             model.openHeight = min(max(height * IslandConst.openScale, layout.notchHeight),
-                                                   IslandConst.openHeightMax * IslandConst.openScale + layout.openInset)
+                                                   IslandConst.openHeightMax * IslandConst.openScale)
                         }
                         .scaleEffect(IslandConst.openScale, anchor: .topLeading)
                         .modifier(IslandLayer(on: stage == .open))
@@ -129,7 +141,9 @@ struct IslandScene: View {
                 .allowsHitTesting(false)
                 .onAppear { model.actorAppeared() }
         }
+        .environment(\.islandAccent, accent)
         .onAppear { model.direct(from: nil, to: situation) }
+        .onChange(of: openUnits, initial: true) { _, units in model.layout.openWidth = units * IslandConst.openScale }
         .onChange(of: folded.module?.id, initial: true) { _, id in model.liveModuleID = id }
         .onChange(of: ear, initial: true) { _, ear in model.layout.compactEar = ear }
         .onChange(of: folded.controls.count, initial: true) { _, count in model.foldedControls = count }
@@ -204,16 +218,19 @@ struct IslandBody<Content: View, Edge: View>: View, Animatable {
     var width: CGFloat
     var height: CGFloat
     let radius: CGFloat
+    /// The thin outline of the open island, in its colour; nil while folded.
+    var border: Color?
     /// Layers anchored to the top-left corner of the island, each with its own width.
     let content: Content
     /// A layer that takes the width the island has at this instant.
     let edge: Edge
 
-    init(width: CGFloat, height: CGFloat, radius: CGFloat,
+    init(width: CGFloat, height: CGFloat, radius: CGFloat, border: Color? = nil,
          @ViewBuilder content: () -> Content, @ViewBuilder edge: () -> Edge) {
         self.width = width
         self.height = height
         self.radius = radius
+        self.border = border
         self.content = content()
         self.edge = edge()
     }
@@ -224,8 +241,9 @@ struct IslandBody<Content: View, Edge: View>: View, Animatable {
     }
 
     var body: some View {
-        IslandCorners(width: width, height: height, radius: radius, content: content, edge: edge)
+        IslandCorners(width: width, height: height, radius: radius, border: border, content: content, edge: edge)
             .animation(.islandEase(0.4), value: radius)
+            .animation(.islandEase(0.4), value: border)
     }
 }
 
@@ -233,6 +251,7 @@ private struct IslandCorners<Content: View, Edge: View>: View, Animatable {
     let width: CGFloat
     let height: CGFloat
     var radius: CGFloat
+    let border: Color?
     let content: Content
     let edge: Edge
 
@@ -249,8 +268,33 @@ private struct IslandCorners<Content: View, Edge: View>: View, Animatable {
                 .frame(width: max(0, width), height: max(0, height), alignment: .topLeading)
                 .overlay(alignment: .topTrailing) { edge }
                 .clipShape(shape)
+            // `border: 1px solid; border-top: 0`: the outline runs down the sides and round the bottom
+            IslandOutline(radius: radius)
+                .stroke(border ?? .clear, lineWidth: 1)
+                .opacity(border == nil ? 0 : 1)
+                .allowsHitTesting(false)
         }
         .frame(width: max(0, width), height: max(0, height), alignment: .topLeading)
+    }
+}
+
+/// The sides and the bottom of `IslandShape`, inset half a line so the stroke stays inside.
+private struct IslandOutline: Shape {
+    var radius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let rect = rect.insetBy(dx: 0.5, dy: 0)
+        let r = max(0, min(radius, rect.width / 2, rect.height)) - 0.5
+        var p = Path()
+        p.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        p.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - 0.5 - r))
+        p.addArc(center: CGPoint(x: rect.minX + r, y: rect.maxY - 0.5 - r), radius: r,
+                 startAngle: .degrees(180), endAngle: .degrees(90), clockwise: true)
+        p.addLine(to: CGPoint(x: rect.maxX - r, y: rect.maxY - 0.5))
+        p.addArc(center: CGPoint(x: rect.maxX - r, y: rect.maxY - 0.5 - r), radius: r,
+                 startAngle: .degrees(90), endAngle: .degrees(0), clockwise: true)
+        p.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        return p
     }
 }
 

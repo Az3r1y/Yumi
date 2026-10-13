@@ -43,4 +43,6 @@ extension Notification.Name {
     static let yumiLit   = AppIdentity.notification("yumiLit")
     /// object: `CGPoint` in -1...1 on both axes, or nil to follow the pointer again
     static let yumiGaze  = AppIdentity.notification("yumiGaze")
+    /// No object: the island's colour or Yumi's costume changed (IslandAccent, YumiCostume)
+    static let yumiLook  = AppIdentity.notification("yumiLook")
 }

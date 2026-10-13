@@ -41,6 +41,12 @@ struct ModuleSnapshot: Identifiable, Equatable, Sendable {
     /// Lines of the activity view's other pages, by page: "recent", "repos" for GitHub.
     /// Empty for most modules.
     var pages: [String: [ModuleRow]] = [:]
+    /// The tab of the open island it belongs to. nil: the one its identifier gives
+    /// (`ModuleCategory.of(moduleID:)`). The registry fills it from the module.
+    var category: ModuleCategory? = nil
+
+    /// Where the island puts it.
+    var tab: ModuleCategory { category ?? ModuleCategory.of(moduleID: id) }
 }
 
 /// One line of a module's list: a session, a pull request, an event.
