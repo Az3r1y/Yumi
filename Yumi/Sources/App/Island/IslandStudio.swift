@@ -228,6 +228,41 @@ enum IslandStudio {
         return all
     }
 
+    /// Example mails for the Gmail shot, in the language of the app: two important, one from a
+    /// friend, one newsletter. Nobody real.
+    static func gmailMails(now: Date = .now) -> [GmailMail] {
+        let fr = Bundle.main.preferredLocalizations.first?.hasPrefix("fr") ?? true
+        func mail(_ uid: Int, _ from: String, _ subject: (String, String), _ minutes: Double, unread: Bool,
+                  important: Bool = false, bulk: Bool = false) -> GmailMail {
+            var mail = GmailMail(uid: uid, from: from, subject: fr ? subject.0 : subject.1,
+                                 date: now.addingTimeInterval(-minutes * 60), unread: unread, thread: nil)
+            mail.important = important
+            mail.bulk = bulk
+            mail.replyAddress = bulk ? "" : "\(from.lowercased().replacingOccurrences(of: " ", with: "."))@example.com"
+            return mail
+        }
+        return [
+            mail(104, "Camille Martin", ("Devis pour le site, une question", "Quote for the site, one question"), 12, unread: true, important: true),
+            mail(103, "Studio Lumen", ("Réunion de lancement jeudi ?", "Kick-off meeting on Thursday?"), 48, unread: true, important: true),
+            mail(102, "Paul", ("Photos du week-end", "Weekend photos"), 95, unread: true),
+            mail(101, "Atelier Hebdo", ("Les nouveautés de la semaine", "This week's news"), 180, unread: false, bulk: true),
+        ]
+    }
+
+    /// The answer Yumi suggests to the first mail. Like the real prompt, it invents nothing:
+    /// what it does not know is left to complete.
+    static func gmailDraft() -> String {
+        let fr = Bundle.main.preferredLocalizations.first?.hasPrefix("fr") ?? true
+        return fr
+            ? "Bonjour Camille, merci pour ton message. Oui, le devis comprend la version mobile. Je t'envoie le détail des délais [à compléter]. Alex"
+            : "Hi Camille, thanks for your message. Yes, the quote includes the mobile version. I'll send you the timeline details [to complete]. Alex"
+    }
+
+    /// The example modules with Gmail as GmailSummary makes it from those mails.
+    static func gmail(_ mails: [GmailMail]) -> [ModuleSnapshot] {
+        modules(musicPlaying: false) + [GmailSummary.snapshot(mails: mails, connection: .connected, now: .now)]
+    }
+
     /// Notion as NotionModule.snapshot words it, from example tasks: two today, one late.
     static func notionTasks() -> [ModuleSnapshot] {
         let now = Date.now
@@ -283,7 +318,7 @@ enum IslandStudio {
     /// twice a second, to check the mode without filming.
     /// `YUMI_STUDIO_ONLY=10,11,12` plays only these shots, in this order.
     private static func rehearse(into folder: String) {
-        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15, 13: 11, 14: 11, 15: 10]
+        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15, 13: 11, 14: 11, 15: 10, 16: 14]
         let only = (ProcessInfo.processInfo.environment["YUMI_STUDIO_ONLY"] ?? "")
             .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         let shots = only.isEmpty ? Array(1...9) : only
@@ -594,6 +629,37 @@ enum IslandStudio {
             }
             after(6.5) { model.setMood(.happy, force: true); model.pose(.celebrate) }
 
+        case 16:
+            // Gmail: the important mails apart, one opened, and the answer Yumi suggests.
+            // Nothing is sent: the shot ends on the Envoyer button, never pressed
+            let mails = gmailMails()
+            after(0.4) {
+                GmailInbox.shared.show(mails)
+                show(gmail(mails))
+                IslandActions.showTab(.day)
+                controller.expand(to: .overview)
+            }
+            after(2.8) {
+                model.selectedModuleID = "gmail"
+                controller.expand(to: .module)
+            }
+            after(5.6) { NotificationCenter.default.post(name: .yumiStudioGmail, object: StudioGmail.choose(mails[0].uid)) }
+            after(6.8) {
+                NotificationCenter.default.post(name: .yumiStudioGmail, object: StudioGmail.think)
+                model.setMood(.thinking)
+            }
+            var typed = ""
+            var at = 8.4
+            for word in gmailDraft().split(separator: " ", omittingEmptySubsequences: false) {
+                at += 0.07
+                let part = String(word)
+                after(at) {
+                    typed += (typed.isEmpty ? "" : " ") + part
+                    NotificationCenter.default.post(name: .yumiStudioGmail, object: StudioGmail.draft(typed))
+                }
+            }
+            after(at + 0.2) { model.setMood(nil); model.pose(.pop) }
+
         default:
             break
         }
@@ -706,4 +772,16 @@ extension IslandStudio {
             NSApp.terminate(nil)
         }
     }
+}
+
+/// What the Gmail shot asks of the Gmail sheet, which keeps its steps to itself.
+enum StudioGmail {
+    case choose(Int)
+    case think
+    case draft(String)
+}
+
+extension Notification.Name {
+    /// Filming mode only: a step of the Gmail shot.
+    static let yumiStudioGmail = AppIdentity.notification("studioGmail")
 }
