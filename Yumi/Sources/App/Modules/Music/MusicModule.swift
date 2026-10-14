@@ -61,11 +61,21 @@ final class MusicModule: YumiModule {
     private var titleWatch: Task<Void, Never>?
     /// What the window titles showed at the last look, by player.
     private var titled: [MusicPlayer: NowPlaying] = [:]
+    /// When play or pause was last pressed in the island, by player read from its title.
+    private var pressedAt: [MusicPlayer: Date] = [:]
+    /// How long a press is trusted over the sound: a browser keeps its sound running a moment after a pause.
+    private static let pressTrust: TimeInterval = 10
+    /// The browsers heard at the last look while showing no known site.
+    private var heardBrowsers: Set<String> = []
+    /// The browser of the page shown as `.web`, to bring it forward.
+    private var webBrowser: String?
 
     #if !APPSTORE
     /// Every three seconds, the titles of the windows of Deezer, YouTube Music and the browsers:
     /// read through Accessibility (the permission Yumi already has for window titles), only
-    /// while the module is selected.
+    /// while the module is selected. Whether the app plays is asked to Core Audio, which needs
+    /// no permission: a YouTube page open in front but never started is not a track. A browser
+    /// that sends sound with no known site in its windows shows its window title (`.web`).
     private func watchTitles() {
         titleWatch?.cancel()
         titleWatch = Task { [weak self] in
@@ -79,6 +89,11 @@ final class MusicModule: YumiModule {
     private func lookAtTitles() {
         guard AXIsProcessTrusted() else { return }
         var found: [MusicPlayer: NowPlaying] = [:]
+        // Asked once per look, and only when a title names a track
+        var audible: Set<String>??
+        let now = Date()
+        // The browsers showing no known site, in case one of them is playing
+        var unknowns: [(id: String, name: String, titles: [String])] = []
         for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
             let name = app.localizedName ?? ""
             let id = app.bundleIdentifier ?? ""
@@ -86,13 +101,42 @@ final class MusicModule: YumiModule {
                            "com.apple.Safari", "com.operasoftware.Opera", "com.vivaldi.Vivaldi"].contains(id)
             guard browser || id == MusicPlayer.deezer.rawValue || id.hasPrefix("com.google.Chrome.app.")
                     || name.localizedCaseInsensitiveContains("Deezer") || name.localizedCaseInsensitiveContains("YouTube Music") else { continue }
-            for title in Self.windowTitles(of: app.processIdentifier) {
-                guard let track = MusicTitles.parse(title, appName: name), found[track.player] == nil else { continue }
-                // A title player does not say whether it is paused: the last button pressed decides
-                let wasPaused = titled[track.player].map { !$0.isPlaying && $0.title == track.title } ?? false
-                found[track.player] = NowPlaying(player: track.player, title: track.title, artist: track.artist, album: "", isPlaying: !wasPaused)
+            let titles = Self.windowTitles(of: app.processIdentifier)
+            var knownSite = false
+            for title in titles {
+                guard let track = MusicTitles.parse(title, appName: name) else { continue }
+                knownSite = true
+                guard found[track.player] == nil else { continue }
+                // A title does not say whether it is paused: the sound of its app does
+                if audible == nil { audible = .some(AudioActivity.audibleBundleIDs()) }
+                let sound = (audible ?? nil).map { TitlePlayback.isAudible(id, among: $0) }
+                let pressed = pressedAt[track.player].map { now.timeIntervalSince($0) < Self.pressTrust } ?? false
+                guard let isPlaying = TitlePlayback.isPlaying(title: track.title, previous: titled[track.player],
+                                                              audible: sound, pressedRecently: pressed) else { continue }
+                found[track.player] = NowPlaying(player: track.player, title: track.title, artist: track.artist, album: "", isPlaying: isPlaying)
+            }
+            if browser, !knownSite, BrowserFallback.canTellItsSound(id) { unknowns.append((id, name, titles)) }
+        }
+        var heard: Set<String> = []
+        if !unknowns.isEmpty {
+            if audible == nil { audible = .some(AudioActivity.audibleBundleIDs()) }
+            let sounds = (audible ?? nil)
+            for browser in unknowns where sounds.map({ TitlePlayback.isAudible(browser.id, among: $0) }) == true { heard.insert(browser.id) }
+            // The one playing, or else the one already shown, to show it paused
+            if let unknown = unknowns.first(where: { heard.contains($0.id) }) ?? unknowns.first(where: { $0.name == titled[.web]?.artist }) {
+                let sound = sounds.map { TitlePlayback.isAudible(unknown.id, among: $0) }
+                // The page already shown, if it is still this browser's
+                let previous = titled[.web].flatMap { $0.artist == unknown.name ? $0 : nil }
+                let pressed = pressedAt[.web].map { now.timeIntervalSince($0) < Self.pressTrust } ?? false
+                if let title = BrowserFallback.title(among: unknown.titles, previous: previous?.title),
+                   let isPlaying = BrowserFallback.isPlaying(title: title, previous: previous, audible: sound,
+                                                             heardBefore: heardBrowsers.contains(unknown.id), pressedRecently: pressed) {
+                    found[.web] = NowPlaying(player: .web, title: title, artist: unknown.name, album: "", isPlaying: isPlaying)
+                    webBrowser = unknown.id
+                }
             }
         }
+        heardBrowsers = heard
         for player in Set(titled.keys).subtracting(found.keys) { receive(.stopped(player)) }
         for (_, track) in found where titled[track.player] != track { receive(.track(track)) }
         titled = found
@@ -129,6 +173,9 @@ final class MusicModule: YumiModule {
         titleWatch?.cancel()
         titleWatch = nil
         titled = [:]
+        pressedAt = [:]
+        heardBrowsers = []
+        webBrowser = nil
         playing = nil
         pausedAt = nil
         lingering?.cancel()
@@ -179,7 +226,7 @@ final class MusicModule: YumiModule {
         pausedAt = Date()
         lingering?.cancel()
         lingering = Task { [weak self] in
-            try? await Task.sleep(for: .seconds(MusicSummary.pausedLinger + 1))
+            try? await Task.sleep(for: .seconds(MusicSummary.pausedLinger(for: playing.player) + 1))
             guard !Task.isCancelled else { return }
             self?.onChange?()
         }
@@ -200,6 +247,7 @@ final class MusicModule: YumiModule {
                 var toggled = playing
                 toggled.isPlaying.toggle()
                 titled[playing.player] = toggled
+                pressedAt[playing.player] = Date()
                 receive(.track(toggled))
             }
             return
@@ -215,6 +263,10 @@ final class MusicModule: YumiModule {
     }
 
     private func open(_ player: MusicPlayer) {
+        if player == .web {
+            if let webBrowser { NSRunningApplication.runningApplications(withBundleIdentifier: webBrowser).first?.activate() }
+            return
+        }
         guard let application = NSWorkspace.shared.urlForApplication(withBundleIdentifier: player.rawValue) else {
             if let url = player.webURL { NSWorkspace.shared.open(url) }
             return

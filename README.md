@@ -151,14 +151,15 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 | Module | What it shows | What it needs |
 |---|---|---|
 | **Claude Code** | Every session, live: request, task progress, current action, approvals | Yumi's hooks (offered in the island) and `python3` |
-| **GitHub** | Activity on all your repositories, grouped by repository: pushes with their exact commits, commits today and this week, pull requests and their checks, stars, forks, releases | A read-only personal access token |
+| **GitHub** | Activity on all your repositories, grouped by repository: pushes with their exact commits, commits today and this week, pull requests and their checks, stars, forks, releases | A read-only personal access token, or the Yumi GitHub App (sign in with a code, install it on your account and as many organisations as you like) |
 | **Notion** | Today's and late tasks from the databases you choose: title, database, a date pill, late ones first. Click to open the page; tick the circle to mark it done in Notion (asked every time) | An internal integration key, and the databases shared with it |
 | **Agenda** | Your next event of the day | Calendar access |
 | **Notes** | Today's reminders, ticked from the notch | Reminders access |
 | **Mail** | Your latest mails from the Mac's Mail app (every account set up there: Gmail, iCloud, Outlook, work), the important ones apart, the account on each mail, and answers Yumi suggests, opened as a draft in Mail that you send yourself. Gmail with an app password stays an option | Nothing by default: macOS asks once to let Yumi read Mail (Automation). For Gmail: your address and a Google app password (kept in the Keychain) |
 | **Focus** | A work timer and its breaks, the length you choose | Nothing |
-| **Music** | The track playing, pause, next, previous | Automation, for Music, Spotify, Deezer or YouTube Music |
+| **Music** | The track or video playing, pause, next, previous: Music, Spotify, Deezer, YouTube Music, YouTube, SoundCloud, Twitch or Vimeo in any browser (the tab in front of its window), and any other page a browser plays, such as a web radio, shown by its window title (not in Safari) | Automation for Music and Spotify; Accessibility for the others |
 | **Weather** | The sky where you are | Location, or a city typed by hand |
+| **Screen time** | Your active time on the Mac today against a daily threshold you choose, hour by hour, the last seven days, the average, median and 75th percentile; Yumi says it once when you reach the threshold, then at every extra hour. While it is on, the two-hour break reminder also restarts after five minutes away from an open Mac | Nothing |
 
 ## Getting around
 
@@ -208,7 +209,7 @@ Your request → engine proposes a plan → Yumi validates it → Permission gat
 - The memory never leaves your Mac. Calendar, reminders and Notion tasks are read on your Mac; the engine only receives Yumi's own one or two sentences about your day, which then stay in the conversation.
 - When you open the chat, **the name of the app in front, its window title and the site's domain** are attached to your first message and shown in the notch (« With … »). **One click removes them.** The content of your screen is never sent. Only an explicit gesture (« Summarize », a window dragged onto Yumi, a dropped file) sends the full address or the file.
 - A plan request sends your words, the last few messages, today's date and time, the list of Yumi's tools and the names of the files he created.
-- Network calls go only to the services behind the modules you turned on (Open-Meteo, api.github.com, api.notion.com) and to the engine you use. GitHub is read-only; Notion reads only the databases you tick, and writes there only after you approve (adding a task, ticking one done).
+- Network calls go only to the services behind the modules you turned on (Open-Meteo, api.github.com and github.com for the GitHub App sign-in, api.notion.com) and to the engine you use. GitHub is read-only; Notion reads only the databases you tick, and writes there only after you approve (adding a task, ticking one done).
 - **« Always »** on a Claude Code permission writes a permanent rule in your Claude Code settings. Remove it with `/permissions` in Claude Code.
 - Tokens and keys are stored in the macOS Keychain, never on disk and never in git.
 
@@ -236,6 +237,7 @@ This is an alpha. Here is what we know is missing or rough today.
 - **Notion** lists twelve tasks at most in the island. Ticking needs a "done" property (checkbox or status) chosen in the settings, and is only offered in the direct build.
 - **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
 - **Mail** reads the inbox of the Mail app only while Mail is open, shows the latest 10 mails of each account (Mail can take up to a minute to answer on a very large inbox), and never changes your mailbox. If you refuse the Automation access the module stays empty (System Settings, Privacy, Automation to change it). Not in the App Store build. The Gmail option needs a Google app password (two-step verification on).
+- **Screen time** counts a minute when the session is unlocked and you touched the keyboard or mouse in the last five minutes, or a call, a film or a presentation keeps the display awake (two hours without input at most). It counts only while Yumi runs, never while the Mac sleeps, and keeps 90 days of totals and 14 days by hour in Yumi's folder. A threshold remark Yumi keeps to himself (Focus, a shared screen, the remarks of the day used up) is not said later.
 - **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
 - **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
 - **The App Store build** is not shipped and cannot use Claude Code or the hooks.

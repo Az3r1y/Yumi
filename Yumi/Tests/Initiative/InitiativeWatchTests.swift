@@ -112,6 +112,22 @@ private func at(_ hour: Int, _ minute: Int = 0, day: Int = 1) -> Date {
         #expect(watch.clock(now: at(17), calendar: paris).isEmpty)
     }
 
+    @Test func fiveMinutesAwayFromAnOpenMacIsABreakToo() {
+        var watch = InitiativeWatch()
+        _ = watch.arrived(now: at(9), calendar: paris, eventsToday: 0, firstEventAt: nil)
+        #expect(watch.clock(now: at(11), calendar: paris) == [.longStretch(hours: 2)])
+        // Screen time saw the person come back after a real break, the session left open
+        watch.rested(now: at(11, 40))
+        #expect(watch.clock(now: at(13), calendar: paris).isEmpty)
+        #expect(watch.nextDeadline(now: at(13), calendar: paris, nextEventStart: nil).map { $0 <= at(13, 40) } == true)
+        #expect(watch.clock(now: at(13, 40), calendar: paris) == [.longStretch(hours: 2)])
+        // Asleep or locked, the return is the wake's business, not this one
+        watch.left(now: at(14))
+        watch.rested(now: at(14, 1))
+        _ = watch.arrived(now: at(14, 2), calendar: paris, eventsToday: 0, firstEventAt: nil)
+        #expect(watch.clock(now: at(15, 41), calendar: paris) == [.longStretch(hours: 4)])
+    }
+
     @Test func lateIsSaidOncePerNight() {
         var watch = InitiativeWatch()
         _ = watch.arrived(now: at(22), calendar: paris, eventsToday: 0, firstEventAt: nil)

@@ -260,7 +260,7 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         var observer: NSObjectProtocol?
     }
 
-    private func make(token: String? = "ghp_test") -> (GitHubModule, FakeGitHub, Seen) {
+    private func make(token: String? = "ghp_test", viaApp: Bool = false, prepared: (@MainActor () -> Void)? = nil) -> (GitHubModule, FakeGitHub, Seen) {
         let name = "yumi.tests.github.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
         defaults.removePersistentDomain(forName: name)
@@ -272,10 +272,27 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         github.set("is%3Aopen", openPulls)
         github.set("=api.github.com/user", user)
         let seen = Seen()
-        let module = GitHubModule(token: { token }, defaults: defaults, fetch: github.fetch,
+        let module = GitHubModule(token: { token }, prepare: { prepared?() }, viaApp: { viaApp },
+                                  defaults: defaults, fetch: github.fetch,
                                   onConnect: { seen.connects += 1 }, onNews: { seen.news.append(($0, $1)) },
                                   play: { seen.scenes.append(($0, $1 > 1 ? $1 : nil)) })
         return (module, github, seen)
+    }
+
+    @Test func theGitHubAppFollowsTheRepositoriesOfEveryInstallation() async {
+        let seen = Seen()
+        let (module, github, _) = make(token: "ghu_app", viaApp: true, prepared: { seen.connects += 1 })
+        github.set("/user/installations?", #"{"total_count":2,"installations":[{"id":1,"account":{"login":"estebanbaigts"}},{"id":2,"account":{"login":"acme"}}]}"#)
+        github.set("/user/installations/1/repositories", #"{"total_count":1,"repositories":[{"full_name":"estebanbaigts/Yumi","fork":false,"stargazers_count":128,"forks_count":12,"pushed_at":"2026-10-01T10:00:00Z","html_url":"https://github.com/estebanbaigts/Yumi"}]}"#)
+        github.set("/user/installations/2/repositories", #"{"total_count":1,"repositories":[{"full_name":"acme/api","fork":false,"stargazers_count":7,"forks_count":1,"pushed_at":"2026-10-02T10:00:00Z","html_url":"https://github.com/acme/api"}]}"#)
+        await module.look()
+        // The token was renewed if needed before the look.
+        #expect(seen.connects == 1)
+        #expect(github.asked("/user/repos").isEmpty)
+        #expect(github.asked("/user/installations/2/repositories").count == 1)
+        // The repository of the organisation, pushed last, comes first.
+        #expect(module.snapshot.subtitle == "acme/api")
+        #expect(github.asked("api.github.com/user").first?.value(forHTTPHeaderField: "Authorization") == "Bearer ghu_app")
     }
 
     @Test func withoutATokenNothingIsAsked() async {

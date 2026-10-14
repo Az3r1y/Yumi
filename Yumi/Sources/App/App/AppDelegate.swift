@@ -344,9 +344,17 @@ final class YumiCore {
                 focus,
                 MusicModule(),
                 weather,
+                ScreenTimeModule(
+                    onThreshold: { [initiative] minutes, threshold in
+                        initiative.notice(.screenTime(minutes: minutes, threshold: threshold))
+                    },
+                    onBreak: { [initiative] in initiative.rested() },
+                    openSettings: { NotificationCenter.default.post(name: .openFullSettings, object: SettingsPage.modules) }),
                 notion,
                 GitHubModule(
-                    token: { KeychainStore.shared.get("github-token") },
+                    token: { GitHubAuth.currentToken },
+                    prepare: { await GitHubAuth.shared.renewIfNeeded() },
+                    viaApp: { GitHubAuth.viaApp },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
                     onNews: { [initiative] event, count in initiative.notice(.repository(event, count: count)) }),
                 GmailModule(

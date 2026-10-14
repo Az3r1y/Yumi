@@ -88,8 +88,8 @@ final class AppState: ObservableObject {
         didSet { UserDefaults.standard.set(autoCloseInterval, forKey: "autoCloseInterval") }
     }
 
-    // Absence interval — persisted
-    var absenceInterval: TimeInterval = 3 * 60 {
+    // Absence interval — persisted: how long the compact island stays without the pointer before hiding
+    @Published var absenceInterval: TimeInterval = 3 * 60 {
         didSet { UserDefaults.standard.set(absenceInterval, forKey: "absenceInterval") }
     }
 

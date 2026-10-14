@@ -100,6 +100,23 @@ import Foundation
         #expect(log.transitions == [[.hidden, .petit], [.petit, .hidden]])
     }
 
+    @Test func aShorterHideDelayTakesEffectAtOnce() async {
+        let (fsm, _) = makeFSM(petitToHidden: Self.never)
+        fsm.mouseEntered()
+        fsm.mouseLeft()
+        fsm.petitToHiddenDelay = Self.short
+        #expect(await reaches(.hidden, fsm))
+    }
+
+    @Test func aLongerHideDelayTakesEffectAtOnce() async {
+        let (fsm, _) = makeFSM(petitToHidden: Self.short)
+        fsm.mouseEntered()
+        fsm.mouseLeft()
+        fsm.petitToHiddenDelay = Self.never
+        try? await Task.sleep(for: Self.settle)
+        #expect(fsm.state == .petit)
+    }
+
     @Test func compactIslandStaysWhileHovered() async {
         let (fsm, _) = makeFSM(petitToHidden: Self.short)
         fsm.mouseEntered()

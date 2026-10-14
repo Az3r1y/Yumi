@@ -25,6 +25,8 @@ enum Occasion: Equatable, Sendable {
     case repository(GitHubEvent, count: Int)
     /// New mail arrived in the Gmail inbox: the newest one, and how many came.
     case mail(from: String, subject: String, count: Int)
+    /// Today's screen time reached the daily threshold, or one more hour above it (minutes).
+    case screenTime(minutes: Int, threshold: Int)
 
     /// The subject, for the rule about being ignored: one per kind of occasion.
     var topic: String {
@@ -39,6 +41,7 @@ enum Occasion: Equatable, Sendable {
         case .weekEnd: return "weekEnd"
         case .repository(let event, _): return "github.\(event.kind.rawValue)"
         case .mail: return "mail"
+        case .screenTime: return "screenTime"
         }
     }
 
@@ -48,7 +51,7 @@ enum Occasion: Equatable, Sendable {
         case .firstWake(let events, _): return (events ?? 0) > 0
         case .back(let finished, let waiting): return finished || waiting
         case .weekEnd: return false
-        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery, .repository, .mail: return true
+        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery, .repository, .mail, .screenTime: return true
         }
     }
 
@@ -279,6 +282,21 @@ enum InitiativePhrases {
                 Variant(key: "stretch.1", text: loc("\(span) d'affilée. Une pause ?"), mood: .worried, action: .takeBreak),
                 Variant(key: "stretch.2", text: loc("Tu n'as pas levé le nez depuis \(n(hours, feminine: true)) \(hours > 1 ? loc("heures") : loc("heure")). Cinq minutes ?"), mood: .worried, action: .takeBreak),
                 Variant(key: "stretch.3", text: loc("\(span) sans souffler. Je te garde ta place cinq minutes ?"), mood: .curious, action: .takeBreak),
+            ]
+
+        case .screenTime(let minutes, let threshold):
+            let total = ScreenTimeSummary.time(minutes)
+            if minutes <= threshold {
+                return [
+                    Variant(key: "screen.limit.1", text: loc("\(total) d'écran aujourd'hui. C'est ton seuil."), mood: .worried, action: .takeBreak),
+                    Variant(key: "screen.limit.2", text: loc("Ça fait \(total) devant l'écran. On avait dit que c'était assez pour aujourd'hui."), mood: .worried, action: .takeBreak),
+                    Variant(key: "screen.limit.3", text: loc("Seuil atteint : \(total) d'écran. Tes yeux méritent une pause."), mood: .curious, action: .takeBreak),
+                ]
+            }
+            return [
+                Variant(key: "screen.over.1", text: loc("\(total) d'écran aujourd'hui. Toujours là ?"), mood: .worried, action: .takeBreak),
+                Variant(key: "screen.over.2", text: loc("Encore une heure de plus : \(total) d'écran aujourd'hui."), mood: .worried, action: .takeBreak),
+                Variant(key: "screen.over.3", text: loc("\(total) devant l'écran. Je dis ça pour tes yeux."), mood: .curious, action: .takeBreak),
             ]
 
         case .agentDone(let project, let minutes):

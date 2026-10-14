@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// Modules: which ones Yumi shows and in what order, then the settings of GitHub, Notion and Agenda.
+/// Modules: which ones Yumi shows and in what order, then the settings of GitHub, Notion, Agenda and screen time.
 /// Keys go to the Keychain, under the same names as before.
 struct ModulesSettings: View {
     @ObservedObject private var state = AppState.shared
     @State private var githubToken = ""
-    @State private var githubConnected = IslandActions.githubConnected
+    @State private var githubConnected = KeychainStore.shared.get(IslandActions.githubTokenKey)?.isEmpty == false
+    @ObservedObject private var githubApp = GitHubAuth.shared
 
     var body: some View {
         ScrollViewReader { scroller in
@@ -15,6 +16,9 @@ struct ModulesSettings: View {
             }
 
             Section {
+                if GitHubApp.isAvailable { GitHubAppRows() }
+                // Signed in with the app, the personal token is not used: no need to show it.
+                if !(GitHubApp.isAvailable && githubApp.signedIn) {
                 LabeledContent("État") {
                     SettingsStatus(text: githubConnected ? loc("Branché") : loc("Pas de jeton"), tone: githubConnected ? .ok : .off)
                 }
@@ -36,15 +40,20 @@ struct ModulesSettings: View {
                         }
                     }
                 }
+                }
             } header: {
                 Text("GitHub")
             } footer: {
-                SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
+                if GitHubApp.isAvailable {
+                    SettingsHelp(loc("L'app GitHub suit chaque compte où tu l'installes, toi et autant d'organisations que tu veux, en lecture seule. Sinon, un jeton en lecture suffit. Je n'écris rien."))
+                } else {
+                    SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
+                }
             }
             .id("module-settings-github")
 
             ContributionsSection()
-            if githubConnected { GitHubReposSection() }
+            if githubConnected || (GitHubApp.isAvailable && githubApp.signedIn) { GitHubReposSection() }
 
             MailSourceSection()
                 .id("module-settings-gmail")
@@ -53,6 +62,8 @@ struct ModulesSettings: View {
 
             AgendaSettingsSection()
                 .id("module-settings-agenda")
+            ScreenTimeSettingsSection()
+                .id("module-settings-screen-time")
         }
         }
     }
@@ -232,6 +243,33 @@ private struct ContributionsSection: View {
         } footer: {
             SettingsHelp(loc("Comme sur ton profil GitHub. Je les relis au plus toutes les trente minutes."))
         }
+    }
+}
+
+/// Screen time: the daily threshold, and whether Yumi says it when it is reached.
+private struct ScreenTimeSettingsSection: View {
+    @AppStorage(ScreenTimeModule.thresholdKey) private var hours = ScreenTimeSummary.defaultThreshold
+    @AppStorage(ScreenTimeModule.remarksKey) private var remarks = true
+
+    var body: some View {
+        Section {
+            Picker(loc("Seuil du jour"), selection: $hours) {
+                ForEach(ScreenTimeSummary.thresholds, id: \.self) { value in
+                    Text(ScreenTimeSummary.hours(value * 60)).tag(value)
+                }
+            }
+            .onChange(of: hours) { changed() }
+            Toggle(loc("Me le dire quand je l'atteins"), isOn: $remarks)
+                .onChange(of: remarks) { changed() }
+        } header: {
+            Text("Temps d'écran")
+        } footer: {
+            SettingsHelp(loc("Je compte une minute quand tu es vraiment devant le Mac : session ouverte, et une touche ou la souris dans les cinq dernières minutes, ou une visio, un film, une présentation. Au-delà de deux heures sans rien toucher, plus rien ne compte. Au seuil, puis à chaque heure de plus, je te le dis, une fois. Tout reste sur ton Mac."))
+        }
+    }
+
+    private func changed() {
+        NotificationCenter.default.post(name: .screenTimeSettingsChanged, object: nil)
     }
 }
 
