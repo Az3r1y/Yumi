@@ -343,6 +343,19 @@ final class IslandWindowController: NSWindowController {
         state.lastActivity = .now
     }
 
+    /// The settings window opens: folds the island like a click beside it, unless an approval
+    /// waits. Returns the bottom of the island on screen when it stays open.
+    func makeRoomForSettings() -> CGFloat? {
+        let open = fsm.state == .home
+        guard open else { return nil }
+        if SettingsOpening.foldsIsland(approvalPending: state.pendingApproval != nil) {
+            collapse()
+            return nil
+        }
+        guard let frame = window?.frame else { return nil }
+        return frame.minY + islandFrame().minY
+    }
+
     func collapse() {
         state.isPinned = false
         fsm.pinned = false

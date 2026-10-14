@@ -94,7 +94,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings(_ sender: Any? = nil) {
         // The island may ask for a page: Claude Code, to install the hooks
         let page = (sender as? Notification)?.object as? SettingsPage
-        if let w = settingsWindow, w.isVisible, page == nil { w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return }
+        let islandBottom = islandController?.makeRoomForSettings()
+        if let w = settingsWindow, w.isVisible, page == nil {
+            if let islandBottom, w.frame.maxY > islandBottom { w.setFrame(settingsFrame(w.frame.size, islandBottom), display: true) }
+            w.makeKeyAndOrderFront(nil); NSApp.activate(ignoringOtherApps: true); return
+        }
         settingsWindow?.close()
         let win = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 760, height: 600),
                            styleMask: [.titled, .closable, .miniaturizable, .resizable],
@@ -102,11 +106,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         win.title = loc("Réglages de \(AppIdentity.productName)")
         win.contentMinSize = NSSize(width: 700, height: 480)
         win.contentView = NSHostingView(rootView: SettingsView(page: page ?? .general))
-        win.center()
+        win.setFrame(settingsFrame(win.frame.size, islandBottom), display: false)
         win.isReleasedWhenClosed = false
         settingsWindow = win
         win.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// Never under the notch: under the menu bar, and under the island when it stays open.
+    private func settingsFrame(_ size: CGSize, _ islandBottom: CGFloat?) -> CGRect {
+        let screen = islandController?.window?.screen ?? NSScreen.main
+        let visible = screen?.visibleFrame ?? CGRect(origin: .zero, size: size)
+        return SettingsOpening.frame(size: size, visible: visible, islandBottom: islandBottom)
     }
 
     // MARK: - Island setup
