@@ -17,11 +17,13 @@ enum ChatRoute: Equatable, Sendable {
 
     /// Tools that do their job without changing anything risky, but that only the runtime can
     /// run: a plan using one of them goes to the runtime too.
-    static let runtimeTools: Set<String> = ["start_focus", "get_today"]
+    static let runtimeTools: Set<String> = ["start_focus", "get_today", "control_music"]
 
     static func route(_ planned: Result<AgentPlan, AgentError>) -> ChatRoute {
         switch planned {
         case .success(let plan) where plan.estimatedRisk >= .write || plan.requiredTools.contains(where: runtimeTools.contains): .agent(plan)
+        // The simple mode has no conversation to hand a reading to: it answers with the tool.
+        case .success(let plan) where plan.plannedBy == SimplePlanner.engineName: .agent(plan)
         case .failure(.unsupportedAction(let reason)): .blocked(reason)
         default: .chat
         }

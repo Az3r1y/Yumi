@@ -4,10 +4,14 @@ import Foundation
 /// goes through `PlanValidator`, the registry, `PermissionManager`, the executor and the
 /// verification, and whichever chats, the chat has no tool that changes the Mac.
 enum Engine: String, CaseIterable, Codable, Sendable {
-    case claudeCode, anthropic, openai, gemini, ollama
+    /// The order is the automatic one: what the person set up first, then Apple's model when this
+    /// Mac has it, then the simple mode, which is always there.
+    case claudeCode, anthropic, openai, gemini, ollama, apple, simple
 
     var label: String {
         switch self {
+        case .apple: loc("Apple (sur ton Mac, gratuit)")
+        case .simple: loc("Mode simple (sans IA)")
         case .claudeCode: "Claude Code"
         case .anthropic: loc("Anthropic (clé API)")
         case .openai: loc("OpenAI (clé API)")
@@ -22,8 +26,26 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .anthropic: "anthropic-api-key"
         case .openai: "openai-api-key"
         case .gemini: "gemini-api-key"
-        case .claudeCode, .ollama: nil
+        case .claudeCode, .ollama, .apple, .simple: nil
         }
+    }
+
+    /// A word under the answers of the chat: who answered.
+    var shortLabel: String {
+        switch self {
+        case .claudeCode, .anthropic: "Claude"
+        case .openai: "OpenAI"
+        case .gemini: "Gemini"
+        case .ollama: "Ollama"
+        case .apple: "Apple"
+        case .simple: loc("Simple")
+        }
+    }
+
+    /// The engine a plan or an answer names (`PlanProposal.engine`, `AgentPlan.plannedBy`).
+    static func named(_ name: String?) -> Engine? {
+        guard let name else { return nil }
+        return Engine(rawValue: name.hasPrefix("engine:") ? String(name.dropFirst(7)) : name)
     }
 
     /// The model used when the person did not choose one. Ollama has none: it uses one installed.
@@ -32,7 +54,7 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .anthropic: "claude-sonnet-4-6"
         case .openai: OpenAILLMProvider.defaultModel
         case .gemini: GeminiLLMProvider.defaultModel
-        case .claudeCode, .ollama: nil
+        case .claudeCode, .ollama, .apple, .simple: nil
         }
     }
 
@@ -44,6 +66,8 @@ enum Engine: String, CaseIterable, Codable, Sendable {
         case .openai: loc("Tes messages et les demandes de plan partent chez OpenAI. Facturé par OpenAI à l'usage.")
         case .gemini: loc("Tes messages et les demandes de plan partent chez Google. Le palier gratuit suffit pour essayer ; au-delà, facturé par Google.")
         case .ollama: loc("Rien ne quitte ton Mac : le modèle tourne en local. Gratuit.")
+        case .apple: loc("Le modèle d'Apple tourne sur ton Mac : rien ne part ailleurs, sans compte, gratuit. Il est fait pour des demandes simples.")
+        case .simple: loc("Sans IA et sans réseau : je comprends les rappels, les tâches, l'agenda, le minuteur et la musique. Toujours disponible.")
         }
     }
 }
@@ -63,13 +87,20 @@ struct EngineSettings: Equatable, Sendable {
     /// The engines to try, in order: the chosen one alone, or the whole order.
     var sequence: [Engine] { choice.map { [$0] } ?? Self.normalised(order) }
 
+    /// The engine that answers, given which ones are ready: the chosen one, or the first ready
+    /// in the order; the simple mode when none is (it is always ready).
+    func active(isReady: (Engine) -> Bool) -> Engine {
+        sequence.first(where: { $0 == .simple || isReady($0) }) ?? .simple
+    }
+
     func model(_ engine: Engine) -> String? { models[engine]?.nonEmptyTrimmed ?? engine.defaultModel }
 
-    /// Every engine once, those missing at the end in the default order.
+    /// Every engine once, those missing at the end in the default order, and the simple mode
+    /// always last: it never fails, so nothing after it would ever be tried.
     static func normalised(_ order: [Engine]) -> [Engine] {
         var seen: [Engine] = []
-        for engine in order + Engine.allCases where !seen.contains(engine) { seen.append(engine) }
-        return seen
+        for engine in order + Engine.allCases where !seen.contains(engine) && engine != .simple { seen.append(engine) }
+        return seen + [.simple]
     }
 
     static func load(from defaults: UserDefaults = .standard) -> EngineSettings {
@@ -91,6 +122,29 @@ struct EngineSettings: Equatable, Sendable {
     }
 }
 
+/// What Yumi says about his engine at first launch: no question about models, only where he
+/// stands and, when Apple Intelligence is only switched off, how to turn it on.
+struct EngineWelcome: Equatable, Sendable {
+    var text: String
+    /// Shows a button that opens the Apple Intelligence pane of System Settings.
+    var opensAppleSettings: Bool
+
+    /// nil when the person set up an engine of their own: nothing to explain.
+    static func message(active: Engine, apple: AppleModelAvailability) -> EngineWelcome? {
+        switch active {
+        case .apple:
+            return EngineWelcome(text: loc("Je tourne sur ton Mac, gratuitement, sans rien envoyer ailleurs."), opensAppleSettings: false)
+        case .simple where apple.canBecomeAvailable:
+            return EngineWelcome(text: apple.message ?? "", opensAppleSettings: apple == .appleIntelligenceOff)
+        case .simple:
+            return EngineWelcome(text: loc("Je comprends déjà les rappels, les tâches, l'agenda et la musique. Pour discuter de tout, tu pourras me brancher une IA dans les réglages."),
+                                 opensAppleSettings: false)
+        default:
+            return nil
+        }
+    }
+}
+
 /// What can be known about an engine without spending anything: installed, a key present,
 /// Ollama answering with a model. Whether a key is accepted is what the « Tester » button checks.
 struct EngineStatus: Equatable, Sendable {
@@ -101,8 +155,13 @@ struct EngineStatus: Equatable, Sendable {
 
 enum EngineDetector {
     static func status(of engine: Engine, claudeCodeInstalled: Bool, hasKey: (Engine) -> Bool,
-                       ollamaModels: [String]?, ollamaModel: String?) -> EngineStatus {
+                       ollamaModels: [String]?, ollamaModel: String?,
+                       apple: AppleModelAvailability = .systemTooOld) -> EngineStatus {
         switch engine {
+        case .apple:
+            return EngineStatus(engine: engine, ready: apple.isAvailable, detail: apple.detail)
+        case .simple:
+            return EngineStatus(engine: engine, ready: true, detail: loc("Toujours prêt."))
         case .claudeCode:
             return claudeCodeInstalled
                 ? EngineStatus(engine: engine, ready: true, detail: loc("Installé. La connexion se vérifie avec « Tester »."))
@@ -140,9 +199,20 @@ struct EngineLLMProvider: LLMProvider {
         return current.choice.map { "engine:\($0.rawValue)" } ?? "engine:auto"
     }
 
+    /// The first engine that is set up answers, and the answer says which one it was. A model
+    /// that was reached and failed is not replaced by another: the person is told.
     func complete(_ request: LLMRequest) async throws -> LLMResponse {
         let current = settings()
-        let providers = current.sequence.compactMap { make($0, current) }
-        return try await FallbackLLMProvider(providers: providers).complete(request)
+        for engine in current.sequence {
+            guard let provider = make(engine, current) else { continue }
+            do {
+                var response = try await provider.complete(request)
+                response.engine = engine.rawValue
+                return response
+            } catch LLMProviderError.unavailable {
+                continue
+            }
+        }
+        throw LLMProviderError.unavailable
     }
 }
