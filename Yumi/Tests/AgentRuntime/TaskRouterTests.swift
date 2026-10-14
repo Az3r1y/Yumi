@@ -1,6 +1,5 @@
 import Foundation
 import Testing
-@testable import Yumi
 
 struct TaskRouterTests {
     @Test func theWordsOfARequestGiveItsKind() {

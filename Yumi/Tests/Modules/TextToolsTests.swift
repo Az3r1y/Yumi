@@ -128,6 +128,8 @@ import Testing
             }
         }
         #expect(!Feature.voiceReplies.defaultOn)
+        // Reading Claude Code's login makes macOS ask for the password: never without asking
+        #expect(!Feature.quotaFromKeychain.defaultOn)
         AppLanguage.$forced.withValue("en") {
             #expect(Feature.batteryMood.detail == "He's hungry below 15 %, happy when you plug the charger in.")
         }

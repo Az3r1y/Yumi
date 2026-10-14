@@ -14,7 +14,7 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
     // The agent
     case planDay, appleNotes, research
     // Claude Code
-    case sessionSummary, testReactions
+    case sessionSummary, testReactions, quotaFromKeychain
 
     var id: String { rawValue }
     var key: String { "feature.\(rawValue)" }
@@ -41,12 +41,13 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
         case .quotaOnSide: .island
         case .imageText, .voiceInput, .voiceReplies: .senses
         case .planDay, .appleNotes, .research: .agent
-        case .sessionSummary, .testReactions: .claude
+        case .sessionSummary, .testReactions, .quotaFromKeychain: .claude
         }
     }
 
-    /// Speaking aloud surprises: off until the person asks for it.
-    var defaultOn: Bool { self != .voiceReplies }
+    /// Speaking aloud surprises, and reading Claude Code's login makes macOS ask for the
+    /// session password: both off until the person asks for them.
+    var defaultOn: Bool { self != .voiceReplies && self != .quotaFromKeychain }
 
     var title: String {
         switch self {
@@ -67,6 +68,7 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
         case .research: loc("Recherche sur le web")
         case .sessionSummary: loc("Résumer une session terminée")
         case .testReactions: loc("Réagir aux tests")
+        case .quotaFromKeychain: loc("Demander les quotas à Anthropic")
         }
     }
 
@@ -89,6 +91,7 @@ enum Feature: String, CaseIterable, Identifiable, Sendable {
         case .research: loc("« Recherche » dans l'île : une question, une réponse courte et ses sources, par Gemini (Antigravity) ou Claude.")
         case .sessionSummary: loc("Une phrase dans l'encoche quand une session Claude Code se termine.")
         case .testReactions: loc("Yumi fête des tests qui passent, et a le tournis quand ils échouent.")
+        case .quotaFromKeychain: loc("Les quotas à jour même sans session Claude Code, avec la connexion de Claude Code lue dans le trousseau : macOS te demande ton mot de passe, et peut le redemander. Sinon, ils viennent de la ligne de statut.")
         }
     }
 
