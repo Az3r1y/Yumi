@@ -86,6 +86,20 @@ import Foundation
         #expect(GitHubApp.installations(from: data) == [.init(id: 11, account: "me"), .init(id: 22, account: "acme")])
     }
 
+    @Test func eachAccountKeepsItsPageOnGitHubOnly() throws {
+        let data = Data(#"{"installations":[{"id":22,"account":{"login":"acme"},"html_url":"https://github.com/organizations/acme/settings/installations/22"},{"id":33,"account":{"login":"odd"},"html_url":"https://evil.example/x"}]}"#.utf8)
+        let found = GitHubApp.installations(from: data)
+        #expect(found[0].manageURL?.absoluteString == "https://github.com/organizations/acme/settings/installations/22")
+        #expect(found[1].manageURL == nil)
+
+        let defaults = try #require(UserDefaults(suiteName: "GitHubAppTests.accounts"))
+        defaults.removePersistentDomain(forName: "GitHubAppTests.accounts")
+        GitHubApp.saveAccounts(found, in: defaults)
+        #expect(GitHubApp.accounts(in: defaults).map(\.account) == ["acme", "odd"])
+        #expect(GitHubApp.accounts(in: defaults).first?.manageURL == found[0].manageURL)
+        #expect(GitHubApp.accounts(in: defaults).last?.manageURL == nil)
+    }
+
     @Test func theRepositoriesOfEveryInstallationMakeOneList() {
         let mine = Data(#"{"repositories":[{"full_name":"me/a","pushed_at":"2026-10-01T00:00:00Z"},{"full_name":"acme/shared","pushed_at":"2026-09-01T00:00:00Z"}]}"#.utf8)
         let acme = Data(#"{"repositories":[{"full_name":"acme/api","pushed_at":"2026-10-03T00:00:00Z"},{"full_name":"acme/shared","pushed_at":"2026-09-01T00:00:00Z"}]}"#.utf8)

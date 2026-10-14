@@ -50,6 +50,7 @@ final class GitHubAuth: ObservableObject {
     func signOut() {
         cancel()
         KeychainStore.shared.remove(GitHubApp.tokenKey)
+        UserDefaults.standard.removeObject(forKey: GitHubApp.accountsKey)
         signedIn = false
         IslandActions.tap()
         Self.tellModule()
@@ -132,6 +133,7 @@ final class GitHubAuth: ObservableObject {
     /// The token no longer works: sign in again.
     private func forget() {
         KeychainStore.shared.remove(GitHubApp.tokenKey)
+        UserDefaults.standard.removeObject(forKey: GitHubApp.accountsKey)
         signedIn = false
     }
 
@@ -148,6 +150,12 @@ struct GitHubAppRows: View {
     var body: some View {
         if auth.signedIn {
             LabeledContent(loc("App GitHub")) { SettingsStatus(text: loc("Connectée"), tone: .ok) }
+            // Each account where the app is installed; its page on GitHub picks the repositories.
+            ForEach(GitHubApp.accounts(), id: \.id) { installation in
+                LabeledContent(installation.account) {
+                    if let page = installation.manageURL { Link(loc("Choisir les dépôts"), destination: page) }
+                }
+            }
             HStack {
                 if let install = GitHubApp.installURL {
                     Link(loc("Ajouter une organisation"), destination: install)

@@ -12349,6 +12349,16 @@
         }
       }
     },
+    "Choisir les dépôts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose repositories"
+          }
+        }
+      }
+    },
     "Ajouter une organisation": {
       "localizations": {
         "en": {

@@ -294,7 +294,9 @@ final class GitHubModule: YumiModule {
         // The GitHub App: the repositories of each account where it is installed.
         guard let list = await kept("/user/installations?per_page=100", token: token) else { return nil }
         var pages: [Data] = []
-        for installation in GitHubApp.installations(from: list).prefix(Self.installationsRead) {
+        let installations = GitHubApp.installations(from: list)
+        GitHubApp.saveAccounts(installations, in: defaults)
+        for installation in installations.prefix(Self.installationsRead) {
             for page in 1...Self.pagesPerInstallation {
                 guard let data = await kept("/user/installations/\(installation.id)/repositories?per_page=100&page=\(page)", token: token) else { break }
                 pages.append(data)

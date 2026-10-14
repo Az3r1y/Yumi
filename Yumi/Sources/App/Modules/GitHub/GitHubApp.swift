@@ -167,6 +167,8 @@ enum GitHubApp {
     struct Installation: Equatable, Sendable {
         var id: Int64
         var account: String
+        /// The installation's page on github.com, where the person picks its repositories or removes it.
+        var manageURL: URL? = nil
     }
 
     static func installations(from data: Data) -> [Installation] {
@@ -174,7 +176,24 @@ enum GitHubApp {
               let items = object["installations"] as? [[String: Any]] else { return [] }
         return items.compactMap { item in
             guard let id = (item["id"] as? NSNumber)?.int64Value else { return nil }
-            return Installation(id: id, account: (item["account"] as? [String: Any])?["login"] as? String ?? "")
+            let page = (item["html_url"] as? String).flatMap(URL.init(string:)).flatMap { $0.host == "github.com" ? $0 : nil }
+            return Installation(id: id, account: (item["account"] as? [String: Any])?["login"] as? String ?? "", manageURL: page)
+        }
+    }
+
+    // MARK: Accounts shown in the settings
+
+    /// The accounts where the app is installed, kept by the module for the settings.
+    static let accountsKey = "github.appAccounts"
+
+    static func saveAccounts(_ installations: [Installation], in defaults: UserDefaults = .standard) {
+        defaults.set(installations.map { ["account": $0.account, "url": $0.manageURL?.absoluteString ?? ""] }, forKey: accountsKey)
+    }
+
+    static func accounts(in defaults: UserDefaults = .standard) -> [Installation] {
+        let items = defaults.array(forKey: accountsKey) as? [[String: String]] ?? []
+        return items.enumerated().map { index, item in
+            Installation(id: Int64(index), account: item["account"] ?? "", manageURL: item["url"].flatMap(URL.init(string:)))
         }
     }
 
