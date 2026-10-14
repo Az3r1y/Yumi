@@ -91,6 +91,9 @@ enum MailAppParse {
             mail.replyElsewhere = GmailCompose.isElsewhere(replyTo: replyTo, sender: address)
             mail.messageID = messageID
             mail.source = .mailApp
+            if parts.count > 9, let box = Int(parts[8]), let index = Int(parts[9]), box > 0, index > 0 {
+                mail.mailAppPlace = MailAppPlace(mailbox: box, index: index)
+            }
             return mail
         }
         .sorted { ($0.date ?? .distantPast) > ($1.date ?? .distantPast) }
@@ -120,7 +123,9 @@ enum MailAppParse {
             set rs to character id 30
             set out to ""
             set now to current date
+            set k to 0
             repeat with mb in (mailboxes of inbox)
+                set k to k + 1
                 set acc to ""
                 try
                     set acc to name of account of mb
@@ -137,7 +142,7 @@ enum MailAppParse {
                         if item i of item 6 of p then set fl to "1"
                         set rt to item i of item 7 of p
                         if rt is missing value then set rt to ""
-                        set out to out & (item i of item 1 of p) & fs & acc & fs & (item i of item 2 of p) & fs & (item i of item 3 of p) & fs & ((item i of item 4 of p) - now) & fs & r & fs & fl & fs & rt & rs
+                        set out to out & (item i of item 1 of p) & fs & acc & fs & (item i of item 2 of p) & fs & (item i of item 3 of p) & fs & ((item i of item 4 of p) - now) & fs & r & fs & fl & fs & rt & fs & k & fs & i & rs
                     end repeat
                 end if
             end repeat
@@ -146,12 +151,24 @@ enum MailAppParse {
         """
     }
 
-    static func textScript(messageID: String) -> String {
+    /// The text of one listed mail, at the place Mail showed it (`MailAppPlace`). Never
+    /// `whose message id is ...` on the inbox: Mail checks every message one by one and stays
+    /// frozen for minutes on a large inbox (tried: 40 000 mails, the event timed out after 2 min).
+    /// New mail pushes it down: the next few places are looked at too, their ids in one event.
+    /// Empty when it is no longer there.
+    static func textScript(messageID: String, place: MailAppPlace, slack: Int = 5) -> String {
         """
         tell application "Mail"
-            set found to (messages of inbox whose message id is \(quoted(messageID)))
-            if (count of found) is 0 then return ""
-            return content of (item 1 of found)
+            set mb to item \(place.mailbox) of (mailboxes of inbox)
+            set p to {message id, content} of message \(place.index) of mb
+            if item 1 of p is \(quoted(messageID)) then return item 2 of p
+            try
+                set ids to message id of messages \(place.index + 1) thru \(place.index + slack) of mb
+                repeat with i from 1 to count of ids
+                    if item i of ids is \(quoted(messageID)) then return content of message (\(place.index) + i) of mb
+                end repeat
+            end try
+            return ""
         end tell
         """
     }
@@ -160,8 +177,9 @@ enum MailAppParse {
     static func draftScript(to address: String, subject: String, body: String) -> String {
         """
         tell application "Mail"
-            set draft to make new outgoing message with properties {subject:\(quoted(subject)), content:\(quoted(body)), visible:true}
+            set draft to make new outgoing message with properties {subject:\(quoted(subject)), content:\(quoted(body)), visible:false}
             tell draft to make new to recipient at end of to recipients with properties {address:\(quoted(address))}
+            set visible of draft to true
             activate
         end tell
         """
@@ -224,7 +242,8 @@ enum MailAppScript {
     }
 
     static func text(of mail: GmailMail) async throws -> String {
-        let raw = try await run(MailAppParse.textScript(messageID: mail.messageID))
+        guard let place = mail.mailAppPlace else { return "" }
+        let raw = try await run(MailAppParse.textScript(messageID: mail.messageID, place: place))
         return GmailParse.readableText(raw)
     }
 

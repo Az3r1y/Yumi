@@ -6,8 +6,10 @@ import Testing
     private let now = Date(timeIntervalSince1970: 1_800_000_000)
 
     private func record(_ id: String, _ account: String, _ sender: String, _ subject: String,
-                        _ ago: Int, read: Bool, flagged: Bool = false, replyTo: String = "") -> String {
-        [id, account, sender, subject, String(-ago), read ? "1" : "0", flagged ? "1" : "0", replyTo].joined(separator: fs) + rs
+                        _ ago: Int, read: Bool, flagged: Bool = false, replyTo: String = "", place: (Int, Int)? = nil) -> String {
+        var fields = [id, account, sender, subject, String(-ago), read ? "1" : "0", flagged ? "1" : "0", replyTo]
+        if let place { fields += [String(place.0), String(place.1)] }
+        return fields.joined(separator: fs) + rs
     }
 
     private var sample: String {
@@ -80,6 +82,30 @@ import Testing
         #expect(MailSource.current(in: d, gmailConnected: true) == .gmail)
         d.set("mailApp", forKey: MailSource.defaultsKey)
         #expect(MailSource.current(in: d, gmailConnected: true) == .mailApp)
+    }
+
+    @Test func theMailsPlaceInMailIsKept() {
+        let mails = MailAppParse.mails(from: record("<e@x>", "Pro", "Paul <paul@boite.fr>", "Devis", 60, read: false, place: (2, 7))
+                                       + record("<f@x>", "Pro", "Paul <paul@boite.fr>", "Devis 2", 90, read: false), now: now)
+        #expect(mails[0].mailAppPlace == MailAppPlace(mailbox: 2, index: 7))
+        #expect(mails[1].mailAppPlace == nil)
+    }
+
+    @Test func readingOneMailNeverFiltersTheWholeInbox() {
+        let script = MailAppParse.textScript(messageID: "<e@x>", place: MailAppPlace(mailbox: 2, index: 7))
+        #expect(!script.contains("whose"))
+        #expect(script.contains("item 2 of (mailboxes of inbox)"))
+        #expect(script.contains("of message 7 of mb"))
+        #expect(script.contains("messages 8 thru 12 of mb"))
+        #expect(script.contains(#""<e@x>""#))
+    }
+
+    @Test func theDraftIsShownOnceItHasItsRecipient() {
+        let draft = MailAppParse.draftScript(to: "lea@icloud.com", subject: "Re: Point", body: "Merci")
+        let recipient = draft.range(of: "make new to recipient")!.lowerBound
+        let shown = draft.range(of: "set visible of draft to true")!.lowerBound
+        #expect(draft.contains("visible:false"))
+        #expect(recipient < shown)
     }
 
     @Test func scriptStringsAreEscaped() {

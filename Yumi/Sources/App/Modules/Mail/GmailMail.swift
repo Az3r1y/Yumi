@@ -22,6 +22,9 @@ struct GmailMail: Equatable, Sendable, Identifiable {
     var messageID = ""
     /// The account in Mail ("iCloud", "Pro"...); empty for Gmail by app password.
     var account = ""
+    /// Where Mail showed it at the last look: the account's inbox (1-based) and the mail's place in
+    /// it. Reaches the mail in one Apple Event; checked against `messageID`, as new mail shifts it.
+    var mailAppPlace: MailAppPlace?
     /// Where it was read: Mail opens it in Mail, Gmail in the browser.
     var source = MailSource.gmail
 
@@ -32,6 +35,11 @@ struct GmailMail: Equatable, Sendable, Identifiable {
         guard let thread else { return URL(string: "https://mail.google.com/mail/u/0/#inbox") }
         return URL(string: "https://mail.google.com/mail/u/0/#inbox/" + String(thread, radix: 16))
     }
+}
+
+struct MailAppPlace: Equatable, Sendable {
+    var mailbox: Int
+    var index: Int
 }
 
 /// Reading what Gmail's IMAP server answers. Pure: no network here.
