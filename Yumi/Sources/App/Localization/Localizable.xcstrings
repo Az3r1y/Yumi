@@ -12288,6 +12288,46 @@
           }
         }
       }
+    },
+    "Pas d'adresse valide pour répondre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No valid address to reply to."
+          }
+        }
+      }
+    },
+    "(pas l'adresse de l'expéditeur)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(not the sender's address)"
+          }
+        }
+      }
+    },
+    "Ce mail demande qu'on réponde à une autre adresse que celle de l'expéditeur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This mail asks for replies to go to another address than the sender's."
+          }
+        }
+      }
+    },
+    "adresse invalide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "invalid address"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

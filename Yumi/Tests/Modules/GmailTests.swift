@@ -48,6 +48,39 @@ import Foundation
         #expect(message.hasSuffix("\r\n\r\nOui\r\n..fin"))
     }
 
+    @Test func aReplyToCannotSmuggleARecipient() {
+        // "=?UTF-8?B?...?=" decodes to "x@evil.fr>\r\nRCPT TO:<spy@evil.fr": a line break on the RCPT line.
+        let smuggled = "=?UTF-8?B?" + Data("x@evil.fr>\r\nRCPT TO:<spy@evil.fr".utf8).base64EncodedString() + "?="
+        let data = fetch([
+            ("UID 50 FLAGS () X-GM-LABELS (\\Inbox)", "From: Bank <service@bank.fr>\nSubject: Urgent\nReply-To: <\(smuggled)>\nMessage-ID: <a@b.fr>\nDate: Tue, 13 Oct 2026 14:02:11 +0200", ""),
+        ])
+        let mail = GmailParse.mails(fromFetch: data)[0]
+        #expect(mail.replyAddress.isEmpty)
+        #expect(!mail.replyAddress.contains("\n") && !mail.replyAddress.contains("\r"))
+    }
+
+    @Test func aReplyToElsewhereIsPointedOut() {
+        let data = fetch([
+            ("UID 51 FLAGS () X-GM-LABELS (\\Inbox)", "From: Bank <service@bank.fr>\nSubject: Urgent\nReply-To: <help@other.fr>\nDate: Tue, 13 Oct 2026 14:02:11 +0200", ""),
+            ("UID 52 FLAGS () X-GM-LABELS (\\Inbox)", "From: Léa <lea@x.fr>\nSubject: Point\nReply-To: LEA@x.fr\nDate: Tue, 13 Oct 2026 14:02:11 +0200", ""),
+        ])
+        let mails = GmailParse.mails(fromFetch: data)
+        #expect(mails[1].replyAddress == "help@other.fr" && mails[1].replyElsewhere)
+        #expect(!mails[0].replyElsewhere)
+    }
+
+    @Test func onlyPlainAddressesAndMessageIDsAreUsed() {
+        #expect(GmailCompose.isSafeAddress("lea.pro+tag@x.fr"))
+        for bad in ["", "lea@x.fr\r\nRCPT TO:<spy@evil.fr>", "lea@x.fr\n", "a@b.fr>,<c@d.fr", "a b@x.fr", "a@b", "a@@b.fr", "a@b.fr\u{0}"] {
+            #expect(!GmailCompose.isSafeAddress(bad), "\(bad.debugDescription)")
+        }
+        #expect(GmailCompose.safeMessageID("<abc@x.fr>") == "<abc@x.fr>")
+        #expect(GmailCompose.safeMessageID("<abc@x.fr>\nBcc: spy@evil.fr") == "")
+        let message = GmailCompose.message(from: "a@gmail.com", to: "b@x.fr", subject: "Re: x", inReplyTo: "<a@b>\rBcc: spy@evil.fr", body: "Oui\r.\rfin")
+        #expect(!message.contains("Bcc"))
+        #expect(!message.contains("\r.\r"))
+    }
+
     @Test func theIslandPutsTheImportantFirst() {
         var plain = GmailMail(uid: 2, from: "Shop", subject: "Promo", date: nil, unread: true, thread: nil)
         plain.bulk = true

@@ -16,6 +16,8 @@ struct GmailMail: Equatable, Sendable, Identifiable {
     var bulk = false
     /// Where an answer goes: Reply-To, else the sender's address.
     var replyAddress = ""
+    /// The Reply-To names another address than the sender's: the island says so before sending.
+    var replyElsewhere = false
     /// The Message-ID, so an answer stays in the conversation.
     var messageID = ""
     /// The account in Mail ("iCloud", "Pro"...); empty for Gmail by app password.
@@ -85,9 +87,12 @@ enum GmailParse {
                                        ?? bigNumber(after: "X-GM-THRID ", in: attributes))
             mail.bulk = bulk
             mail.important = labels.contains("\\Important") && !bulk
+            // Both come from whoever wrote the mail: an address that is not one plain address is
+            // dropped, so nothing can be answered to it.
             let replyTo = address(decode(fields["reply-to"] ?? ""))
-            mail.replyAddress = replyTo.isEmpty ? address(fromField) : replyTo
-            mail.messageID = (fields["message-id"] ?? "").trimmingCharacters(in: .whitespaces)
+            mail.replyAddress = GmailCompose.replyAddress(replyTo: replyTo, sender: address(fromField))
+            mail.replyElsewhere = GmailCompose.isElsewhere(replyTo: replyTo, sender: address(fromField))
+            mail.messageID = GmailCompose.safeMessageID((fields["message-id"] ?? "").trimmingCharacters(in: .whitespaces))
             mails.append(mail)
         }
         return mails.sorted { $0.uid > $1.uid }

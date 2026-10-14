@@ -140,7 +140,9 @@ struct GmailSheet: View {
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.07)))
                     .disabled(step == .sending)
                 HStack(spacing: 8) {
-                    Text(mail.account.isEmpty ? loc("À \(mail.replyAddress)") : loc("À \(mail.replyAddress), depuis \(mail.account)")).font(IslandTheme.text(11)).foregroundStyle(IslandTheme.muted).lineLimit(1)
+                    Text(recipientLine(mail)).font(IslandTheme.text(11))
+                        .foregroundStyle(mail.replyElsewhere || mail.replyAddress.isEmpty ? IslandTheme.amber : IslandTheme.muted).lineLimit(1)
+                        .help(mail.replyElsewhere ? loc("Ce mail demande qu'on réponde à une autre adresse que celle de l'expéditeur.") : "")
                     if case .failed(let reason) = step {
                         Text(reason).font(IslandTheme.text(11, .medium)).foregroundStyle(IslandTheme.red).lineLimit(1)
                     }
@@ -159,7 +161,7 @@ struct GmailSheet: View {
                             .background(Capsule().fill(IslandTheme.green))
                     }
                     .buttonStyle(RoundPress())
-                    .disabled(step == .sending || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(step == .sending || mail.replyAddress.isEmpty || draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             case .sent:
                 HStack(spacing: 8) {
@@ -188,6 +190,14 @@ struct GmailSheet: View {
     }
 
     /// Reads the mail, then asks the model for a short answer in its language.
+    /// Who the answer goes to, said before the click: a Reply-To that is not the sender is pointed out.
+    private func recipientLine(_ mail: GmailMail) -> String {
+        if mail.replyAddress.isEmpty { return loc("Pas d'adresse valide pour répondre.") }
+        var line = mail.account.isEmpty ? loc("À \(mail.replyAddress)") : loc("À \(mail.replyAddress), depuis \(mail.account)")
+        if mail.replyElsewhere { line += " " + loc("(pas l'adresse de l'expéditeur)") }
+        return line
+    }
+
     private func suggest(for mail: GmailMail) {
         let credentials = credentials
         guard mail.source == .mailApp || credentials != nil else { return }
