@@ -17,6 +17,10 @@ struct LLMRequest: Equatable, Sendable {
     /// The answer must be a single JSON object. Providers with a JSON mode can turn it on.
     var expectsJSON: Bool
     var maxOutputTokens: Int
+    /// For a plan: the tools it may use, so that a provider able to constrain its answer (Apple's
+    /// guided generation) can do so. The prompt already lists them for the others.
+    var tools: [ToolDescriptor] = []
+    var maxSteps = 12
 }
 
 struct LLMMessage: Equatable, Sendable {
@@ -27,6 +31,8 @@ struct LLMMessage: Equatable, Sendable {
 
 struct LLMResponse: Equatable, Sendable {
     var text: String
+    /// The engine that answered, when several were tried (`EngineLLMProvider`).
+    var engine: String? = nil
 }
 
 enum LLMProviderError: Error, Equatable, Sendable {

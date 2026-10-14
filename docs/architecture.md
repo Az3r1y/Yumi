@@ -31,9 +31,9 @@ scripts/                  release and translation helpers
 | `Hooks/` | `HookServer`: the local socket the Claude Code hooks talk to. It never blocks Claude Code | Core, Modules |
 | `Island/` | The notch window and everything drawn in it: window controller, state machine (hidden, compact, open, greeting), the open island in cards and bento tabs, the chat view, settings in the island, the filming mode (`IslandStudio`) | Contracts, Core, Character, Modules (through snapshots) |
 | `Character/` | Yumi himself: soft body, face, poses, habits, scenes, costumes, all drawn in code by `YumiRenderer` from `design/maquette/reference.html` | Contracts only |
-| `AgentRuntime/` | The agent: request, planner, policy, executor, verifier. `Tools/` holds one file per action; `Providers/` the language models; `QuickTask/` the ⌥ Space capture | Permissions, Context, Memory |
+| `AgentRuntime/` | The agent: request, planner, policy, executor, verifier. `Tools/` holds one file per action; `Providers/` the language models (Apple's on-device model included); `SimpleMode/` the planner without any model, for common requests in French and English; `QuickTask/` the ⌥ Space capture | Permissions, Context, Memory |
 | `Permissions/` | The checkpoint every action goes through: risk, approval, what the person allowed before | nothing above it |
-| `Engines/` | Choosing and configuring the engine (Claude Code, Anthropic, OpenAI, Gemini, Ollama) | AgentRuntime/Providers |
+| `Engines/` | Choosing and configuring the engine (Claude Code, Anthropic, OpenAI, Gemini, Ollama, Apple, simple mode) | AgentRuntime/Providers |
 | `Context/` | What is in front of the person (app, window, page), only when they allow it | nothing above it |
 | `Memory/` | What Yumi remembers about the person, readable and erasable | Contracts |
 | `Initiative/` | When Yumi speaks first, and how rarely | Contracts, Memory |
@@ -54,7 +54,8 @@ Two rules keep this readable:
 
 ```
 You type in the island (or ⌥ Space)
-  → AgentRuntime: planner proposes a plan with tools
+  → AgentRuntime: planner proposes a plan with tools (the engine of the settings, or the
+    simple mode when no model answers)
   → Permissions: risk of each step, approval card in the island when needed
   → Tool.execute, then Tool.verify looks again
   → the island shows the result; Character plays the matching pose and sound

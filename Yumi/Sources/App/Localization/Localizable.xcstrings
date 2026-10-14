@@ -12328,6 +12328,562 @@
           }
         }
       }
+    },
+    "Ajouter le rappel « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add the reminder “%@”"
+          }
+        }
+      }
+    },
+    "Ajouter « %@ » à l'agenda": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add “%@” to the calendar"
+          }
+        }
+      }
+    },
+    "Apple (sur ton Mac, gratuit)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple (on your Mac, free)"
+          }
+        }
+      }
+    },
+    "Apple Intelligence est désactivé.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence is turned off."
+          }
+        }
+      }
+    },
+    "C'est parti pour la musique.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Here comes the music."
+          }
+        }
+      }
+    },
+    "Ce Mac n'est pas compatible.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac is not compatible."
+          }
+        }
+      }
+    },
+    "Ce Mac ne peut pas faire tourner le modèle d'Apple. Je fonctionne en mode simple : rappels, tâches, agenda et musique.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac can't run Apple's model. I work in simple mode: reminders, tasks, calendar and music."
+          }
+        }
+      }
+    },
+    "Concentre-moi 25 min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus 25 min"
+          }
+        }
+      }
+    },
+    "Demande macOS 26.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs macOS 26."
+          }
+        }
+      }
+    },
+    "Donner l'heure": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell the time"
+          }
+        }
+      }
+    },
+    "Il est %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's %@."
+          }
+        }
+      }
+    },
+    "Je comprends déjà les rappels, les tâches, l'agenda et la musique. Pour discuter de tout, tu pourras me brancher une IA dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already understand reminders, tasks, your calendar and music. To chat about anything, you can plug an AI into me in the settings."
+          }
+        }
+      }
+    },
+    "Je n'ai pas bien compris, pardon. Sans IA, je sais déjà créer un rappel, ajouter une tâche, noter un rendez-vous, lancer un minuteur ou mettre ta musique. Par exemple : « rappelle-moi d'appeler maman demain 18 h ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorry, I didn't quite get that. Without an AI, I can already create a reminder, add a task, put an appointment in your calendar, start a timer or play your music. For example: “remind me to call mom tomorrow at 6pm”."
+          }
+        }
+      }
+    },
+    "Je tourne sur ton Mac, gratuitement, sans rien envoyer ailleurs.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I run on your Mac, for free, without sending anything anywhere."
+          }
+        }
+      }
+    },
+    "Lancer un Focus de %lld minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a %lld-minute focus session"
+          }
+        }
+      }
+    },
+    "Langue pas encore prise en charge.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language not supported yet."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple demande macOS 26 ou plus récent. En attendant, je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model needs macOS 26 or later. Meanwhile, I work in simple mode."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple est en cours de téléchargement sur ton Mac. Je m'en sers dès qu'il est prêt ; en attendant, je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model is downloading to your Mac. I'll use it as soon as it's ready; meanwhile, I work in simple mode."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple ne parle pas encore ma langue sur ce Mac. Je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model doesn't speak my language on this Mac yet. I work in simple mode."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple tourne sur ton Mac : rien ne part ailleurs, sans compte, gratuit. Il est fait pour des demandes simples.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model runs on your Mac: nothing goes anywhere else, no account, free. It is made for simple requests."
+          }
+        }
+      }
+    },
+    "Mets de la musique": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play some music"
+          }
+        }
+      }
+    },
+    "Mettre la musique": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play the music"
+          }
+        }
+      }
+    },
+    "Mettre la musique en pause": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause the music"
+          }
+        }
+      }
+    },
+    "Minuteur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer"
+          }
+        }
+      }
+    },
+    "Mode simple (sans IA)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple mode (no AI)"
+          }
+        }
+      }
+    },
+    "Modèle en cours de téléchargement.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model downloading."
+          }
+        }
+      }
+    },
+    "Morceau précédent.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous track."
+          }
+        }
+      }
+    },
+    "Morceau suivant.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next track."
+          }
+        }
+      }
+    },
+    "Musique en pause.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music paused."
+          }
+        }
+      }
+    },
+    "Nouvelle tâche : ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New task: "
+          }
+        }
+      }
+    },
+    "Occupé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Busy"
+          }
+        }
+      }
+    },
+    "Ouvrir les Réglages Système": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
+          }
+        }
+      }
+    },
+    "Passer au morceau suivant": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip to the next track"
+          }
+        }
+      }
+    },
+    "Pour discuter de tout, tu pourras me brancher une IA dans les réglages, section Moteurs.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To chat about anything, you can plug an AI into me in the settings, Engines section."
+          }
+        }
+      }
+    },
+    "Pour me rendre plus malin gratuitement, active Apple Intelligence : Réglages Système, Apple Intelligence et Siri. En attendant, je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To make me smarter for free, turn on Apple Intelligence: System Settings, Apple Intelligence & Siri. Meanwhile, I work in simple mode."
+          }
+        }
+      }
+    },
+    "Prêt, sur ce Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ready, on this Mac."
+          }
+        }
+      }
+    },
+    "Qu'est-ce que j'ai aujourd'hui ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What do I have today?"
+          }
+        }
+      }
+    },
+    "Rappelle-moi de ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remind me to "
+          }
+        }
+      }
+    },
+    "Revenir au morceau précédent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go back to the previous track"
+          }
+        }
+      }
+    },
+    "Réponse de %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer from %@"
+          }
+        }
+      }
+    },
+    "Résumer la journée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sum up the day"
+          }
+        }
+      }
+    },
+    "Sans IA et sans réseau : je comprends les rappels, les tâches, l'agenda, le minuteur et la musique. Toujours disponible.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No AI and no network: I understand reminders, tasks, the calendar, the timer and music. Always available."
+          }
+        }
+      }
+    },
+    "Simple": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple"
+          }
+        }
+      }
+    },
+    "Toujours prêt.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always ready."
+          }
+        }
+      }
+    },
+    "Tâche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task"
+          }
+        }
+      }
+    },
+    "je n'ai pas de lecteur de musique sous la main": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't have a music player at hand"
+          }
+        }
+      }
+    },
+    "je sais mettre la musique, la mettre en pause, passer au suivant ou revenir au précédent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can play the music, pause it, skip to the next track or go back to the previous one"
+          }
+        }
+      }
+    },
+    "la conversation est trop longue pour le modèle d'Apple, efface-la et recommence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the conversation is too long for Apple's model, clear it and start again"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple a préféré ne pas répondre à ça": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model preferred not to answer that"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple est occupé, réessaie dans un instant": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model is busy, try again in a moment"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple n'est pas encore prêt sur ce Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model is not ready on this Mac yet"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple ne parle pas encore cette langue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model doesn't speak this language yet"
+          }
+        }
+      }
+    },
+    "rien ne joue en ce moment": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nothing is playing right now"
+          }
+        }
+      }
+    },
+    "✓ Toujours prêt.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Always ready."
+          }
+        }
+      }
+    },
+    "Control the music": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control the music"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piloter la musique"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

@@ -10,6 +10,8 @@ struct WelcomeActivity: View {
     /// Empty until the person picks one.
     @State private var held = YumiWorkHabit.isChosen() ? YumiWorkHabit.current().rawValue : ""
     @FocusState private var focused: Bool
+    /// Where Yumi stands without any setup: Apple's model, or the simple mode. Never a question.
+    @State private var engine: EngineWelcome?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -40,6 +42,20 @@ struct WelcomeActivity: View {
                 }
             }
             .riseIn(3)
+            if let engine {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Up to three lines: this sentence is the whole answer to "does it work here?"
+                    Text(engine.text)
+                        .font(IslandTheme.text(12.5, .regular))
+                        .foregroundStyle(IslandTheme.muted)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if engine.opensAppleSettings {
+                        TextButton(label: loc("Ouvrir les Réglages Système")) { NSWorkspace.shared.open(AppleModelAvailability.settingsURL) }
+                    }
+                }
+                .riseIn(4)
+            }
             TextButton(label: loc("Plus tard")) { IslandActions.skipName() }
                 .riseIn(4)
             // The menu bar item can hide behind the notch: the other ways in, said once
@@ -47,7 +63,10 @@ struct WelcomeActivity: View {
                 .riseIn(5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .onAppear { focused = true }
+        .onAppear {
+            focused = true
+            engine = EngineWelcome.message(active: EngineFactory.activeEngine, apple: .current)
+        }
     }
 
     private func choose(_ choice: YumiWorkHabit) {

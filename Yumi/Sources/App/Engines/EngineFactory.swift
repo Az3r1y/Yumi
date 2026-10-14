@@ -27,7 +27,29 @@ enum EngineFactory {
         case .ollama:
             let model = settings.models[.ollama]
             return OllamaLLMProvider(model: { model })
+        case .apple:
+            return AppleLLMProvider()
+        case .simple:
+            return nil // Not a model: the simple mode plans (SimplePlanner) and answers (ClaudeService) itself.
         }
+    }
+
+    /// Ready as far as can be known without asking anything: installed, a key, a model chosen,
+    /// Apple's model available. Ollama counts once a model is chosen.
+    static func isReady(_ engine: Engine, _ settings: EngineSettings) -> Bool {
+        switch engine {
+        case .claudeCode: hasClaudeCode
+        case .anthropic, .openai, .gemini: engine.keychainKey.flatMap { KeychainStore.shared.get($0)?.nonEmptyTrimmed } != nil
+        case .ollama: settings.models[.ollama]?.nonEmptyTrimmed != nil
+        case .apple: AppleModelAvailability.current.isAvailable
+        case .simple: true
+        }
+    }
+
+    /// The engine that should answer now.
+    static var activeEngine: Engine {
+        let settings = EngineSettings.load()
+        return settings.active { isReady($0, settings) }
     }
 
     static func key(_ engine: Engine) -> @Sendable () -> String? {
@@ -47,8 +69,21 @@ enum EngineFactory {
         EngineLLMProvider(settings: { EngineSettings.load() }, make: { provider($0, $1) })
     }
 
+    /// The runtime's planner: the engines above, and the simple mode when none answers.
+    static var agentPlanner: EngineAgentPlanner {
+        EngineAgentPlanner(llm: LLMAgentPlanner(provider: planner),
+                           simple: SimplePlanner(taskDestination: {
+                               let destination = QuickTaskDestination.stored()
+                               let base = UserDefaults.standard.string(forKey: QuickTaskDestination.notionBaseKey)
+                               return (destination, base)
+                           }),
+                           choice: { EngineSettings.load().choice })
+    }
+
     /// Asks the engine one short question: "OK" when it answers, otherwise why not.
     static func test(_ engine: Engine) async -> String {
+        if engine == .simple { return loc("✓ Toujours prêt.") }
+        if engine == .apple, let message = AppleModelAvailability.current.message { return message }
         guard let provider = provider(engine, EngineSettings.load()) else { return loc("Indisponible dans cette version.") }
         let request = LLMRequest(system: "Answer with the single word OK.", messages: [LLMMessage(role: .user, content: "Test")],
                                  expectsJSON: false, maxOutputTokens: 20)

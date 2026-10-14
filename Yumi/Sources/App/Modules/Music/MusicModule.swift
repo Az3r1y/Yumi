@@ -262,6 +262,23 @@ final class MusicModule: YumiModule {
         #endif
     }
 
+    /// What the agent asks (`control_music`), with the module's own buttons. nil when done,
+    /// otherwise why not. With nothing playing, « play » opens the player.
+    func control(_ command: MusicCommand) -> String? {
+        switch command {
+        case .play:
+            if playing?.isPlaying == true { return nil }
+            perform(.primary)
+        case .pause:
+            guard playing?.isPlaying == true else { return loc("rien ne joue en ce moment") }
+            perform(.primary)
+        case .next, .previous:
+            guard playing != nil else { return loc("rien ne joue en ce moment") }
+            perform(command == .next ? .secondary : .previous)
+        }
+        return nil
+    }
+
     private func open(_ player: MusicPlayer) {
         if player == .web {
             if let webBrowser { NSRunningApplication.runningApplications(withBundleIdentifier: webBrowser).first?.activate() }

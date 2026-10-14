@@ -73,7 +73,7 @@ He does **not** control your whole Mac. He never deletes, moves, sends a message
 - **Leaving your Mac is high risk.** Writing to an outside service such as Notion is asked every time and cannot be remembered.
 - **Checked afterwards.** The run fails if the result is not really there.
 - **A history of decisions** stays on your Mac (Settings › Permissions): which tool, which file or site, what was decided. Never the content.
-- **No account, no telemetry.** No server of ours. Your messages go only to the AI engine you choose, and with Ollama, nothing leaves your Mac.
+- **No account, no telemetry.** No server of ours. Out of the box, Yumi runs on Apple's on-device model or in simple mode: nothing leaves your Mac. Your messages go elsewhere only if you plug in another AI engine.
 
 Details: [How the safety model works](#how-the-safety-model-works) and [Privacy](#privacy).
 
@@ -91,7 +91,7 @@ All of this comes from Claude Code's hooks and, for Claude's last message, from 
 
 ## Install
 
-**Requirements:** macOS 15 or later. A Mac with a notch is recommended. An AI engine for the chat and the actions: Claude Code, an Anthropic, OpenAI or Gemini key, or Ollama on your Mac (see [Engines](#engines)). Claude Code is only required to follow your Claude Code sessions.
+**Requirements:** macOS 15 or later. A Mac with a notch is recommended. **No account and no AI subscription needed:** Yumi works from the first launch with Apple's on-device model (macOS 26 with Apple Intelligence) or, on any Mac, in simple mode. You can plug in a bigger engine later: Claude Code, an Anthropic, OpenAI or Gemini key, or Ollama (see [Engines](#engines)). Claude Code is only required to follow your Claude Code sessions.
 
 1. Download `Yumi-<version>.zip` from the [latest release](https://github.com/estebanbaigts/Yumi/releases).
 2. Unzip it and drag **Yumi.app** into **Applications**.
@@ -177,10 +177,12 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 
 The engine talks with you in the chat and proposes plans for actions. Whichever you use, **every plan is checked by Yumi** (known tools only, valid arguments, risk set by Yumi's code, not by the model), **every change asks you first**, and **the result is verified**. In the chat, no engine has a tool that changes your Mac.
 
-**Automatic** takes the first engine that is ready, in this order. **Settings › Engines** lets you pick one, change the order, enter keys and models, and test each one.
+**No account needed.** With nothing set up, Yumi uses Apple's model when your Mac has it, and the simple mode otherwise. **Automatic** takes the engine you set up first, then Apple, then the simple mode, which is always last. **Settings › Engines** lets you pick one, change the order, enter keys and models, and test each one. Under each answer, the chat shows discreetly which engine answered.
 
 | Engine | What you need | What leaves your Mac, and who bills it |
 |---|---|---|
+| **Apple (on your Mac, free)** | macOS 26, Apple silicon, Apple Intelligence turned on (System Settings › Apple Intelligence & Siri). Yumi tells you in the island if the model is downloading, switched off or not available on your Mac. | Nothing leaves your Mac. No account. Free. |
+| **Simple mode (no AI)** | Nothing. Always available. | Nothing leaves your Mac, no network at all. Understands common requests in French and English: reminders (« rappelle-moi d'appeler maman demain 18 h », "remind me to call mom tomorrow at 6pm"), tasks, calendar blocks, focus timer, the time, your day, and music (play, pause, next). When it does not understand, it says so and offers buttons. |
 | **Claude Code** | Installed and logged in. Yumi runs it with no tool, shell, file, web, MCP server, settings or hooks. | Your messages go to Anthropic through your Claude Code account. Counted in your plan. |
 | **Anthropic API** | A key | Your messages go to Anthropic. Billed per use. |
 | **OpenAI API** | A key (default model `gpt-4o-mini`) | Your messages go to OpenAI. Billed per use. |
@@ -238,6 +240,8 @@ This is an alpha. Here is what we know is missing or rough today.
 - **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
 - **Mail** reads the inbox of the Mail app only while Mail is open, shows the latest 10 mails of each account (Mail can take up to a minute to answer on a very large inbox), and never changes your mailbox. If you refuse the Automation access the module stays empty (System Settings, Privacy, Automation to change it). Not in the App Store build. The Gmail option needs a Google app password (two-step verification on).
 - **Screen time** counts a minute when the session is unlocked and you touched the keyboard or mouse in the last five minutes, or a call, a film or a presentation keeps the display awake (two hours without input at most). It counts only while Yumi runs, never while the Mac sleeps, and keeps 90 days of totals and 14 days by hour in Yumi's folder. A threshold remark Yumi keeps to himself (Focus, a shared screen, the remarks of the day used up) is not said later.
+- **Apple's model is small.** It is made for simple requests and short conversations; for long discussions or complex plans, plug in a bigger engine. It needs macOS 26 and Apple Intelligence.
+- **The simple mode** only understands fixed forms of common requests (reminders, tasks, calendar, timer, music, the time, your day). It does not chat.
 - **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
 - **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
 - **The App Store build** is not shipped and cannot use Claude Code or the hooks.
