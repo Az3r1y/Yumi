@@ -14,6 +14,8 @@ enum MusicPlayer: String, CaseIterable, Sendable {
     case soundcloud = "soundcloud.com"
     case twitch = "twitch.tv"
     case vimeo = "vimeo.com"
+    /// Any other page of a browser that sends sound (a web radio): its window title, its browser's name.
+    case web = "web"
 
     var name: String {
         switch self {
@@ -25,6 +27,7 @@ enum MusicPlayer: String, CaseIterable, Sendable {
         case .soundcloud:   return "SoundCloud"
         case .twitch:       return "Twitch"
         case .vimeo:        return "Vimeo"
+        case .web:          return "Web"
         }
     }
 
@@ -49,7 +52,7 @@ enum MusicPlayer: String, CaseIterable, Sendable {
         case .soundcloud:   return URL(string: "https://soundcloud.com")
         case .twitch:       return URL(string: "https://www.twitch.tv")
         case .vimeo:        return URL(string: "https://vimeo.com")
-        case .music, .spotify: return nil
+        case .music, .spotify, .web: return nil
         }
     }
 }
@@ -67,12 +70,7 @@ enum MusicTitles {
     /// "Lueur - Halo Nord - YouTube Music" → YouTube Music, "Lueur", "Halo Nord". nil when the
     /// title is not a track of a known player (or only the player's own name, nothing playing).
     static func parse(_ windowTitle: String, appName: String = "") -> (player: MusicPlayer, title: String, artist: String)? {
-        var text = windowTitle.trimmingCharacters(in: .whitespaces)
-        for suffix in browserSuffixes where text.hasSuffix(suffix) { text = String(text.dropLast(suffix.count)) }
-        // A tab marked as playing sound
-        text = text.replacingOccurrences(of: "🔊", with: "").replacingOccurrences(of: "▶ ", with: "").trimmingCharacters(in: .whitespaces)
-        // "(3) Lueur - YouTube": the count of unread notifications
-        if let count = text.range(of: #"^\(\d+\+?\) "#, options: .regularExpression) { text.removeSubrange(count) }
+        let text = clean(windowTitle)
 
         // Music players: "title - artist"
         let players: [(MusicPlayer, [String])] = [
@@ -115,6 +113,19 @@ enum MusicTitles {
             return (player, track, "")
         }
         return nil
+    }
+
+    /// A window title without its browser's name, the sound mark of its tab and a count of notifications.
+    static func clean(_ windowTitle: String) -> String {
+        // The browser's name goes first: a tab without a title leaves only " - Google Chrome"
+        var text = windowTitle
+        while text.last?.isWhitespace == true { text.removeLast() }
+        for suffix in browserSuffixes where text.hasSuffix(suffix) { text = String(text.dropLast(suffix.count)) }
+        // A tab marked as playing sound
+        text = text.replacingOccurrences(of: "🔊", with: "").replacingOccurrences(of: "▶ ", with: "").trimmingCharacters(in: .whitespaces)
+        // "(3) Lueur - YouTube": the count of unread notifications
+        if let count = text.range(of: #"^\(\d+\+?\) "#, options: .regularExpression) { text.removeSubrange(count) }
+        return text
     }
 
     /// What is left of `text` without `suffix`, unless it is only the player's name or one of its lists.
@@ -163,6 +174,40 @@ enum TitlePlayback {
         case nil:
             // Without the sound, the last button pressed decides
             return !(sameTrack && previous?.isPlaying == false)
+        }
+    }
+}
+
+/// A browser that sends sound while none of its windows shows a known site: a web radio, a
+/// podcast page. Yumi shows the title of one of its windows, the one in front unless the one
+/// already shown is still open, since a title alone does not say which tab plays.
+enum BrowserFallback {
+    /// Safari plays through WebKit processes shared with Mail and every app showing a web page:
+    /// its sound cannot be told apart, so a page that is not a known site is never guessed there.
+    static func canTellItsSound(_ bundleID: String) -> Bool {
+        bundleID.lowercased() != "com.apple.safari"
+    }
+
+    /// The title to show among the browser's window titles, front first; nil when they are all empty.
+    static func title(among windowTitles: [String], previous: String?) -> String? {
+        let titles = windowTitles.map(MusicTitles.clean).filter { !$0.isEmpty }
+        if let previous, titles.contains(previous) { return previous }
+        return titles.first
+    }
+
+    /// Whether to show the page as playing (true), paused (false), or not at all (nil). Stricter
+    /// than a known site: without the sound it is never shown, and a page shows only after its
+    /// browser was heard at two looks in a row, so a notification sound is not taken for music.
+    /// - Parameters:
+    ///   - heardBefore: the browser was already heard at the last look.
+    static func isPlaying(title: String, previous: NowPlaying?, audible: Bool?, heardBefore: Bool,
+                          pressedRecently: Bool = false) -> Bool? {
+        let sameTrack = previous?.title == title
+        if pressedRecently, sameTrack, let previous { return previous.isPlaying }
+        switch audible {
+        case true?:  return previous != nil || heardBefore ? true : nil
+        case false?: return sameTrack ? false : nil
+        case nil:    return nil
         }
     }
 }
@@ -269,12 +314,17 @@ enum MusicSummary {
     /// How long a paused track stays in the folded island, so it can be resumed from there.
     static let pausedLinger: TimeInterval = 5 * 60
 
+    /// A page that is not a known site may have been any sound: it leaves after a minute.
+    static func pausedLinger(for player: MusicPlayer) -> TimeInterval {
+        player == .web ? 60 : pausedLinger
+    }
+
     /// What the folded island shows: the track while it plays, and for a few minutes after a pause.
     /// - Parameter pausedFor: seconds since the track was paused, when it is.
     static func live(_ playing: NowPlaying?, canControl: Bool, pausedFor: TimeInterval? = nil) -> ModuleLive? {
         guard let playing else { return nil }
         if !playing.isPlaying {
-            guard let pausedFor, pausedFor < pausedLinger else { return nil }
+            guard let pausedFor, pausedFor < pausedLinger(for: playing.player) else { return nil }
         }
         let text = playing.artist.isEmpty ? playing.title : "\(playing.title) · \(playing.artist)"
         let controls = [

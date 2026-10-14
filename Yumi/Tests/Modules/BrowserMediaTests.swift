@@ -78,3 +78,67 @@ import Foundation
         #expect(TitlePlayback.isPlaying(title: "Autre", previous: paused, audible: nil) == true)
     }
 }
+
+@Suite struct BrowserFallbackTests {
+    private let radio = "NRJ: Hit Music Only. Ecouter la radio en ligne, clips, actus, webradios..."
+
+    @Test func aWebRadioIsNotAKnownSite() {
+        // What Arc showed while the NRJ radio played: only the fallback can show it
+        #expect(MusicTitles.parse(radio) == nil)
+        #expect(BrowserFallback.title(among: [radio, "Dynasty Nova - Jeu de stratégie 4X spatial"], previous: nil) == radio)
+    }
+
+    @Test func theTitleLosesItsBrowserAndMarks() {
+        #expect(BrowserFallback.title(among: ["🔊 (2) Radio Lueur - Google Chrome"], previous: nil) == "Radio Lueur")
+        #expect(MusicTitles.clean("Radio Lueur — Mozilla Firefox") == "Radio Lueur")
+    }
+
+    @Test func emptyTitlesAreSkipped() {
+        #expect(BrowserFallback.title(among: ["", "  ", "Radio Lueur - Arc"], previous: nil) == "Radio Lueur")
+        #expect(BrowserFallback.title(among: ["", " - Google Chrome"], previous: nil) == nil)
+    }
+
+    @Test func thePageShownStaysWhenAnotherWindowComesInFront() {
+        #expect(BrowserFallback.title(among: ["Dynasty Nova", radio], previous: radio) == radio)
+        // Closed: the window in front takes over
+        #expect(BrowserFallback.title(among: ["Dynasty Nova"], previous: radio) == "Dynasty Nova")
+    }
+
+    @Test func aPageShowsOnlyWhenHeardTwiceInARow() {
+        // A single sound (a notification) is not music
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: true, heardBefore: false) == nil)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: true, heardBefore: true) == true)
+        // Never without the sound, nor when the system cannot say
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: false, heardBefore: true) == nil)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: nil, heardBefore: true) == nil)
+    }
+
+    @Test func aPageHeardThenSilentIsPausedThenLeavesSooner() {
+        let shown = NowPlaying(player: .web, title: radio, artist: "Arc", album: "", isPlaying: true)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: shown, audible: true, heardBefore: false) == true)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: shown, audible: false, heardBefore: true) == false)
+        #expect(BrowserFallback.isPlaying(title: "Autre", previous: shown, audible: false, heardBefore: true) == nil)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: shown, audible: nil, heardBefore: true) == nil)
+        // A pause pressed in the island is trusted over the sound that lingers
+        var paused = shown
+        paused.isPlaying = false
+        #expect(BrowserFallback.isPlaying(title: radio, previous: paused, audible: true, heardBefore: true, pressedRecently: true) == false)
+        // Paused, a page leaves the island after a minute; a known player after five
+        #expect(MusicSummary.live(paused, canControl: true, pausedFor: 30) != nil)
+        #expect(MusicSummary.live(paused, canControl: true, pausedFor: 90) == nil)
+        let video = NowPlaying(player: .youtube, title: "Lueur", artist: "", album: "", isPlaying: false)
+        #expect(MusicSummary.live(video, canControl: true, pausedFor: 90) != nil)
+    }
+
+    @Test func safariSoundCannotBeToldApart() {
+        #expect(!BrowserFallback.canTellItsSound("com.apple.Safari"))
+        #expect(BrowserFallback.canTellItsSound("company.thebrowser.Browser"))
+    }
+
+    @Test func theIslandShowsThePageAndItsBrowser() {
+        let shown = NowPlaying(player: .web, title: radio, artist: "Arc", album: "", isPlaying: true)
+        let snapshot = MusicSummary.snapshot(shown, canControl: true)
+        #expect(snapshot.title == radio && snapshot.subtitle == "Arc")
+        #expect(snapshot.live != nil && !MusicPlayer.web.isScriptable && MusicPlayer.web.webURL == nil)
+    }
+}
