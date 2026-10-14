@@ -1,7 +1,7 @@
 import SwiftUI
 
 // The first launch: Yumi asks the person's first name, in his voice, with a single field
-// (design/yumi/voix.md), and what he should have in hand while an agent works (coffee,
+// (design/voix.md), and what he should have in hand while an agent works (coffee,
 // tea, a book, nothing...). The name goes to the core through `memorySetName`; it can be passed
 // over, he asks again later, without insisting. The choice is made before the name is sent.
 

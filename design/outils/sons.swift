@@ -1,7 +1,7 @@
 // Synthesises the 28 placeholder sounds of Yumi. Original work, generated from the formulas
 // below: nothing is sampled or copied from another product.
 //
-//   swift design/yumi/outils/sons.swift Yumi/Resources/sounds
+//   swift design/outils/sons.swift Yumi/Resources/sounds
 //
 // File names are the ones SoundEngine.preload() looks for. 44.1 kHz, 16 bit, mono.
 // The output is deterministic (seeded noise), so running it twice gives identical files.

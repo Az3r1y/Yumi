@@ -3,8 +3,8 @@ import Foundation
 // MARK: - Character contract
 // The island tells the character what to do through these notifications; the character
 // renderer listens to them. Both sides rely on this file, so neither edits it during
-// the parallel work (see YUMI.md). The reference for what each value looks like is
-// design/yumi/maquette/reference.html.
+// the parallel work (see docs/journal.md). The reference for what each value looks like is
+// design/maquette/reference.html.
 
 /// One-shot body movements. They play once and the character returns to rest.
 enum YumiPose: String, CaseIterable, Sendable {

@@ -900,7 +900,7 @@ import Foundation
                    "yumiTalk", "updateCheckEnabled", "feedback", "memory"]
         let placed = SettingsPage.allCases.flatMap { SettingsPage.settings[$0] ?? [] }
         for key in old { #expect(placed.filter { $0 == key }.count == 1, "\(key)") }
-        // The integrations inherited from Coucou are gone: none of their settings is shown anywhere.
+        // The old integrations are gone: none of their settings is shown anywhere.
         let retired = ["vercelProjectFilter", "n8nWorkflowFilter", "activeIntegrations", "resend-api-key", "resend-from", "n8n-url",
                        "n8n-api-key", "vercel-token", "stripe-api-key", "calcom-api-key", "notion-api-key"]
         for key in retired { #expect(!placed.contains(key), "\(key)") }

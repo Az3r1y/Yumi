@@ -1,7 +1,7 @@
 import AppKit
 import SwiftUI
 
-// When Yumi speaks first (Contracts/RemarkTypes.swift, design/yumi/voix.md): one sentence
+// When Yumi speaks first (Contracts/RemarkTypes.swift, design/voix.md): one sentence
 // next to him, at most one action, and a cross. Folded, the island widens just enough for
 // it. Open, the sentence sits above the rail and the activity stays where it is.
 

@@ -34,7 +34,7 @@
   with it. Do not stage it: record the real app.
 -->
 <p align="center">
-  <img src="docs/parler.png" alt="The chat in the notch: asked for a short welcome note, Yumi writes it and saves bienvenue.txt in Downloads" width="640">
+  <img src="docs/images/parler.png" alt="The chat in the notch: asked for a short welcome note, Yumi writes it and saves bienvenue.txt in Downloads" width="640">
 </p>
 
 ---
@@ -86,7 +86,7 @@ When Claude Code asks for a permission, the island opens and you answer **Allow*
 All of this comes from Claude Code's hooks and, for Claude's last message, from the session transcript on your Mac. None of it is sent anywhere. Keys and tokens that appear in commands are masked.
 
 <p align="center">
-  <img src="docs/demo.gif" alt="A Claude Code session asks to run npm test; the user approves it from the notch" width="380">
+  <img src="docs/images/demo.gif" alt="A Claude Code session asks to run npm test; the user approves it from the notch" width="380">
 </p>
 
 ## Install
@@ -272,18 +272,18 @@ Continuous integration builds and tests every push. Pushing a tag `v<version>` b
 ```
 Yumi/                  the app (Sources/App, Tests, Resources, project.yml)
 release/               the install guides shipped in the zip
-design/yumi/           character sheet, voice (French and English), mockups, video plan
+design/                character reference, voice (French and English), video plan
 motion/                the presentation films, made with Remotion
 site/                  the website
-docs/                  images, post-alpha status, backlog
+docs/                  architecture, journal of decisions, backlog, images
 ```
 
-- [YUMI.md](YUMI.md): decisions and work plan (in French).
-- [docs/POST_ALPHA_STATUS.md](docs/POST_ALPHA_STATUS.md): an honest audit of where Yumi stands.
+- [docs/architecture.md](docs/architecture.md): the map of the code, folder by folder.
+- [docs/journal.md](docs/journal.md): decisions and work plan (in French).
 - [CONTRIBUTING.md](CONTRIBUTING.md): how to build, test and propose a change.
 
 ## Origin and license
 
-Yumi started from [Coucou](https://github.com/Louis-CFM/coucou)'s open-source notch app (MIT, by Louis Raillé) and grew into its own agent, permission system and character. About 6 % of today's Swift code is unchanged from it; [ATTRIBUTION.md](ATTRIBUTION.md) lists what comes from Coucou and what does not. Yumi is an independent project, not affiliated with or endorsed by the author of Coucou.
+Yumi is an independent project. Its first lines of code came from an MIT-licensed notch app, credited in [ATTRIBUTION.md](ATTRIBUTION.md).
 
 The code is under the [MIT License](LICENSE). The Yumi name, the character, the icons, the sounds and the films in `motion/` are not: see [LICENSE-ASSETS.md](LICENSE-ASSETS.md) and [motion/LICENSE.md](motion/LICENSE.md).

@@ -269,7 +269,7 @@ enum LiveChat {
 // MARK: - Asking the first name
 
 /// Yumi asks the person's first name once, after the launch, and does not insist
-/// (design/yumi/voix.md): passed over, he asks again some days later.
+/// (design/voix.md): passed over, he asks again some days later.
 enum FirstName {
     /// How long he waits before asking again.
     static let patience: TimeInterval = 3 * 24 * 3600
@@ -290,7 +290,7 @@ enum FirstName {
 
 // MARK: - Yumi's voice
 
-/// How Yumi writes numbers and durations (design/yumi/voix.md): small numbers in letters
+/// How Yumi writes numbers and durations (design/voix.md): small numbers in letters
 /// inside a sentence, figures only for values read at a glance.
 enum Voice {
     /// "douze" up to ninety-nine, figures beyond.

@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Initiative contract
-// Yumi speaks first, rarely and to the point (see design/yumi/voix.md). The core decides
+// Yumi speaks first, rarely and to the point (see design/voix.md). The core decides
 // when and what: it sets `AppState.remark`. The island shows it next to Yumi, lets the
 // person answer or wave it away, and reports back through the notifications below.
 // Both sides rely on this file, so neither edits it during the parallel work.

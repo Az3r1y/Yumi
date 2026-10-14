@@ -2,7 +2,7 @@
 # Renders the app icon and the menu bar icon from the drawing code of the app itself:
 # the block between the "YumiSkin" markers of BotEngine.swift is compiled with icones.swift.
 #
-#   design/yumi/outils/icones.sh
+#   design/outils/icones.sh
 #
 # Writes Yumi/Assets.xcassets/AppIcon.appiconset and MenuBarIcon.imageset.
 set -e
@@ -17,5 +17,5 @@ trap 'rm -rf "$tmp"' EXIT
     sed -n '/^\/\/ >>> YumiSkin/,/^\/\/ <<< YumiSkin/p' Yumi/Sources/App/BotEngine.swift
 } > "$tmp/YumiSkin.swift"
 
-swiftc -O "$tmp/YumiSkin.swift" design/yumi/outils/icones.swift -o "$tmp/icones"
+swiftc -O "$tmp/YumiSkin.swift" design/outils/icones.swift -o "$tmp/icones"
 "$tmp/icones" Yumi/Assets.xcassets

@@ -1,6 +1,6 @@
 import CoreGraphics
 
-// `POSE_FX` of design/yumi/maquette/reference.html: each pose is a short list of beats that
+// `POSE_FX` of design/maquette/reference.html: each pose is a short list of beats that
 // change the targets and the stiffness of the springs. Times are in milliseconds.
 
 extension YumiBlob {

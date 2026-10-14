@@ -22,7 +22,7 @@ enum IslandView: String, CaseIterable {
     case quickTask
 }
 
-// MARK: - What the island shows (design/yumi/maquette/reference.html)
+// MARK: - What the island shows (design/maquette/reference.html)
 
 /// The eight views of the open island. Several legacy `IslandView` values, still set by
 /// the hook server and the chat service, land on the same screen.
@@ -206,7 +206,7 @@ enum AgentSource: Equatable {
     case claudeCode
 }
 
-// MARK: - Constants (sizes of design/yumi/maquette/reference.html)
+// MARK: - Constants (sizes of design/maquette/reference.html)
 
 enum IslandConst {
     static let notchWidth: CGFloat  = 184

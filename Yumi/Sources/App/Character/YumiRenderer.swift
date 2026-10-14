@@ -108,7 +108,7 @@ struct YumiLight {
     }
 }
 
-/// Draws Yumi as design/yumi/maquette/reference.html does, element for element, in the
+/// Draws Yumi as design/maquette/reference.html does, element for element, in the
 /// 100 × 84 box of the mock-up (the body spans x 8…92 and y 8…76 at rest). The caller
 /// scales and places that box; nothing here knows about points or the island.
 enum YumiRenderer {

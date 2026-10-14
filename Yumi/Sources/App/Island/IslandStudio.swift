@@ -2,7 +2,7 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// The filming mode (design/yumi/video.md): launched with `YUMI_STUDIO=1`, the island plays
+/// The filming mode (design/video.md): launched with `YUMI_STUDIO=1`, the island plays
 /// each shot of the video on a key, with careful example data and nothing personal, as many
 /// times as needed. No sound, no automatic folding, and the pointer is ignored, so that
 /// nothing moves but what the shot asks for. `YUMI_STUDIO_SCALE=1.5` or `2` enlarges the
@@ -395,7 +395,7 @@ enum IslandStudio {
         controller?.studioRest()
     }
 
-    // MARK: - The shots of design/yumi/video.md
+    // MARK: - The shots of design/video.md
 
     static func play(_ shot: Int) {
         guard let controller else { return }

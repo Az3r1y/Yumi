@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Module contract
 // A module is one thing Yumi watches: Claude Code, the calendar, a timer, the weather.
 // The core fills `AppState.modules` with snapshots; the island draws them. Both sides
-// rely on this file, so neither edits it during the parallel work (see YUMI.md).
+// rely on this file, so neither edits it during the parallel work (see docs/journal.md).
 
 /// What the island needs to draw one module, and nothing else.
 struct ModuleSnapshot: Identifiable, Equatable, Sendable {

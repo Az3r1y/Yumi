@@ -154,7 +154,7 @@ targets:
     platform: macOS
     sources:
       - path: Tests
-      - path: Sources/App/IslandStateMachine.swift
+      - path: Sources/App/Island/IslandStateMachine.swift
         group: Tests/UnderTest
       - path: Sources/App/Core
       - path: Sources/App/Modules
@@ -181,7 +181,7 @@ targets:
         group: Tests/UnderTest
       - path: Sources/App/Contracts/EventAnimations.swift
         group: Tests/UnderTest
-      - path: Sources/App/AppIdentity.swift
+      - path: Sources/App/App/AppIdentity.swift
         group: Tests/UnderTest
       # The tests read the translations too, in French and in English
       - path: Sources/App/Localization/Localizable.xcstrings

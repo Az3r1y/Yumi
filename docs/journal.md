@@ -1,3 +1,5 @@
+> Journal historique des décisions, en français. Pour la structure actuelle du code, voir [architecture.md](architecture.md). Les mentions de `ARCHITECTURE.md` renvoient à l'ancienne analyse du code d'origine, retirée du dépôt.
+
 # Yumi : décisions et répartition du travail
 
 Contrat partagé entre les trois sessions de travail. Lire aussi `ARCHITECTURE.md`. En cas de désaccord entre les deux, ce fichier fait foi.

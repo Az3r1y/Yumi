@@ -4,14 +4,14 @@ import SwiftUI
 
 // The block below is the first Yumi drawing (CoreGraphics). The greeting and the file-drop
 // canvases still use it, and so does the icon generator. The character of the island itself
-// is drawn by Character/YumiRenderer.swift, ported from design/yumi/maquette/reference.html.
+// is drawn by Character/YumiRenderer.swift, ported from design/maquette/reference.html.
 
 // MARK: - Yumi skin
 
 // >>> YumiSkin
 // Yumi's first look (concept 4), used by GreetingCanvasView and UploadCanvasView.
 // CoreGraphics only, y pointing down, origin at the body centre.
-// design/yumi/outils/icones.sh compiles this block on its own to render the icons,
+// design/outils/icones.sh compiles this block on its own to render the icons,
 // so keep it free of SwiftUI, AppState and anything outside the markers.
 
 struct YumiRGB: Equatable, Sendable {
@@ -455,7 +455,7 @@ extension YumiCadence {
 // MARK: - Bot engine
 
 /// The character as the rest of the app drives it. The soft body, the faces, the poses and the
-/// habits are ports of design/yumi/maquette/reference.html (see Character/). This class decides
+/// habits are ports of design/maquette/reference.html (see Character/). This class decides
 /// which of them to show, from the island state and from the commands of
 /// Contracts/CharacterCommands.swift, and eases the face the way the CSS of the mock-up does.
 ///

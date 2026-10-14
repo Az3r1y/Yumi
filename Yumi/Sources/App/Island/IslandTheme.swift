@@ -1,6 +1,6 @@
 import SwiftUI
 
-// Colours, type and motion of design/yumi/maquette/reference.html (`:root`).
+// Colours, type and motion of design/maquette/reference.html (`:root`).
 // The island is one fixed object: same values in the light and dark themes.
 
 enum IslandTheme {

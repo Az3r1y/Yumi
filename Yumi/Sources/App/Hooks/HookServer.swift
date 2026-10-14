@@ -491,7 +491,7 @@ final class HookServer: @unchecked Sendable {
 
     private var _pendingHooksData: Data?
 
-    /// Number of Coucou or NotchBuddy hooks the last preview removes. Shown before the user confirms.
+    /// Number of legacy hooks the last preview removes. Shown before the user confirms.
     private(set) var pendingLegacyHookCount = 0
 
     /// Returns preview JSON without writing — call writeClaudeHooks() to confirm.
@@ -522,7 +522,7 @@ final class HookServer: @unchecked Sendable {
     }
 
     /// Merges this app's hooks into the settings.json at `settingsURL`, replacing any it already has
-    /// and removing the legacy Coucou and NotchBuddy hooks from every event. A file that cannot be
+    /// and removing the legacy hooks of an earlier notch app from every event. A file that cannot be
     /// read as a JSON object is refused, never replaced.
     private func buildHooksData(settingsURL: URL) throws -> Data {
         let existing: Data?

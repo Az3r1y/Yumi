@@ -174,7 +174,7 @@ private struct YumiProbeView: NSViewRepresentable {
 // MARK: - Character demo (Debug builds only)
 
 #if DEBUG
-/// Two ways to check the character by eye against design/yumi/maquette/reference.html:
+/// Two ways to check the character by eye against design/maquette/reference.html:
 ///
 /// - `YUMI_DEMO=gallery` opens a window laid out like the character sheet of the mock-up
 ///   (habits, poses, expressions, rim colours).

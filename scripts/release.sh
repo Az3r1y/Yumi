@@ -46,7 +46,7 @@ ZIP="$BUILD_DIR/Yumi-$VERSION.zip"
 TAG="v$VERSION"
 
 # ── 1. Preflight ──────────────────────────────────────────────────────────────
-[ -n "$TEAM_ID" ] || die "YUMI_TEAM_ID is not set. The signing team has to be provided before the first release (see YUMI.md)."
+[ -n "$TEAM_ID" ] || die "YUMI_TEAM_ID is not set. The signing team has to be provided before the first release (see docs/journal.md)."
 [[ "$TEAM_ID" =~ ^[A-Z0-9]{10}$ ]] || die "YUMI_TEAM_ID must be the 10-character team ID, got '$TEAM_ID'"
 
 for tool in xcodegen xcodebuild xcrun codesign ditto; do

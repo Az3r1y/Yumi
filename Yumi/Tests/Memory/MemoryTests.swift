@@ -106,7 +106,7 @@ import Foundation
     }
 }
 
-/// What must never reach the file (design/yumi/voix.md).
+/// What must never reach the file (design/voix.md).
 @Suite struct MemoryGuardTests {
     @Test func secretsAreRefused() {
         let secrets = [

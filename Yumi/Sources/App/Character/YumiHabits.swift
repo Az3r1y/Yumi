@@ -1,6 +1,6 @@
 import CoreGraphics
 
-// `SCENES` of design/yumi/maquette/reference.html: human habits on a slime. Each one has a
+// `SCENES` of design/maquette/reference.html: human habits on a slime. Each one has a
 // face, a rim colour, a prop (drawn by YumiRenderer) and a small routine that runs every frame.
 
 extension YumiHabit {

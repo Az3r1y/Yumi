@@ -1,7 +1,7 @@
 import SwiftUI
 
 // The open island shows one activity at a time, each with its own layout
-// (`STATES[...].view()` in design/yumi/maquette/reference.html, version 13): a few lines
+// (`STATES[...].view()` in design/maquette/reference.html, version 13): a few lines
 // on the left, big round buttons on the right. No cards, no caption under Yumi.
 
 // MARK: - Building blocks

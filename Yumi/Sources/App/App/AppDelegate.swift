@@ -14,7 +14,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Warm up Keychain cache on main thread BEFORE any module or view touches it.
         // While filming (YUMI_STUDIO) the store stays empty and never touches the Keychain.
         _ = KeychainStore.shared
-        // The keys of the integrations inherited from Coucou go, once (they are no longer in Yumi).
+        // The keys of the old integrations go, once (they are no longer in Yumi).
         KeychainStore.shared.eraseRetiredKeys()
         NSApp.setActivationPolicy(.accessory)
         setupMenuBarItem()

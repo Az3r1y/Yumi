@@ -463,7 +463,7 @@ final class IslandModel: ObservableObject {
 
 enum IslandPrefs {
     /// What he holds while an agent works (YumiWorkHabit). "La cigarette doit pouvoir être
-    /// désactivée" (YUMI.md): it is one choice among others.
+    /// désactivée" (docs/journal.md): it is one choice among others.
     static let workHabitKey = YumiWorkHabit.defaultsKey
     /// When Yumi last asked the first name.
     static let nameAskedKey = "firstNameAskedAt"

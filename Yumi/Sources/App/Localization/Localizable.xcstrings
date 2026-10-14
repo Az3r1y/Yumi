@@ -10623,22 +10623,22 @@
         }
       }
     },
-    "Ça retire aussi %lld anciens hooks de Coucou.": {
+    "Ça retire aussi %lld anciens hooks d'une autre app.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "It also removes %lld old Coucou hooks."
+            "value": "It also removes %lld old hooks from another app."
           }
         }
       }
     },
-    "Ça retire aussi un ancien hook de Coucou.": {
+    "Ça retire aussi un ancien hook d'une autre app.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "It also removes an old Coucou hook."
+            "value": "It also removes an old hook from another app."
           }
         }
       }

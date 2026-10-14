@@ -1,6 +1,6 @@
 import CoreGraphics
 
-/// The soft body: a port of `Blob` in design/yumi/maquette/reference.html, with the same
+/// The soft body: a port of `Blob` in design/maquette/reference.html, with the same
 /// constants. Height and lean are springs, and the outline is rebuilt from them every frame,
 /// so Yumi wobbles instead of being scaled. All lengths are in the 100 × 84 box of the mock-up.
 final class YumiBlob {
