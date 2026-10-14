@@ -308,6 +308,7 @@ struct ModuleActivity: View {
         case "music", "musique":  music
         case "focus":             focus
         case "github":            github
+        case ScreenTimeSummary.moduleID: ScreenTimeActivity(module: module)
         case "claude-code" where !module.rows.isEmpty: sessions
         default:                  common
         }

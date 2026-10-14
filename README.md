@@ -159,6 +159,7 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 | **Focus** | A work timer and its breaks, the length you choose | Nothing |
 | **Music** | The track or video playing, pause, next, previous: Music, Spotify, Deezer, YouTube Music, YouTube, SoundCloud, Twitch or Vimeo in any browser (the tab in front of its window), and any other page a browser plays, such as a web radio, shown by its window title (not in Safari) | Automation for Music and Spotify; Accessibility for the others |
 | **Weather** | The sky where you are | Location, or a city typed by hand |
+| **Screen time** | Your active time on the Mac today against a daily threshold you choose, hour by hour, the last seven days, the average, median and 75th percentile; Yumi says it once when you reach the threshold, then at every extra hour. While it is on, the two-hour break reminder also restarts after five minutes away from an open Mac | Nothing |
 
 ## Getting around
 
@@ -236,6 +237,7 @@ This is an alpha. Here is what we know is missing or rough today.
 - **Notion** lists twelve tasks at most in the island. Ticking needs a "done" property (checkbox or status) chosen in the settings, and is only offered in the direct build.
 - **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
 - **Mail** reads the inbox of the Mail app only while Mail is open, shows the latest 10 mails of each account (Mail can take up to a minute to answer on a very large inbox), and never changes your mailbox. If you refuse the Automation access the module stays empty (System Settings, Privacy, Automation to change it). Not in the App Store build. The Gmail option needs a Google app password (two-step verification on).
+- **Screen time** counts a minute when the session is unlocked and you touched the keyboard or mouse in the last five minutes, or a call, a film or a presentation keeps the display awake (two hours without input at most). It counts only while Yumi runs, never while the Mac sleeps, and keeps 90 days of totals and 14 days by hour in Yumi's folder. A threshold remark Yumi keeps to himself (Focus, a shared screen, the remarks of the day used up) is not said later.
 - **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
 - **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
 - **The App Store build** is not shipped and cannot use Claude Code or the hooks.

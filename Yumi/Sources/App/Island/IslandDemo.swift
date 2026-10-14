@@ -372,6 +372,13 @@ enum IslandDemo {
             model.category = .day
             model.selectedModuleID = "gmail"
             controller.expand(to: .module)
+        case "screen-time":
+            // Screen time with made-up days (nothing is read from the Mac)
+            let snapshot = ScreenTimeSummary.snapshot(.example(now: .now), threshold: ScreenTimeSummary.defaultThreshold * 60, now: .now)
+            state.modules = state.modules.filter { $0.id != IslandModel.agentModuleID } + [snapshot]
+            model.category = .day
+            model.selectedModuleID = snapshot.id
+            controller.expand(to: .module)
         case "settings-approval":
             // An approval waits: the island stays, the window opens below it
             state.stateOverride = .approval
