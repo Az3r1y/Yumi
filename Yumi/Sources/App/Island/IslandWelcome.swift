@@ -44,7 +44,12 @@ struct WelcomeActivity: View {
             .riseIn(3)
             if let engine {
                 VStack(alignment: .leading, spacing: 0) {
-                    ActSub(text: engine.text)
+                    // Up to three lines: this sentence is the whole answer to "does it work here?"
+                    Text(engine.text)
+                        .font(IslandTheme.text(12.5, .regular))
+                        .foregroundStyle(IslandTheme.muted)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
                     if engine.opensAppleSettings {
                         TextButton(label: loc("Ouvrir les Réglages Système")) { NSWorkspace.shared.open(AppleModelAvailability.settingsURL) }
                     }
