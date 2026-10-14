@@ -286,10 +286,11 @@ final class YumiCore {
         let focus = FocusModule()
         let notes = NotesModule()
         let weather = WeatherModule()
+        let music = MusicModule()
         let notion = NotionModule(api: Self.notionAPI,
                                   openSettings: { NotificationCenter.default.post(name: .openFullSettings, object: nil) })
         agent = Self.makeAgent(permissions: permissions,
-                               modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather, notion: notion))
+                               modules: ModuleBridge(focus: focus, agenda: agenda, notes: notes, weather: weather, notion: notion, music: music))
         #if !APPSTORE
         // A task ticked in the island goes through the runtime: the approval, the write, the check.
         let agent = agent
@@ -342,7 +343,7 @@ final class YumiCore {
                 agenda,
                 notes,
                 focus,
-                MusicModule(),
+                music,
                 weather,
                 notion,
                 GitHubModule(
@@ -448,9 +449,10 @@ final class YumiCore {
 
     private static func makeAgent(permissions: LocalPermissionManager, modules: ModuleBridge) -> RuntimeAgent {
         // The engines of the settings, in their order (EngineFactory): read again at each request.
-        let provider = EngineFactory.planner
+        // Without any, the simple mode plans the common requests itself.
+        let planner = EngineFactory.agentPlanner
         #if APPSTORE
-        return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), permissions: permissions)
+        return RuntimeAgent(planner: planner, permissions: permissions)
         #else
         var tools = ToolRegistry.standard
         // The files Yumi created: the only ones it may add to later.
@@ -463,7 +465,8 @@ final class YumiCore {
         try? tools.register(AddReminderTool(store: EventKitReminderStore()))
         try? tools.register(StartFocusTool(focus: modules))
         try? tools.register(GetTodayTool(source: modules))
-        return RuntimeAgent(planner: LLMAgentPlanner(provider: provider), tools: tools, permissions: permissions,
+        try? tools.register(ControlMusicTool(music: modules))
+        return RuntimeAgent(planner: planner, tools: tools, permissions: permissions,
                             policy: AgentPolicy(maximumRisk: .write))
         #endif
     }

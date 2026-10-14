@@ -228,10 +228,14 @@ struct IslandTalkView: View {
         let id: String
         let mine: Bool
         let text: String
+        var engine: String? = nil
+        var suggestions: [ChatSuggestion] = []
     }
 
     private var lines: [Line] {
-        var out = state.chatHistory.map { Line(id: $0.id.uuidString, mine: $0.role == .user, text: $0.content) }
+        var out = state.chatHistory.map {
+            Line(id: $0.id.uuidString, mine: $0.role == .user, text: $0.content, engine: $0.engine, suggestions: $0.suggestions)
+        }
         if state.view == .note, let note = state.noteMessage {
             out.append(Line(id: "note", mine: false, text: note))
         }
@@ -271,7 +275,20 @@ struct IslandTalkView: View {
                     ScrollView(.vertical, showsIndicators: false) {
                         VStack(alignment: .leading, spacing: 8) {
                             ForEach(lines) { line in
-                                ChatLine(text: line.text, mine: line.mine).id(line.id)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    ChatLine(text: line.text, mine: line.mine)
+                                    // Only under the last answer: what Yumi offers now, not what he offered before.
+                                    if !line.suggestions.isEmpty, line.id == lines.last?.id {
+                                        ChatSuggestions(suggestions: line.suggestions, pick: pick)
+                                    }
+                                    if let engine = line.engine, !line.mine {
+                                        Text(engine)
+                                            .font(IslandTheme.text(9.5, .medium))
+                                            .foregroundStyle(IslandTheme.faint)
+                                            .accessibilityLabel(loc("Réponse de \(engine)"))
+                                    }
+                                }
+                                .id(line.id)
                             }
                             if let live {
                                 ChatLiveView(live: live, running: state.chatLive != nil)
@@ -350,5 +367,41 @@ struct IslandTalkView: View {
         text = ""
         IslandActions.send(query)
         focused = true
+    }
+
+    /// A button of the simple mode: sends its sentence, or starts it in the field.
+    private func pick(_ suggestion: ChatSuggestion) {
+        if suggestion.sends {
+            IslandActions.send(suggestion.text)
+        } else {
+            text = suggestion.text
+            focused = true
+        }
+    }
+}
+
+/// The buttons the simple mode offers under its answer (Rappel, Tâche, Agenda, Minuteur, Musique).
+struct ChatSuggestions: View {
+    let suggestions: [ChatSuggestion]
+    let pick: (ChatSuggestion) -> Void
+    @Environment(\.islandAccent) private var accent
+
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 5) {
+                ForEach(suggestions) { suggestion in
+                    Button { pick(suggestion) } label: {
+                        Text(suggestion.label)
+                            .font(IslandTheme.text(11, .medium))
+                            .foregroundStyle(Color.white)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 3.5)
+                            .overlay(Capsule().strokeBorder(accent.opacity(0.8), lineWidth: 1))
+                            .contentShape(Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
     }
 }

@@ -210,14 +210,32 @@ final class ClaudeService {
                     await chatWithAPI(query: query, context: context, state: state)
                     return
                 }
-            case .openai, .gemini, .ollama:
+            case .simple:
+                await answerSimply(state: state)
+                return
+            case .openai, .gemini, .ollama, .apple:
                 if let provider = EngineFactory.provider(engine, settings),
                    await chatWithProvider(provider, engine: engine, query: query, context: context, state: state) {
                     return
                 }
             }
         }
+        if settings.choice == .apple, let message = AppleModelAvailability.current.message {
+            await showError(message, state: state)
+            return
+        }
         await showError(settings.choice == nil ? ChatPhrases.noEngine : ChatPhrases.chosenEngineMissing(settings.choice!.label), state: state)
+    }
+
+    // MARK: - Chat without a model
+
+    /// The simple mode did not understand a message, and no model can talk: Yumi says so kindly
+    /// and offers what he can do, as buttons.
+    private func answerSimply(state: AppState) async {
+        state.chatHistory.append(ChatMessage(role: .assistant, content: SimpleReply.notUnderstood + "\n" + SimpleReply.plugLater,
+                                             engine: Engine.simple.shortLabel, suggestions: SimpleReply.suggestions))
+        state.stateOverride = nil
+        state.view = .prompt
     }
 
     // MARK: - Chat through another engine
@@ -243,7 +261,7 @@ final class ClaudeService {
                 return true
             }
             providerConversation += [message, LLMMessage(role: .assistant, content: visible)]
-            state.chatHistory.append(ChatMessage(role: .assistant, content: visible))
+            state.chatHistory.append(ChatMessage(role: .assistant, content: visible, engine: engine.shortLabel))
             state.stateOverride = nil
             state.view = .prompt
             NotificationCenter.default.post(name: .triggerEmote, object: BotEmote.happy)
@@ -301,7 +319,7 @@ final class ClaudeService {
         }
         let result = await agent.execute(plan, for: request)
         let text = AgentLook.remark(for: result)?.text ?? loc("C'est annulé, je n'ai rien fait.")
-        state.chatHistory.append(ChatMessage(role: .assistant, content: text))
+        state.chatHistory.append(ChatMessage(role: .assistant, content: text, engine: Engine.named(plan.plannedBy)?.shortLabel))
         remember(query, answeredWith: text)
         state.view = .prompt
         return true
@@ -596,7 +614,7 @@ final class ClaudeService {
         }
         answeredTurns += 1
         let last = transcript.finish(result)
-        state.chatHistory.append(contentsOf: last.map { ChatMessage(role: .assistant, content: $0) })
+        state.chatHistory.append(contentsOf: last.map { ChatMessage(role: .assistant, content: $0, engine: Engine.claudeCode.shortLabel) })
         guard transcript.hasText || !last.isEmpty else {
             await showError(ChatPhrases.noAnswer, state: state)
             return .failed
@@ -711,7 +729,7 @@ final class ClaudeService {
         }
 
         // Add to display history
-        state.chatHistory.append(ChatMessage(role: .assistant, content: visible))
+        state.chatHistory.append(ChatMessage(role: .assistant, content: visible, engine: Engine.anthropic.shortLabel))
 
         state.stateOverride = nil
         state.view = .prompt

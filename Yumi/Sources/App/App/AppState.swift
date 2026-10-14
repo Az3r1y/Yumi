@@ -265,4 +265,8 @@ struct ChatMessage: Identifiable {
     let id = UUID()
     let role: ChatRole
     let content: String
+    /// Who answered (Apple, Simple, Claude…), shown discreetly under the answer.
+    var engine: String? = nil
+    /// Buttons under the answer: the simple mode offers them when it did not understand.
+    var suggestions: [ChatSuggestion] = []
 }
