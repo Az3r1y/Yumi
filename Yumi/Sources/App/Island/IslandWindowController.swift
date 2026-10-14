@@ -200,9 +200,10 @@ final class IslandWindowController: NSWindowController {
             .store(in: &subscriptions)
 
         // What the loop used to copy at every frame
-        state.$autoCloseInterval
+        state.$autoCloseInterval.map { _ in () }
+            .merge(with: state.$absenceInterval.map { _ in () })
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in self?.syncFoldSetting() }
+            .sink { [weak self] in self?.syncFoldSetting() }
             .store(in: &subscriptions)
         state.$pendingApproval
             .receive(on: DispatchQueue.main)
@@ -226,10 +227,12 @@ final class IslandWindowController: NSWindowController {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.7, execute: item)
     }
 
-    /// The delay before the island folds is the user's; 0 is "never".
+    /// The delays before the island folds (0 is "never") and before the compact island hides are the user's.
     func syncFoldSetting() {
         fsm.foldsByItself = !holdsOpen && state.autoCloseInterval > 0
         if state.autoCloseInterval > 0 { fsm.homeToPetitDelay = max(3, state.autoCloseInterval) }
+        // A measure or the filming mode keeps its own delay
+        if !holdsOpen && !IslandStudio.isOn { fsm.petitToHiddenDelay = max(60, state.absenceInterval) }
     }
 
     private func pollFrame() {
