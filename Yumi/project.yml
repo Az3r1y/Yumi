@@ -177,6 +177,8 @@ targets:
         group: Tests/UnderTest
       - path: Sources/App/Character/YumiWorkHabit.swift
         group: Tests/UnderTest
+      - path: Sources/App/Character/YumiFaceTurn.swift
+        group: Tests/UnderTest
       - path: Sources/App/Contracts/AgentLook.swift
         group: Tests/UnderTest
       - path: Sources/App/Contracts/EventAnimations.swift

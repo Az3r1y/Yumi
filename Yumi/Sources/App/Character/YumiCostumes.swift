@@ -262,20 +262,15 @@ enum YumiCostumes {
         let t = m.time
         var c = context
         // The middle of the face moves as the middle of the eyes does
-        c.translateBy(x: sin(yaw) * cos(pitch) * 40.1 * 0.94, y: sin(pitch) * 30)
-        c.translateBy(x: 50, y: 45)
-        c.scaleBy(x: max(0.6, cos(yaw)), y: max(0.6, cos(pitch)))
-        c.translateBy(x: -50, y: -45)
+        c.concatenate(YumiFaceTurn.face(yaw: yaw, pitch: pitch))
 
         /// The context of one eye, exactly where `drawFace` puts it.
         func eye(_ sd: CGFloat) -> GraphicsContext {
-            let ya = sd * 0.33 + yaw
             var e = context
             e.translateBy(x: 50, y: 45)
             e.scaleBy(x: eyesScale, y: eyesScale)
             e.translateBy(x: -50, y: -45)
-            e.translateBy(x: 50 + sin(ya) * cos(pitch) * 40.1, y: 45 + sin(pitch) * 30)
-            e.scaleBy(x: max(0.35, cos(ya)), y: max(0.6, cos(pitch)))
+            e.concatenate(YumiFaceTurn.eye(sd, yaw: yaw, pitch: pitch))
             return e
         }
 
