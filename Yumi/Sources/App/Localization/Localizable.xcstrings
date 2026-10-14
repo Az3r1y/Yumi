@@ -11908,6 +11908,146 @@
           }
         }
       }
+    },
+    "Thé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tea"
+          }
+        }
+      }
+    },
+    "Eau": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Water"
+          }
+        }
+      }
+    },
+    "Jus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Juice"
+          }
+        }
+      }
+    },
+    "Livre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Book"
+          }
+        }
+      }
+    },
+    "Manette": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gamepad"
+          }
+        }
+      }
+    },
+    "Tricot": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knitting"
+          }
+        }
+      }
+    },
+    "Pause thé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tea break"
+          }
+        }
+      }
+    },
+    "Je m'hydrate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Staying hydrated"
+          }
+        }
+      }
+    },
+    "Petit jus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little juice"
+          }
+        }
+      }
+    },
+    "Un chapitre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more chapter"
+          }
+        }
+      }
+    },
+    "Encore une partie": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more game"
+          }
+        }
+      }
+    },
+    "Maille à l'endroit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knit one, purl one"
+          }
+        }
+      }
+    },
+    "Concentré": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focused"
+          }
+        }
+      }
+    },
+    "Aperçu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        }
+      }
     }
   },
   "version": "1.0"

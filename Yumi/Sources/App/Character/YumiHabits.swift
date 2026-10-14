@@ -16,6 +16,13 @@ extension YumiHabit {
         case .whistle:    return .elsewhere
         case .sleep:      return .asleep
         case .matcha:     return .serene
+        case .tea:        return .serene
+        case .water:      return .neutral
+        case .juice:      return .happy
+        case .book:       return .focused
+        case .gamepad:    return .focused
+        case .knitting:   return .serene
+        case .focus:      return .focused
         }
     }
 
@@ -30,6 +37,21 @@ extension YumiHabit {
         case .whistle:    return .calm
         case .sleep:      return .calm
         case .matcha:     return .done
+        case .tea:        return .done
+        case .water:      return .calm
+        case .juice:      return .joy
+        case .book:       return .think
+        case .gamepad:    return .joy
+        case .knitting:   return .calm
+        case .focus:      return .work
+        }
+    }
+
+    /// A habit that keeps him moving for as long as it lasts (the cadence stays at thirty a second).
+    var lasts: Bool {
+        switch self {
+        case .exhausted, .sunglasses, .sleep: return false
+        default: return true
         }
     }
 
@@ -122,6 +144,67 @@ extension YumiHabit {
 
         case .cloud:
             b.th = 0.9
+
+        case .tea:
+            // A mug with its tea bag: a slow steam, a sip every six seconds, then a quiet sigh
+            b.sa += dt
+            let c = b.st.truncatingRemainder(dividingBy: 6.5)
+            if b.sa > 0.5 && !b.sip {
+                b.sa = 0
+                let p = b.world(75 + R() * 4, 60)
+                b.puff(p.x, p.y, R() * 3 - 1.5, -11, 0.8, 1.5)
+            }
+            if c > 3.4 && c < 4.5 {
+                b.sip = true; b.leanTarget = -4; b.th = 1.02; b.ex = false; b.tempFace = nil
+            } else {
+                b.sip = false; b.leanTarget = 0; b.th = 1
+                if c >= 4.5 && c < 5.4 {
+                    if !b.ex { b.ex = true; b.vh -= 1.2; b.tempFace = .shut }
+                } else if b.ex {
+                    b.ex = false; b.tempFace = nil
+                }
+            }
+
+        case .water, .juice:
+            // A bottle of water, or a glass of juice with its straw: a sip now and then, a little
+            // lift after it
+            let period: CGFloat = self == .water ? 7 : 5.5
+            let c = b.st.truncatingRemainder(dividingBy: period)
+            if c > period - 2.4 && c < period - 1.3 {
+                b.sip = true; b.leanTarget = -4; b.th = 1.02; b.ex = false
+            } else {
+                b.sip = false; b.leanTarget = 0; b.th = 1
+                if c >= period - 1.3 && !b.ex { b.ex = true; b.vh -= 1.4 }
+                if c < 1 { b.ex = false }
+            }
+
+        case .book:
+            // He reads, leaning a little over the book; a page turns every five seconds and his
+            // head follows it
+            let c = b.st.truncatingRemainder(dividingBy: 5)
+            b.th = 0.98
+            b.leanTarget = c > 4.2 ? 3 : -2 + 0.6 * sin(b.st * 0.8)
+            if c > 4.2 && !b.ex { b.ex = true; b.vh -= 0.8 }
+            if c < 1 { b.ex = false }
+
+        case .gamepad:
+            // He plays: small quick jolts, and a jump when he wins a round
+            b.th = 1 + 0.02 * sin(b.st * 17)
+            b.leanTarget = 3 * sin(b.st * 3.1) + (R() < 0.02 ? R() * 4 - 2 : 0)
+            let c = b.st.truncatingRemainder(dividingBy: 8)
+            if c > 7.3 && !b.ex { b.ex = true; b.vh -= 3; b.tempFace = .happy }
+            if c < 1 && b.ex { b.ex = false; b.tempFace = nil }
+
+        case .knitting:
+            // Calm, steady stitches: he rocks gently with the needles
+            b.th = 1 + 0.015 * sin(b.st * 6)
+            b.leanTarget = 1.5 * sin(b.st * 1.1)
+
+        case .focus:
+            // Empty hands, focused: a slow nod now and then, as if he followed the agent
+            b.th = 0.99
+            let c = b.st.truncatingRemainder(dividingBy: 6)
+            b.leanTarget = c > 5 ? 2.5 * sin((c - 5) * .pi) : 0
 
         case .sunglasses, .sleep:
             b.th = 1

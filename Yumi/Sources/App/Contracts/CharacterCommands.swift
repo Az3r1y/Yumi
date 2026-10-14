@@ -18,6 +18,8 @@ enum YumiPose: String, CaseIterable, Sendable {
 /// Lasting human habits, each with its prop and routine. Only one at a time.
 enum YumiHabit: String, CaseIterable, Sendable {
     case smoke, exhausted, coffee, headphones, sunglasses, cloud, whistle, sleep, matcha
+    // What he may have in hand while an agent works, besides coffee, cigarette and matcha
+    case tea, water, juice, book, gamepad, knitting, focus
 }
 
 /// Face expressions.

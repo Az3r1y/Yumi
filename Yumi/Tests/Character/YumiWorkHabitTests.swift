@@ -34,7 +34,7 @@ import Testing
 
     @Test func anUnknownValueFallsBack() {
         let d = defaults()
-        d.set("tea", forKey: YumiWorkHabit.defaultsKey)
+        d.set("cocoa", forKey: YumiWorkHabit.defaultsKey)
         #expect(YumiWorkHabit.current(in: d) == .coffee)
     }
 
@@ -44,16 +44,44 @@ import Testing
         #expect(YumiWorkHabit.matcha.habit(filming: false) == .matcha)
     }
 
-    @Test func randomDrawsOneOfTheThree() {
-        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.1 }) == .smoke)
-        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.5 }) == .coffee)
-        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.9 }) == .matcha)
-        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.99999 }) == .matcha)
+    @Test func randomDrawsAmongAllTheHabits() {
+        let count = YumiWorkHabit.habits.count
+        var drawn = Set<YumiHabit>()
+        for i in 0..<count {
+            drawn.insert(YumiWorkHabit.random.habit(filming: false, draw: { (Double(i) + 0.5) / Double(count) }))
+        }
+        #expect(drawn == Set(YumiWorkHabit.habits.compactMap(\.held)))
+        #expect(drawn.count == count)
+        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0 }) == .coffee)
+        #expect(YumiWorkHabit.random.habit(filming: false, draw: { 0.99999 }) == .focus)
+    }
+
+    @Test func everyChoiceHasALabelAndAHabit() {
+        for choice in YumiWorkHabit.allCases {
+            #expect(!choice.label.isEmpty)
+            #expect(choice == .random || choice.held != nil)
+        }
+        #expect(Set(YumiWorkHabit.habits + [.random]) == Set(YumiWorkHabit.allCases))
+        #expect(YumiWorkHabit.settingsChoices.last == .random)
+        #expect(!YumiWorkHabit.firstChoices.contains(.random))
+        #expect(Set(YumiWorkHabit.allCases.map(\.label)).count == YumiWorkHabit.allCases.count)
+    }
+
+    @Test func theNewChoicesAreReadBack() {
+        for choice in [YumiWorkHabit.tea, .water, .juice, .book, .gamepad, .knitting, .nothing] {
+            let d = defaults()
+            d.set(choice.rawValue, forKey: YumiWorkHabit.defaultsKey)
+            #expect(YumiWorkHabit.current(in: d) == choice)
+        }
+        #expect(YumiWorkHabit.nothing.habit(filming: false) == .focus)
+        #expect(YumiWorkHabit.book.habit(filming: true) == .book)
     }
 
     @Test func noCigaretteOnFilm() {
         #expect(YumiWorkHabit.smoke.habit(filming: true) == .coffee)
-        #expect(YumiWorkHabit.random.habit(filming: true, draw: { 0.1 }) == .coffee)
+        let smoke = YumiWorkHabit.habits.firstIndex(of: .smoke)!
+        let draw = (Double(smoke) + 0.5) / Double(YumiWorkHabit.habits.count)
+        #expect(YumiWorkHabit.random.habit(filming: true, draw: { draw }) == .coffee)
         #expect(YumiWorkHabit.matcha.habit(filming: true) == .matcha)
     }
 

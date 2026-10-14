@@ -1,8 +1,8 @@
 import SwiftUI
 
 // The first launch: Yumi asks the person's first name, in his voice, with a single field
-// (design/yumi/voix.md), and what he should have in hand while an agent works: coffee,
-// cigarette or matcha. The name goes to the core through `memorySetName`; it can be passed
+// (design/yumi/voix.md), and what he should have in hand while an agent works (coffee,
+// tea, a book, nothing...). The name goes to the core through `memorySetName`; it can be passed
 // over, he asks again later, without insisting. The choice is made before the name is sent.
 
 struct WelcomeActivity: View {
@@ -33,13 +33,11 @@ struct WelcomeActivity: View {
             .riseIn(2)
             HStack(spacing: 8) {
                 ActSub(text: loc("Quand un agent bosse, je prends"))
-                HStack(spacing: 0) {
-                    ForEach(YumiWorkHabit.firstChoices, id: \.self) { choice in
-                        SegmentButton(label: choice.label, on: held == choice.rawValue) { choose(choice) }
-                    }
+                WorkHabitChips(choices: YumiWorkHabit.firstChoices, selected: held) { choose($0) }
+                if let choice = YumiWorkHabit(rawValue: held) {
+                    WorkHabitPreview(choice: choice, size: 18)
+                        .frame(width: 30, height: 22)
                 }
-                .padding(2)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(3)
             TextButton(label: loc("Plus tard")) { IslandActions.skipName() }

@@ -448,6 +448,13 @@ final class IslandModel: ObservableObject {
         case .whistle:    return loc("La la la")
         case .sleep:      return "Chut"
         case .matcha:     return loc("Pause matcha")
+        case .tea:        return loc("Pause thé")
+        case .water:      return loc("Je m'hydrate")
+        case .juice:      return loc("Petit jus")
+        case .book:       return loc("Un chapitre")
+        case .gamepad:    return loc("Encore une partie")
+        case .knitting:   return loc("Maille à l'endroit")
+        case .focus:      return loc("Concentré")
         }
     }
 }
@@ -455,8 +462,8 @@ final class IslandModel: ObservableObject {
 // MARK: - Preferences of the island
 
 enum IslandPrefs {
-    /// Cigarette, coffee or matcha while an agent works (YumiWorkHabit). "La cigarette doit
-    /// pouvoir être désactivée" (YUMI.md): it is one of the three choices.
+    /// What he holds while an agent works (YumiWorkHabit). "La cigarette doit pouvoir être
+    /// désactivée" (YUMI.md): it is one choice among others.
     static let workHabitKey = YumiWorkHabit.defaultsKey
     /// When Yumi last asked the first name.
     static let nameAskedKey = "firstNameAskedAt"

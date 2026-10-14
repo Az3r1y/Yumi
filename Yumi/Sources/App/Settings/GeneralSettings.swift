@@ -194,7 +194,11 @@ struct YumiSettings: View {
 
             Section {
                 Picker("Pendant qu'un agent bosse", selection: $workHabit) {
-                    ForEach(YumiWorkHabit.allCases, id: \.self) { Text($0.label).tag($0.rawValue) }
+                    ForEach(YumiWorkHabit.settingsChoices, id: \.self) { Text($0.label).tag($0.rawValue) }
+                }
+                LabeledContent("Aperçu") {
+                    WorkHabitPreview(choice: YumiWorkHabit(rawValue: workHabit) ?? .coffee, size: 40)
+                        .frame(width: 70, height: 60)
                 }
                 Picker("Je parle de moi-même", selection: $talk) {
                     Text("Jamais").tag(YumiTalk.silent.rawValue)
