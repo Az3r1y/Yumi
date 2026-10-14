@@ -91,7 +91,7 @@ private func around(_ now: Date, talk: YumiTalk = .chatty, name: String? = "Este
         [.firstWake(events: 2, firstAt: at(10)), .firstWake(events: 0, firstAt: nil), .firstWake(events: nil, firstAt: nil),
          .back(agentFinished: true, agentWaiting: false), .back(agentFinished: false, agentWaiting: true), .back(agentFinished: false, agentWaiting: false), .longStretch(hours: 3),
          .agentDone(project: "yumi", minutes: 42), .meetingWhileAgentWaits(title: "Point produit", minutes: 5), .late,
-         .lowBattery(percent: 9), .weekEnd]
+         .lowBattery(percent: 9), .weekEnd, .screenTime(minutes: 480, threshold: 480), .screenTime(minutes: 605, threshold: 480)]
     }
 
     @Test func everySentenceIsInHisVoice() {

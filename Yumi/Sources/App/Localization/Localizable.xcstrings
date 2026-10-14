@@ -12428,6 +12428,196 @@
           }
         }
       }
+    },
+    "%@ au-delà de ton seuil de %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ over your threshold of %2$@."
+          }
+        }
+      }
+    },
+    "%@ d'écran aujourd'hui. C'est ton seuil.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ of screen today. That's your threshold."
+          }
+        }
+      }
+    },
+    "%@ d'écran aujourd'hui. Toujours là ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ of screen today. Still here?"
+          }
+        }
+      }
+    },
+    "%@ devant l'écran aujourd'hui.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ in front of the screen today."
+          }
+        }
+      }
+    },
+    "%@ devant l'écran. Je dis ça pour tes yeux.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ in front of the screen. I'm saying it for your eyes."
+          }
+        }
+      }
+    },
+    "%lld h": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld h"
+          }
+        }
+      }
+    },
+    "3 jours sur 4 sous": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "3 days in 4 under"
+          }
+        }
+      }
+    },
+    "7 jours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "7 days"
+          }
+        }
+      }
+    },
+    "Encore %@ avant ton seuil de %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%1$@ left before your threshold of %2$@."
+          }
+        }
+      }
+    },
+    "Encore une heure de plus : %@ d'écran aujourd'hui.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more hour: %@ of screen today."
+          }
+        }
+      }
+    },
+    "Je compte une minute quand tu es vraiment devant le Mac : session ouverte, et une touche ou la souris dans les cinq dernières minutes, ou une visio, un film, une présentation. Au-delà de deux heures sans rien toucher, plus rien ne compte. Au seuil, puis à chaque heure de plus, je te le dis, une fois. Tout reste sur ton Mac.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I count a minute when you're really at the Mac: session unlocked, and a key or the mouse in the last five minutes, or a call, a film, a presentation. After two hours without touching anything, nothing counts. At the threshold, then at every extra hour, I tell you, once. Everything stays on your Mac."
+          }
+        }
+      }
+    },
+    "Me le dire quand je l'atteins": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell me when I reach it"
+          }
+        }
+      }
+    },
+    "Pas encore d'écran aujourd'hui.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No screen yet today."
+          }
+        }
+      }
+    },
+    "Seuil atteint : %@ d'écran. Tes yeux méritent une pause.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Threshold reached: %@ of screen. Your eyes deserve a break."
+          }
+        }
+      }
+    },
+    "Seuil du jour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Daily threshold"
+          }
+        }
+      }
+    },
+    "Temps d'écran": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Screen time"
+          }
+        }
+      }
+    },
+    "moyenne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "average"
+          }
+        }
+      }
+    },
+    "médiane": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "median"
+          }
+        }
+      }
+    },
+    "Ça fait %@ devant l'écran. On avait dit que c'était assez pour aujourd'hui.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That's %@ in front of the screen. We said that was enough for today."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

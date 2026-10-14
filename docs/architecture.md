@@ -37,7 +37,7 @@ scripts/                  release and translation helpers
 | `Context/` | What is in front of the person (app, window, page), only when they allow it | nothing above it |
 | `Memory/` | What Yumi remembers about the person, readable and erasable | Contracts |
 | `Initiative/` | When Yumi speaks first, and how rarely | Contracts, Memory |
-| `Modules/` | One folder per module (Claude Code, GitHub, Notion, Mail, Agenda, Notes, Focus, Music, Weather). Each produces a `ModuleSnapshot` and is filed under a tab (`ModuleCategory`). | Contracts, Core |
+| `Modules/` | One folder per module (Claude Code, GitHub, Notion, Mail, Agenda, Notes, Focus, Music, Weather, Screen time). Each produces a `ModuleSnapshot` and is filed under a tab (`ModuleCategory`). | Contracts, Core |
 | `Core/` | Typed events, session store, chat plumbing, hook settings, studio mode | Contracts |
 | `Contracts/` | Plain types shared between parts (snapshots, character commands, island look). No logic, no views | nothing |
 | `Settings/` | The settings window | everything it configures |
