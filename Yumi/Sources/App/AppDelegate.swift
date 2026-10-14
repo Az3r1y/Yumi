@@ -355,6 +355,10 @@ final class YumiCore {
                               let password = KeychainStore.shared.get(GmailModule.passwordKey), !password.isEmpty else { return nil }
                         return (address, password)
                     },
+                    source: {
+                        MailSource.current(gmailConnected: KeychainStore.shared.get(GmailModule.passwordKey)?.isEmpty == false)
+                    },
+                    hiddenAccounts: { MailAccounts.hidden() },
                     onNewMail: { [initiative] mail, count in
                         initiative.notice(.mail(from: mail.from, subject: mail.subject, count: count))
                     },

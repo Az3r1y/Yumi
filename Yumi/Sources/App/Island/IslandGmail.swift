@@ -1,9 +1,10 @@
 import AppKit
 import SwiftUI
 
-// The Gmail sheet: the important mails first, the rest under them. A mail chosen, Yumi reads it
-// and suggests an answer the person can change. "Envoyer" sends it from their address; "Annuler"
-// drops it. Nothing leaves without that click.
+// The mail sheet: the important mails first, the rest under them. A mail chosen, Yumi reads it
+// and suggests an answer the person can change. From Apple's Mail, "Ouvrir dans Mail" opens it as
+// a draft the person sends from Mail; from Gmail, "Envoyer" sends it from their address.
+// "Annuler" drops it. Nothing leaves without the person's own click.
 
 struct GmailSheet: View {
     @ObservedObject private var inbox = GmailInbox.shared
@@ -17,6 +18,19 @@ struct GmailSheet: View {
         guard let address = UserDefaults.standard.string(forKey: GmailModule.addressKey), !address.isEmpty,
               let password = KeychainStore.shared.get(GmailModule.passwordKey), !password.isEmpty else { return nil }
         return (address, password)
+    }
+
+    private var source: MailSource { MailSource.current(gmailConnected: credentials != nil) }
+    private var mailApp: Bool { source == .mailApp }
+    private var severalAccounts: Bool { MailAccounts.names(in: inbox.mails).count > 1 }
+
+    /// When the inbox is empty: what the module says (Mail closed, access refused, no account).
+    private var emptyText: String {
+        if let module = AppState.shared.modules.first(where: { $0.id == "gmail" }), !module.subtitle.isEmpty, module.status.isEmpty {
+            return module.title + ". " + module.subtitle
+        }
+        if mailApp { return loc("Rien de neuf dans ta boîte.") }
+        return credentials == nil ? loc("Branche Gmail dans Réglages, Modules.") : loc("Rien de neuf dans ta boîte.")
     }
 
     var body: some View {
@@ -41,7 +55,7 @@ struct GmailSheet: View {
         let others = inbox.mails.filter { !$0.important }
         return VStack(alignment: .leading, spacing: 8) {
             if inbox.mails.isEmpty {
-                ActSub(text: credentials == nil ? loc("Branche Gmail dans Réglages, Modules.") : loc("Rien de neuf dans ta boîte."))
+                ActSub(text: emptyText)
             }
             if !important.isEmpty {
                 section(loc("Importants"), important.prefix(4), color: IslandTheme.amber)
@@ -59,7 +73,7 @@ struct GmailSheet: View {
                 .tracking(0.8)
                 .foregroundStyle(color)
             ForEach(mails) { mail in
-                Button { choose(mail) } label: { MailLine(mail: mail) }
+                Button { choose(mail) } label: { MailLine(mail: mail, showsAccount: severalAccounts) }
                     .buttonStyle(.plain)
             }
         }
@@ -82,8 +96,11 @@ struct GmailSheet: View {
                     Text(loc("De \(mail.from)")).font(IslandTheme.text(11)).foregroundStyle(IslandTheme.muted).lineLimit(1)
                 }
                 Spacer(minLength: 4)
-                TextButton(label: loc("Ouvrir dans Gmail")) { if let url = mail.url { NSWorkspace.shared.open(url) } }
-                    .fixedSize()
+                TextButton(label: mail.source == .mailApp ? loc("Ouvrir dans Mail") : loc("Ouvrir dans Gmail")) {
+                    NotificationCenter.default.post(name: .moduleRowAction, object: nil,
+                                                    userInfo: ["module": "gmail", "row": String(mail.uid)])
+                }
+                .fixedSize()
             }
             switch step {
             case .reading:
@@ -114,7 +131,7 @@ struct GmailSheet: View {
                     .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.07)))
                     .disabled(step == .sending)
                 HStack(spacing: 8) {
-                    Text(loc("À \(mail.replyAddress)")).font(IslandTheme.text(11)).foregroundStyle(IslandTheme.muted).lineLimit(1)
+                    Text(mail.account.isEmpty ? loc("À \(mail.replyAddress)") : loc("À \(mail.replyAddress), depuis \(mail.account)")).font(IslandTheme.text(11)).foregroundStyle(IslandTheme.muted).lineLimit(1)
                     if case .failed(let reason) = step {
                         Text(reason).font(IslandTheme.text(11, .medium)).foregroundStyle(IslandTheme.red).lineLimit(1)
                     }
@@ -124,7 +141,9 @@ struct GmailSheet: View {
                         .font(IslandTheme.text(12, .medium))
                         .foregroundStyle(IslandTheme.muted)
                     Button { send(mail) } label: {
-                        Label(step == .sending ? loc("Envoi…") : loc("Envoyer"), systemImage: "paperplane.fill")
+                        Label(mail.source == .mailApp ? loc("Ouvrir dans Mail")
+                                : step == .sending ? loc("Envoi…") : loc("Envoyer"),
+                              systemImage: mail.source == .mailApp ? "envelope.open.fill" : "paperplane.fill")
                             .font(IslandTheme.text(12, .semibold))
                             .foregroundStyle(.black)
                             .padding(.horizontal, 14).padding(.vertical, 6)
@@ -136,7 +155,9 @@ struct GmailSheet: View {
             case .sent:
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill").foregroundStyle(IslandTheme.green)
-                    ActSub(text: loc("Envoyé à \(mail.replyAddress)."))
+                    ActSub(text: mail.source == .mailApp
+                           ? loc("Brouillon ouvert dans Mail : relis-le et envoie-le toi-même.")
+                           : loc("Envoyé à \(mail.replyAddress)."))
                 }
             }
         }
@@ -159,12 +180,20 @@ struct GmailSheet: View {
 
     /// Reads the mail, then asks the model for a short answer in its language.
     private func suggest(for mail: GmailMail) {
-        guard let credentials else { return }
+        let credentials = credentials
+        guard mail.source == .mailApp || credentials != nil else { return }
         step = .thinking
         IslandModel.shared.setMood(.thinking)
         let name = AppState.shared.userName
         Task {
-            let text = (try? await GmailIMAP.text(of: mail.uid, address: credentials.address, password: credentials.password)) ?? ""
+            let text: String
+            if mail.source == .mailApp {
+                text = (try? await MailAppScript.text(of: mail)) ?? ""
+            } else if let credentials {
+                text = (try? await GmailIMAP.text(of: mail.uid, address: credentials.address, password: credentials.password)) ?? ""
+            } else {
+                text = ""
+            }
             let request = LLMRequest(
                 system: """
                 Tu es Yumi et tu aides la personne à répondre à un mail. Écris seulement le texte de la réponse, \
@@ -197,11 +226,27 @@ struct GmailSheet: View {
         }
     }
 
-    /// The click on "Envoyer": the only way an answer leaves.
+    /// The click on "Envoyer" (Gmail) or "Ouvrir dans Mail": the only way an answer leaves. Mail
+    /// only gets a draft; the person sends it from there.
     private func send(_ mail: GmailMail) {
-        guard let credentials, !mail.replyAddress.isEmpty else { return }
-        step = .sending
+        guard !mail.replyAddress.isEmpty else { return }
         let body = draft
+        if mail.source == .mailApp {
+            step = .sending
+            Task {
+                do {
+                    try await MailAppScript.openDraft(to: mail.replyAddress, subject: GmailCompose.replySubject(mail.subject), body: body)
+                    await MainActor.run { step = .sent; IslandModel.shared.pose(.pop) }
+                } catch MailAppScript.Failure.denied {
+                    await MainActor.run { step = .failed(loc("Mail refuse : autorise Yumi dans Réglages Système, Automatisation.")) }
+                } catch {
+                    await MainActor.run { step = .failed(loc("Mail n'a pas ouvert le brouillon, rien n'est parti.")) }
+                }
+            }
+            return
+        }
+        guard let credentials else { return }
+        step = .sending
         Task {
             do {
                 try await GmailSMTP.send(from: credentials.address, password: credentials.password, to: mail.replyAddress,
@@ -218,9 +263,10 @@ struct GmailSheet: View {
     }
 }
 
-/// One mail in the list: unread dot, sender, subject, time.
+/// One mail in the list: unread dot, sender, subject, account when there are several, time.
 private struct MailLine: View {
     let mail: GmailMail
+    var showsAccount = false
     @State private var hover = false
 
     var body: some View {
@@ -238,6 +284,15 @@ private struct MailLine: View {
                 .foregroundStyle(mail.unread ? IslandTheme.fg : IslandTheme.muted)
                 .lineLimit(1)
             Spacer(minLength: 4)
+            if showsAccount, !mail.account.isEmpty {
+                Text(mail.account)
+                    .font(IslandTheme.text(9.5, .semibold))
+                    .foregroundStyle(IslandTheme.muted)
+                    .lineLimit(1)
+                    .padding(.horizontal, 5).padding(.vertical, 1)
+                    .background(Capsule().fill(Color.white.opacity(0.08)))
+                    .fixedSize()
+            }
             Text(mail.date.map { GmailSummary.when($0, now: .now) } ?? "")
                 .font(IslandTheme.text(10.5))
                 .foregroundStyle(IslandTheme.muted)
