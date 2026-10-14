@@ -118,3 +118,11 @@ import Testing
         #expect(module.snapshot.rows.count == 2)
     }
 }
+
+@Suite struct MailReadingStateTests {
+    @MainActor @Test func theFirstLookSaysItIsReadingNotConnectGmail() {
+        let module = GmailModule(credentials: { nil }, source: { .mailApp }, fetchMailApp: { [] })
+        #expect(module.snapshot.title == loc("Je lis ta boîte…"))
+        #expect(module.snapshot.rows.isEmpty)
+    }
+}

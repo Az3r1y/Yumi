@@ -107,8 +107,10 @@ enum MailAppParse {
         "\"" + text.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "\"", with: "\\\"") + "\""
     }
 
-    /// The script that lists the latest `count` mails of the unified inbox. "NOACCOUNT" when
-    /// Mail has no account.
+    /// The script that lists the latest `count` mails of each account's inbox. "NOACCOUNT" when
+    /// Mail has no account. Mail answers slowly on a large inbox (a few seconds to a minute for
+    /// 40 000 mails, mostly to find the range): each account costs ONE Apple Event that brings
+    /// every property at once, never one event per mail.
     static func listScript(count: Int) -> String {
         """
         tell application "Mail"
@@ -117,28 +119,26 @@ enum MailAppParse {
             set rs to character id 30
             set out to ""
             set now to current date
-            set total to count of messages of inbox
-            if total is 0 then return ""
-            set n to total
-            if n > \(count) then set n to \(count)
-            repeat with m in (messages 1 thru n of inbox)
+            repeat with mb in (mailboxes of inbox)
                 set acc to ""
                 try
-                    set acc to name of account of mailbox of m
+                    set acc to name of account of mb
                 end try
-                set rt to ""
-                try
-                    set rt to reply to of m
-                end try
-                set mid to ""
-                try
-                    set mid to message id of m
-                end try
-                set r to "0"
-                if read status of m then set r to "1"
-                set fl to "0"
-                if flagged status of m then set fl to "1"
-                set out to out & mid & fs & acc & fs & (sender of m) & fs & (subject of m) & fs & ((date received of m) - now) & fs & r & fs & fl & fs & rt & rs
+                set total to count of messages of mb
+                if total > 0 then
+                    set n to total
+                    if n > \(count) then set n to \(count)
+                    set p to {message id, sender, subject, date received, read status, flagged status, reply to} of messages 1 thru n of mb
+                    repeat with i from 1 to n
+                        set r to "0"
+                        if item i of item 5 of p then set r to "1"
+                        set fl to "0"
+                        if item i of item 6 of p then set fl to "1"
+                        set rt to item i of item 7 of p
+                        if rt is missing value then set rt to ""
+                        set out to out & (item i of item 1 of p) & fs & acc & fs & (item i of item 2 of p) & fs & (item i of item 3 of p) & fs & ((item i of item 4 of p) - now) & fs & r & fs & fl & fs & rt & rs
+                    end repeat
+                end if
             end repeat
             return out
         end tell
@@ -169,7 +169,10 @@ enum MailAppParse {
 
 /// Talking to Mail through Apple Events, one script at a time, off the main thread.
 enum MailAppScript {
-    enum Failure: Error, Equatable { case closed, denied, noAccount, failed }
+    enum Failure: Error, Equatable { case closed, denied, noAccount, failed, timedOut }
+
+    /// How long a script may take before the module stops waiting.
+    static let timeout: TimeInterval = 90
 
     static let bundleID = "com.apple.mail"
     private static let queue = DispatchQueue(label: "app.yumi.mail-app")
@@ -186,10 +189,19 @@ enum MailAppScript {
         throw Failure.denied
         #else
         guard startingMail || isRunning else { throw Failure.closed }
+        // An Apple Event can wait for ever: the Automation prompt left unanswered, Mail busy
+        // with its own setup. The module gives up after `timeout`; the script ends on its own.
+        final class Once: @unchecked Sendable {
+            private let lock = NSLock()
+            private var done = false
+            func claim() -> Bool { lock.lock(); defer { lock.unlock() }; if done { return false }; done = true; return true }
+        }
+        let once = Once()
         return try await withCheckedThrowingContinuation { continuation in
             queue.async {
                 var error: NSDictionary?
                 let output = NSAppleScript(source: source)?.executeAndReturnError(&error)
+                guard once.claim() else { return }
                 if let error {
                     let code = error[NSAppleScript.errorNumber] as? Int
                     continuation.resume(throwing: code == notAuthorized ? Failure.denied : code == -600 ? Failure.closed : Failure.failed)
@@ -197,11 +209,14 @@ enum MailAppScript {
                     continuation.resume(returning: output?.stringValue ?? "")
                 }
             }
+            DispatchQueue.global().asyncAfter(deadline: .now() + timeout) {
+                if once.claim() { continuation.resume(throwing: Failure.timedOut) }
+            }
         }
         #endif
     }
 
-    static func latest(count: Int = 20) async throws -> [GmailMail] {
+    static func latest(count: Int = 10) async throws -> [GmailMail] {
         let output = try await run(MailAppParse.listScript(count: count))
         if output == "NOACCOUNT" { throw Failure.noAccount }
         return MailAppParse.mails(from: output, now: Date())

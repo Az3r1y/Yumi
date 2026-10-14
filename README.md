@@ -235,7 +235,7 @@ This is an alpha. Here is what we know is missing or rough today.
 - **Read then act is not there yet.** The agent can read (your day) or act (create, add), but not read and then act on what it read in one request, like « prepare my day ».
 - **Notion** lists twelve tasks at most in the island. Ticking needs a "done" property (checkbox or status) chosen in the settings, and is only offered in the direct build.
 - **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
-- **Mail** reads the inbox of the Mail app only while Mail is open, shows the latest 20 mails, and never changes your mailbox. If you refuse the Automation access the module stays empty (System Settings, Privacy, Automation to change it). Not in the App Store build. The Gmail option needs a Google app password (two-step verification on).
+- **Mail** reads the inbox of the Mail app only while Mail is open, shows the latest 10 mails of each account (Mail can take up to a minute to answer on a very large inbox), and never changes your mailbox. If you refuse the Automation access the module stays empty (System Settings, Privacy, Automation to change it). Not in the App Store build. The Gmail option needs a Google app password (two-step verification on).
 - **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
 - **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
 - **The App Store build** is not shipped and cannot use Claude Code or the hooks.

@@ -203,6 +203,29 @@ enum IslandDemo {
         await pause(1.2);  snap("8-settled")
     }
 
+    /// Example mails from two accounts of Apple's Mail.
+    private static var sampleMails: [GmailMail] {
+        let now = Date.now
+        func mail(_ id: String, _ account: String, _ from: String, _ subject: String, minutes: Double,
+                  unread: Bool, important: Bool = false) -> GmailMail {
+            var mail = GmailMail(uid: MailAppParse.stableID(id), from: from, subject: subject,
+                                 date: now.addingTimeInterval(-minutes * 60), unread: unread, thread: nil)
+            mail.account = account
+            mail.important = important
+            mail.source = .mailApp
+            mail.messageID = id
+            mail.replyAddress = "contact@example.com"
+            return mail
+        }
+        return [
+            mail("1", "Pro", "Camille Durand", "Urgent : contrat à signer avant vendredi", minutes: 12, unread: true, important: true),
+            mail("2", "iCloud", "Léa Martin", "Dîner samedi ?", minutes: 40, unread: true),
+            mail("3", "Pro", "Paul Moreau", "Compte rendu de la réunion produit", minutes: 95, unread: false, important: true),
+            mail("4", "iCloud", "Apple", "Ton reçu", minutes: 180, unread: false),
+            mail("5", "Pro", "Notion", "Mises à jour de la semaine", minutes: 300, unread: false),
+        ]
+    }
+
     /// What Yumi could remember, of each kind.
     private static var memories: [MemoryEntry] {
         let now = Date.now
@@ -336,6 +359,36 @@ enum IslandDemo {
             controller.expand(to: .module)
         case "settings":
             controller.expand(to: .settings)
+        case "mail":
+            // The mails module with two example accounts (nothing is read from Mail)
+            let mails = sampleMails
+            GmailInbox.shared.show(mails)
+            GmailInbox.shared.showAccounts(MailAccounts.names(in: mails))
+            let snapshot = GmailSummary.snapshot(mails: mails, connection: .connected, now: .now, source: .mailApp)
+            // Nothing else asks for attention, so the island stays on the mails
+            state.modules = state.modules.filter { $0.id != IslandModel.agentModuleID }
+                .map { $0.id == "gmail" ? snapshot : $0 }
+            if !state.modules.contains(where: { $0.id == "gmail" }) { state.modules.append(snapshot) }
+            model.category = .day
+            model.selectedModuleID = "gmail"
+            controller.expand(to: .module)
+        case "settings-approval":
+            // An approval waits: the island stays, the window opens below it
+            state.stateOverride = .approval
+            state.pendingApproval = ApprovalInfo(sessionId: "demo", tool: "Bash", command: "xcodebuild -scheme Yumi test")
+            controller.expand(to: .approval)
+            Task { @MainActor in
+                await pause(2.5)
+                IslandActions.openSettings()
+            }
+        case "settings-open":
+            // The island is open, then the settings window opens: the island folds
+            controller.holdsOpen = false
+            controller.expand(to: .overview)
+            Task { @MainActor in
+                await pause(2.5)
+                IslandActions.openSettings()
+            }
         case "welcome":
             controller.expand(to: .welcome)
         case "remark-short":

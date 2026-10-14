@@ -12268,6 +12268,26 @@
           }
         }
       }
+    },
+    "Je lis ta boîte…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading your inbox…"
+          }
+        }
+      }
+    },
+    "Mail met parfois une minute à répondre sur une grosse boîte.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail sometimes takes a minute to answer on a large inbox."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

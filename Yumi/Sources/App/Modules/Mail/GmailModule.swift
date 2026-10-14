@@ -159,6 +159,8 @@ final class GmailModule: YumiModule {
 
     enum Connection: Equatable {
         case notSet, connected, refused, offline
+        /// The first look is under way (Mail can take a minute on a large inbox).
+        case reading
         /// Mail is the source but is not open, has no account, or the person refused the access.
         case mailClosed, mailNoAccount, mailDenied
     }
@@ -176,7 +178,7 @@ final class GmailModule: YumiModule {
     private var rowObserver: NSObjectProtocol?
     private var settingsObserver: NSObjectProtocol?
     private var mails: [GmailMail] = []
-    private var connection = Connection.notSet
+    private var connection = Connection.reading
     /// The mails already seen, to notice the ones that arrive. nil until the first look.
     private var seen: Set<Int>?
     private var currentSource = MailSource.mailApp
@@ -234,9 +236,21 @@ final class GmailModule: YumiModule {
     }
 
     /// One look at the inbox. Internal so tests can drive it.
+    /// A look still running (Mail can take a minute on a large inbox): the next one waits for it.
+    private var looking = false
+
     func look() async {
+        guard !looking else { return }
+        looking = true
+        defer { looking = false }
         let source = source()
-        if source != currentSource { currentSource = source; seen = nil; mails = [] }
+        if source != currentSource {
+            currentSource = source
+            seen = nil
+            mails = []
+            connection = .reading
+            onChange?()
+        }
         do {
             let all: [GmailMail]
             switch source {
@@ -340,6 +354,10 @@ enum GmailSummary {
             snapshot.subtitle = loc("Il faut un mot de passe d'application de 16 lettres, pas ton mot de passe Google : Réglages, Modules.")
             snapshot.primaryAction = loc("Réglages")
             return snapshot
+        case .reading:
+            snapshot.title = loc("Je lis ta boîte…")
+            snapshot.subtitle = mailApp ? loc("Mail met parfois une minute à répondre sur une grosse boîte.") : ""
+            return snapshot
         case .mailClosed:
             snapshot.title = loc("Mail est fermé")
             snapshot.subtitle = loc("Ouvre l'app Mail et je lis ta boîte de réception, sans rien y toucher.")
@@ -364,6 +382,7 @@ enum GmailSummary {
         }
         let unread = mails.filter(\.unread).count
         let important = mails.filter { $0.important && $0.unread }.count
+        if connection == .reading { return snapshot }
         snapshot.status = important > 0 ? loc("\(important) importants") : unread == 0 ? loc("à jour") : loc("\(unread) non lus")
         snapshot.needsAttention = important > 0
         // The important ones first, then the others, newest first in each
