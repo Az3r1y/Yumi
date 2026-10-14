@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - The open island, in cards (the island demo, version "2 · Coucou")
+// MARK: - The open island, in cards
 //
 // The tabs sit in the height of the menu bar, beside the notch; under them, the chips of the
 // tab's modules, then the cards. Yumi is drawn above the island by IslandRootView, at the

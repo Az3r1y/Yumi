@@ -4,7 +4,7 @@ import Foundation
 // What the chat is doing right now, so the island can show it as it happens instead of
 // after the fact. The core fills `AppState.chatLive` while a message is being answered and
 // sets it back to nil when the answer is complete; the island draws it. Both sides rely on
-// this file, so neither edits it during the parallel work (see YUMI.md).
+// this file, so neither edits it during the parallel work (see docs/journal.md).
 
 /// The answer in progress. nil in `AppState` when the chat is idle.
 struct ChatLive: Equatable, Sendable {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-// The pieces of the open island in cards (the island demo, version "2 · Coucou"): the row of
+// The pieces of the open island in cards: the row of
 // tabs in the height of the menu bar, the chips of the tab's modules, the dark cards, the
 // sessions of Claude Code as small characters, and the place kept for Yumi.
 

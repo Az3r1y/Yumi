@@ -1,6 +1,6 @@
 import CoreGraphics
 
-// The mock-up (design/yumi/maquette/reference.html) animates the face with CSS transitions
+// The mock-up (design/maquette/reference.html) animates the face with CSS transitions
 // and keyframes. These three helpers reproduce them, so the same durations and curves can
 // be written here as they are written there.
 

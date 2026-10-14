@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Quitting contract
 // Yumi says goodbye before the app ends. The core delays the end of the app and tells the
 // island; the island plays the goodbye and tells the core when it is over. Both sides rely
-// on this file, so neither edits it during the parallel work (see YUMI.md).
+// on this file, so neither edits it during the parallel work (see docs/journal.md).
 
 extension Notification.Name {
     /// Posted by the core when the user quits. The island plays the goodbye sequence.

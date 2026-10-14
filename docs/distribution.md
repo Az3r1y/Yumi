@@ -1,6 +1,6 @@
 # Yumi : stratégie de distribution
 
-Diagnostic établi le 2026-10-08 sur l'état réel du dépôt (0.1.0-alpha.7, README alpha 5 réécrit, site `site/`, projet Remotion `motion/`, `docs/POST_ALPHA_STATUS.md`). Les chiffres GitHub (stars, forks, issues) n'ont pas pu être lus : `gh` n'est pas installé sur cette machine.
+Diagnostic établi le 2026-10-08 sur l'état réel du dépôt (0.1.0-alpha.7, README alpha 5 réécrit, site `site/`, projet Remotion `motion/`, `docs/archive/post-alpha-status.md`). Les chiffres GitHub (stars, forks, issues) n'ont pas pu être lus : `gh` n'est pas installé sur cette machine.
 
 **Positionnement validé (2026-10-08), remplace les versions précédentes.**
 - Message principal : *The little AI in your notch that asks before it acts.*

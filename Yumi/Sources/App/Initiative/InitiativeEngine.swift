@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - When Yumi speaks first
-// See « Quand il parle le premier » in design/yumi/voix.md and Contracts/RemarkTypes.swift.
+// See « Quand il parle le premier » in design/voix.md and Contracts/RemarkTypes.swift.
 // The engine is pure: an occasion and what surrounds it come in, a remark comes out, or nothing.
 // When in doubt he stays quiet. `InitiativeDriver` watches the Mac and feeds the engine.
 

@@ -32,7 +32,7 @@ enum AppIdentity {
     /// Message Claude Code receives when a permission is denied from the island.
     static let denyMessage = "Denied from \(productName)"
     /// Hook commands containing one of these were installed by the apps Yumi replaces
-    /// (Coucou, NotchBuddy). They are removed when Yumi installs its own hooks.
+    /// of an earlier notch app. They are removed when Yumi installs its own hooks.
     static let legacyHookCommandMarkers = ["NotchBuddy", "coucou"]
 
     // MARK: Internal
@@ -117,7 +117,7 @@ enum AppIdentity {
         command == hookCommand
     }
 
-    /// True for a hook left behind by Coucou or NotchBuddy.
+    /// True for a hook left behind by an earlier notch app.
     static func isLegacyHookCommand(_ command: String) -> Bool {
         !isOwnHookCommand(command) && legacyHookCommandMarkers.contains { command.contains($0) }
     }

@@ -1,7 +1,7 @@
 import Testing
 import Foundation
 
-/// Everything Yumi says must sound like him (design/yumi/voix.md): no assistant formula, no emoji.
+/// Everything Yumi says must sound like him (design/voix.md): no assistant formula, no emoji.
 /// This test collects every sentence the modules and the chat can produce, in every state.
 @Suite struct VoiceTests {
     private var calendar: Calendar {

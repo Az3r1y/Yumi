@@ -1,7 +1,7 @@
 #if DEBUG
 import SwiftUI
 
-// The character sheet of design/yumi/maquette/reference.html, rebuilt with the Swift engine:
+// The character sheet of design/maquette/reference.html, rebuilt with the Swift engine:
 // same sections, same order, same sizes, so the two can be compared side by side.
 // Opened by `YUMI_DEMO=gallery` (see BotDemo). Debug builds only.
 

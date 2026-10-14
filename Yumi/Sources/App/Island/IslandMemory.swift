@@ -15,7 +15,7 @@ struct MemoryActivity: View {
 
     private let listLimit: CGFloat = 176
 
-    /// The groups, in the order of design/yumi/voix.md, each with its most recent line first.
+    /// The groups, in the order of design/voix.md, each with its most recent line first.
     static func sections(_ entries: [MemoryEntry]) -> [(kind: MemoryEntry.Kind, title: String, entries: [MemoryEntry])] {
         let titles: [(MemoryEntry.Kind, String)] = [(.person, loc("Toi")), (.project, loc("Tes projets")), (.thread, loc("Le fil"))]
         return titles.compactMap { kind, title in

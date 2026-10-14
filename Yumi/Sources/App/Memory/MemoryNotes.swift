@@ -19,7 +19,7 @@ enum MemoryNotes {
     static let opening = "<memoire>"
     static let closing = "</memoire>"
 
-    /// What the conversation is told about remembering (design/yumi/voix.md).
+    /// What the conversation is told about remembering (design/voix.md).
     static let instructions = """
     Tu as une mémoire, et c'est toi qui décides ce qui mérite d'y entrer. Pour la modifier, termine ta réponse par un bloc que la personne ne verra pas, une ligne par souvenir :
     \(opening)

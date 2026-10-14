@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Memory contract
-// What Yumi remembers about the person (see design/yumi/voix.md). The core owns the
+// What Yumi remembers about the person (see design/voix.md). The core owns the
 // store: it learns, saves and fills `AppState.memory` and `AppState.userName`. The island
 // shows the memory and lets the person correct or erase it through the notifications
 // below. Both sides rely on this file, so neither edits it during the parallel work.

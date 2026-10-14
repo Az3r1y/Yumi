@@ -47,7 +47,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO
 
-      # The App Store target is not shipped yet, but it must keep compiling (see YUMI.md).
+      # The App Store target is not shipped yet, but it must keep compiling (see docs/journal.md).
       - name: Build App Store target
         run: |
           xcodebuild \

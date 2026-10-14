@@ -38,7 +38,7 @@ private let repos = """
  {"full_name":"estebanbaigts/audioscope","fork":false,"stargazers_count":4,"forks_count":0,"html_url":"https://github.com/estebanbaigts/audioscope"}]
 """
 private let openPulls = #"{"total_count":3,"incomplete_results":false,"items":[{"title":"x","html_url":"https://github.com/estebanbaigts/Yumi/pull/14","repository_url":"https://api.github.com/repos/estebanbaigts/Yumi"}]}"#
-private let reviewRequested = #"{"total_count":1,"items":[{"title":"Fix du repli","html_url":"https://github.com/louis/coucou/pull/9","repository_url":"https://api.github.com/repos/louis/coucou"}]}"#
+private let reviewRequested = #"{"total_count":1,"items":[{"title":"Fix du repli","html_url":"https://github.com/octo/demo/pull/9","repository_url":"https://api.github.com/repos/octo/demo"}]}"#
 private let noReview = #"{"total_count":0,"items":[]}"#
 
 @Suite struct GitHubFeedTests {
@@ -67,8 +67,8 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         #expect(GitHubFeed.mostActiveRepo(from: Data(repos.utf8)) == GitHubRepo(fullName: "estebanbaigts/Yumi", stars: 128, forks: 12,
                                                                                url: URL(string: "https://github.com/estebanbaigts/Yumi")))
         #expect(GitHubFeed.search(from: Data(openPulls.utf8)).count == 3)
-        #expect(GitHubFeed.search(from: Data(reviewRequested.utf8)).first == GitHubReview(title: "Fix du repli", repo: "louis/coucou",
-                                                                                         url: URL(string: "https://github.com/louis/coucou/pull/9")))
+        #expect(GitHubFeed.search(from: Data(reviewRequested.utf8)).first == GitHubReview(title: "Fix du repli", repo: "octo/demo",
+                                                                                         url: URL(string: "https://github.com/octo/demo/pull/9")))
         #expect(GitHubFeed.search(from: Data(noReview.utf8)).first == nil)
         #expect(GitHubFeed.events(from: Data("{\"message\":\"Bad credentials\"}".utf8), login: "x", received: false).isEmpty)
     }
@@ -174,7 +174,7 @@ private let noReview = #"{"total_count":0,"items":[]}"#
     }
 
     @Test func aPullRequestWaitingForReviewComesFirst() {
-        let review = GitHubReview(title: "Fix du repli", repo: "louis/coucou", url: nil)
+        let review = GitHubReview(title: "Fix du repli", repo: "octo/demo", url: nil)
         let snapshot = GitHubSummary.snapshot(connection: .connected, repo: repo, openPulls: 3, last: (star, 1), review: review)
         #expect(snapshot.title == "Une pull request t'attend : Fix du repli")
         #expect(snapshot.primaryAction == "Relire")

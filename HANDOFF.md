@@ -4,7 +4,7 @@
 
 ## Le projet en une phrase
 
-Yumi, compagnon macOS dans la notch (Swift 6, SwiftUI, AppKit, aucune dépendance). Alpha publique gratuite. Voir README.md pour les fonctions, YUMI.md pour les décisions, docs/POST_ALPHA_STATUS.md et docs/BACKLOG.md pour la suite.
+Yumi, compagnon macOS dans la notch (Swift 6, SwiftUI, AppKit, aucune dépendance). Alpha publique gratuite. Voir README.md pour les fonctions, docs/journal.md pour les décisions, docs/archive/post-alpha-status.md et docs/backlog.md pour la suite.
 
 ## État au 8 octobre 2026
 
@@ -16,7 +16,7 @@ Yumi, compagnon macOS dans la notch (Swift 6, SwiftUI, AppKit, aucune dépendanc
 
 - Répondre en français, sans tirets longs (ni en incise, ni en séparateur).
 - Dépôt : /Users/thewise/yumi, remote git@github.com:estebanbaigts/Yumi.git. Commits avec `user.email = 91676362+estebanbaigts@users.noreply.github.com`, terminés par la ligne Co-Authored-By demandée par le harnais.
-- /Users/thewise/coucou est en lecture seule. Ne jamais reprendre le nom, le personnage, les icônes ou les sons de Coucou. LICENSE et ATTRIBUTION.md doivent rester (MIT).
+- Ne jamais reprendre de nom, personnage, icônes ou sons d'un autre projet. LICENSE et ATTRIBUTION.md doivent rester (licence MIT du code d'origine).
 - Les onglets travaillent chacun sur une branche, dans un worktree neuf créé depuis /Users/thewise/yumi, poussent, et ne fusionnent jamais. La coordination vérifie, teste et fusionne.
 - Xcode reformate parfois les fichiers `Localization/*.xcstrings` pendant une compilation : `git checkout -- Yumi/Sources/App/Localization/` avant toute fusion si ce sont les seuls changements.
 - Ajouter une traduction : insérer l'entrée dans Localizable.xcstrings sans reformater le fichier (json.dumps avec indent=2, ensure_ascii=False, ordre conservé). Un test échoue s'il manque l'anglais d'une clé.
@@ -49,6 +49,6 @@ Pour économiser l'usage : ouvrir une session neuve par chantier plutôt que ré
 ## Prochaines étapes probables
 
 1. Publier l'alpha 6, la tester en vrai (GitHub contributions, Notion).
-2. « Lire puis agir » : prépare ma journée, avec un aperçu du plan (docs/POST_ALPHA_STATUS.md).
+2. « Lire puis agir » : prépare ma journée, avec un aperçu du plan (docs/archive/post-alpha-status.md).
 3. Spécification des modules externes (déclarés dans un fichier, derrière la même porte d'accord), à valider par l'utilisateur avant de coder.
 4. Commits GitHub dépliables, Mac sans notch.

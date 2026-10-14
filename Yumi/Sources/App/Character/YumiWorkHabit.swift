@@ -2,7 +2,7 @@ import Foundation
 
 /// What Yumi has in hand while an agent works: a coffee, a tea, a matcha, water, a juice, a
 /// book, a gamepad, a knitting, a cigarette, or nothing at all, chosen at the first launch, or
-/// one of them at random, set in the settings. The cigarette is one choice among others (YUMI.md).
+/// one of them at random, set in the settings. The cigarette is one choice among others (docs/journal.md).
 enum YumiWorkHabit: String, CaseIterable, Sendable {
     case smoke, coffee, matcha, random
     case tea, water, juice, book, gamepad, knitting, nothing

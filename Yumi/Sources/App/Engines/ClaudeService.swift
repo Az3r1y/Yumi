@@ -65,12 +65,12 @@ final class KeychainStore: @unchecked Sendable {
         "openai-api-key",
         "gemini-api-key",
         "github-token",
-        // Not "notion-api-key": that name was Coucou's, erased once at launch.
+        // Not "notion-api-key": that old name is erased once at launch.
         "notion-integration-key",
         "gmail-app-password",
     ]
 
-    /// Keys of the integrations inherited from Coucou, removed from Yumi: erased once.
+    /// Keys of the old integrations, removed from Yumi: erased once.
     static let retiredKeys = ["resend-api-key", "resend-from", "n8n-url", "n8n-api-key",
                               "vercel-token", "stripe-api-key", "calcom-api-key", "notion-api-key"]
 

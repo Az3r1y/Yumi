@@ -1,5 +1,5 @@
 // Renders the app icon and the menu bar icon with YumiSkin, the drawing code of the app.
-// Not compiled into the app: run design/yumi/outils/icones.sh, which pairs this file with
+// Not compiled into the app: run design/outils/icones.sh, which pairs this file with
 // the YumiSkin block of BotEngine.swift.
 
 import CoreGraphics

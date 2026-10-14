@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - What Yumi remembers
-// See design/yumi/voix.md and Contracts/MemoryTypes.swift. The book is the memory itself, pure:
+// See design/voix.md and Contracts/MemoryTypes.swift. The book is the memory itself, pure:
 // a first name and short sentences. `MemoryStore` keeps it in a file and tells the app.
 
 struct MemoryBook: Equatable, Sendable {
@@ -140,7 +140,7 @@ struct MemoryBook: Equatable, Sendable {
 
 // MARK: - What Yumi never remembers
 
-/// The last check before anything is written (design/yumi/voix.md, « Ce qu'il ne retient jamais »).
+/// The last check before anything is written (design/voix.md, « Ce qu'il ne retient jamais »).
 /// The conversation itself sorts what is worth remembering; this guard only makes sure that a
 /// secret or a pasted document can never reach the file, whatever the conversation decided.
 enum MemoryGuard {
