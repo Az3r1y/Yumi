@@ -87,7 +87,8 @@ enum MailAppParse {
             mail.account = account
             mail.bulk = bulk
             mail.important = MailClassify.important(flagged: flagged, unread: unread, bulk: bulk, subject: subject)
-            mail.replyAddress = replyTo.isEmpty ? address : replyTo
+            mail.replyAddress = GmailCompose.replyAddress(replyTo: replyTo, sender: address)
+            mail.replyElsewhere = GmailCompose.isElsewhere(replyTo: replyTo, sender: address)
             mail.messageID = messageID
             mail.source = .mailApp
             return mail

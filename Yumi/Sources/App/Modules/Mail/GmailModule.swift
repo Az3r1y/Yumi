@@ -423,6 +423,10 @@ final class GmailSMTP: @unchecked Sendable {
 
     static func send(from address: String, password: String, to recipient: String, subject: String,
                      inReplyTo messageID: String, body: String) async throws {
+        // Each one ends up on a command line: one with a line break could add a recipient.
+        guard GmailCompose.isSafeAddress(address), GmailCompose.isSafeAddress(recipient) else {
+            throw Failure.rejected(loc("adresse invalide"))
+        }
         let smtp = GmailSMTP()
         defer { smtp.connection.cancel() }
         try await smtp.open()
@@ -491,8 +495,32 @@ enum GmailCompose {
         subject.lowercased().hasPrefix("re:") ? subject : "Re: " + subject
     }
 
+    /// One plain address: no space, no line break, no bracket or comma that could end a command
+    /// line or add a recipient.
+    static func isSafeAddress(_ address: String) -> Bool {
+        address.utf8.count <= 254
+            && address.wholeMatch(of: /[^\s\p{Cc}<>(),;:"\\@]+@[^\s\p{Cc}<>(),;:"\\@]+\.[^\s\p{Cc}<>(),;:"\\@]+/) != nil
+    }
+
+    /// The Message-ID when it is one "<...>" without space or line break, else nothing: the
+    /// answer then simply starts a new conversation.
+    static func safeMessageID(_ id: String) -> String {
+        id.utf8.count <= 998 && id.wholeMatch(of: /<[^\s\p{Cc}<>]+>/) != nil ? id : ""
+    }
+
+    /// Where an answer goes: the Reply-To, else the sender. Empty when that is not a plain address.
+    static func replyAddress(replyTo: String, sender: String) -> String {
+        let chosen = replyTo.isEmpty ? sender : replyTo
+        return isSafeAddress(chosen) ? chosen : ""
+    }
+
+    static func isElsewhere(replyTo: String, sender: String) -> Bool {
+        !replyTo.isEmpty && replyTo.lowercased() != sender.lowercased()
+    }
+
     /// The whole message: headers, then the text, lines starting with a dot doubled.
     static func message(from: String, to: String, subject: String, inReplyTo: String, body: String) -> String {
+        let inReplyTo = safeMessageID(inReplyTo)
         var headers = [
             "From: <\(from)>",
             "To: <\(to)>",
@@ -505,7 +533,7 @@ enum GmailCompose {
             headers.append("In-Reply-To: \(inReplyTo)")
             headers.append("References: \(inReplyTo)")
         }
-        let text = body.replacingOccurrences(of: "\r\n", with: "\n").components(separatedBy: "\n")
+        let text = body.replacingOccurrences(of: "\r\n", with: "\n").replacingOccurrences(of: "\r", with: "\n").components(separatedBy: "\n")
             .map { $0.hasPrefix(".") ? "." + $0 : $0 }
             .joined(separator: "\r\n")
         return headers.joined(separator: "\r\n") + "\r\n\r\n" + text
