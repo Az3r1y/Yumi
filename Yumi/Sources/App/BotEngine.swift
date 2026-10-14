@@ -847,7 +847,7 @@ final class BotEngine: ObservableObject {
         // A habit that lasts keeps him moving round his shape at rest (the headphones: height
         // 0.92…1.08, lean ±7): the pictures are drawn for that one, and the stretch and the
         // shear follow the beat
-        let swaying = !fading && pose == nil && [.headphones, .whistle, .smoke, .coffee, .matcha, .cloud].contains(blob.habit)
+        let swaying = !fading && pose == nil && blob.habit?.lasts == true
         if steady || swaying, !lightQueued, clock - lightBuiltAt > 0.25 {
             lightQueued = true
             let h = steady ? blob.h : 1, lean = steady ? blob.lean : 0
@@ -899,11 +899,8 @@ final class BotEngine: ObservableObject {
         if pose != nil || scene != nil { return .full }
         // A habit that lasts keeps the body moving, so it is never settled: thirty a second is
         // enough for it, whatever eases meanwhile
-        switch blob.habit {
-        case .smoke, .coffee, .matcha, .headphones, .whistle, .cloud: return .habit
-        case .sleep where !isDeepAsleep: return .habit
-        default: break
-        }
+        if let habit = blob.habit, habit.lasts { return .habit }
+        if blob.habit == .sleep, !isDeepAsleep { return .habit }
         if !blob.isSettled { return .full }
         // A costume lives on its own (a pompom, a glint): thirty a second, like a lasting habit
         if costume.moves, !isMini, !isDeepAsleep { return .habit }
@@ -924,9 +921,8 @@ final class BotEngine: ObservableObject {
         // get every frame through the checks above.
         if state == .approval { return .habit }
 
+        if let habit = blob.habit, habit.lasts { return .habit }
         switch blob.habit {
-        case .smoke, .coffee, .matcha, .headphones, .whistle, .cloud:
-            return .habit
         case .sunglasses:
             // They drop onto his nose in 0.55 s, then nothing moves but his breathing
             return now - habitStart < 0.6 ? .full : .low
@@ -935,6 +931,8 @@ final class BotEngine: ObservableObject {
             return isDeepAsleep ? .still : .habit
         case .exhausted, nil:
             return .low
+        default:
+            return .habit
         }
     }
 

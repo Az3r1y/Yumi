@@ -597,6 +597,24 @@ enum OutsideClick {
     }
 }
 
+/// Opening the settings window folds the island, as a click beside it would, unless an
+/// approval waits there: then the island stays and the window opens below it.
+enum SettingsOpening {
+    static func foldsIsland(approvalPending: Bool) -> Bool { !approvalPending }
+
+    /// Where the window starts (screen coordinates, origin bottom-left): centred horizontally,
+    /// its top under the menu bar and under the island when it stays open, inside the screen.
+    static func frame(size: CGSize, visible: CGRect, islandBottom: CGFloat?, gap: CGFloat = 12) -> CGRect {
+        var top = visible.maxY - gap
+        if let islandBottom { top = min(top, islandBottom - gap) }
+        let height = min(size.height, max(top - visible.minY, 200))
+        let width = min(size.width, visible.width)
+        let y = max(visible.minY, top - height)
+        let x = visible.midX - width / 2
+        return CGRect(x: x, y: y, width: width, height: height)
+    }
+}
+
 /// When the island offers to install the Claude Code hooks: Claude Code is there, the hooks
 /// are not, it was never offered, and nothing is being filmed. Nothing is written without the
 /// person's accord: the offer only opens the preview.

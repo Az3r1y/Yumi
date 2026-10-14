@@ -37,16 +37,15 @@ struct SettingsActivity: View {
             }
             .riseIn(1)
             row(loc("Habitude")) {
-                HStack(spacing: 0) {
-                    ForEach(YumiWorkHabit.allCases, id: \.self) { choice in
-                        SegmentButton(label: choice.label, on: workHabit == choice.rawValue) {
-                            workHabit = choice.rawValue
-                            IslandActions.tap()
-                        }
+                HStack(spacing: 4) {
+                    WorkHabitChips(choices: YumiWorkHabit.settingsChoices, selected: workHabit) { choice in
+                        workHabit = choice.rawValue
+                        IslandActions.tap()
                     }
+                    .frame(maxWidth: 300)
+                    WorkHabitPreview(choice: YumiWorkHabit(rawValue: workHabit) ?? .coffee, size: 18)
+                        .frame(width: 30, height: 22)
                 }
-                .padding(2)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(2)
             row(loc("Yumi parle")) {

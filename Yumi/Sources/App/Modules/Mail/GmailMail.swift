@@ -1,6 +1,6 @@
 import Foundation
 
-/// One mail of the inbox, as the island shows it: who, what, when, read or not.
+/// One mail of the inbox (Mail's unified inbox or Gmail's), as the island shows it: who, what, when, read or not.
 struct GmailMail: Equatable, Sendable, Identifiable {
     var uid: Int
     /// The sender's name, or their address without a name.
@@ -18,6 +18,10 @@ struct GmailMail: Equatable, Sendable, Identifiable {
     var replyAddress = ""
     /// The Message-ID, so an answer stays in the conversation.
     var messageID = ""
+    /// The account in Mail ("iCloud", "Pro"...); empty for Gmail by app password.
+    var account = ""
+    /// Where it was read: Mail opens it in Mail, Gmail in the browser.
+    var source = MailSource.gmail
 
     var id: Int { uid }
 

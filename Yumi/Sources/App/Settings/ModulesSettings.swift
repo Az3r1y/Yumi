@@ -46,7 +46,7 @@ struct ModulesSettings: View {
             ContributionsSection()
             if githubConnected { GitHubReposSection() }
 
-            GmailSettingsSection()
+            MailSourceSection()
                 .id("module-settings-gmail")
             NotionSettingsSection()
                 .id("module-settings-notion")
@@ -231,6 +231,78 @@ private struct ContributionsSection: View {
             Text("Contributions")
         } footer: {
             SettingsHelp(loc("Comme sur ton profil GitHub. Je les relis au plus toutes les trente minutes."))
+        }
+    }
+}
+
+/// The mails module: where the mails come from (Apple's Mail by default, or Gmail), the access
+/// to Mail, and which of Mail's accounts the island shows. Gmail's own section follows when chosen.
+struct MailSourceSection: View {
+    @AppStorage(MailSource.defaultsKey) private var stored = ""
+    @State private var hidden = MailAccounts.hidden()
+    @ObservedObject private var inbox = GmailInbox.shared
+    @State private var access: String?
+
+    private var source: MailSource {
+        MailSource(rawValue: stored) ?? MailSource.current(gmailConnected: KeychainStore.shared.get(GmailModule.passwordKey)?.isEmpty == false)
+    }
+
+    var body: some View {
+        Section {
+            if MailSource.mailAppAvailable {
+                Picker("Source", selection: Binding(get: { source }, set: { stored = $0.rawValue; changed() })) {
+                    Text("App Mail du Mac").tag(MailSource.mailApp)
+                    Text("Gmail (mot de passe d'application)").tag(MailSource.gmail)
+                }
+            }
+            if source == .mailApp {
+                LabeledContent("Accès à Mail") {
+                    HStack {
+                        if let access { Text(access).foregroundStyle(.secondary).font(.callout) }
+                        Button("Autoriser", action: askAccess)
+                    }
+                }
+                if inbox.accounts.count > 1 {
+                    ForEach(inbox.accounts, id: \.self) { account in
+                        Toggle(account, isOn: Binding(get: { !hidden.contains(account) }, set: { show(account, $0) }))
+                    }
+                }
+            }
+        } header: {
+            Text("Mails")
+        } footer: {
+            SettingsHelp(source == .mailApp
+                ? loc("Je lis la boîte de réception de l'app Mail, tous tes comptes, sans aucun mot de passe et sans rien marquer comme lu. Une réponse s'ouvre en brouillon dans Mail : c'est toi qui l'envoies. Si tu refuses l'accès, le module reste vide ; tu peux changer d'avis dans Réglages Système, Confidentialité, Automatisation.")
+                : loc("Gmail se lit avec un mot de passe d'application, ci-dessous."))
+        }
+        if source == .gmail { GmailSettingsSection() }
+    }
+
+    private func show(_ account: String, _ on: Bool) {
+        var set = hidden
+        if on { set.remove(account) } else { set.insert(account) }
+        UserDefaults.standard.set(Array(set).sorted(), forKey: MailAccounts.hiddenKey)
+        hidden = set
+        changed()
+    }
+
+    private func changed() {
+        NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
+    }
+
+    /// The click asks macOS for the Automation access to Mail (the system prompt appears once).
+    private func askAccess() {
+        access = loc("Je demande…")
+        Task {
+            do {
+                _ = try await MailAppScript.run("tell application \"Mail\" to count of accounts", startingMail: true)
+                access = loc("Autorisé")
+                changed()
+            } catch MailAppScript.Failure.denied {
+                access = loc("Refusé : Réglages Système, Automatisation")
+            } catch {
+                access = loc("Mail ne répond pas")
+            }
         }
     }
 }

@@ -55,7 +55,7 @@
 
 He can also tell the time and see which app and window are in front, when you let him.
 
-He does **not** control your whole Mac. He never deletes, moves, sends a message or an email on his own, runs a command, or edits a file he did not create. A request he cannot do is refused, and he says why. (In the Gmail module, a reply he suggests leaves only when you press **Send** yourself.) New tricks come with each release.
+He does **not** control your whole Mac. He never deletes, moves, sends a message or an email on his own, runs a command, or edits a file he did not create. A request he cannot do is refused, and he says why. (In the Mail module, a reply he suggests opens as a draft in Mail, or with Gmail leaves only when you press **Send** yourself.) New tricks come with each release.
 
 ## Why Yumi?
 
@@ -118,7 +118,7 @@ Yumi is a public alpha, **0.1.0-alpha.9**: free, open source, and moving fast.
 
 - **New in alpha 9:** a redesigned island in three tabs (Work, Day, Unwind) with bento cards, the island colour of your choice, costumes for Yumi, a Gmail module, Deezer and YouTube Music, a focus length you choose, and GitHub news told as they happen.
 
-- **Works today:** the actions above, with approval and verification; Claude Code sessions and approvals; the modules (calendar, reminders, focus, music, weather, GitHub, Notion, Gmail); memory; English and French.
+- **Works today:** the actions above, with approval and verification; Claude Code sessions and approvals; the modules (calendar, reminders, focus, music, weather, GitHub, Notion, Mail or Gmail); memory; English and French.
 - **Still rough:** see [Known limitations](#known-limitations). Not notarized, not tested on Macs without a notch, and one request cannot yet read then act (« prepare my day »).
 - **Something broke?** [Open a bug report](https://github.com/estebanbaigts/Yumi/issues/new?template=bug.yml), or use **Send feedback** in Yumi's menu ([form](https://tally.so/r/Me9lvA), no account needed).
 
@@ -155,7 +155,7 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 | **Notion** | Today's and late tasks from the databases you choose: title, database, a date pill, late ones first. Click to open the page; tick the circle to mark it done in Notion (asked every time) | An internal integration key, and the databases shared with it |
 | **Agenda** | Your next event of the day | Calendar access |
 | **Notes** | Today's reminders, ticked from the notch | Reminders access |
-| **Gmail** | Your latest mails, the important ones apart, and answers Yumi suggests. Nothing is sent until you press Send | Your Gmail address and a Google app password (kept in the Keychain) |
+| **Mail** | Your latest mails from the Mac's Mail app (every account set up there: Gmail, iCloud, Outlook, work), the important ones apart, the account on each mail, and answers Yumi suggests, opened as a draft in Mail that you send yourself. Gmail with an app password stays an option | Nothing by default: macOS asks once to let Yumi read Mail (Automation). For Gmail: your address and a Google app password (kept in the Keychain) |
 | **Focus** | A work timer and its breaks, the length you choose | Nothing |
 | **Music** | The track playing, pause, next, previous | Automation, for Music, Spotify, Deezer or YouTube Music |
 | **Weather** | The sky where you are | Location, or a city typed by hand |
@@ -235,7 +235,7 @@ This is an alpha. Here is what we know is missing or rough today.
 - **Read then act is not there yet.** The agent can read (your day) or act (create, add), but not read and then act on what it read in one request, like « prepare my day ».
 - **Notion** lists twelve tasks at most in the island. Ticking needs a "done" property (checkbox or status) chosen in the settings, and is only offered in the direct build.
 - **GitHub** commits are listed flat, not foldable. Counts cover what GitHub's activity feed returns (90 days, 300 events).
-- **Gmail** needs a Google app password (two-step verification on), shows the latest mails of the inbox only, and never changes your mailbox.
+- **Mail** reads the inbox of the Mail app only while Mail is open, shows the latest 10 mails of each account (Mail can take up to a minute to answer on a very large inbox), and never changes your mailbox. If you refuse the Automation access the module stays empty (System Settings, Privacy, Automation to change it). Not in the App Store build. The Gmail option needs a Google app password (two-step verification on).
 - **Gemini's free tier** can run out quickly; Yumi tells you which limit was hit and when it resets.
 - **CPU**: about 10 % while an animated habit plays during an agent run, much less at rest.
 - **The App Store build** is not shipped and cannot use Claude Code or the hooks.

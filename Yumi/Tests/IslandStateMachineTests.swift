@@ -961,6 +961,24 @@ import Foundation
         #expect(!r13)
     }
 
+    @Test func openingSettingsFoldsTheIslandUnlessAnApprovalWaits() {
+        #expect(SettingsOpening.foldsIsland(approvalPending: false))
+        #expect(!SettingsOpening.foldsIsland(approvalPending: true))
+    }
+
+    @Test func theSettingsWindowStartsUnderTheMenuBarAndTheIsland() {
+        let visible = CGRect(x: 0, y: 0, width: 1512, height: 944)   // under the menu bar
+        let size = CGSize(width: 760, height: 600)
+        let free = SettingsOpening.frame(size: size, visible: visible, islandBottom: nil)
+        #expect(free.maxY <= visible.maxY)
+        #expect(free.midX == visible.midX)
+        #expect(free.size == size)
+        let below = SettingsOpening.frame(size: size, visible: visible, islandBottom: 700)
+        #expect(below.maxY <= 700)
+        #expect(below.minY >= visible.minY)
+        #expect(below.maxY == 688)
+    }
+
     @Test func aClickOutsideFoldsUnlessSomethingWaits() {
         #expect(OutsideClick.folds(islandOpen: true, insideIsland: false, approvalPending: false, unsentDraft: false, pinned: false))
         #expect(!OutsideClick.folds(islandOpen: true, insideIsland: true, approvalPending: false, unsentDraft: false, pinned: false))

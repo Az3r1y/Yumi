@@ -220,7 +220,7 @@ enum BotDemo {
     private static func openGallery() {
         let model = YumiGalleryModel()
         let host = NSHostingView(rootView: YumiGalleryView(model: model))
-        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 850),
+        let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 980, height: 1020),
                               styleMask: [.titled, .closable], backing: .buffered, defer: false)
         window.title = loc("Yumi : planche du personnage")
         window.contentView = host

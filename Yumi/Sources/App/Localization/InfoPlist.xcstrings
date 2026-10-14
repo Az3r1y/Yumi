@@ -25,13 +25,13 @@
         "fr": {
           "stringUnit": {
             "state": "translated",
-            "value": "Je lis l'adresse de la page ouverte dans ton navigateur quand tu me la montres, j'envoie par Mail ce que tu confirmes, et je mets ta musique en pause ou au morceau suivant quand tu me le demandes."
+            "value": "Je lis l'adresse de la page ouverte dans ton navigateur quand tu me la montres, je lis ta boîte de réception dans Mail (sans rien y changer) et j'y ouvre en brouillon les réponses que tu enverras toi-même, j'envoie par Mail ce que tu confirmes, et je mets ta musique en pause ou au morceau suivant quand tu me le demandes."
           }
         },
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "I read the address of the page open in your browser when you show it to me, I send with Mail what you confirm, and I pause your music or skip to the next track when you ask."
+            "value": "I read the address of the page open in your browser when you show it to me, I read your inbox in Mail (without changing anything) and open there as drafts the answers you send yourself, I send with Mail what you confirm, and I pause your music or skip to the next track when you ask."
           }
         }
       }

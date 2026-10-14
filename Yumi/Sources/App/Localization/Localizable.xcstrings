@@ -11908,6 +11908,386 @@
           }
         }
       }
+    },
+    "Thé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tea"
+          }
+        }
+      }
+    },
+    "Eau": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Water"
+          }
+        }
+      }
+    },
+    "Jus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Juice"
+          }
+        }
+      }
+    },
+    "Livre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Book"
+          }
+        }
+      }
+    },
+    "Manette": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gamepad"
+          }
+        }
+      }
+    },
+    "Tricot": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knitting"
+          }
+        }
+      }
+    },
+    "Pause thé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tea break"
+          }
+        }
+      }
+    },
+    "Je m'hydrate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Staying hydrated"
+          }
+        }
+      }
+    },
+    "Petit jus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little juice"
+          }
+        }
+      }
+    },
+    "Un chapitre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more chapter"
+          }
+        }
+      }
+    },
+    "Encore une partie": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more game"
+          }
+        }
+      }
+    },
+    "Maille à l'endroit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knit one, purl one"
+          }
+        }
+      }
+    },
+    "Concentré": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focused"
+          }
+        }
+      }
+    },
+    "Aperçu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        }
+      }
+    },
+    "Ouvrir Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Mail"
+          }
+        }
+      }
+    },
+    "Mail est fermé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail is closed"
+          }
+        }
+      }
+    },
+    "Ouvre l'app Mail et je lis ta boîte de réception, sans rien y toucher.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the Mail app and I read your inbox, without touching anything."
+          }
+        }
+      }
+    },
+    "Aucun compte dans Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No account in Mail"
+          }
+        }
+      }
+    },
+    "Ajoute ton compte dans l'app Mail, ou choisis Gmail dans Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add your account in the Mail app, or choose Gmail in Settings, Modules."
+          }
+        }
+      }
+    },
+    "Je n'ai pas accès à Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I have no access to Mail"
+          }
+        }
+      }
+    },
+    "Réglages Système, Confidentialité, Automatisation : autorise Yumi à contrôler Mail.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Settings, Privacy, Automation: allow Yumi to control Mail."
+          }
+        }
+      }
+    },
+    "Mail ne répond pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail does not answer"
+          }
+        }
+      }
+    },
+    "Ouvrir dans Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Mail"
+          }
+        }
+      }
+    },
+    "À %@, depuis %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To %1$@, from %2$@"
+          }
+        }
+      }
+    },
+    "Brouillon ouvert dans Mail : relis-le et envoie-le toi-même.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draft opened in Mail: read it and send it yourself."
+          }
+        }
+      }
+    },
+    "Mail refuse : autorise Yumi dans Réglages Système, Automatisation.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail refuses: allow Yumi in System Settings, Automation."
+          }
+        }
+      }
+    },
+    "Mail n'a pas ouvert le brouillon, rien n'est parti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail did not open the draft, nothing was sent."
+          }
+        }
+      }
+    },
+    "Source": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source"
+          }
+        }
+      }
+    },
+    "App Mail du Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Mac's Mail app"
+          }
+        }
+      }
+    },
+    "Gmail (mot de passe d'application)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail (app password)"
+          }
+        }
+      }
+    },
+    "Accès à Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access to Mail"
+          }
+        }
+      }
+    },
+    "Mails": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail"
+          }
+        }
+      }
+    },
+    "Je lis la boîte de réception de l'app Mail, tous tes comptes, sans aucun mot de passe et sans rien marquer comme lu. Une réponse s'ouvre en brouillon dans Mail : c'est toi qui l'envoies. Si tu refuses l'accès, le module reste vide ; tu peux changer d'avis dans Réglages Système, Confidentialité, Automatisation.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I read the inbox of the Mail app, all your accounts, with no password and without marking anything read. An answer opens as a draft in Mail: you send it yourself. If you refuse the access, the module stays empty; you can change your mind in System Settings, Privacy, Automation."
+          }
+        }
+      }
+    },
+    "Gmail se lit avec un mot de passe d'application, ci-dessous.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail is read with an app password, below."
+          }
+        }
+      }
+    },
+    "Je demande…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asking…"
+          }
+        }
+      }
+    },
+    "Refusé : Réglages Système, Automatisation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refused: System Settings, Automation"
+          }
+        }
+      }
+    },
+    "Je lis ta boîte…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading your inbox…"
+          }
+        }
+      }
+    },
+    "Mail met parfois une minute à répondre sur une grosse boîte.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail sometimes takes a minute to answer on a large inbox."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

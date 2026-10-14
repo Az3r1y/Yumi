@@ -160,15 +160,15 @@ enum YumiRenderer {
             startPoint: CGPoint(x: 0, y: 20), endPoint: CGPoint(x: 0, y: 80)))
     }
 
-    private static func line(_ a: CGPoint, _ b: CGPoint) -> Path {
+    static func line(_ a: CGPoint, _ b: CGPoint) -> Path {
         var p = Path(); p.move(to: a); p.addLine(to: b); return p
     }
 
-    private static func circle(_ cx: CGFloat, _ cy: CGFloat, _ r: CGFloat) -> Path {
+    static func circle(_ cx: CGFloat, _ cy: CGFloat, _ r: CGFloat) -> Path {
         Path(ellipseIn: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2))
     }
 
-    private static func round(_ width: CGFloat) -> StrokeStyle { StrokeStyle(lineWidth: width, lineCap: .round) }
+    static func round(_ width: CGFloat) -> StrokeStyle { StrokeStyle(lineWidth: width, lineCap: .round) }
 
     // MARK: Whole character
 
@@ -578,6 +578,8 @@ enum YumiRenderer {
             c.fill(Path(ellipseIn: surface.insetBy(dx: 2.6, dy: 0.7)), with: .color(Color(.sRGB, red: 0.698, green: 0.827, blue: 0.494)))
             c.fill(circle(73.4, 54.7, 0.6), with: .color(Color(.sRGB, red: 0.835, green: 0.910, blue: 0.663)))
         }
+
+        drawWorkProps(f, in: props)
 
         if let o = f.props[.sunglasses], o > 0.01 {
             // They drop onto his nose in 0.55 s
