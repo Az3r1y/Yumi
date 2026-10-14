@@ -538,7 +538,7 @@ enum SettingsPage: String, CaseIterable, Identifiable, Sendable {
                        "absenceInterval", "contextEngineEnabled", "quickTaskShortcutEnabled", "quickTaskShortcutFlags",
                        "quickTaskShortcutCode", "quickTaskDestination", "quickTaskNotionBase"],
         .yumi:        ["soundEnabled", "soundVolume", "workHabit", "yumiTalk"],
-        .modules:     ["github-token", "agendaHiddenCalendars", "agendaTargetCalendar"],
+        .modules:     ["github-token", "github-app-token", "agendaHiddenCalendars", "agendaTargetCalendar"],
         .engines:     ["engineSettings", "engineKeys"],
         .claudeCode:  ["hooks", "claudeDirectoryBookmark"],
         .permissions: ["macOSPermissions", "yumiPermissions"],

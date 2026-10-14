@@ -65,6 +65,8 @@ final class KeychainStore: @unchecked Sendable {
         "openai-api-key",
         "gemini-api-key",
         "github-token",
+        // The GitHub App's user access token and refresh token, as JSON (Modules/GitHub/GitHubApp.swift).
+        "github-app-token",
         // Not "notion-api-key": that old name is erased once at launch.
         "notion-integration-key",
         "gmail-app-password",
