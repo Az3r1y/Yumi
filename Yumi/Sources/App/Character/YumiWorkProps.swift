@@ -3,17 +3,19 @@ import SwiftUI
 // What he holds while an agent works, besides the cigarette, the coffee and the matcha
 // (YumiWorkHabit): a mug of tea, a bottle of water, a glass of juice, a book, a gamepad, a
 // knitting. Drawn in the space of the props of YumiRenderer (a 100 × 84 box, the face round
-// 50, 45); the cups sit by his right side like the coffee, the rest in front of him.
+// 50, 45); the cups sit by his right side like the coffee and turn with the face, the rest is
+// held low in front of him and stays with the body.
 
 extension YumiRenderer {
 
-    static func drawWorkProps(_ f: YumiFrame, in props: GraphicsContext) {
-        if let o = f.props[.tea], o > 0.01 { drawTea(f, o, props) }
-        if let o = f.props[.water], o > 0.01 { drawWater(f, o, props) }
-        if let o = f.props[.juice], o > 0.01 { drawJuice(f, o, props) }
-        if let o = f.props[.book], o > 0.01 { drawBook(f, o, props) }
-        if let o = f.props[.gamepad], o > 0.01 { drawGamepad(f, o, props) }
-        if let o = f.props[.knitting], o > 0.01 { drawKnitting(f, o, props) }
+    /// `face` turns with the head (YumiFaceTurn), `held` does not.
+    static func drawWorkProps(_ f: YumiFrame, face: GraphicsContext, held: GraphicsContext) {
+        if let o = f.props[.tea], o > 0.01 { drawTea(f, o, face) }
+        if let o = f.props[.water], o > 0.01 { drawWater(f, o, face) }
+        if let o = f.props[.juice], o > 0.01 { drawJuice(f, o, face) }
+        if let o = f.props[.book], o > 0.01 { drawBook(f, o, held) }
+        if let o = f.props[.gamepad], o > 0.01 { drawGamepad(f, o, held) }
+        if let o = f.props[.knitting], o > 0.01 { drawKnitting(f, o, held) }
         // .focus: empty hands, nothing to draw
     }
 

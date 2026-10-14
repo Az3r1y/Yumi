@@ -364,12 +364,8 @@ enum YumiRenderer {
 
             // The eyes sit on a sphere: turning the head slides them sideways and narrows
             // the one going round the edge
-            let ya = sd * 0.33 + f.yaw, pi = f.pitch
-            let ex = sin(ya) * cos(pi) * 40.1, ey = sin(pi) * 30
             var eg = face
-            eg.translateBy(x: ex - sd * 13, y: ey)
-            eg.translateBy(x: cx, y: 45)
-            eg.scaleBy(x: max(0.35, cos(ya)), y: max(0.6, cos(pi)))
+            eg.concatenate(YumiFaceTurn.eye(sd, yaw: f.yaw, pitch: f.pitch))
             eg.translateBy(x: -cx, y: -45)
 
             // White of the eye, with the blink
@@ -508,6 +504,11 @@ enum YumiRenderer {
                                   yaw: f.yaw, pitch: f.pitch, eyesScale: f.eyesScale, in: props)
         }
 
+        // What he holds low in front of him stays with the body, which does not turn
+        let held = props
+        // Everything below is worn on the face: it turns with the head, as the eyes do
+        props.concatenate(YumiFaceTurn.face(yaw: f.yaw, pitch: f.pitch))
+
         if let o = f.props[.smoke], o > 0.01 {
             var c = props
             c.opacity = o
@@ -579,13 +580,17 @@ enum YumiRenderer {
             c.fill(circle(73.4, 54.7, 0.6), with: .color(Color(.sRGB, red: 0.835, green: 0.910, blue: 0.663)))
         }
 
-        drawWorkProps(f, in: props)
+        drawWorkProps(f, face: props, held: held)
 
         if let o = f.props[.sunglasses], o > 0.01 {
             // They drop onto his nose in 0.55 s
             let p = YumiCurve.spring(f.habitTime / 0.55)
             var c = props
             c.opacity = o * max(0, min(1, p))
+            // They grow with the eyes under the pointer, so the lenses keep covering them
+            c.translateBy(x: 50, y: 45)
+            c.scaleBy(x: f.eyesScale, y: f.eyesScale)
+            c.translateBy(x: -50, y: -45)
             c.translateBy(x: 50, y: 44.5 - 34 * (1 - p))
             c.rotate(by: .degrees(Double(-14 * (1 - p))))
             c.translateBy(x: -50, y: -44.5)
