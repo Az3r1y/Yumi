@@ -20,7 +20,7 @@ Diagnostic établi le 2026-10-08 sur l'état réel du dépôt (0.1.0-alpha.7, RE
 Trois promesses dans une phrase : moniteur d'agents, garde-fou, compagnon. C'est honnête mais dilué. Le lecteur retient « encore une app d'encoche ».
 
 ### 2. Hook actuel
-Le `demo.gif` : Claude Code demande `npm test`, on approuve depuis l'encoche. C'est le meilleur actif du repo, mais il montre la fonction la plus proche de Coucou (approbation Claude Code), pas la plus différenciante (Yumi agit lui-même, après un clic, puis vérifie).
+Le `demo.gif` : Claude Code demande `npm test`, on approuve depuis l'encoche. C'est le meilleur actif du repo, mais il montre la fonction la plus courante dans les apps d'encoche (approbation Claude Code), pas la plus différenciante (Yumi agit lui-même, après un clic, puis vérifie).
 
 ### 3. Éléments à potentiel viral
 - **Le moment « il demande avant »** : une carte qui montre exactement le fichier et son contenu avant création. Visuel, rassurant, inédit pour un agent.
@@ -40,7 +40,6 @@ Tableau des moteurs, `PlanValidator`, planchers de risque, `shasum`/`gh attestat
 - Les actions disponibles sont modestes (fichier texte, rappel, événement, tâche Notion). Les présenter comme « agit sur ton Mac » sans les citer crée une déception à l'installation. Il faut être précis : petites actions, toujours visibles.
 - « Open Anyway » au premier lancement : friction et méfiance, surtout pour un outil qui parle de sécurité.
 - Pas de vidéo de 20 s qui montre le parcours complet demande → plan → clic → vérification.
-- Héritage Coucou : si ce n'est pas dit clairement et tôt, quelqu'un le dira à ta place sur HN ou Reddit, et ce sera lu comme « clone ». À assumer dans une ligne (« built on Coucou's MIT notch app, then rebuilt around an agent runtime and a permission gate »).
 
 ### 6. Fonctionnalités qui méritent une vidéo
 1. Demande → carte de plan → clic → fichier créé → « vérifié ».
@@ -83,7 +82,7 @@ Chaque release alpha = un post « une capacité, une vidéo » : Notion high-ris
 - **Présentation** : Yumi vit dans l'encoche. Tu demandes, il prépare un plan, te montre exactement ce qui va changer, attend ton clic, agit, puis vérifie.
 - **Cible** : devs et power users curieux des agents mais méfiants.
 - **Hook** : la carte d'approbation + « vérifié ».
-- **Différence avec Coucou** : Coucou montre et relaie des agents tiers. Yumi a son propre agent, son runtime, son gate et sa vérification.
+- **Différence avec les autres apps d'encoche** : elles montrent et relaient des agents tiers. Yumi a son propre agent, son runtime, son gate et sa vérification.
 - **Avantage** : thème « confiance » très actuel, compréhensible par des non-devs, différenciant.
 - **Risque** : promesse plus grande que le catalogue d'actions actuel (fichiers texte, rappels, événements). À cadrer par la précision.
 
@@ -92,7 +91,7 @@ Chaque release alpha = un post « une capacité, une vidéo » : Notion high-ris
 - **Présentation** : toutes tes sessions, ce qu'elles font, et leurs demandes de permission, sans quitter ce que tu fais.
 - **Cible** : utilisateurs intensifs de Claude Code.
 - **Hook** : 3 terminaux qui tournent, une seule encoche qui résume tout.
-- **Différence avec Coucou** : faible. C'est le terrain le plus proche de Coucou.
+- **Différence avec les autres apps d'encoche** : faible. C'est le terrain le plus disputé.
 - **Avantage** : besoin immédiat, communauté identifiée, conversion rapide.
 - **Risque** : être perçu comme un clone ; dépendance à un seul outil tiers.
 
@@ -101,7 +100,7 @@ Chaque release alpha = un post « une capacité, une vidéo » : Notion high-ris
 - **Présentation** : un petit être vivant dans ton Mac qui te tient compagnie, suit tes agents et peut faire des choses pour toi, toujours avec ta permission.
 - **Cible** : grand public tech, créateurs, TikTok/Reels.
 - **Hook** : le personnage + un geste concret.
-- **Différence avec Coucou** : personnage, voix, initiative, mémoire.
+- **Différence avec les autres apps d'encoche** : personnage, voix, initiative, mémoire.
 - **Avantage** : le plus partageable visuellement.
 - **Risque** : perçu comme gadget ; ne convertit pas en contributeurs.
 
@@ -133,12 +132,12 @@ Logique : le personnage attire (C), « il demande toujours » rassure tout le mo
 | **TikTok** | Démos face écran, personnage | 3/sem. pendant 3 sem., puis 2 | « Mon Mac a un petit habitant » / « je lui demande de tout supprimer » | Vertical 15-25 s, texte à l'écran, son | « Lien dans la bio, gratuit, open source » | Portée large, effet waouh |
 | **Reels** | Même clips que TikTok | Republication | Idem | Idem | Idem | Portée sans effort supplémentaire |
 | **YouTube Shorts** | Mêmes clips + 1 vidéo longue (5 min) au jour 21 | Republication + 1 long | « Construire un agent qui ne peut rien casser » | Vertical + horizontal | Lien en description | Recherche long terme |
-| **Reddit** | Post de lancement, puis réponses utiles | 1 post par sub, une fois ; commentaires au fil de l'eau | « I built a macOS agent where the model can only propose » | Texte + GIF, transparence Coucou | Feedback demandé, pas de « star please » | Feedback qualifié, premiers contributeurs |
+| **Reddit** | Post de lancement, puis réponses utiles | 1 post par sub, une fois ; commentaires au fil de l'eau | « I built a macOS agent where the model can only propose » | Texte + GIF | Feedback demandé, pas de « star please » | Feedback qualifié, premiers contributeurs |
 | **Communautés Claude Code / agents / macOS** | Discord Anthropic, r/ClaudeAI, communautés MCP, forums Swift | Ponctuel, quand utile | « Approuver Claude Code depuis l'encoche » | Message court + GIF | Repo | Utilisateurs cœur de cible |
 | **Product Hunt** | Lancement unique | Une fois, après notarisation ou en assumant l'alpha | Phrase A | Galerie 5 visuels + vidéo 40 s | Download | Pic de visibilité, backlinks |
 | **Hacker News** | Show HN | Une fois, un mardi/mercredi 15h-16h FR | « Show HN: Yumi, a macOS agent that asks before changing anything » | Lien repo, premier commentaire technique | Discussion | Devs seniors, stars en masse |
 
-Règles : ne jamais poster sans vidéo réelle ; Reddit et HN demandent l'honnêteté (alpha, non notarisé, base Coucou) dès le premier commentaire ; Product Hunt et HN à des semaines différentes.
+Règles : ne jamais poster sans vidéo réelle ; Reddit et HN demandent l'honnêteté (alpha, non notarisé) dès le premier commentaire ; Product Hunt et HN à des semaines différentes.
 
 ---
 
@@ -191,7 +190,7 @@ Règles : ne jamais poster sans vidéo réelle ; Reddit et HN demandent l'honnê
 ## Étape 6 : plan 30 jours (environ 1 h/jour, 2-3 h les jours de lancement)
 
 **Semaine 1 : préparer le terrain (pas de lancement)**
-- J1 : valider la phrase A. Réordonner le haut du README (Claude Code le fait). Une ligne d'attribution Coucou visible.
+- J1 : valider la phrase A. Réordonner le haut du README (Claude Code le fait).
 - J2 : enregistrer 4 clips bruts (idées 1, 2, 3, 7). Écran propre, police grosse, 1080p.
 - J3 : monter les 4 clips (Remotion `motion/` pour les sous-titres et la fin standard).
 - J4 : templates d'issues, 6 `good first issue`, Discussions activées, topics GitHub, description et social preview.
@@ -226,7 +225,7 @@ Règles : ne jamais poster sans vidéo réelle ; Reddit et HN demandent l'honnê
 | Prio | Tâche | Impact | Effort | Raison | Dépendances |
 |---|---|---|---|---|---|
 | P0 | Fixer la phrase de positionnement | Très haut | 15 min | Tout le reste en découle | Aucune |
-| P0 | Nouveau haut de README (phrase, vidéo du parcours complet, Download, attribution Coucou) | Très haut | 1-2 h | Premier écran de chaque visiteur | Phrase, vidéo |
+| P0 | Nouveau haut de README (phrase, vidéo du parcours complet, Download) | Très haut | 1-2 h | Premier écran de chaque visiteur | Phrase, vidéo |
 | P0 | Enregistrer la vidéo « demande → plan → clic → vérifié » | Très haut | 1-2 h | L'actif n°1, n'existe pas encore | Aucune |
 | P0 | Description, topics, social preview du repo | Haut | 20 min | Aperçu partout où le lien est collé | Phrase |
 | P1 | 4 clips courts montés | Haut | 3 h | Carburant de 2 semaines | Vidéo P0 |

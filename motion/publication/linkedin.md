@@ -37,7 +37,6 @@ Vidéo : `out/linkedin/masterclass-16x9.mp4` (1 min 58), ou `masterclass-9x16.mp
 
 > L'alpha est ici : https://github.com/estebanbaigts/Yumi/releases/tag/v0.1.0-alpha
 > Le code : https://github.com/estebanbaigts/Yumi
-> Yumi part du code open source de Coucou, de Louis Raillé, sous licence MIT. Merci à lui.
 
 **Texte alternatif**
 
@@ -65,7 +64,6 @@ Vidéo : `out/linkedin/linkedin-film.mp4` (27,6 s).
 **Premier commentaire**
 
 > Le code est ici : https://github.com/estebanbaigts/Yumi
-> Yumi part du code open source de Coucou, de Louis Raillé, sous licence MIT. Merci à lui.
 
 
 ## Post 2 : les permissions depuis la notch
