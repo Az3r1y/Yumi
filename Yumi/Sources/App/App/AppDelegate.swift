@@ -346,7 +346,9 @@ final class YumiCore {
                 weather,
                 notion,
                 GitHubModule(
-                    token: { KeychainStore.shared.get("github-token") },
+                    token: { GitHubAuth.currentToken },
+                    prepare: { await GitHubAuth.shared.renewIfNeeded() },
+                    viaApp: { GitHubAuth.viaApp },
                     onConnect: { NotificationCenter.default.post(name: .openFullSettings, object: nil) },
                     onNews: { [initiative] event, count in initiative.notice(.repository(event, count: count)) }),
                 GmailModule(

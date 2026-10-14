@@ -236,7 +236,7 @@ enum IslandActions {
     /// The key the core reads the token from (KeychainStore, never on disk).
     static let githubTokenKey = "github-token"
 
-    static var githubConnected: Bool { KeychainStore.shared.get(githubTokenKey)?.isEmpty == false }
+    static var githubConnected: Bool { GitHubAuth.currentToken != nil }
 
     /// Hands the token to the core's Keychain store, and tells the module to read it again.
     static func connectGitHub(_ token: String?) {

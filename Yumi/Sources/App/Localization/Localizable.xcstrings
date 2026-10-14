@@ -12288,6 +12288,146 @@
           }
         }
       }
+    },
+    "GitHub ne répond pas. Réessaie dans un moment.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub is not answering. Try again in a moment."
+          }
+        }
+      }
+    },
+    "Connexion annulée sur GitHub.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign-in cancelled on GitHub."
+          }
+        }
+      }
+    },
+    "GitHub a refusé la connexion (%@).": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub refused the sign-in (%@)."
+          }
+        }
+      }
+    },
+    "Le code a expiré. Recommence.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The code expired. Start again."
+          }
+        }
+      }
+    },
+    "App GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub App"
+          }
+        }
+      }
+    },
+    "Connectée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected"
+          }
+        }
+      }
+    },
+    "Choisir les dépôts": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose repositories"
+          }
+        }
+      }
+    },
+    "Ajouter une organisation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add an organisation"
+          }
+        }
+      }
+    },
+    "Déconnecter l'app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign out of the app"
+          }
+        }
+      }
+    },
+    "Code à taper sur GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Code to type on GitHub"
+          }
+        }
+      }
+    },
+    "Copier": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy"
+          }
+        }
+      }
+    },
+    "Ouvrir GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open GitHub"
+          }
+        }
+      }
+    },
+    "Se connecter avec l'app GitHub": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sign in with the GitHub App"
+          }
+        }
+      }
+    },
+    "L'app GitHub suit chaque compte où tu l'installes, toi et autant d'organisations que tu veux, en lecture seule. Sinon, un jeton en lecture suffit. Je n'écris rien.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The GitHub App follows every account where you install it, yours and as many organisations as you like, read-only. Otherwise, a read-only token is enough. I write nothing."
+          }
+        }
+      }
     }
   },
   "version": "1.0"

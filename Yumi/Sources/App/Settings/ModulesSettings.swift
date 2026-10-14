@@ -5,7 +5,8 @@ import SwiftUI
 struct ModulesSettings: View {
     @ObservedObject private var state = AppState.shared
     @State private var githubToken = ""
-    @State private var githubConnected = IslandActions.githubConnected
+    @State private var githubConnected = KeychainStore.shared.get(IslandActions.githubTokenKey)?.isEmpty == false
+    @ObservedObject private var githubApp = GitHubAuth.shared
 
     var body: some View {
         ScrollViewReader { scroller in
@@ -15,6 +16,9 @@ struct ModulesSettings: View {
             }
 
             Section {
+                if GitHubApp.isAvailable { GitHubAppRows() }
+                // Signed in with the app, the personal token is not used: no need to show it.
+                if !(GitHubApp.isAvailable && githubApp.signedIn) {
                 LabeledContent("État") {
                     SettingsStatus(text: githubConnected ? loc("Branché") : loc("Pas de jeton"), tone: githubConnected ? .ok : .off)
                 }
@@ -36,15 +40,20 @@ struct ModulesSettings: View {
                         }
                     }
                 }
+                }
             } header: {
                 Text("GitHub")
             } footer: {
-                SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
+                if GitHubApp.isAvailable {
+                    SettingsHelp(loc("L'app GitHub suit chaque compte où tu l'installes, toi et autant d'organisations que tu veux, en lecture seule. Sinon, un jeton en lecture suffit. Je n'écris rien."))
+                } else {
+                    SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
+                }
             }
             .id("module-settings-github")
 
             ContributionsSection()
-            if githubConnected { GitHubReposSection() }
+            if githubConnected || (GitHubApp.isAvailable && githubApp.signedIn) { GitHubReposSection() }
 
             MailSourceSection()
                 .id("module-settings-gmail")
