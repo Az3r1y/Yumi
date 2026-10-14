@@ -3991,6 +3991,16 @@
         }
       }
     },
+    "Demander les quotas à Anthropic": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ask Anthropic for the quotas"
+          }
+        }
+      }
+    },
     "Depuis %@": {
       "localizations": {
         "en": {
@@ -5259,6 +5269,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "I fold away after"
+          }
+        }
+      }
+    },
+    "Les quotas à jour même sans session Claude Code, avec la connexion de Claude Code lue dans le trousseau : macOS te demande ton mot de passe, et peut le redemander. Sinon, ils viennent de la ligne de statut.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up-to-date quotas even without a Claude Code session, using Claude Code's login read from the Keychain: macOS asks for your password, and may ask again. Otherwise they come from the status line."
           }
         }
       }

@@ -1,6 +1,5 @@
 import Foundation
 import Testing
-@testable import Yumi
 
 struct AntigravityHookTranslatorTests {
     private func payload(_ event: String, _ extra: [String: Any] = [:]) -> [String: Any] {

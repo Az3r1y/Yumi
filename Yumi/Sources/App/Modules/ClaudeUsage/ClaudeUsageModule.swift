@@ -62,8 +62,11 @@ final class ClaudeUsageModule: YumiModule {
         // The day's euro, once a day
         let rateChanged = await EuroRate.refresh()
         #if !APPSTORE
-        // Anthropic's own figures, at most every five minutes; the status line's otherwise
-        if Date().timeIntervalSince(quotasAsked) >= Self.quotasInterval {
+        // Anthropic's own figures, at most every five minutes, only when the person turned it on
+        // (reading Claude Code's login makes macOS ask); the status line's otherwise
+        if !Feature.isOn(.quotaFromKeychain) {
+            quotas = nil
+        } else if Date().timeIntervalSince(quotasAsked) >= Self.quotasInterval {
             quotasAsked = Date()
             let fetched = await Task.detached(priority: .utility) { () -> (fiveHour: StatusLineRelay.Report.Allowance?, sevenDay: StatusLineRelay.Report.Allowance?)? in
                 guard let token = ClaudeQuotaAPI.accessToken() else { return nil }
