@@ -6,11 +6,12 @@
 
 Yumi, compagnon macOS dans la notch (Swift 6, SwiftUI, AppKit, aucune dépendance). Alpha publique gratuite. Voir README.md pour les fonctions, docs/journal.md pour les décisions, docs/archive/post-alpha-status.md et docs/backlog.md pour la suite.
 
-## État au 8 octobre 2026
+## État au 14 octobre 2026
 
-- `main` : version 0.1.0-alpha.6, 837 tests, CI verte. Alpha 6 construite par la CI (brouillon de release à publier par l'utilisateur si ce n'est pas fait).
-- Sur `main` mais pas encore dans une release : la grille de contributions GitHub en un seul Canvas (64ec4e8, correctif CPU).
-- Non testé en réel : contributions GitHub, liste et cochage Notion, moteurs OpenAI et Ollama, Mac sans notch.
+- `main` : version 0.1.0-alpha.10, 1016 tests, CI verte. Le tag v0.1.0-alpha.10 a été déplacé une fois (correctif Mail ajouté après publication) : la release est repassée en brouillon, à republier par l'utilisateur si ce n'est pas fait.
+- Alpha 10 : Yumi marche sans rien configurer. Moteur choisi tout seul : celui de la personne, sinon le modèle d'Apple (FoundationModels, macOS 26), sinon le mode simple (AgentRuntime/SimpleMode, déterministe, sans réseau). Premier lancement sans question sur les modèles.
+- Mail (app Mail d'Apple) : ne jamais filtrer la boîte avec `whose` (40 000 mails : Mail figé plus de 2 min). Le texte d'un mail se lit à sa place (`MailAppPlace`). Même ainsi, chaque Apple Event peut prendre plusieurs secondes sur une grosse boîte Gmail.
+- Non testé en réel : le modèle d'Apple (pas encore téléchargé sur le Mac de l'utilisateur), le correctif Mail, l'alpha 10 sur un Mac sans Apple Intelligence (MacBook Air M1 d'une personne non développeuse), liste et cochage Notion, moteurs OpenAI et Ollama, Mac sans notch.
 
 ## Règles
 
@@ -48,7 +49,9 @@ Pour économiser l'usage : ouvrir une session neuve par chantier plutôt que ré
 
 ## Prochaines étapes probables
 
-1. Publier l'alpha 6, la tester en vrai (GitHub contributions, Notion).
-2. « Lire puis agir » : prépare ma journée, avec un aperçu du plan (docs/archive/post-alpha-status.md).
-3. Spécification des modules externes (déclarés dans un fichier, derrière la même porte d'accord), à valider par l'utilisateur avant de coder.
-4. Commits GitHub dépliables, Mac sans notch.
+1. Faire tester l'alpha 10 sur le MacBook Air M1, sans aide : noter où ça bloque.
+2. Vérifier le correctif Mail en réel ; si Mail se fige encore, faire passer le brouillon avant la relecture de la boîte et relire moins souvent.
+3. Essayer le modèle d'Apple une fois téléchargé (choix des outils sur des demandes simples).
+4. « Lire puis agir » : prépare ma journée, avec un aperçu du plan (docs/archive/post-alpha-status.md).
+5. Spécification des modules externes (déclarés dans un fichier, derrière la même porte d'accord), à valider par l'utilisateur avant de coder.
+6. Commits GitHub dépliables, Mac sans notch.
