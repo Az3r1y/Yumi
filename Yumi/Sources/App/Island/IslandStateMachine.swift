@@ -38,8 +38,14 @@ final class IslandStateMachine {
             }
         }
     }
-    /// petit → hidden delay (seconds). Override for debug.
-    var petitToHiddenDelay: TimeInterval = 60
+    /// petit → hidden delay (seconds): the user's setting.
+    var petitToHiddenDelay: TimeInterval = 60 {
+        didSet {
+            // A countdown already running starts again with the new delay
+            guard petitToHiddenDelay != oldValue, petitHideWork != nil else { return }
+            schedulePetitHide()
+        }
+    }
     /// greeting → petit if `greetComplete()` never comes. The launch lasts about 5 s.
     var greetingTimeout: TimeInterval = 8
 
