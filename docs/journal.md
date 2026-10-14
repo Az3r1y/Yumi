@@ -561,3 +561,12 @@ Demandé par plusieurs testeurs.
 | Île | Fil par dépôt : en-tête « Yumi · 3 aujourd'hui, 12 cette semaine », puis « 3 commits sur main » et chaque commit (message, sha court, auteur), un clic ouvre le commit ; les autres événements ; puis les PR ouvertes et leurs checks (inchangé). Île repliée : CI rouge et relecture d'abord, puis un push de moins de deux minutes. Scènes du personnage inchangées. Les commits ne se replient pas : `ModuleRow` n'a pas de lignes dépliables, et l'île est un chantier à part. |
 | Comptes | Calculés sur les pushes vus dans le flux (GitHub en garde 90 jours, 300 événements au plus). |
 | Confidentialité | Seulement api.github.com, en lecture. Aucune écriture sur GitHub. |
+
+## Musique : les vidéos et la musique du navigateur (issue #5, branche `feat/5-browser-media`)
+
+| Sujet | Décision |
+|---|---|
+| Sites | YouTube, SoundCloud, Twitch et Vimeo rejoignent Deezer et YouTube Music, lus dans le titre des fenêtres (Accessibilité, déjà accordée), dans tous les navigateurs connus. Le titre d'une vidéo est gardé entier : l'ordre artiste et morceau n'y est pas fiable. |
+| Lecture ou pause | Demandé à Core Audio (`AudioActivity`, `kAudioProcessPropertyIsRunningOutput`), sans aucune permission : le navigateur ou l'un de ses processus auxiliaires envoie-t-il du son. Une page jamais entendue n'est pas un morceau (une vidéo ouverte que personne n'a lancée) ; un morceau entendu puis muet passe en pause. Un bouton de l'île l'emporte sur le son pendant 10 s. Si Core Audio ne répond pas, l'ancien comportement (le dernier bouton décide). |
+| Écartés | MediaRemote : réservé aux apps Apple depuis macOS 15.4. Apple Events vers les navigateurs : une autorisation Automatisation par navigateur, et rien sur la lecture sans « JavaScript depuis Apple Events ». |
+| Limites | Seul l'onglet au premier plan de chaque fenêtre est vu. Safari joue par les processus WebKit partagés avec d'autres apps (Mail…). Boutons par les touches média du Mac. Rien dans le build App Store ni en mode tournage. |

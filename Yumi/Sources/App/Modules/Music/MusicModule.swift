@@ -61,11 +61,16 @@ final class MusicModule: YumiModule {
     private var titleWatch: Task<Void, Never>?
     /// What the window titles showed at the last look, by player.
     private var titled: [MusicPlayer: NowPlaying] = [:]
+    /// When play or pause was last pressed in the island, by player read from its title.
+    private var pressedAt: [MusicPlayer: Date] = [:]
+    /// How long a press is trusted over the sound: a browser keeps its sound running a moment after a pause.
+    private static let pressTrust: TimeInterval = 10
 
     #if !APPSTORE
     /// Every three seconds, the titles of the windows of Deezer, YouTube Music and the browsers:
     /// read through Accessibility (the permission Yumi already has for window titles), only
-    /// while the module is selected.
+    /// while the module is selected. Whether the app plays is asked to Core Audio, which needs
+    /// no permission: a YouTube page open in front but never started is not a track.
     private func watchTitles() {
         titleWatch?.cancel()
         titleWatch = Task { [weak self] in
@@ -79,6 +84,9 @@ final class MusicModule: YumiModule {
     private func lookAtTitles() {
         guard AXIsProcessTrusted() else { return }
         var found: [MusicPlayer: NowPlaying] = [:]
+        // Asked once per look, and only when a title names a track
+        var audible: Set<String>??
+        let now = Date()
         for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular {
             let name = app.localizedName ?? ""
             let id = app.bundleIdentifier ?? ""
@@ -88,9 +96,13 @@ final class MusicModule: YumiModule {
                     || name.localizedCaseInsensitiveContains("Deezer") || name.localizedCaseInsensitiveContains("YouTube Music") else { continue }
             for title in Self.windowTitles(of: app.processIdentifier) {
                 guard let track = MusicTitles.parse(title, appName: name), found[track.player] == nil else { continue }
-                // A title player does not say whether it is paused: the last button pressed decides
-                let wasPaused = titled[track.player].map { !$0.isPlaying && $0.title == track.title } ?? false
-                found[track.player] = NowPlaying(player: track.player, title: track.title, artist: track.artist, album: "", isPlaying: !wasPaused)
+                // A title does not say whether it is paused: the sound of its app does
+                if audible == nil { audible = .some(AudioActivity.audibleBundleIDs()) }
+                let sound = (audible ?? nil).map { TitlePlayback.isAudible(id, among: $0) }
+                let pressed = pressedAt[track.player].map { now.timeIntervalSince($0) < Self.pressTrust } ?? false
+                guard let isPlaying = TitlePlayback.isPlaying(title: track.title, previous: titled[track.player],
+                                                              audible: sound, pressedRecently: pressed) else { continue }
+                found[track.player] = NowPlaying(player: track.player, title: track.title, artist: track.artist, album: "", isPlaying: isPlaying)
             }
         }
         for player in Set(titled.keys).subtracting(found.keys) { receive(.stopped(player)) }
@@ -129,6 +141,7 @@ final class MusicModule: YumiModule {
         titleWatch?.cancel()
         titleWatch = nil
         titled = [:]
+        pressedAt = [:]
         playing = nil
         pausedAt = nil
         lingering?.cancel()
@@ -200,6 +213,7 @@ final class MusicModule: YumiModule {
                 var toggled = playing
                 toggled.isPlaying.toggle()
                 titled[playing.player] = toggled
+                pressedAt[playing.player] = Date()
                 receive(.track(toggled))
             }
             return

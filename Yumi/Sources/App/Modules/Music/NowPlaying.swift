@@ -1,14 +1,19 @@
 import Foundation
 
 /// The apps Yumi can follow. Music and Spotify announce their track changes to the whole
-/// system; Deezer and YouTube Music are read from the title of their window (the app, or a
-/// browser tab on top), and are driven with the Mac's media keys.
+/// system; Deezer, YouTube Music and the video sites are read from the title of their window
+/// (the app, or a browser tab on top), and are driven with the Mac's media keys.
 enum MusicPlayer: String, CaseIterable, Sendable {
     case music = "com.apple.Music"
     case spotify = "com.spotify.client"
     case deezer = "com.deezer.deezer-desktop"
     /// The web player or its installed app: not one bundle, so a name of our own.
     case youtubeMusic = "music.youtube.com"
+    /// Sites only played in a browser, named by their address.
+    case youtube = "youtube.com"
+    case soundcloud = "soundcloud.com"
+    case twitch = "twitch.tv"
+    case vimeo = "vimeo.com"
 
     var name: String {
         switch self {
@@ -16,6 +21,10 @@ enum MusicPlayer: String, CaseIterable, Sendable {
         case .spotify:      return "Spotify"
         case .deezer:       return "Deezer"
         case .youtubeMusic: return "YouTube Music"
+        case .youtube:      return "YouTube"
+        case .soundcloud:   return "SoundCloud"
+        case .twitch:       return "Twitch"
+        case .vimeo:        return "Vimeo"
         }
     }
 
@@ -27,7 +36,7 @@ enum MusicPlayer: String, CaseIterable, Sendable {
         switch self {
         case .music:   return "com.apple.Music.playerInfo"
         case .spotify: return "com.spotify.client.PlaybackStateChanged"
-        case .deezer, .youtubeMusic: return nil
+        default:       return nil
         }
     }
 
@@ -36,6 +45,10 @@ enum MusicPlayer: String, CaseIterable, Sendable {
         switch self {
         case .deezer:       return URL(string: "https://www.deezer.com")
         case .youtubeMusic: return URL(string: "https://music.youtube.com")
+        case .youtube:      return URL(string: "https://www.youtube.com")
+        case .soundcloud:   return URL(string: "https://soundcloud.com")
+        case .twitch:       return URL(string: "https://www.twitch.tv")
+        case .vimeo:        return URL(string: "https://vimeo.com")
         case .music, .spotify: return nil
         }
     }
@@ -47,6 +60,10 @@ enum MusicTitles {
     static let browserSuffixes = [" - Google Chrome", " - Microsoft Edge", " - Brave", " — Mozilla Firefox", " - Mozilla Firefox",
                                   " - Arc", " - Safari", " — Safari", " - Opera", " - Vivaldi"]
 
+    /// Pages of a site that are not a track: its home, its lists.
+    private static let notTracks: Set<String> = ["home", "accueil", "explore", "explorer", "library", "bibliothèque",
+                                                 "subscriptions", "abonnements", "history", "historique", "following", "suivis"]
+
     /// "Lueur - Halo Nord - YouTube Music" → YouTube Music, "Lueur", "Halo Nord". nil when the
     /// title is not a track of a known player (or only the player's own name, nothing playing).
     static func parse(_ windowTitle: String, appName: String = "") -> (player: MusicPlayer, title: String, artist: String)? {
@@ -54,6 +71,10 @@ enum MusicTitles {
         for suffix in browserSuffixes where text.hasSuffix(suffix) { text = String(text.dropLast(suffix.count)) }
         // A tab marked as playing sound
         text = text.replacingOccurrences(of: "🔊", with: "").replacingOccurrences(of: "▶ ", with: "").trimmingCharacters(in: .whitespaces)
+        // "(3) Lueur - YouTube": the count of unread notifications
+        if let count = text.range(of: #"^\(\d+\+?\) "#, options: .regularExpression) { text.removeSubrange(count) }
+
+        // Music players: "title - artist"
         let players: [(MusicPlayer, [String])] = [
             (.youtubeMusic, [" - YouTube Music", " | YouTube Music"]),
             (.deezer, [" - Deezer", " | Deezer", " – Deezer"]),
@@ -61,9 +82,7 @@ enum MusicTitles {
         for (player, suffixes) in players {
             let isApp = appName.localizedCaseInsensitiveContains(player.name)
             guard let suffix = suffixes.first(where: { text.hasSuffix($0) }) ?? (isApp ? "" : nil) else { continue }
-            let track = String(text.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
-            guard !track.isEmpty, track.caseInsensitiveCompare(player.name) != .orderedSame,
-                  !["home", "accueil", "explore", "explorer", "library", "bibliothèque"].contains(track.lowercased()) else { return nil }
+            guard let track = track(in: text, before: suffix, of: player) else { return nil }
             for separator in [" • ", " · ", " - ", " — ", " – "] {
                 let parts = track.components(separatedBy: separator)
                 if parts.count >= 2 {
@@ -73,7 +92,78 @@ enum MusicTitles {
             }
             return (player, track, "")
         }
+
+        // SoundCloud: "Stream Lueur by Halo Nord | Listen online for free on SoundCloud"
+        for suffix in [" | Listen online for free on SoundCloud", " | SoundCloud"] where text.hasSuffix(suffix) {
+            guard var track = track(in: text, before: suffix, of: .soundcloud) else { return nil }
+            if track.hasPrefix("Stream ") { track = String(track.dropFirst("Stream ".count)) }
+            if let by = track.range(of: " by ", options: .backwards) {
+                return (.soundcloud, String(track[..<by.lowerBound]), String(track[by.upperBound...]))
+            }
+            return (.soundcloud, track, "")
+        }
+
+        // Video sites: the title of a video is kept whole, the order of artist and song is anyone's guess
+        let videos: [(MusicPlayer, [String])] = [
+            (.youtube, [" - YouTube"]),
+            (.twitch, [" - Twitch"]),
+            (.vimeo, [" on Vimeo", " | Vimeo"]),
+        ]
+        for (player, suffixes) in videos {
+            guard let suffix = suffixes.first(where: { text.hasSuffix($0) }) else { continue }
+            guard let track = track(in: text, before: suffix, of: player) else { return nil }
+            return (player, track, "")
+        }
         return nil
+    }
+
+    /// What is left of `text` without `suffix`, unless it is only the player's name or one of its lists.
+    private static func track(in text: String, before suffix: String, of player: MusicPlayer) -> String? {
+        let track = String(text.dropLast(suffix.count)).trimmingCharacters(in: .whitespaces)
+        guard !track.isEmpty, track.caseInsensitiveCompare(player.name) != .orderedSame,
+              !notTracks.contains(track.lowercased()) else { return nil }
+        return track
+    }
+}
+
+/// Whether a player read from its window title is playing. Its title stays the same in pause, but
+/// the system knows which apps send sound to the speakers right now (`AudioActivity`).
+enum TitlePlayback {
+    /// True when the app `bundleID`, or one of its helper processes, is in `audible` (bundle
+    /// identifiers of the processes sending sound, lowercased).
+    static func isAudible(_ bundleID: String, among audible: Set<String>) -> Bool {
+        var id = bundleID.lowercased()
+        // An installed web app plays through Chrome
+        if id.hasPrefix("com.google.chrome.app.") { id = "com.google.chrome" }
+        let owners: [String]
+        switch id {
+        // Safari plays through WebKit's processes, shared with the other apps that show web pages
+        case "com.apple.safari":    owners = ["com.apple.webkit"]
+        case "org.mozilla.firefox": owners = [id, "org.mozilla.plugincontainer"]
+        default:                    owners = [id]
+        }
+        return audible.contains { process in owners.contains { process == $0 || process.hasPrefix($0 + ".") } }
+    }
+
+    /// Whether to show a track seen in a window title as playing (true), paused (false), or not at all (nil).
+    /// - Parameters:
+    ///   - previous: what was shown for this player at the last look.
+    ///   - audible: whether its app sends sound now; nil when the system could not say.
+    ///   - pressedRecently: a button of the island just played or paused it: trust that over the sound,
+    ///     which a browser may keep running for a few seconds after a pause.
+    static func isPlaying(title: String, previous: NowPlaying?, audible: Bool?, pressedRecently: Bool = false) -> Bool? {
+        let sameTrack = previous?.title == title
+        if pressedRecently, sameTrack, let previous { return previous.isPlaying }
+        switch audible {
+        case true?:
+            return true
+        case false?:
+            // A page never heard is not a track: a video open that nobody started
+            return sameTrack ? false : nil
+        case nil:
+            // Without the sound, the last button pressed decides
+            return !(sameTrack && previous?.isPlaying == false)
+        }
     }
 }
 

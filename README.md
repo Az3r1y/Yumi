@@ -157,7 +157,7 @@ You choose which modules appear and in which order: drag and drop in **Settings 
 | **Notes** | Today's reminders, ticked from the notch | Reminders access |
 | **Mail** | Your latest mails from the Mac's Mail app (every account set up there: Gmail, iCloud, Outlook, work), the important ones apart, the account on each mail, and answers Yumi suggests, opened as a draft in Mail that you send yourself. Gmail with an app password stays an option | Nothing by default: macOS asks once to let Yumi read Mail (Automation). For Gmail: your address and a Google app password (kept in the Keychain) |
 | **Focus** | A work timer and its breaks, the length you choose | Nothing |
-| **Music** | The track playing, pause, next, previous | Automation, for Music, Spotify, Deezer or YouTube Music |
+| **Music** | The track or video playing, pause, next, previous: Music, Spotify, Deezer, YouTube Music, and YouTube, SoundCloud, Twitch or Vimeo in any browser (the tab in front of its window) | Automation for Music and Spotify; Accessibility for the others |
 | **Weather** | The sky where you are | Location, or a city typed by hand |
 
 ## Getting around
