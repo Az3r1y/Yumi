@@ -932,8 +932,9 @@ final class IslandWindowController: NSWindowController {
         let frame = panel.frame
         let origin = NSPoint(x: screen.frame.midX - frame.width / 2, y: screen.frame.maxY - frame.height)
         if frame.origin != origin { panel.setFrameOrigin(origin) }
-        let layout = IslandLayout(notchWidth: Self.notchWidth(for: screen), notchHeight: Self.notchHeight(for: screen),
-                                  hasNotch: screen.safeAreaInsets.top > 0)
+        var layout = model.layout
+        layout.fit(notchWidth: Self.notchWidth(for: screen), notchHeight: Self.notchHeight(for: screen),
+                   hasNotch: screen.safeAreaInsets.top > 0)
         guard layout != model.layout else { return }
         model.layout = layout
         state.notchWidth = layout.notchWidth

@@ -156,6 +156,8 @@ targets:
       - path: Tests
       - path: Sources/App/Island/IslandStateMachine.swift
         group: Tests/UnderTest
+      - path: Sources/App/Island/IslandLayout.swift
+        group: Tests/UnderTest
       - path: Sources/App/Core
       - path: Sources/App/Modules
       - path: Sources/App/Contracts/ModuleTypes.swift
