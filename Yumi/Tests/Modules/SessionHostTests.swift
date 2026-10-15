@@ -22,9 +22,13 @@ import Foundation
             sessions = SessionReducer.apply(.sessionLocated(SessionID("s"), origin), to: sessions)
             return ClaudeSessions.snapshot(ClaudeSessions.ordered(sessions)).secondaryAction
         }
-        #expect(second(terminal) == "Ouvrir le terminal")
-        #expect(second(code) == "Ouvrir l'éditeur")
-        #expect(second(desktop) == "Ouvrir la session")
+        #expect(second(terminal) == "Ouvrir Terminal")
+        #expect(second(SessionOrigin(hostName: "iTerm.app")) == "Ouvrir iTerm2")
+        #expect(second(SessionOrigin(hostName: "ghostty")) == "Ouvrir Ghostty")
+        #expect(second(code) == "Ouvrir VS Code")
+        #expect(second(desktop) == "Ouvrir Claude")
+        // A host Yumi cannot name keeps the generic button
+        #expect(second(SessionOrigin(hostBundleID: "com.example.not-installed", hostName: "SomeTerm")) == "Ouvrir le terminal")
         #expect(second(SessionOrigin(workingDirectory: "/dev/yumi")) == nil)
     }
 
@@ -78,6 +82,14 @@ import Foundation
         }.first
         #expect(origin?.tty == "/dev/ttys029")
         #expect(origin?.terminalSessionID == "5EA8CE8A-6833-4935-9CED-65F56FF8BF1D")
+    }
+
+    @Test func aSessionLineNamesTheApplicationItOpens() {
+        var sessions = SessionReducer.apply(.sessionStarted(SessionID("s"), ClaudeHookTranslator.agent, title: "yumi"), to: [:])
+        sessions = SessionReducer.apply(.sessionLocated(SessionID("s"), SessionOrigin(hostBundleID: "com.googlecode.iterm2", hostName: "iTerm.app")), to: sessions)
+        var board = SessionBoard()
+        board.update(Array(sessions.values))
+        #expect(board.rows().first?.actionLabel == "Ouvrir iTerm2")
     }
 
     @Test func iTermFindsThePaneByItsIdentifierOrItsTTY() throws {

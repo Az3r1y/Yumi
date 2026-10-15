@@ -67,6 +67,8 @@ struct ModuleRow: Identifiable, Equatable, Sendable {
     var section: String? = nil
     /// Sent back with `moduleRowAction` when the line is clicked. nil: the line is not a button.
     var action: String? = nil
+    /// The button of an unfolded line, named after where it goes: "Ouvrir iTerm2". nil: a generic one.
+    var actionLabel: String? = nil
     /// A count shown next to the state: "3/7" for the tasks of a Claude Code session. nil for none.
     var progress: String? = nil
     /// Lines shown when the line is unfolded: the request, the task, the last actions. Empty:

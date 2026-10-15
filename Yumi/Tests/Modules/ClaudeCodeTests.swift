@@ -144,7 +144,9 @@ import Foundation
         #expect(snapshot.status == "2 sessions")
         #expect(snapshot.title == "Claude écrit Tests.swift sur yumi.")
         #expect(snapshot.subtitle == "Deux sessions ouvertes.")
-        #expect(snapshot.secondaryAction == "Ouvrir le terminal")
+        // The session runs in iTerm2: the button names it, and still draws a terminal
+        #expect(snapshot.secondaryAction == "Ouvrir iTerm2")
+        #expect(snapshot.secondarySymbol == "terminal.fill")
         #expect(!snapshot.needsAttention)
     }
 
