@@ -72,6 +72,9 @@ final class IslandWindowController: NSWindowController {
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = false
+        // A click on a button of the island leaves the keyboard where it was: only a text field
+        // takes it. Otherwise the next ⌘C or ⌘V typed in the application in front came to Yumi.
+        panel.becomesKeyOnlyIfNeeded = true
         panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.mainMenuWindow)) + 3)
         panel.collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary, .ignoresCycle]
         panel.ignoresMouseEvents = true
@@ -143,6 +146,7 @@ final class IslandWindowController: NSWindowController {
             switch to {
             case .hidden:
                 self.setMode(.hidden)
+                self.islandPanel.giveKeyboardBack()
 
             case .petit:
                 if from == .hidden { SoundEngine.shared.play("peek") }
@@ -172,7 +176,7 @@ final class IslandWindowController: NSWindowController {
         state.isPinned = false
         fsm.pinned = false
         if state.view != .overview { state.view = .overview }
-        window?.resignKey()
+        islandPanel.giveKeyboardBack()
     }
 
     // MARK: - Following the pointer, only when it moves
@@ -742,8 +746,8 @@ final class IslandWindowController: NSWindowController {
                 let screen = IslandScreen.resolve(view: view, state: .idle, approvalPending: false)
                 if screen == .talk || screen == .welcome || screen == .memory || screen == .quickTask {
                     self.islandPanel.makeKey()
-                } else if self.islandPanel.isKeyWindow {
-                    self.islandPanel.resignKey()
+                } else {
+                    self.islandPanel.giveKeyboardBack()
                 }
             }
             .store(in: &subscriptions)
@@ -969,6 +973,17 @@ final class IslandWindowController: NSWindowController {
 final class IslandPanel: NSPanel {
     override var canBecomeKey:  Bool { true }
     override var canBecomeMain: Bool { false }
+
+    /// Gives the keyboard back to the application in front. `resignKey()` only tells a window
+    /// it lost the keyboard: called by hand, AppKit and the window server stop agreeing on who
+    /// has it, and the keys typed next could still come here. Ordering the panel out takes the
+    /// keyboard away for real; it comes back at once, in the same place.
+    func giveKeyboardBack() {
+        guard isKeyWindow || NSApp.keyWindow === self else { return }
+        let visible = isVisible
+        orderOut(nil)
+        if visible { orderFrontRegardless() }
+    }
 
     /// Allow panel to sit in the menu bar / notch area — don't let macOS push it down.
     override func constrainFrameRect(_ frameRect: NSRect, to screen: NSScreen?) -> NSRect {
