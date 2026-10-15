@@ -164,7 +164,7 @@ struct IslandOpenLayer: View {
                         }
                     }
                     if let action = chosen.action {
-                        TextButton(label: loc("Ouvrir le terminal")) { IslandActions.row(IslandModel.agentModuleID, action) }
+                        TextButton(label: chosen.actionLabel ?? loc("Ouvrir le terminal")) { IslandActions.row(IslandModel.agentModuleID, action) }
                             .fixedSize()
                     }
                 }

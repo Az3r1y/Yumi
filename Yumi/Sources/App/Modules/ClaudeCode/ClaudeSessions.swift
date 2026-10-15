@@ -1,4 +1,4 @@
-import Foundation
+import AppKit
 
 /// Reads the Claude Code sessions out of the store: which one to show first, and how to say what it does.
 enum ClaudeSessions {
@@ -56,7 +56,12 @@ enum ClaudeSessions {
             snapshot.primaryAction = loc("Installer")
             snapshot.secondaryAction = nil
         }
-        return snapshot.withSymbols("terminal.fill")
+        snapshot = snapshot.withSymbols("terminal.fill")
+        // "Ouvrir iTerm2" is a terminal all the same: its button draws one.
+        if snapshot.secondaryAction != nil, let symbol = SessionHost.symbol(for: sessions.first?.origin) {
+            snapshot.secondarySymbol = symbol
+        }
+        return snapshot
     }
 
     private static func plainSnapshot(_ sessions: [Session]) -> ModuleSnapshot {
@@ -156,13 +161,44 @@ enum SessionHost {
         return knownEditors.contains(id) || editorMarkers.contains { id.lowercased().contains($0) }
     }
 
-    /// The button that brings the session forward, named after what it opens. Nil when the host is unknown.
+    /// Names of the hosts, by bundle identifier, for the button that opens them.
+    private static let names: [String: String] = [
+        "com.apple.Terminal": "Terminal", "com.googlecode.iterm2": "iTerm2",
+        "com.mitchellh.ghostty": "Ghostty", "com.github.wez.wezterm": "WezTerm",
+        "dev.warp.Warp-Stable": "Warp", "net.kovidgoyal.kitty": "kitty", "org.alacritty": "Alacritty",
+        "co.zeit.hyper": "Hyper", "org.tabby": "Tabby",
+        "com.microsoft.VSCode": "VS Code", "com.microsoft.VSCodeInsiders": "VS Code Insiders",
+        "com.vscodium.codium": "VSCodium", "com.todesktop.230313mzl4w4u92": "Cursor",
+        "com.exafunction.windsurf": "Windsurf", "dev.zed.Zed": "Zed",
+        "com.anthropic.claudefordesktop": "Claude",
+    ]
+
+    /// The name of the application the session runs in: "iTerm2", "Ghostty". Nil when it is unknown.
+    static func appName(for origin: SessionOrigin?) -> String? {
+        guard let id = bundleID(for: origin) else { return nil }
+        if let name = names[id] { return name }
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: id) else { return nil }
+        return FileManager.default.displayName(atPath: url.path).replacingOccurrences(of: ".app", with: "")
+    }
+
+    /// The button that brings the session forward, named after the application it opens:
+    /// "Ouvrir iTerm2", never a terminal the session is not in. Nil when the host is unknown.
     static func openLabel(for origin: SessionOrigin?) -> String? {
-        switch kind(of: origin) {
+        guard let kind = kind(of: origin) else { return nil }
+        if let name = appName(for: origin) { return loc("Ouvrir \(name)") }
+        switch kind {
         case .editor:   return loc("Ouvrir l'éditeur")
         case .terminal: return loc("Ouvrir le terminal")
         case .other:    return loc("Ouvrir la session")
-        case nil:       return nil
+        }
+    }
+
+    /// The symbol of that button: a terminal, an editor, or nil for the generic one.
+    static func symbol(for origin: SessionOrigin?) -> String? {
+        switch kind(of: origin) {
+        case .terminal: return "terminal.fill"
+        case .editor:   return "curlybraces"
+        default:        return nil
         }
     }
 
@@ -309,6 +345,7 @@ struct SessionBoard: Equatable, Sendable {
         var row = ModuleRow(id: session.id.value, title: ClaudeSessions.projectName(session), detail: "",
                             state: .neutral, label: "", date: entry.since,
                             action: SessionHost.kind(of: session.origin) == nil ? nil : session.id.value)
+        row.actionLabel = SessionHost.openLabel(for: session.origin)
         if entry.closed {
             row.state = .success
             row.label = loc("terminée")
