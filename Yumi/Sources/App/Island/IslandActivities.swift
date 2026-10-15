@@ -491,7 +491,13 @@ struct AlertActivity: View {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
                 ActTitle(text: approval.tool == "Bash" ? loc("Claude veut lancer ça. Je laisse passer ?") : loc("Claude veut utiliser \(approval.tool). Je laisse passer ?")).riseIn(1)
                 ActMono(prompt: approval.tool == "Bash" ? "$" : nil, text: approval.command, color: IslandTheme.amber).riseIn(2)
-                TextButton(label: loc("Toujours autoriser")) { HookServer.shared.sendApprovalDecision("always", for: approval.requestID) }.riseIn(3)
+                HStack(spacing: 14) {
+                    TextButton(label: loc("Toujours autoriser")) { HookServer.shared.sendApprovalDecision("always", for: approval.requestID) }
+                    // Where the request was made: to read the whole conversation before answering
+                    if let open = ClaudeTaskMirror.openLabel(session: approval.sessionId) {
+                        TextButton(label: open) { ClaudeTaskMirror.openSession(approval.sessionId) }
+                    }
+                }.riseIn(3)
             } trail: {
                 RoundButton(style: .fill, symbol: "xmark", label: loc("Refuser"), color: IslandTheme.red) {
                     HookServer.shared.sendApprovalDecision("deny", for: approval.requestID)

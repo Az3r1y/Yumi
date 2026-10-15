@@ -790,6 +790,7 @@ final class ClaudeTaskMirror {
         var task = state.tasks[idx]
         let featured = ClaudeSessions.ordered(sessions).first
         Self.featuredOrigin = featured?.origin
+        Self.origins = sessions.compactMapValues(\.origin)
         if let session = featured {
             task.name = ClaudeSessions.projectName(session)
             if let cwd = session.origin?.workingDirectory, !cwd.isEmpty { task.sessionCwd = cwd }
@@ -855,6 +856,19 @@ final class ClaudeTaskMirror {
 
     /// Where the session shown by the pill runs.
     private static var featuredOrigin: SessionOrigin?
+    /// Where each session runs, for the cards that answer one of them (an approval).
+    private static var origins: [SessionID: SessionOrigin] = [:]
+
+    /// The button that brings forward the application a session runs in, or nil when it is unknown.
+    static func openLabel(session id: String) -> String? {
+        SessionHost.openLabel(for: origins[SessionID(id)])
+    }
+
+    /// Brings forward the application, and the tab when the terminal can say, of one session.
+    @discardableResult
+    static func openSession(_ id: String) -> Bool {
+        ClaudeCodeModule.bringToFront(origins[SessionID(id)])
+    }
 
     /// Brings forward the application the session of the pill runs in: its terminal, its editor
     /// (on the project), or the Claude app. Never another one. Returns false when it is unknown.
@@ -902,7 +916,25 @@ private func hookScriptTemplate(header: String, summary: String, socketPath: Str
 #!/usr/bin/env python3
 # \(header)
 # \(summary)
-import sys, json, os, socket
+import sys, json, os, socket, subprocess
+
+def find_tty():
+    # The hook runs without a terminal; the claude process above it holds the one of its tab.
+    try:
+        pid = os.getppid()
+        for _ in range(4):
+            out = subprocess.run(['/bin/ps', '-o', 'ppid=,tty=', '-p', str(pid)],
+                                 capture_output=True, text=True, timeout=0.3).stdout.split()
+            if len(out) < 2:
+                return ''
+            if out[1] not in ('??', '-'):
+                return '/dev/' + out[1]
+            pid = int(out[0])
+            if pid <= 1:
+                return ''
+    except Exception:
+        pass
+    return ''
 
 def main():
     try:
@@ -919,6 +951,8 @@ def main():
     payload.setdefault('iterm_session_id', env.get('ITERM_SESSION_ID', ''))
     payload.setdefault('term_session_id', env.get('TERM_SESSION_ID', ''))
     payload.setdefault('bundle_id', env.get('__CFBundleIdentifier', ''))
+    if 'tty' not in payload:
+        payload['tty'] = find_tty()
     if 'cwd' not in payload or not payload['cwd']:
         payload['cwd'] = os.getcwd()
 

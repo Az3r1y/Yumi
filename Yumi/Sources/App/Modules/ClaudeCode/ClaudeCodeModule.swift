@@ -123,7 +123,8 @@ final class ClaudeCodeModule: YumiModule {
     }
 
     /// Brings the application a session runs in to the front. An editor reopens the project folder,
-    /// which focuses the right window when several are open. Returns false when the host is unknown.
+    /// which focuses the right window when several are open; Terminal and iTerm2 select the
+    /// session's tab. Returns false when the host is unknown.
     @discardableResult
     static func bringToFront(_ origin: SessionOrigin?) -> Bool {
         guard let origin, let bundleID = SessionHost.bundleID(for: origin) else { return false }
@@ -134,6 +135,8 @@ final class ClaudeCodeModule: YumiModule {
                            configuration: NSWorkspace.OpenConfiguration(), completionHandler: nil)
         } else if let running = workspace.runningApplications.first(where: { $0.bundleIdentifier == bundleID }) {
             running.activate()
+            // Then, where the terminal can say so, the tab the session runs in.
+            TerminalTab.select(origin, bundleID: bundleID)
         } else if let application = workspace.urlForApplication(withBundleIdentifier: bundleID) {
             workspace.openApplication(at: application, configuration: NSWorkspace.OpenConfiguration(),
                                       completionHandler: nil)

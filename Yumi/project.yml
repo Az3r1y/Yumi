@@ -81,7 +81,7 @@ targets:
         LSUIElement: YES
         NSHighResolutionCapable: YES
         NSSupportsAutomaticGraphicsSwitching: YES
-        NSAppleEventsUsageDescription: "Je lis l'adresse de la page ouverte dans ton navigateur quand tu me la montres, je lis ta boîte de réception dans Mail (sans rien y changer) et j'y ouvre en brouillon les réponses que tu enverras toi-même, j'envoie par Mail ce que tu confirmes, et je mets ta musique en pause ou au morceau suivant quand tu me le demandes."
+        NSAppleEventsUsageDescription: "Je lis l'adresse de la page ouverte dans ton navigateur quand tu me la montres, je lis ta boîte de réception dans Mail (sans rien y changer) et j'y ouvre en brouillon les réponses que tu enverras toi-même, j'envoie par Mail ce que tu confirmes, et je mets ta musique en pause ou au morceau suivant, ou j'ouvre l'onglet du terminal où travaille Claude Code, quand tu me le demandes."
         # Not a key macOS reads: Accessibility consent is given in System Settings, with no custom text.
         # Kept as a record of why the app asks for it.
         NSAccessibilityUsageDescription: "Je lis le titre de la fenêtre que tu me montres, et j'écoute la touche Échap et ton raccourci."

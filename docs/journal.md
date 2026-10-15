@@ -602,3 +602,15 @@ Inspiré de [temps-ecran](https://github.com/livio-emilio/temps-ecran) de Livio 
 | Remarques | Au seuil, puis à chaque heure de plus, une fois : occasion `screenTime` du moteur d'initiative, avec l'action Pause. Elle compte comme une remarque qui compte (aussi en discret) et suit toutes les règles : vingt minutes entre deux remarques, limite du jour, jamais pendant un Focus, un partage d'écran, une présentation ou Ne pas déranger. Un palier refusé n'est pas redit plus tard. |
 | Pause de deux heures | `InitiativeWatch.rested` : quand le module voit une minute qui compte après une qui ne comptait pas (cinq minutes sans rien toucher, session ouverte), les deux heures repartent de zéro, comme au réveil. Sans le module, l'ancien comportement (seuls le réveil et le déverrouillage après cinq minutes comptent). Les deux heures restent deux heures. |
 | Développement | `YUMI_SCREEN_TIME_TICK=1` (Debug) : un regard par seconde, chacun vaut une minute, pour voir passer une heure en une minute. |
+
+## Le bon onglet du terminal (branche `feat/terminal-tab`)
+
+Quand Claude Code demande quelque chose, l'île propose d'aller voir dans la session même, pas seulement dans l'application qui l'héberge.
+
+| Sujet | Décision |
+|---|---|
+| Où est la session | Le script du hook remonte ses processus parents (`ps -o ppid=,tty=`, quatre niveaux au plus, 0,3 s chacun) jusqu'au `claude` qui a un terminal, et envoie son tty (`/dev/ttys004`). Il envoyait déjà `ITERM_SESSION_ID` : Yumi en garde l'UUID. Les deux vont dans `SessionOrigin` (`tty`, `terminalSessionID`). |
+| Aller à l'onglet | `TerminalTab` : l'application passe devant comme avant, puis un AppleScript sélectionne la fenêtre, l'onglet et le volet. iTerm2 par l'UUID ou le tty, Terminal par le tty. Seuls des chiffres, lettres, `/` et `-` entrent dans le script. Onglet introuvable ou Automatisation refusée : l'application reste simplement devant. |
+| Autres terminaux | Ghostty, Warp, kitty, WezTerm, tmux : l'application passe devant, sans choisir l'onglet. Éditeurs : inchangé (le dossier du projet est rouvert). |
+| Île | La carte d'accord de Claude Code a un bouton « Ouvrir le terminal » (ou « l'éditeur », « la session ») à côté de « Toujours autoriser », qui ouvre la session de cette demande. « Voir » sur une question et les lignes de sessions vont aussi au bon onglet. |
+| App Store | Aucun Apple Event (bac à sable) : l'application passe devant, comme avant. |
