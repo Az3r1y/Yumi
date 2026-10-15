@@ -64,3 +64,43 @@ import Foundation
         #expect(!ClaudeCodeModule.bringToFront(nil))
     }
 }
+
+@Suite struct TerminalTabTests {
+    @Test func theHookSaysWhichTabTheSessionRunsIn() {
+        let events = ClaudeHookTranslator.events(for: [
+            "hook_event_name": "UserPromptSubmit", "session_id": "s", "cwd": "/dev/yumi",
+            "term_program": "iTerm.app", "bundle_id": "com.googlecode.iterm2",
+            "tty": "/dev/ttys029", "iterm_session_id": "w0t9p0:5EA8CE8A-6833-4935-9CED-65F56FF8BF1D",
+        ])
+        let origin = events.compactMap { event -> SessionOrigin? in
+            if case .sessionLocated(_, let origin) = event { return origin }
+            return nil
+        }.first
+        #expect(origin?.tty == "/dev/ttys029")
+        #expect(origin?.terminalSessionID == "5EA8CE8A-6833-4935-9CED-65F56FF8BF1D")
+    }
+
+    @Test func iTermFindsThePaneByItsIdentifierOrItsTTY() throws {
+        let origin = SessionOrigin(tty: "/dev/ttys029", terminalSessionID: "5EA8CE8A-6833")
+        let script = try #require(TerminalTab.script(for: origin, bundleID: TerminalTab.iTerm))
+        #expect(script.contains("unique id of s is \"5EA8CE8A-6833\" or tty of s is \"/dev/ttys029\""))
+        #expect(script.contains("select t"))
+    }
+
+    @Test func terminalFindsTheTabByItsTTY() throws {
+        let script = try #require(TerminalTab.script(for: SessionOrigin(tty: "/dev/ttys004"), bundleID: TerminalTab.terminal))
+        #expect(script.contains("tty of t is \"/dev/ttys004\""))
+        #expect(script.contains("set selected tab of w to t"))
+    }
+
+    @Test func nothingToAskWithoutATabOrAnotherTerminal() {
+        #expect(TerminalTab.script(for: SessionOrigin(), bundleID: TerminalTab.terminal) == nil)
+        #expect(TerminalTab.script(for: SessionOrigin(), bundleID: TerminalTab.iTerm) == nil)
+        #expect(TerminalTab.script(for: SessionOrigin(tty: "/dev/ttys004"), bundleID: "com.mitchellh.ghostty") == nil)
+    }
+
+    @Test func aValueThatIsNotATTYNeverReachesTheScript() {
+        let origin = SessionOrigin(tty: "/dev/ttys004\" then do shell script \"rm")
+        #expect(TerminalTab.script(for: origin, bundleID: TerminalTab.terminal) == nil)
+    }
+}

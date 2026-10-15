@@ -73,12 +73,7 @@ enum ClaudeSessions {
         if waiting == 1 { snapshot.subtitle += loc(", une t'attend") }
         if waiting > 1 { snapshot.subtitle += loc(", \(FrenchText.spelled(waiting)) t'attendent") }
         snapshot.subtitle += "."
-        switch SessionHost.kind(of: featured.origin) {
-        case .editor:   snapshot.secondaryAction = loc("Ouvrir l'éditeur")
-        case .terminal: snapshot.secondaryAction = loc("Ouvrir le terminal")
-        case .other:    snapshot.secondaryAction = loc("Ouvrir la session")
-        case nil:       break
-        }
+        snapshot.secondaryAction = SessionHost.openLabel(for: featured.origin)
         snapshot.needsAttention = waiting > 0
         snapshot.live = live(sessions)
         return snapshot
@@ -159,6 +154,16 @@ enum SessionHost {
     static func isEditor(_ origin: SessionOrigin?) -> Bool {
         guard let id = bundleID(for: origin) else { return false }
         return knownEditors.contains(id) || editorMarkers.contains { id.lowercased().contains($0) }
+    }
+
+    /// The button that brings the session forward, named after what it opens. Nil when the host is unknown.
+    static func openLabel(for origin: SessionOrigin?) -> String? {
+        switch kind(of: origin) {
+        case .editor:   return loc("Ouvrir l'éditeur")
+        case .terminal: return loc("Ouvrir le terminal")
+        case .other:    return loc("Ouvrir la session")
+        case nil:       return nil
+        }
     }
 
     /// What kind of application hosts the session, or nil when it is unknown.
