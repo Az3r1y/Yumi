@@ -112,8 +112,11 @@ struct EngineAgentPlanner: AgentPlanner {
         if choice() == .simple { return fallback }
         do {
             let proposal = try await llm.propose(for: request, tools: tools)
-            // The model said it cannot plan (and it is not a refused action): the simple mode may know.
-            if proposal.cannotPlan?.nonEmptyTrimmed != nil, proposal.isAction != true, fallback.steps != nil { return fallback }
+            // Apple's small model said it cannot plan (and it is not a refused action): the simple
+            // mode may know. A larger model that says so is believed: "Rappelle-moi le nom ?" is a
+            // question, not a reminder.
+            if proposal.cannotPlan?.nonEmptyTrimmed != nil, proposal.isAction != true, fallback.steps != nil,
+               Engine.named(proposal.engine) == .apple { return fallback }
             return proposal
         } catch .noProvider {
             return fallback

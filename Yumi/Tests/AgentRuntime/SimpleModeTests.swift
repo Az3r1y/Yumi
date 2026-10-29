@@ -307,10 +307,26 @@ private let allTools = ["add_reminder", "add_notion_task", "add_event", "start_f
         #expect(proposal.engine == nil)
     }
 
+    /// Answers as the engine `engine` would, through `EngineLLMProvider`.
+    private struct NamedEngine: LLMProvider {
+        var engine: String
+        var json: String
+        var name: String { engine }
+        func complete(_ request: LLMRequest) async throws -> LLMResponse {
+            var response = LLMResponse(text: json)
+            response.engine = engine
+            return response
+        }
+    }
+
     @Test func whatAModelCouldNotPlanTheSimpleModeMayTake() async throws {
-        let model = ScriptedLLMProvider(json: #"{"cannotPlan": "unclear", "isAction": false}"#)
+        let model = NamedEngine(engine: "apple", json: #"{"cannotPlan": "unclear", "isAction": false}"#)
         let proposal = try await planner(model).propose(for: AgentRequest(userIntent: "rappelle-moi de partir à 18h"), tools: tools)
         #expect(proposal.engine == "simple")
+        // A larger model that finds no action is believed: a question stays a question
+        let claude = NamedEngine(engine: "claudeCode", json: #"{"cannotPlan": "a question", "isAction": false}"#)
+        let question = try await planner(claude).propose(for: AgentRequest(userIntent: "Rappelle-moi le nom proposé ?"), tools: tools)
+        #expect(question.steps == nil)
         let refused = ScriptedLLMProvider(json: #"{"cannotPlan": "deleting", "isAction": true}"#)
         let kept = try await planner(refused).propose(for: AgentRequest(userIntent: "rappelle-moi de partir à 18h"), tools: tools)
         #expect(kept.isAction == true)

@@ -48,7 +48,8 @@ struct AntigravityLLMProvider: LLMProvider {
 
     func complete(_ request: LLMRequest) async throws -> LLMResponse {
         guard let binary = binary() else { throw LLMProviderError.unavailable }
-        if let problem = Self.isolationProblem(in: configFolder, isOwnHooks: isOwnHooks) { throw LLMProviderError.failed(problem) }
+        // Blocked by the person's settings: the next engine answers; the settings say why
+        if Self.isolationProblem(in: configFolder, isOwnHooks: isOwnHooks) != nil { throw LLMProviderError.unavailable }
         // No flag for the rules: they open the prompt
         let prompt = request.system + "\n\n" + AppleLLMProvider.prompt(for: request.messages, keepingLast: 30)
         let schema = request.expectsJSON && !request.tools.isEmpty ? Self.planSchema(request.tools) : nil
