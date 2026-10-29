@@ -1,7 +1,7 @@
 import SwiftUI
 
 // The open island shows one activity at a time, each with its own layout
-// (`STATES[...].view()` in design/yumi/maquette/reference.html, version 13): a few lines
+// (`STATES[...].view()` in design/maquette/reference.html, version 13): a few lines
 // on the left, big round buttons on the right. No cards, no caption under Yumi.
 
 // MARK: - Building blocks
@@ -308,6 +308,7 @@ struct ModuleActivity: View {
         case "music", "musique":  music
         case "focus":             focus
         case "github":            github
+        case ScreenTimeSummary.moduleID: ScreenTimeActivity(module: module)
         case "claude-code" where !module.rows.isEmpty: sessions
         default:                  common
         }
@@ -490,7 +491,13 @@ struct AlertActivity: View {
                 ActMeta(color: IslandTheme.amber, text: IslandAgent.name(state.focusTask)).riseIn(0)
                 ActTitle(text: approval.tool == "Bash" ? loc("Claude veut lancer ça. Je laisse passer ?") : loc("Claude veut utiliser \(approval.tool). Je laisse passer ?")).riseIn(1)
                 ActMono(prompt: approval.tool == "Bash" ? "$" : nil, text: approval.command, color: IslandTheme.amber).riseIn(2)
-                TextButton(label: loc("Toujours autoriser")) { HookServer.shared.sendApprovalDecision("always", for: approval.requestID) }.riseIn(3)
+                HStack(spacing: 14) {
+                    TextButton(label: loc("Toujours autoriser")) { HookServer.shared.sendApprovalDecision("always", for: approval.requestID) }
+                    // Where the request was made: to read the whole conversation before answering
+                    if let open = ClaudeTaskMirror.openLabel(session: approval.sessionId) {
+                        TextButton(label: open) { ClaudeTaskMirror.openSession(approval.sessionId) }
+                    }
+                }.riseIn(3)
             } trail: {
                 RoundButton(style: .fill, symbol: "xmark", label: loc("Refuser"), color: IslandTheme.red) {
                     HookServer.shared.sendApprovalDecision("deny", for: approval.requestID)

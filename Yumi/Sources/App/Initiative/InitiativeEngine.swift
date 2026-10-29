@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - When Yumi speaks first
-// See « Quand il parle le premier » in design/yumi/voix.md and Contracts/RemarkTypes.swift.
+// See « Quand il parle le premier » in design/voix.md and Contracts/RemarkTypes.swift.
 // The engine is pure: an occasion and what surrounds it come in, a remark comes out, or nothing.
 // When in doubt he stays quiet. `InitiativeDriver` watches the Mac and feeds the engine.
 
@@ -24,6 +24,10 @@ enum Occasion: Equatable, Sendable {
     case weekEnd
     /// Something that counts happened on one of the person's repositories.
     case repository(GitHubEvent, count: Int)
+    /// New mail arrived in the Gmail inbox: the newest one, and how many came.
+    case mail(from: String, subject: String, count: Int)
+    /// Today's screen time reached the daily threshold, or one more hour above it (minutes).
+    case screenTime(minutes: Int, threshold: Int)
 
     /// The subject, for the rule about being ignored: one per kind of occasion.
     var topic: String {
@@ -37,6 +41,8 @@ enum Occasion: Equatable, Sendable {
         case .lowBattery: return "lowBattery"
         case .weekEnd: return "weekEnd"
         case .repository(let event, _): return "github.\(event.kind.rawValue)"
+        case .mail: return "mail"
+        case .screenTime: return "screenTime"
         }
     }
 
@@ -46,7 +52,16 @@ enum Occasion: Equatable, Sendable {
         case .firstWake(let events, _): return (events ?? 0) > 0
         case .back(let finished, let waiting): return finished || waiting
         case .weekEnd: return false
-        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery, .repository: return true
+        case .longStretch, .agentDone, .meetingWhileAgentWaits, .late, .lowBattery, .repository, .mail, .screenTime: return true
+        }
+    }
+
+    /// News the person asked to hear as it comes (what happens on their repositories): the
+    /// twenty-minute rule and the daily count do not apply, and it does not delay the others.
+    var isNews: Bool {
+        switch self {
+        case .repository, .mail: return true
+        default: return false
         }
     }
 
@@ -123,7 +138,7 @@ struct InitiativeEngine: Codable, Equatable, Sendable {
 
         let remark = YumiRemark(id: UUID().uuidString, text: chosen.text, mood: chosen.mood,
                                 action: chosen.action?.label, duration: chosen.text.count > 60 ? 10 : 8)
-        lastRemarkAt = around.now
+        if !occasion.isNews { lastRemarkAt = around.now }
         said.append(Said(day: day, phrase: chosen.key))
         said.removeAll { $0.day != day && $0.day != yesterday }
         pending = Pending(id: remark.id, topic: occasion.topic, action: chosen.action)
@@ -139,10 +154,11 @@ struct InitiativeEngine: Codable, Equatable, Sendable {
         if around.doNotDisturb { return .doNotDisturb }
         if around.talk == .discreet, !occasion.matters { return .smallTalk }
         if let until = silentUntil[occasion.topic], around.now < until { return .ignoredTooOften }
-        if !occasion.someoneWaits {
+        if !occasion.someoneWaits, !occasion.isNews {
             if let last = lastRemarkAt, around.now.timeIntervalSince(last) < Self.quietTime { return .tooSoon }
             let day = Self.day(around.now, around.calendar)
-            if said.filter({ $0.day == day }).count >= (Self.dailyLimit[around.talk] ?? 0) { return .enoughForToday }
+            // GitHub news (`gh.`) do not use up the remarks of the day
+            if said.filter({ $0.day == day && !$0.phrase.hasPrefix("gh.") }).count >= (Self.dailyLimit[around.talk] ?? 0) { return .enoughForToday }
         }
         return nil
     }
@@ -269,6 +285,21 @@ enum InitiativePhrases {
                 Variant(key: "stretch.3", text: loc("\(span) sans souffler. Je te garde ta place cinq minutes ?"), mood: .curious, action: .takeBreak),
             ]
 
+        case .screenTime(let minutes, let threshold):
+            let total = ScreenTimeSummary.time(minutes)
+            if minutes <= threshold {
+                return [
+                    Variant(key: "screen.limit.1", text: loc("\(total) d'écran aujourd'hui. C'est ton seuil."), mood: .worried, action: .takeBreak),
+                    Variant(key: "screen.limit.2", text: loc("Ça fait \(total) devant l'écran. On avait dit que c'était assez pour aujourd'hui."), mood: .worried, action: .takeBreak),
+                    Variant(key: "screen.limit.3", text: loc("Seuil atteint : \(total) d'écran. Tes yeux méritent une pause."), mood: .curious, action: .takeBreak),
+                ]
+            }
+            return [
+                Variant(key: "screen.over.1", text: loc("\(total) d'écran aujourd'hui. Toujours là ?"), mood: .worried, action: .takeBreak),
+                Variant(key: "screen.over.2", text: loc("Encore une heure de plus : \(total) d'écran aujourd'hui."), mood: .worried, action: .takeBreak),
+                Variant(key: "screen.over.3", text: loc("\(total) devant l'écran. Je dis ça pour tes yeux."), mood: .curious, action: .takeBreak),
+            ]
+
         case .agentDone(let project, let minutes, let summary):
             let time = FrenchText.spokenMinutes(Double(minutes) * 60)
             if let summary {
@@ -312,6 +343,30 @@ enum InitiativePhrases {
                     Variant(key: "gh.stars.2", text: loc("\(repo) vient de prendre \(stars)."), mood: .happy),
                     Variant(key: "gh.stars.3", text: loc("\(cap(stars)) de plus pour \(repo). Je les ai comptées."), mood: .wink),
                 ]
+            case .star where event.actor.isEmpty:
+                return [
+                    Variant(key: "gh.star.q1", text: loc("Une étoile de plus sur \(repo). Va voir."), mood: .happy),
+                    Variant(key: "gh.star.q2", text: loc("Hé, quelqu'un vient d'étoiler \(repo)."), mood: .wink),
+                    Variant(key: "gh.star.q3", text: loc("\(repo) prend une étoile. Ça brille."), mood: .happy),
+                ]
+            case .fork where event.actor.isEmpty:
+                return [
+                    Variant(key: "gh.fork.q1", text: loc("Hé, \(repo) vient d'être forké."), mood: .curious),
+                    Variant(key: "gh.fork.q2", text: loc("Un fork de plus pour \(repo). Ton code voyage."), mood: .happy),
+                ]
+            case .push:
+                let who = event.actor.isEmpty ? "" : loc(" par \(event.actor)")
+                if event.headline.isEmpty {
+                    return [
+                        Variant(key: "gh.push.1", text: loc("Hé, il y a eu un push sur \(repo)\(who). Regarde."), mood: .curious),
+                        Variant(key: "gh.push.2", text: loc("Ça bouge sur \(repo) : du nouveau code\(who)."), mood: .happy),
+                    ]
+                }
+                let line = event.headline.count > 70 ? String(event.headline.prefix(68)) + "…" : event.headline
+                return [
+                    Variant(key: "gh.commit.1", text: loc("Nouveau commit sur \(repo)\(who) : « \(line) »."), mood: .curious),
+                    Variant(key: "gh.commit.2", text: loc("Hé, un push sur \(repo) : « \(line) »."), mood: .happy),
+                ]
             case .star:
                 return [
                     Variant(key: "gh.star.1", text: loc("Une étoile de plus sur \(repo), de la part de \(event.actor)."), mood: .happy),
@@ -339,6 +394,19 @@ enum InitiativePhrases {
                     Variant(key: "gh.merge.3", text: loc("Fusion faite sur \(repo). Deux gouttes, une seule."), mood: .wink),
                 ]
             }
+
+        case .mail(let from, let subject, let count):
+            let what = subject.isEmpty ? "" : " : « \(subject.count > 60 ? String(subject.prefix(58)) + "…" : subject) »"
+            if count > 1 {
+                return [
+                    Variant(key: "gh.mail.many.1", text: loc("\(count) nouveaux mails, dont un de \(from)\(what)."), mood: .curious),
+                    Variant(key: "gh.mail.many.2", text: loc("Ta boîte se remplit : \(count) mails, le dernier de \(from)."), mood: .surprised),
+                ]
+            }
+            return [
+                Variant(key: "gh.mail.1", text: loc("Hé, un mail de \(from)\(what)."), mood: .curious),
+                Variant(key: "gh.mail.2", text: loc("Nouveau mail de \(from)\(what)."), mood: .happy),
+            ]
 
         case .weekEnd:
             var end = [

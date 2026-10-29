@@ -51,6 +51,9 @@ struct YumiFrame {
     /// The scene being played for an outside event, if any (Character/YumiScenes.swift).
     var scene: YumiSceneMoment?
 
+    /// What he wears, chosen in the settings (Contracts/IslandLookTypes.swift).
+    var costume: YumiCostume = .none
+
     /// The blurred light, already drawn for a shape close to this one (see YumiLight).
     /// nil: it is drawn again for this picture.
     var storedLight: YumiLight?
@@ -105,7 +108,7 @@ struct YumiLight {
     }
 }
 
-/// Draws Yumi as design/yumi/maquette/reference.html does, element for element, in the
+/// Draws Yumi as design/maquette/reference.html does, element for element, in the
 /// 100 × 84 box of the mock-up (the body spans x 8…92 and y 8…76 at rest). The caller
 /// scales and places that box; nothing here knows about points or the island.
 enum YumiRenderer {
@@ -157,15 +160,15 @@ enum YumiRenderer {
             startPoint: CGPoint(x: 0, y: 20), endPoint: CGPoint(x: 0, y: 80)))
     }
 
-    private static func line(_ a: CGPoint, _ b: CGPoint) -> Path {
+    static func line(_ a: CGPoint, _ b: CGPoint) -> Path {
         var p = Path(); p.move(to: a); p.addLine(to: b); return p
     }
 
-    private static func circle(_ cx: CGFloat, _ cy: CGFloat, _ r: CGFloat) -> Path {
+    static func circle(_ cx: CGFloat, _ cy: CGFloat, _ r: CGFloat) -> Path {
         Path(ellipseIn: CGRect(x: cx - r, y: cy - r, width: r * 2, height: r * 2))
     }
 
-    private static func round(_ width: CGFloat) -> StrokeStyle { StrokeStyle(lineWidth: width, lineCap: .round) }
+    static func round(_ width: CGFloat) -> StrokeStyle { StrokeStyle(lineWidth: width, lineCap: .round) }
 
     // MARK: Whole character
 
@@ -361,12 +364,8 @@ enum YumiRenderer {
 
             // The eyes sit on a sphere: turning the head slides them sideways and narrows
             // the one going round the edge
-            let ya = sd * 0.33 + f.yaw, pi = f.pitch
-            let ex = sin(ya) * cos(pi) * 40.1, ey = sin(pi) * 30
             var eg = face
-            eg.translateBy(x: ex - sd * 13, y: ey)
-            eg.translateBy(x: cx, y: 45)
-            eg.scaleBy(x: max(0.35, cos(ya)), y: max(0.6, cos(pi)))
+            eg.concatenate(YumiFaceTurn.eye(sd, yaw: f.yaw, pitch: f.pitch))
             eg.translateBy(x: -cx, y: -45)
 
             // White of the eye, with the blink
@@ -451,6 +450,10 @@ enum YumiRenderer {
         var tops = context
         tops.translateBy(x: f.lean, y: 68 - 68 * f.h)
 
+        if f.costume.onHead {
+            YumiCostumes.drawHead(f.costume, .init(time: f.time, lean: f.lean, accent: f.rim[0].color), in: tops)
+        }
+
         if let o = f.props[.headphones], o > 0.01 {
             var c = tops
             c.opacity = o
@@ -495,6 +498,16 @@ enum YumiRenderer {
         props.translateBy(x: 50, y: 45)
         props.scaleBy(x: f.faceScale.width, y: f.faceScale.height)
         props.translateBy(x: -50, y: -45)
+
+        if f.costume.onFace {
+            YumiCostumes.drawFace(f.costume, .init(time: f.time, lean: f.lean, accent: f.rim[0].color),
+                                  yaw: f.yaw, pitch: f.pitch, eyesScale: f.eyesScale, in: props)
+        }
+
+        // What he holds low in front of him stays with the body, which does not turn
+        let held = props
+        // Everything below is worn on the face: it turns with the head, as the eyes do
+        props.concatenate(YumiFaceTurn.face(yaw: f.yaw, pitch: f.pitch))
 
         if let o = f.props[.smoke], o > 0.01 {
             var c = props
@@ -567,6 +580,8 @@ enum YumiRenderer {
             c.fill(circle(73.4, 54.7, 0.6), with: .color(Color(.sRGB, red: 0.835, green: 0.910, blue: 0.663)))
         }
 
+        drawWorkProps(f, face: props, held: held)
+
         if let o = f.props[.sunglasses], o > 0.01 {
             // They drop onto his nose in 0.55 s
             let p = YumiCurve.spring(f.habitTime / 0.55)
@@ -575,7 +590,11 @@ enum YumiRenderer {
             let right = 50 + sin(0.33 + f.yaw) * cos(f.pitch) * 40.1
             var c = props
             c.opacity = o * max(0, min(1, p))
-            c.translateBy(x: (left + right) / 2, y: 44.5 + sin(f.pitch) * 30 - 34 * (1 - p))
+            // They grow with the eyes under the pointer, so the lenses keep covering them
+            c.translateBy(x: 50, y: 45)
+            c.scaleBy(x: f.eyesScale, y: f.eyesScale)
+            c.translateBy(x: -50, y: -45)
+            c.translateBy(x: 50, y: 44.5 - 34 * (1 - p))
             c.rotate(by: .degrees(Double(-14 * (1 - p))))
             c.scaleBy(x: (right - left) / (2 * sin(0.33) * 40.1), y: 1)
             c.translateBy(x: -50, y: -44.5)

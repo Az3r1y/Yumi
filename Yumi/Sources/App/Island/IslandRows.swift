@@ -49,7 +49,7 @@ struct ModuleRowsList: View {
                             }
                         }
                         if open.contains(row.id) {
-                            RowDetails(lines: row.details) {
+                            RowDetails(lines: row.details, label: row.actionLabel ?? loc("Ouvrir le terminal")) {
                                 if let action = row.action { IslandActions.row(module.id, action) }
                             }
                             .transition(.opacity.combined(with: .move(edge: .top)))
@@ -164,6 +164,7 @@ private struct ModuleRowLine: View {
 /// The details of an unfolded line, then the button that opens where it runs.
 private struct RowDetails: View {
     let lines: [String]
+    let label: String
     let open: @MainActor () -> Void
 
     var body: some View {
@@ -175,7 +176,7 @@ private struct RowDetails: View {
                     .lineLimit(2)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            TextButton(label: loc("Ouvrir le terminal"), action: open)
+            TextButton(label: label, action: open)
         }
         .padding(.leading, 20)
         .padding(.trailing, 7)

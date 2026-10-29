@@ -1,7 +1,7 @@
 #if DEBUG
 import SwiftUI
 
-// The character sheet of design/yumi/maquette/reference.html, rebuilt with the Swift engine:
+// The character sheet of design/maquette/reference.html, rebuilt with the Swift engine:
 // same sections, same order, same sizes, so the two can be compared side by side.
 // Opened by `YUMI_DEMO=gallery` (see BotDemo). Debug builds only.
 
@@ -28,7 +28,7 @@ final class YumiGalleryModel {
             setup(engine)
             return Cell(label: label, engine: engine, pose: pose)
         }
-        habits = zip(YumiHabit.allCases, ["Clope", "Épuisé", "Café", "Casque", "Lunettes", "Nuage", "Sifflote", "Dodo", "Matcha"])
+        habits = zip(YumiHabit.allCases, ["Clope", "Épuisé", "Café", "Casque", "Lunettes", "Nuage", "Sifflote", "Dodo", "Matcha", "Thé", "Eau", "Jus", "Livre", "Manette", "Tricot", "Rien"])
             .map { habit, label in cell(label) { $0.setHabit(habit) } }
         // `POSES` of the mock-up, each with the face it wears on the sheet
         let sheet: [(YumiPose, String, YumiMood)] = [
@@ -68,14 +68,15 @@ struct YumiGalleryView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
-            row("Habitudes", model.habits, top: 30)
+            row("Habitudes", Array(model.habits.prefix(9)), top: 30)
+            row("Habitudes de travail", Array(model.habits.dropFirst(9)), top: 30)
             row("Poses de la planche", model.poses, top: 30)
             row("Expressions", model.moods, top: 14)
             row("La lumière de contour porte l'état", model.rims, top: 14)
             row("Scènes (un événement, puis trois d'un coup)", model.scenes.map(\.cell), top: 34)
         }
         .padding(18)
-        .frame(width: 980, height: 850, alignment: .topLeading)
+        .frame(width: 980, height: 1020, alignment: .topLeading)
         .background(Color(white: 0.06))
     }
 

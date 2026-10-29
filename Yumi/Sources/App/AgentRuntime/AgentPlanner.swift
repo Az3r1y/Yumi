@@ -25,6 +25,10 @@ struct PlanProposal: Equatable, Codable, Sendable {
     /// With `cannotPlan`: the person asked to change something on the Mac (delete, run, edit…)
     /// that the tools cannot do. Can only block a request, never allow one.
     var isAction: Bool?
+    /// Which engine wrote it (« apple », « simple »…), set by Yumi, never read from a model's answer.
+    var engine: String? = nil
+
+    private enum CodingKeys: String, CodingKey { case goal, steps, cannotPlan, isAction }
 }
 
 /// A planner that asks a language model, whichever provider carries it.
@@ -45,7 +49,9 @@ struct LLMAgentPlanner: AgentPlanner {
             if Task.isCancelled || error is CancellationError { throw .cancelled }
             throw .providerFailed(String(describing: error))
         }
-        return try PlannerPrompt.parse(response.text)
+        var proposal = try PlannerPrompt.parse(response.text)
+        proposal.engine = response.engine
+        return proposal
     }
 }
 
@@ -105,7 +111,7 @@ enum PlannerPrompt {
         }
         user += "<request>\n\(dataOnly(request.trimmedIntent))\n</request>"
         return LLMRequest(system: system, messages: [LLMMessage(role: .user, content: user)],
-                          expectsJSON: true, maxOutputTokens: 1500, tools: tools)
+                          expectsJSON: true, maxOutputTokens: 1500, tools: tools, maxSteps: maxSteps)
     }
 
     /// "2026-10-03 Saturday 14:05", in the Mac's time zone.

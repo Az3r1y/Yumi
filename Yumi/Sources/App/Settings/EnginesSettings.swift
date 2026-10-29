@@ -11,6 +11,7 @@ struct EnginesSettings: View {
     @State private var ollamaModels: [String]? = nil
     @State private var results: [Engine: String] = [:]
     @State private var testing: Set<Engine> = []
+    @State private var apple = AppleModelAvailability.current
 
     private var engines: [Engine] {
         #if APPSTORE
@@ -42,18 +43,27 @@ struct EnginesSettings: View {
             AntigravityHooksSection()
             #endif
         }
-        .task { await refreshOllama() }
+        .task {
+            apple = AppleModelAvailability.current
+            await refreshOllama()
+        }
     }
 
     @ViewBuilder
     private func section(_ engine: Engine, index: Int, last: Bool) -> some View {
         let status = EngineDetector.status(of: engine, claudeCodeInstalled: EngineFactory.hasClaudeCode,
                                            hasKey: { !(keys[$0] ?? "").isEmpty && KeychainStore.shared.get($0.keychainKey ?? "") != nil },
-                                           ollamaModels: ollamaModels, ollamaModel: settings.models[.ollama],
+                                           ollamaModels: ollamaModels, ollamaModel: settings.models[.ollama], apple: apple,
                                            isOwnAntigravityHooks: { AntigravityHooks.isOwn($0) })
         Section {
             LabeledContent("État") {
                 SettingsStatus(text: status.detail, tone: status.ready ? .ok : .off)
+            }
+            if engine == .apple, let message = apple.message {
+                Text(message).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                if apple == .appleIntelligenceOff {
+                    Button("Ouvrir les Réglages Système") { NSWorkspace.shared.open(AppleModelAvailability.settingsURL) }
+                }
             }
             if let key = engine.keychainKey {
                 LabeledContent("Clé API") {
@@ -99,11 +109,12 @@ struct EnginesSettings: View {
                 Spacer()
                 Button { move(engine, by: -1) } label: { Image(systemName: "chevron.up") }
                     .buttonStyle(.borderless)
-                    .disabled(index == 0)
+                    .disabled(index == 0 || engine == .simple)
                     .help("Essayer plus tôt")
                 Button { move(engine, by: 1) } label: { Image(systemName: "chevron.down") }
                     .buttonStyle(.borderless)
-                    .disabled(last)
+                    // The simple mode stays last: it always answers, nothing after it would be tried.
+                    .disabled(last || engine == .simple || EngineSettings.normalised(settings.order).filter(engines.contains).dropFirst(index + 1).allSatisfy { $0 == .simple })
                     .help("Essayer plus tard")
             }
         } footer: {

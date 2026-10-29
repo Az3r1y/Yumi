@@ -6,7 +6,7 @@ import SwiftUI
 
 struct IslandRail: View {
     /// The App Store build may not launch Antigravity nor Claude Code.
-    private static var canSearch: Bool {
+    static var canSearch: Bool {
         #if APPSTORE
         false
         #else

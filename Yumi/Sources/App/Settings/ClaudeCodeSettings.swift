@@ -203,7 +203,7 @@ struct ClaudeCodeSettings: View {
     private func legacyNote() -> String? {
         let legacy = HookServer.shared.pendingLegacyHookCount
         guard legacy > 0 else { return nil }
-        return legacy == 1 ? loc("Ça retire aussi un ancien hook de Coucou.") : loc("Ça retire aussi \(legacy) anciens hooks de Coucou.")
+        return legacy == 1 ? loc("Ça retire aussi un ancien hook d'une autre app.") : loc("Ça retire aussi \(legacy) anciens hooks d'une autre app.")
     }
 
     private func installTools() {

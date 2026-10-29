@@ -63,6 +63,14 @@ struct InitiativeWatch: Codable, Equatable, Sendable {
         if awaySince == nil { awaySince = now }
     }
 
+    /// The person is back after five minutes or more without touching the Mac, the session left
+    /// open: that was a break too, the stretch of work starts again.
+    mutating func rested(now: Date) {
+        guard awaySince == nil, workingSince != nil else { return }
+        workingSince = now
+        stretchesSaid = 0
+    }
+
     /// The person took the break Yumi offered.
     mutating func tookBreak(now: Date) {
         workingSince = now

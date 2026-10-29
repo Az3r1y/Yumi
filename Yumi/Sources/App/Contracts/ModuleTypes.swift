@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Module contract
 // A module is one thing Yumi watches: Claude Code, the calendar, a timer, the weather.
 // The core fills `AppState.modules` with snapshots; the island draws them. Both sides
-// rely on this file, so neither edits it during the parallel work (see YUMI.md).
+// rely on this file, so neither edits it during the parallel work (see docs/journal.md).
 
 /// What the island needs to draw one module, and nothing else.
 struct ModuleSnapshot: Identifiable, Equatable, Sendable {
@@ -41,6 +41,12 @@ struct ModuleSnapshot: Identifiable, Equatable, Sendable {
     /// Lines of the activity view's other pages, by page: "recent", "repos" for GitHub.
     /// Empty for most modules.
     var pages: [String: [ModuleRow]] = [:]
+    /// The tab of the open island it belongs to. nil: the one its identifier gives
+    /// (`ModuleCategory.of(moduleID:)`). The registry fills it from the module.
+    var category: ModuleCategory? = nil
+
+    /// Where the island puts it.
+    var tab: ModuleCategory { category ?? ModuleCategory.of(moduleID: id) }
 }
 
 /// One line of a module's list: a session, a pull request, an event.
@@ -61,6 +67,8 @@ struct ModuleRow: Identifiable, Equatable, Sendable {
     var section: String? = nil
     /// Sent back with `moduleRowAction` when the line is clicked. nil: the line is not a button.
     var action: String? = nil
+    /// The button of an unfolded line, named after where it goes: "Ouvrir iTerm2". nil: a generic one.
+    var actionLabel: String? = nil
     /// A count shown next to the state: "3/7" for the tasks of a Claude Code session. nil for none.
     var progress: String? = nil
     /// Lines shown when the line is unfolded: the request, the task, the last actions. Empty:

@@ -1,11 +1,12 @@
 import SwiftUI
 
-/// Modules: which ones Yumi shows and in what order, then the settings of GitHub, Notion and Agenda.
+/// Modules: which ones Yumi shows and in what order, then the settings of GitHub, Notion, Agenda and screen time.
 /// Keys go to the Keychain, under the same names as before.
 struct ModulesSettings: View {
     @ObservedObject private var state = AppState.shared
     @State private var githubToken = ""
-    @State private var githubConnected = IslandActions.githubConnected
+    @State private var githubConnected = KeychainStore.shared.get(IslandActions.githubTokenKey)?.isEmpty == false
+    @ObservedObject private var githubApp = GitHubAuth.shared
 
     var body: some View {
         ScrollViewReader { scroller in
@@ -15,6 +16,9 @@ struct ModulesSettings: View {
             }
 
             Section {
+                if GitHubApp.isAvailable { GitHubAppRows() }
+                // Signed in with the app, the personal token is not used: no need to show it.
+                if !(GitHubApp.isAvailable && githubApp.signedIn) {
                 LabeledContent("État") {
                     SettingsStatus(text: githubConnected ? loc("Branché") : loc("Pas de jeton"), tone: githubConnected ? .ok : .off)
                 }
@@ -36,21 +40,30 @@ struct ModulesSettings: View {
                         }
                     }
                 }
+                }
             } header: {
                 Text("GitHub")
             } footer: {
-                SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
+                if GitHubApp.isAvailable {
+                    SettingsHelp(loc("L'app GitHub suit chaque compte où tu l'installes, toi et autant d'organisations que tu veux, en lecture seule. Sinon, un jeton en lecture suffit. Je n'écris rien."))
+                } else {
+                    SettingsHelp(loc("Un jeton en lecture suffit : je regarde tes dépôts, tes pull requests et leurs checks, je n'écris rien."))
+                }
             }
             .id("module-settings-github")
 
             ContributionsSection()
-            if githubConnected { GitHubReposSection() }
+            if githubConnected || (GitHubApp.isAvailable && githubApp.signedIn) { GitHubReposSection() }
 
+            MailSourceSection()
+                .id("module-settings-gmail")
             NotionSettingsSection()
                 .id("module-settings-notion")
 
             AgendaSettingsSection()
                 .id("module-settings-agenda")
+            ScreenTimeSettingsSection()
+                .id("module-settings-screen-time")
         }
         }
     }
@@ -230,5 +243,174 @@ private struct ContributionsSection: View {
         } footer: {
             SettingsHelp(loc("Comme sur ton profil GitHub. Je les relis au plus toutes les trente minutes."))
         }
+    }
+}
+
+/// Screen time: the daily threshold, and whether Yumi says it when it is reached.
+private struct ScreenTimeSettingsSection: View {
+    @AppStorage(ScreenTimeModule.thresholdKey) private var hours = ScreenTimeSummary.defaultThreshold
+    @AppStorage(ScreenTimeModule.remarksKey) private var remarks = true
+
+    var body: some View {
+        Section {
+            Picker(loc("Seuil du jour"), selection: $hours) {
+                ForEach(ScreenTimeSummary.thresholds, id: \.self) { value in
+                    Text(ScreenTimeSummary.hours(value * 60)).tag(value)
+                }
+            }
+            .onChange(of: hours) { changed() }
+            Toggle(loc("Me le dire quand je l'atteins"), isOn: $remarks)
+                .onChange(of: remarks) { changed() }
+        } header: {
+            Text("Temps d'écran")
+        } footer: {
+            SettingsHelp(loc("Je compte une minute quand tu es vraiment devant le Mac : session ouverte, et une touche ou la souris dans les cinq dernières minutes, ou une visio, un film, une présentation. Au-delà de deux heures sans rien toucher, plus rien ne compte. Au seuil, puis à chaque heure de plus, je te le dis, une fois. Tout reste sur ton Mac."))
+        }
+    }
+
+    private func changed() {
+        NotificationCenter.default.post(name: .screenTimeSettingsChanged, object: nil)
+    }
+}
+
+/// The mails module: where the mails come from (Apple's Mail by default, or Gmail), the access
+/// to Mail, and which of Mail's accounts the island shows. Gmail's own section follows when chosen.
+struct MailSourceSection: View {
+    @AppStorage(MailSource.defaultsKey) private var stored = ""
+    @State private var hidden = MailAccounts.hidden()
+    @ObservedObject private var inbox = GmailInbox.shared
+    @State private var access: String?
+
+    private var source: MailSource {
+        MailSource(rawValue: stored) ?? MailSource.current(gmailConnected: KeychainStore.shared.get(GmailModule.passwordKey)?.isEmpty == false)
+    }
+
+    var body: some View {
+        Section {
+            if MailSource.mailAppAvailable {
+                Picker("Source", selection: Binding(get: { source }, set: { stored = $0.rawValue; changed() })) {
+                    Text("App Mail du Mac").tag(MailSource.mailApp)
+                    Text("Gmail (mot de passe d'application)").tag(MailSource.gmail)
+                }
+            }
+            if source == .mailApp {
+                LabeledContent("Accès à Mail") {
+                    HStack {
+                        if let access { Text(access).foregroundStyle(.secondary).font(.callout) }
+                        Button("Autoriser", action: askAccess)
+                    }
+                }
+                if inbox.accounts.count > 1 {
+                    ForEach(inbox.accounts, id: \.self) { account in
+                        Toggle(account, isOn: Binding(get: { !hidden.contains(account) }, set: { show(account, $0) }))
+                    }
+                }
+            }
+        } header: {
+            Text("Mails")
+        } footer: {
+            SettingsHelp(source == .mailApp
+                ? loc("Je lis la boîte de réception de l'app Mail, tous tes comptes, sans aucun mot de passe et sans rien marquer comme lu. Une réponse s'ouvre en brouillon dans Mail : c'est toi qui l'envoies. Si tu refuses l'accès, le module reste vide ; tu peux changer d'avis dans Réglages Système, Confidentialité, Automatisation.")
+                : loc("Gmail se lit avec un mot de passe d'application, ci-dessous."))
+        }
+        if source == .gmail { GmailSettingsSection() }
+    }
+
+    private func show(_ account: String, _ on: Bool) {
+        var set = hidden
+        if on { set.remove(account) } else { set.insert(account) }
+        UserDefaults.standard.set(Array(set).sorted(), forKey: MailAccounts.hiddenKey)
+        hidden = set
+        changed()
+    }
+
+    private func changed() {
+        NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
+    }
+
+    /// The click asks macOS for the Automation access to Mail (the system prompt appears once).
+    private func askAccess() {
+        access = loc("Je demande…")
+        Task {
+            do {
+                _ = try await MailAppScript.run("tell application \"Mail\" to count of accounts", startingMail: true)
+                access = loc("Autorisé")
+                changed()
+            } catch MailAppScript.Failure.denied {
+                access = loc("Refusé : Réglages Système, Automatisation")
+            } catch {
+                access = loc("Mail ne répond pas")
+            }
+        }
+    }
+}
+
+/// Gmail: an address and an app password (Google account, Security, App passwords). The
+/// password goes to the Keychain, the address to the defaults. Reading is all the module does;
+/// an answer leaves only when the person clicks "Envoyer" in the island.
+struct GmailSettingsSection: View {
+    @State private var address = UserDefaults.standard.string(forKey: GmailModule.addressKey) ?? ""
+    @State private var password = ""
+    @State private var connected = KeychainStore.shared.get(GmailModule.passwordKey)?.isEmpty == false
+    @State private var problem: String?
+
+    var body: some View {
+        Section {
+            if let problem {
+                Text(problem).foregroundStyle(.red).font(.callout)
+            }
+            LabeledContent("État") {
+                SettingsStatus(text: connected ? loc("Branché : \(address)") : loc("Pas branché"), tone: connected ? .ok : .off)
+            }
+            if connected {
+                Button("Débrancher Gmail") {
+                    KeychainStore.shared.remove(GmailModule.passwordKey)
+                    connected = false
+                    NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
+                }
+            } else {
+                LabeledContent("Adresse") {
+                    TextField("", text: $address, prompt: Text(verbatim: "toi@gmail.com"))
+                        .labelsHidden()
+                        .textFieldStyle(.roundedBorder)
+                        .frame(maxWidth: 280)
+                }
+                LabeledContent("Mot de passe d'application") {
+                    HStack {
+                        SecureField("", text: $password, prompt: Text(verbatim: "abcd efgh ijkl mnop"))
+                            .labelsHidden()
+                            .textFieldStyle(.roundedBorder)
+                            .frame(maxWidth: 280)
+                            .onSubmit(connect)
+                        Button("Brancher", action: connect)
+                            .disabled(!address.contains("@") || password.trimmingCharacters(in: .whitespaces).isEmpty)
+                    }
+                }
+                Link(loc("Créer un mot de passe d'application Google"), destination: URL(string: "https://myaccount.google.com/apppasswords")!)
+            }
+        } header: {
+            Text("Gmail")
+        } footer: {
+            SettingsHelp(loc("Il faut la validation en deux étapes sur ton compte Google. Je lis ta boîte sans rien marquer comme lu ; une réponse ne part que quand tu cliques sur Envoyer dans l'île."))
+        }
+    }
+
+    private func connect() {
+        let mail = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        let secret = password.replacingOccurrences(of: " ", with: "")
+        guard mail.contains("@"), !secret.isEmpty else { return }
+        // An app password is exactly 16 letters: anything else is the account's own password,
+        // which Gmail refuses
+        guard secret.count == 16, secret.allSatisfy(\.isLetter) else {
+            problem = loc("Ce n'est pas un mot de passe d'application : Google en donne un de 16 lettres. Ton mot de passe habituel ne marche pas ici.")
+            return
+        }
+        problem = nil
+        UserDefaults.standard.set(mail, forKey: GmailModule.addressKey)
+        KeychainStore.shared.set(GmailModule.passwordKey, value: secret)
+        password = ""
+        address = mail
+        connected = true
+        NotificationCenter.default.post(name: .gmailSettingsChanged, object: nil)
     }
 }

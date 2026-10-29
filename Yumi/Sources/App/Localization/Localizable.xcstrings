@@ -91,6 +91,16 @@
         }
       }
     },
+    " par %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " by %@"
+          }
+        }
+      }
+    },
     " pour %@": {
       "localizations": {
         "en": {
@@ -107,6 +117,36 @@
           "stringUnit": {
             "state": "translated",
             "value": " on %@"
+          }
+        }
+      }
+    },
+    " · erreur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · error"
+          }
+        }
+      }
+    },
+    " · fini": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · done"
+          }
+        }
+      }
+    },
+    " · à toi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": " · your turn"
           }
         }
       }
@@ -877,6 +917,16 @@
         }
       }
     },
+    "%@ prend une étoile. Ça brille.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ gets a star. Shiny."
+          }
+        }
+      }
+    },
     "%@ refuse la clé. Vérifie-la dans les réglages, section Moteurs.": {
       "localizations": {
         "en": {
@@ -1203,12 +1253,32 @@
         }
       }
     },
+    "%lld attend": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld waiting"
+          }
+        }
+      }
+    },
     "%lld aujourd'hui, %lld cette semaine": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld today, %lld this week"
+          }
+        }
+      }
+    },
+    "%lld cmd": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld cmd"
           }
         }
       }
@@ -1239,6 +1309,16 @@
         }
       }
     },
+    "%lld en cours": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld running"
+          }
+        }
+      }
+    },
     "%lld en retard.": {
       "localizations": {
         "en": {
@@ -1249,12 +1329,32 @@
         }
       }
     },
+    "%lld fich.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld files"
+          }
+        }
+      }
+    },
     "%lld fichiers": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "%lld files"
+          }
+        }
+      }
+    },
+    "%lld importants": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld important"
           }
         }
       }
@@ -1279,6 +1379,26 @@
         }
       }
     },
+    "%lld non lus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld unread"
+          }
+        }
+      }
+    },
+    "%lld nouveaux mails, dont un de %@%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld new mails, one from %@%@."
+          }
+        }
+      }
+    },
     "%lld sessions": {
       "localizations": {
         "en": {
@@ -1295,6 +1415,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "%lld tasks to do"
+          }
+        }
+      }
+    },
+    "%lld échec(s)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld failed"
           }
         }
       }
@@ -1379,6 +1509,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "(none)"
+          }
+        }
+      }
+    },
+    "(pas l'adresse de l'expéditeur)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(not the sender's address)"
+          }
+        }
+      }
+    },
+    "(sans objet)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "(no subject)"
           }
         }
       }
@@ -1483,6 +1633,16 @@
         }
       }
     },
+    "1 minute": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "1 minute"
+          }
+        }
+      }
+    },
     "1 session": {
       "localizations": {
         "en": {
@@ -1509,6 +1669,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "2:30 to 3:00 PM, video call"
+          }
+        }
+      }
+    },
+    "15 secondes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "15 seconds"
           }
         }
       }
@@ -1563,6 +1733,16 @@
         }
       }
     },
+    "30 secondes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "30 seconds"
+          }
+        }
+      }
+    },
     "5 h": {
       "localizations": {
         "en": {
@@ -1579,6 +1759,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "5 h · %@"
+          }
+        }
+      }
+    },
+    "5 secondes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "5 seconds"
           }
         }
       }
@@ -1655,6 +1845,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Access granted"
+          }
+        }
+      }
+    },
+    "Accès à Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Access to Mail"
           }
         }
       }
@@ -1743,6 +1943,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ajouter à un fichier"
+          }
+        }
+      }
+    },
+    "Adresse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Address"
           }
         }
       }
@@ -1859,6 +2069,16 @@
         }
       }
     },
+    "Ajoute ton compte dans l'app Mail, ou choisis Gmail dans Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add your account in the Mail app, or choose Gmail in Settings, Modules."
+          }
+        }
+      }
+    },
     "Ajouter": {
       "localizations": {
         "en": {
@@ -1875,6 +2095,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add to"
+          }
+        }
+      }
+    },
+    "Ajouter le rappel « %@ »": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add the reminder “%@”"
           }
         }
       }
@@ -1915,6 +2145,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Add “%@” to Reminders"
+          }
+        }
+      }
+    },
+    "Ajouter « %@ » à l'agenda": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add “%@” to the calendar"
           }
         }
       }
@@ -1965,6 +2205,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Cancel"
+          }
+        }
+      }
+    },
+    "Antennes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Antennae"
           }
         }
       }
@@ -2119,12 +2369,52 @@
         }
       }
     },
+    "Aperçu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Preview"
+          }
+        }
+      }
+    },
+    "App Mail du Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Mac's Mail app"
+          }
+        }
+      }
+    },
+    "Apple (sur ton Mac, gratuit)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple (on your Mac, free)"
+          }
+        }
+      }
+    },
     "Apple Intelligence (sur ce Mac)": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Apple Intelligence (on this Mac)"
+          }
+        }
+      }
+    },
+    "Apple Intelligence est désactivé.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple Intelligence is turned off."
           }
         }
       }
@@ -2219,6 +2509,16 @@
         }
       }
     },
+    "Aucun compte dans Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No account in Mail"
+          }
+        }
+      }
+    },
     "Aucun dépôt suivi.": {
       "localizations": {
         "en": {
@@ -2245,6 +2545,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No model installed in Ollama."
+          }
+        }
+      }
+    },
+    "Aucun moteur ne répond : écris ta réponse ici.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No engine answers: write your answer here."
           }
         }
       }
@@ -2305,6 +2615,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Today"
+          }
+        }
+      }
+    },
+    "Auréole": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Halo"
           }
         }
       }
@@ -2419,6 +2739,16 @@
         }
       }
     },
+    "Bavard": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Chatty"
+          }
+        }
+      }
+    },
     "Bien reçu": {
       "localizations": {
         "en": {
@@ -2435,6 +2765,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Welcome."
+          }
+        }
+      }
+    },
+    "Bleu": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Blue"
           }
         }
       }
@@ -2495,12 +2835,62 @@
         }
       }
     },
+    "Bonnet": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Beanie"
+          }
+        }
+      }
+    },
+    "Boîte vide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Empty inbox"
+          }
+        }
+      }
+    },
+    "Branche Gmail dans Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Gmail in Settings, Modules."
+          }
+        }
+      }
+    },
+    "Branche Gmail dans les réglages, Plus de réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect Gmail in the settings, More settings."
+          }
+        }
+      }
+    },
     "Branche Notion dans les réglages": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Connect Notion in the settings"
+          }
+        }
+      }
+    },
+    "Branche ta boîte Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connect your Gmail inbox"
           }
         }
       }
@@ -2525,12 +2915,32 @@
         }
       }
     },
+    "Branché : %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Connected: %@"
+          }
+        }
+      }
+    },
     "Branchés": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Connected"
+          }
+        }
+      }
+    },
+    "Brouillon ouvert dans Mail : relis-le et envoie-le toi-même.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Draft opened in Mail: read it and send it yourself."
           }
         }
       }
@@ -2723,12 +3133,32 @@
         }
       }
     },
+    "C'est noté, je te le rappelle demain à 15 h.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Got it, I'll remind you tomorrow at 3 PM."
+          }
+        }
+      }
+    },
     "C'est parti pour %@. Je me tais.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Off we go for %@. I'll be quiet."
+          }
+        }
+      }
+    },
+    "C'est parti pour la musique.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Here comes the music."
           }
         }
       }
@@ -2975,6 +3405,66 @@
         }
       }
     },
+    "Ce Mac n'est pas compatible.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac is not compatible."
+          }
+        }
+      }
+    },
+    "Ce Mac ne peut pas faire tourner le modèle d'Apple. Je fonctionne en mode simple : rappels, tâches, agenda et musique.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This Mac can't run Apple's model. I work in simple mode: reminders, tasks, calendar and music."
+          }
+        }
+      }
+    },
+    "Ce mail demande qu'on réponde à une autre adresse que celle de l'expéditeur.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This mail asks for replies to go to another address than the sender's."
+          }
+        }
+      }
+    },
+    "Ce n'est pas un mot de passe d'application : Google en donne un de 16 lettres. Ton mot de passe habituel ne marche pas ici.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This is not an app password: Google gives one of 16 letters. Your usual password does not work here."
+          }
+        }
+      }
+    },
+    "Ce que Yumi sait de toi": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What Yumi knows about you"
+          }
+        }
+      }
+    },
+    "Ce que Yumi sait de toi (%lld)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What Yumi knows about you (%lld)"
+          }
+        }
+      }
+    },
     "Ce que je fais sans te demander": {
       "localizations": {
         "en": {
@@ -3041,6 +3531,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Change…"
+          }
+        }
+      }
+    },
+    "Chat": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cat"
           }
         }
       }
@@ -3177,6 +3677,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose a Notion database in the settings."
+          }
+        }
+      }
+    },
+    "Ciel": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sky"
           }
         }
       }
@@ -3575,6 +4085,26 @@
         }
       }
     },
+    "Concentre-moi 25 min": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focus 25 min"
+          }
+        }
+      }
+    },
+    "Concentré": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Focused"
+          }
+        }
+      }
+    },
     "Concerne : %@": {
       "localizations": {
         "en": {
@@ -3665,6 +4195,22 @@
         }
       }
     },
+    "Control the music": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Control the music"
+          }
+        },
+        "fr": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Piloter la musique"
+          }
+        }
+      }
+    },
     "Copie un texte, je le garde en note.": {
       "localizations": {
         "en": {
@@ -3725,12 +4271,42 @@
         }
       }
     },
+    "Couleur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour"
+          }
+        }
+      }
+    },
+    "Couleur %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Colour %@"
+          }
+        }
+      }
+    },
     "Couleurs": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Colours"
+          }
+        }
+      }
+    },
+    "Couronne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crown"
           }
         }
       }
@@ -3807,6 +4383,16 @@
         }
       }
     },
+    "Créer un mot de passe d'application Google": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create a Google app password"
+          }
+        }
+      }
+    },
     "Current context": {
       "localizations": {
         "en": {
@@ -3879,6 +4465,16 @@
         }
       }
     },
+    "Dans Réglages, Modules : ton adresse et un mot de passe d'application.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "In Settings, Modules: your address and an app password."
+          }
+        }
+      }
+    },
     "Dans l'île": {
       "localizations": {
         "en": {
@@ -3905,6 +4501,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Date"
+          }
+        }
+      }
+    },
+    "De %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "From %@"
           }
         }
       }
@@ -3977,6 +4583,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Asks for Bash: npm test"
+          }
+        }
+      }
+    },
+    "Demande macOS 26.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Needs macOS 26."
           }
         }
       }
@@ -4087,6 +4703,16 @@
         }
       }
     },
+    "Discret": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Discreet"
+          }
+        }
+      }
+    },
     "Donne, je m'en occupe.": {
       "localizations": {
         "en": {
@@ -4127,6 +4753,16 @@
         }
       }
     },
+    "Donner l'heure": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tell the time"
+          }
+        }
+      }
+    },
     "Dossier .claude": {
       "localizations": {
         "en": {
@@ -4163,6 +4799,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Disconnect"
+          }
+        }
+      }
+    },
+    "Débrancher Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Disconnect Gmail"
           }
         }
       }
@@ -4227,6 +4873,16 @@
         }
       }
     },
+    "Détente": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unwind"
+          }
+        }
+      }
+    },
     "Développeur": {
       "localizations": {
         "en": {
@@ -4243,6 +4899,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "EEEE, MMMM d"
+          }
+        }
+      }
+    },
+    "Eau": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Water"
           }
         }
       }
@@ -4297,12 +4963,32 @@
         }
       }
     },
+    "Encore une partie": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more game"
+          }
+        }
+      }
+    },
     "Enregistrer": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Save"
+          }
+        }
+      }
+    },
+    "Envoi…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sending…"
           }
         }
       }
@@ -4333,6 +5019,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Send feedback"
+          }
+        }
+      }
+    },
+    "Envoyé à %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent to %@."
           }
         }
       }
@@ -4417,6 +5113,16 @@
         }
       }
     },
+    "Fleur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Flower"
+          }
+        }
+      }
+    },
     "Focus en cours": {
       "localizations": {
         "en": {
@@ -4453,6 +5159,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Merged on %@. Two drops, now one."
+          }
+        }
+      }
+    },
+    "Fête": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Party"
           }
         }
       }
@@ -4527,6 +5243,56 @@
         }
       }
     },
+    "Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail"
+          }
+        }
+      }
+    },
+    "Gmail (mot de passe d'application)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail (app password)"
+          }
+        }
+      }
+    },
+    "Gmail ne répond pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail does not answer"
+          }
+        }
+      }
+    },
+    "Gmail refuse le mot de passe": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail refuses the password"
+          }
+        }
+      }
+    },
+    "Gmail se lit avec un mot de passe d'application, ci-dessous.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gmail is read with an app password, below."
+          }
+        }
+      }
+    },
     "Google Gemini (clé API)": {
       "localizations": {
         "en": {
@@ -4537,12 +5303,32 @@
         }
       }
     },
+    "Gris": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Grey"
+          }
+        }
+      }
+    },
     "Général": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "General"
+          }
+        }
+      }
+    },
+    "Habitude": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Habit"
           }
         }
       }
@@ -4583,6 +5369,56 @@
           "stringUnit": {
             "state": "translated",
             "value": "Hooks removed."
+          }
+        }
+      }
+    },
+    "Hé, %@ vient d'être forké.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, %@ was just forked."
+          }
+        }
+      }
+    },
+    "Hé, il y a eu un push sur %@%@. Regarde.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, there was a push on %@%@. Take a look."
+          }
+        }
+      }
+    },
+    "Hé, quelqu'un vient d'étoiler %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, someone just starred %@."
+          }
+        }
+      }
+    },
+    "Hé, un mail de %@%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, a mail from %@%@."
+          }
+        }
+      }
+    },
+    "Hé, un push sur %@ : « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Hey, a push on %@: “%@”."
           }
         }
       }
@@ -4647,6 +5483,16 @@
         }
       }
     },
+    "Il est %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It's %@."
+          }
+        }
+      }
+    },
     "Il est tard. Je reste là, mais toi tu peux aller dormir.": {
       "localizations": {
         "en": {
@@ -4667,12 +5513,32 @@
         }
       }
     },
+    "Il faut la validation en deux étapes sur ton compte Google. Je lis ta boîte sans rien marquer comme lu ; une réponse ne part que quand tu cliques sur Envoyer dans l'île.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your Google account needs 2-Step Verification. I read your inbox without marking anything as read; an answer only leaves when you click Send in the island."
+          }
+        }
+      }
+    },
     "Il faut macOS 26 et Apple Intelligence activé.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Needs macOS 26 with Apple Intelligence turned on."
+          }
+        }
+      }
+    },
+    "Il faut un mot de passe d'application de 16 lettres, pas ton mot de passe Google : Réglages, Modules.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "It needs a 16-letter app password, not your Google password: Settings, Modules."
           }
         }
       }
@@ -4763,6 +5629,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "It just got started. I'm watching."
+          }
+        }
+      }
+    },
+    "Importants": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Important"
           }
         }
       }
@@ -5067,6 +5943,16 @@
         }
       }
     },
+    "Je comprends déjà les rappels, les tâches, l'agenda et la musique. Pour discuter de tout, tu pourras me brancher une IA dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I already understand reminders, tasks, your calendar and music. To chat about anything, you can plug an AI into me in the settings."
+          }
+        }
+      }
+    },
     "Je compte ta journée avec Claude": {
       "localizations": {
         "en": {
@@ -5083,6 +5969,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Correcting…"
+          }
+        }
+      }
+    },
+    "Je demande…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Asking…"
           }
         }
       }
@@ -5213,6 +6109,36 @@
         }
       }
     },
+    "Je lis la boîte de réception de l'app Mail, tous tes comptes, sans aucun mot de passe et sans rien marquer comme lu. Une réponse s'ouvre en brouillon dans Mail : c'est toi qui l'envoies. Si tu refuses l'accès, le module reste vide ; tu peux changer d'avis dans Réglages Système, Confidentialité, Automatisation.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I read the inbox of the Mail app, all your accounts, with no password and without marking anything read. An answer opens as a draft in Mail: you send it yourself. If you refuse the access, the module stays empty; you can change your mind in System Settings, Privacy, Automation."
+          }
+        }
+      }
+    },
+    "Je lis le mail et j'écris une réponse…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading the mail and writing an answer…"
+          }
+        }
+      }
+    },
+    "Je lis ta boîte…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading your inbox…"
+          }
+        }
+      }
+    },
     "Je lis un fichier": {
       "localizations": {
         "en": {
@@ -5253,6 +6179,16 @@
         }
       }
     },
+    "Je m'hydrate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Staying hydrated"
+          }
+        }
+      }
+    },
     "Je m'organise": {
       "localizations": {
         "en": {
@@ -5269,146 +6205,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "I fold away after"
-          }
-        }
-      }
-    },
-    "Les quotas à jour même sans session Claude Code, avec la connexion de Claude Code lue dans le trousseau : macOS te demande ton mot de passe, et peut le redemander. Sinon, ils viennent de la ligne de statut.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Up-to-date quotas even without a Claude Code session, using Claude Code's login read from the Keychain: macOS asks for your password, and may ask again. Otherwise they come from the status line."
-          }
-        }
-      }
-    },
-    "Raisonnement long": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Long reasoning"
-          }
-        }
-      }
-    },
-    "Routage": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Routing"
-          }
-        }
-      }
-    },
-    "Silencieux": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Silent"
-          }
-        }
-      }
-    },
-    "Discret": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Discreet"
-          }
-        }
-      }
-    },
-    "Bavard": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Chatty"
-          }
-        }
-      }
-    },
-    "Simple": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Simple"
-          }
-        }
-      }
-    },
-    "Web, actualité": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Web, news"
-          }
-        }
-      }
-    },
-    "Yumi parle": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Yumi speaks up"
-          }
-        }
-      }
-    },
-    "Sans date.": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "No date."
-          }
-        }
-      }
-    },
-    "5 secondes": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "5 seconds"
-          }
-        }
-      }
-    },
-    "15 secondes": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "15 seconds"
-          }
-        }
-      }
-    },
-    "30 secondes": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "30 seconds"
-          }
-        }
-      }
-    },
-    "1 minute": {
-      "localizations": {
-        "en": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "1 minute"
           }
         }
       }
@@ -5449,6 +6245,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "I have no engine to think with. Install Claude Code (then \"claude\" and /login), or add an Anthropic, OpenAI or Gemini key, or start Ollama: Settings, Engines."
+          }
+        }
+      }
+    },
+    "Je n'ai pas accès à Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I have no access to Mail"
+          }
+        }
+      }
+    },
+    "Je n'ai pas bien compris, pardon. Sans IA, je sais déjà créer un rappel, ajouter une tâche, noter un rendez-vous, lancer un minuteur ou mettre ta musique. Par exemple : « rappelle-moi d'appeler maman demain 18 h ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sorry, I didn't quite get that. Without an AI, I can already create a reminder, add a task, put an appointment in your calendar, start a timer or play your music. For example: “remind me to call mom tomorrow at 6pm”."
           }
         }
       }
@@ -5913,6 +6729,16 @@
         }
       }
     },
+    "Je réessaie dans deux minutes.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I'll try again in two minutes."
+          }
+        }
+      }
+    },
     "Je réessaie dans un moment.": {
       "localizations": {
         "en": {
@@ -5983,6 +6809,16 @@
         }
       }
     },
+    "Je tourne sur ton Mac, gratuitement, sans rien envoyer ailleurs.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I run on your Mac, for free, without sending anything anywhere."
+          }
+        }
+      }
+    },
     "Je traduis…": {
       "localizations": {
         "en": {
@@ -6023,12 +6859,42 @@
         }
       }
     },
+    "Journée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Day"
+          }
+        }
+      }
+    },
+    "Jus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Juice"
+          }
+        }
+      }
+    },
     "Juste ton prénom. Je le garde pour moi.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Just your first name. I'll keep it to myself."
+          }
+        }
+      }
+    },
+    "L'envoi a échoué, rien n'est parti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sending failed, nothing went out."
           }
         }
       }
@@ -6223,12 +7089,42 @@
         }
       }
     },
+    "Lancer les tests": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Run the tests"
+          }
+        }
+      }
+    },
+    "Lancer un Focus de %lld minutes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Start a %lld-minute focus session"
+          }
+        }
+      }
+    },
     "Langue": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Language"
+          }
+        }
+      }
+    },
+    "Langue pas encore prise en charge.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Language not supported yet."
           }
         }
       }
@@ -6249,6 +7145,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "The microphone isn't answering."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple demande macOS 26 ou plus récent. En attendant, je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model needs macOS 26 or later. Meanwhile, I work in simple mode."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple est en cours de téléchargement sur ton Mac. Je m'en sers dès qu'il est prêt ; en attendant, je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model is downloading to your Mac. I'll use it as soon as it's ready; meanwhile, I work in simple mode."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple ne parle pas encore ma langue sur ce Mac. Je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model doesn't speak my language on this Mac yet. I work in simple mode."
+          }
+        }
+      }
+    },
+    "Le modèle d'Apple tourne sur ton Mac : rien ne part ailleurs, sans compte, gratuit. Il est fait pour des demandes simples.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model runs on your Mac: nothing goes anywhere else, no account, free. It is made for simple requests."
           }
         }
       }
@@ -6289,6 +7225,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "The shortcut opens the island on “New task”. I read a simple date in it (“tomorrow”, “thursday 3pm”). Notion is outside your Mac: I ask for your approval for every task."
+          }
+        }
+      }
+    },
+    "Le reste": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The rest"
           }
         }
       }
@@ -6353,6 +7299,16 @@
         }
       }
     },
+    "Les quotas à jour même sans session Claude Code, avec la connexion de Claude Code lue dans le trousseau : macOS te demande ton mot de passe, et peut le redemander. Sinon, ils viennent de la ligne de statut.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Up-to-date quotas even without a Claude Code session, using Claude Code's login read from the Keychain: macOS asks for your password, and may ask again. Otherwise they come from the status line."
+          }
+        }
+      }
+    },
     "Les sessions de Claude Code de la journée s'afficheront ici.": {
       "localizations": {
         "en": {
@@ -6369,6 +7325,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Licences"
+          }
+        }
+      }
+    },
+    "Licorne": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unicorn"
+          }
+        }
+      }
+    },
+    "Lire l'écran d'accueil": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Read the home screen"
           }
         }
       }
@@ -6423,6 +7399,16 @@
         }
       }
     },
+    "Livre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Book"
+          }
+        }
+      }
+    },
     "Lueur": {
       "localizations": {
         "en": {
@@ -6449,6 +7435,106 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sunglasses when it's sunny, a cloud when it rains."
+          }
+        }
+      }
+    },
+    "Lunettes rondes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Round glasses"
+          }
+        }
+      }
+    },
+    "Mail automatique : pas besoin de répondre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Automatic mail: no need to answer."
+          }
+        }
+      }
+    },
+    "Mail est fermé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail is closed"
+          }
+        }
+      }
+    },
+    "Mail met parfois une minute à répondre sur une grosse boîte.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail sometimes takes a minute to answer on a large inbox."
+          }
+        }
+      }
+    },
+    "Mail n'a pas ouvert le brouillon, rien n'est parti.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail did not open the draft, nothing was sent."
+          }
+        }
+      }
+    },
+    "Mail ne répond pas": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail does not answer"
+          }
+        }
+      }
+    },
+    "Mail refuse : autorise Yumi dans Réglages Système, Automatisation.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail refuses: allow Yumi in System Settings, Automation."
+          }
+        }
+      }
+    },
+    "Maille à l'endroit": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knit one, purl one"
+          }
+        }
+      }
+    },
+    "Mails": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mail"
+          }
+        }
+      }
+    },
+    "Manette": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gamepad"
           }
         }
       }
@@ -6523,12 +7609,62 @@
         }
       }
     },
+    "Mets de la musique": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play some music"
+          }
+        }
+      }
+    },
+    "Mettre la musique": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Play the music"
+          }
+        }
+      }
+    },
+    "Mettre la musique en pause": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pause the music"
+          }
+        }
+      }
+    },
     "Mettre à jour": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Update"
+          }
+        }
+      }
+    },
+    "Minuteur": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Timer"
+          }
+        }
+      }
+    },
+    "Mode simple (sans IA)": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple mode (no AI)"
           }
         }
       }
@@ -6573,6 +7709,16 @@
         }
       }
     },
+    "Modules et comptes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Modules and accounts"
+          }
+        }
+      }
+    },
     "Modules masqués": {
       "localizations": {
         "en": {
@@ -6603,6 +7749,16 @@
         }
       }
     },
+    "Modèle en cours de téléchargement.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Model downloading."
+          }
+        }
+      }
+    },
     "Moi, c'est Yumi. Et toi ?": {
       "localizations": {
         "en": {
@@ -6613,12 +7769,52 @@
         }
       }
     },
+    "Moins de réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Fewer settings"
+          }
+        }
+      }
+    },
     "Monter": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Move up"
+          }
+        }
+      }
+    },
+    "Morceau précédent.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Previous track."
+          }
+        }
+      }
+    },
+    "Morceau suivant.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Next track."
+          }
+        }
+      }
+    },
+    "Mot de passe d'application": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App password"
           }
         }
       }
@@ -6643,12 +7839,32 @@
         }
       }
     },
+    "Moustache": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Moustache"
+          }
+        }
+      }
+    },
     "Musique": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
             "value": "Music"
+          }
+        }
+      }
+    },
+    "Musique en pause.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Music paused."
           }
         }
       }
@@ -6783,6 +7999,26 @@
         }
       }
     },
+    "Nouveau commit sur %@%@ : « %@ ».": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New commit on %@%@: “%@”."
+          }
+        }
+      }
+    },
+    "Nouveau mail de %@%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New mail from %@%@."
+          }
+        }
+      }
+    },
     "Nouvelle note": {
       "localizations": {
         "en": {
@@ -6803,6 +8039,16 @@
         }
       }
     },
+    "Nouvelle tâche : ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "New task: "
+          }
+        }
+      }
+    },
     "Nouvelle version": {
       "localizations": {
         "en": {
@@ -6819,6 +8065,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "New versions"
+          }
+        }
+      }
+    },
+    "Nœud": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Bow"
           }
         }
       }
@@ -6845,6 +8101,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Observer l'app et la fenêtre au premier plan"
+          }
+        }
+      }
+    },
+    "Occupé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Busy"
           }
         }
       }
@@ -6953,6 +8219,16 @@
         }
       }
     },
+    "Orange": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Orange"
+          }
+        }
+      }
+    },
     "Other": {
       "localizations": {
         "en": {
@@ -6989,6 +8265,16 @@
         }
       }
     },
+    "Ouvre l'app Mail et je lis ta boîte de réception, sans rien y toucher.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open the Mail app and I read your inbox, without touching anything."
+          }
+        }
+      }
+    },
     "Ouvrir": {
       "localizations": {
         "en": {
@@ -7009,6 +8295,26 @@
         }
       }
     },
+    "Ouvrir Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Gmail"
+          }
+        }
+      }
+    },
+    "Ouvrir Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open Mail"
+          }
+        }
+      }
+    },
     "Ouvrir Musique": {
       "localizations": {
         "en": {
@@ -7025,6 +8331,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open Yumi when the Mac starts"
+          }
+        }
+      }
+    },
+    "Ouvrir dans Gmail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Gmail"
+          }
+        }
+      }
+    },
+    "Ouvrir dans Mail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open in Mail"
           }
         }
       }
@@ -7075,6 +8401,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Open the terminal"
+          }
+        }
+      }
+    },
+    "Ouvrir les Réglages Système": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Open System Settings"
           }
         }
       }
@@ -7149,6 +8485,16 @@
         }
       }
     },
+    "Pas branché": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Not connected"
+          }
+        }
+      }
+    },
     "Pas branchés": {
       "localizations": {
         "en": {
@@ -7175,6 +8521,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "No access"
+          }
+        }
+      }
+    },
+    "Pas d'adresse valide pour répondre.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No valid address to reply to."
           }
         }
       }
@@ -7279,6 +8635,16 @@
         }
       }
     },
+    "Passer au morceau suivant": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skip to the next track"
+          }
+        }
+      }
+    },
     "Pause": {
       "localizations": {
         "en": {
@@ -7305,6 +8671,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Matcha break"
+          }
+        }
+      }
+    },
+    "Pause thé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tea break"
           }
         }
       }
@@ -7349,6 +8725,26 @@
         }
       }
     },
+    "Petit jus": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A little juice"
+          }
+        }
+      }
+    },
+    "Pirate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pirate"
+          }
+        }
+      }
+    },
     "Pluie vers %@. Prends une veste.": {
       "localizations": {
         "en": {
@@ -7385,6 +8781,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Shorter"
+          }
+        }
+      }
+    },
+    "Plus de réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "More settings"
           }
         }
       }
@@ -7499,6 +8905,26 @@
         }
       }
     },
+    "Pour discuter de tout, tu pourras me brancher une IA dans les réglages, section Moteurs.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To chat about anything, you can plug an AI into me in the settings, Engines section."
+          }
+        }
+      }
+    },
+    "Pour me rendre plus malin gratuitement, active Apple Intelligence : Réglages Système, Apple Intelligence et Siri. En attendant, je fonctionne en mode simple.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To make me smarter for free, turn on Apple Intelligence: System Settings, Apple Intelligence & Siri. Meanwhile, I work in simple mode."
+          }
+        }
+      }
+    },
     "Poussé sur %@": {
       "localizations": {
         "en": {
@@ -7591,6 +9017,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Ready, on this Mac."
+          }
+        }
+      }
+    },
+    "Qu'est-ce que j'ai aujourd'hui ?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "What do I have today?"
           }
         }
       }
@@ -7745,6 +9181,16 @@
         }
       }
     },
+    "Raisonnement long": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Long reasoning"
+          }
+        }
+      }
+    },
     "Ranger": {
       "localizations": {
         "en": {
@@ -7781,6 +9227,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Reminder: %@"
+          }
+        }
+      }
+    },
+    "Rappelle-moi d'appeler Paul demain à 15 h": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remind me to call Paul tomorrow at 3 PM"
+          }
+        }
+      }
+    },
+    "Rappelle-moi de ": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remind me to "
           }
         }
       }
@@ -7891,6 +9357,16 @@
         }
       }
     },
+    "Refusé : Réglages Système, Automatisation": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Refused: System Settings, Automation"
+          }
+        }
+      }
+    },
     "Regarder l'app au premier plan": {
       "localizations": {
         "en": {
@@ -7991,6 +9467,26 @@
         }
       }
     },
+    "Retour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back"
+          }
+        }
+      }
+    },
+    "Revenir au morceau précédent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Go back to the previous track"
+          }
+        }
+      }
+    },
     "Rien": {
       "localizations": {
         "en": {
@@ -8007,6 +9503,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Nothing changed"
+          }
+        }
+      }
+    },
+    "Rien de neuf dans ta boîte.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Nothing new in your inbox."
           }
         }
       }
@@ -8151,6 +9657,26 @@
         }
       }
     },
+    "Rose": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pink"
+          }
+        }
+      }
+    },
+    "Routage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Routing"
+          }
+        }
+      }
+    },
     "Run": {
       "localizations": {
         "en": {
@@ -8283,6 +9809,16 @@
         }
       }
     },
+    "Réglages Système, Confidentialité, Automatisation : autorise Yumi à contrôler Mail.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System Settings, Privacy, Automation: allow Yumi to control Mail."
+          }
+        }
+      }
+    },
     "Réglages de %@": {
       "localizations": {
         "en": {
@@ -8333,6 +9869,16 @@
         }
       }
     },
+    "Réponse de %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Answer from %@"
+          }
+        }
+      }
+    },
     "Résume-moi %@ en trois points": {
       "localizations": {
         "en": {
@@ -8359,6 +9905,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Summarise"
+          }
+        }
+      }
+    },
+    "Résumer la journée": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sum up the day"
           }
         }
       }
@@ -8439,6 +9995,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Without %@ (click to attach)"
+          }
+        }
+      }
+    },
+    "Sans IA et sans réseau : je comprends les rappels, les tâches, l'agenda, le minuteur et la musique. Toujours disponible.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No AI and no network: I understand reminders, tasks, the calendar, the timer and music. Always available."
+          }
+        }
+      }
+    },
+    "Sans date.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No date."
           }
         }
       }
@@ -8623,6 +10199,26 @@
         }
       }
     },
+    "Silencieux": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Silent"
+          }
+        }
+      }
+    },
+    "Simple": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Simple"
+          }
+        }
+      }
+    },
     "Son": {
       "localizations": {
         "en": {
@@ -8639,6 +10235,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Sounds"
+          }
+        }
+      }
+    },
+    "Sorcière": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Witch"
+          }
+        }
+      }
+    },
+    "Source": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Source"
           }
         }
       }
@@ -8793,6 +10409,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Waiting for you."
+          }
+        }
+      }
+    },
+    "Ta boîte se remplit : %lld mails, le dernier de %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Your inbox is filling up: %lld mails, the latest from %@."
           }
         }
       }
@@ -9043,6 +10669,16 @@
         }
       }
     },
+    "Thé": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tea"
+          }
+        }
+      }
+    },
     "Toi": {
       "localizations": {
         "en": {
@@ -9153,6 +10789,16 @@
         }
       }
     },
+    "Toujours prêt.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Always ready."
+          }
+        }
+      }
+    },
     "Tous": {
       "localizations": {
         "en": {
@@ -9169,6 +10815,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "All modules"
+          }
+        }
+      }
+    },
+    "Tous les réglages": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "All settings"
           }
         }
       }
@@ -9249,6 +10905,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Turn into a reminder or an event"
+          }
+        }
+      }
+    },
+    "Travail": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Work"
+          }
+        }
+      }
+    },
+    "Tricot": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Knitting"
           }
         }
       }
@@ -9369,6 +11045,16 @@
         }
       }
     },
+    "Tâche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Task"
+          }
+        }
+      }
+    },
     "Tâche %@ : %@": {
       "localizations": {
         "en": {
@@ -9435,6 +11121,16 @@
         }
       }
     },
+    "Un chapitre": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more chapter"
+          }
+        }
+      }
+    },
     "Un clic sur Yumi : un clin d'œil ou un cœur.": {
       "localizations": {
         "en": {
@@ -9481,6 +11177,16 @@
         }
       }
     },
+    "Un fork de plus pour %@. Ton code voyage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more fork of %@. Your code travels."
+          }
+        }
+      }
+    },
     "Un instant.": {
       "localizations": {
         "en": {
@@ -9521,6 +11227,16 @@
         }
       }
     },
+    "Une adresse et un mot de passe d'application, dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An address and an app password, in the settings."
+          }
+        }
+      }
+    },
     "Une clé d'intégration et les bases à suivre.": {
       "localizations": {
         "en": {
@@ -9557,6 +11273,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "One hour"
+          }
+        }
+      }
+    },
+    "Une idée, une tâche": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "An idea, a task"
           }
         }
       }
@@ -9737,6 +11463,16 @@
         }
       }
     },
+    "Une étoile de plus sur %@. Va voir.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "One more star on %@. Go and see."
+          }
+        }
+      }
+    },
     "Une étoile de plus sur Atelier.": {
       "localizations": {
         "en": {
@@ -9843,6 +11579,16 @@
         }
       }
     },
+    "Vert": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Green"
+          }
+        }
+      }
+    },
     "Voici ta journée :": {
       "localizations": {
         "en": {
@@ -9929,6 +11675,26 @@
           "stringUnit": {
             "state": "translated",
             "value": "Volume"
+          }
+        }
+      }
+    },
+    "Vérifie le mot de passe d'application dans les réglages.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Check the app password in the settings."
+          }
+        }
+      }
+    },
+    "Web, actualité": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web, news"
           }
         }
       }
@@ -10037,6 +11803,26 @@
         }
       }
     },
+    "Yumi parle": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yumi speaks up"
+          }
+        }
+      }
+    },
+    "Yumi propose une réponse": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Yumi suggests an answer"
+          }
+        }
+      }
+    },
     "abonné": {
       "localizations": {
         "en": {
@@ -10053,6 +11839,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "on"
+          }
+        }
+      }
+    },
+    "adresse invalide": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "invalid address"
           }
         }
       }
@@ -10925,6 +12721,16 @@
         }
       }
     },
+    "je n'ai pas de lecteur de musique sous la main": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I don't have a music player at hand"
+          }
+        }
+      }
+    },
     "je n'ai pas le droit d'ouvrir %@": {
       "localizations": {
         "en": {
@@ -11135,6 +12941,16 @@
         }
       }
     },
+    "je sais mettre la musique, la mettre en pause, passer au suivant ou revenir au précédent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "I can play the music, pause it, skip to the next track or go back to the previous one"
+          }
+        }
+      }
+    },
     "l'ajout dans %@ a échoué": {
       "localizations": {
         "en": {
@@ -11253,6 +13069,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "the %@ database has no “done” property chosen in the settings"
+          }
+        }
+      }
+    },
+    "la conversation est trop longue pour le modèle d'Apple, efface-la et recommence": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "the conversation is too long for Apple's model, clear it and start again"
           }
         }
       }
@@ -11499,6 +13325,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "the Focus module is off. Turn it on in my settings and ask me again"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple a préféré ne pas répondre à ça": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model preferred not to answer that"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple est occupé, réessaie dans un instant": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model is busy, try again in a moment"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple n'est pas encore prêt sur ce Mac": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model is not ready on this Mac yet"
+          }
+        }
+      }
+    },
+    "le modèle d'Apple ne parle pas encore cette langue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Apple's model doesn't speak this language yet"
           }
         }
       }
@@ -12101,6 +13967,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "nothing this week"
+          }
+        }
+      }
+    },
+    "rien ne joue en ce moment": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "nothing is playing right now"
           }
         }
       }
@@ -12717,6 +14593,26 @@
         }
       }
     },
+    "À %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To %@"
+          }
+        }
+      }
+    },
+    "À %@, depuis %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To %1$@, from %2$@"
+          }
+        }
+      }
+    },
     "À brancher": {
       "localizations": {
         "en": {
@@ -12733,6 +14629,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "Choose one"
+          }
+        }
+      }
+    },
+    "À faire": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "To do"
           }
         }
       }
@@ -12837,6 +14743,16 @@
         }
       }
     },
+    "Ça bouge sur %@ : du nouveau code%@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Things are moving on %@: new code%@."
+          }
+        }
+      }
+    },
     "Ça n'a pas marché.": {
       "localizations": {
         "en": {
@@ -12847,22 +14763,22 @@
         }
       }
     },
-    "Ça retire aussi %lld anciens hooks de Coucou.": {
+    "Ça retire aussi %lld anciens hooks d'une autre app.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "It also removes %lld old Coucou hooks."
+            "value": "It also removes %lld old hooks from another app."
           }
         }
       }
     },
-    "Ça retire aussi un ancien hook de Coucou.": {
+    "Ça retire aussi un ancien hook d'une autre app.": {
       "localizations": {
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "It also removes an old Coucou hook."
+            "value": "It also removes an old hook from another app."
           }
         }
       }
@@ -13027,6 +14943,16 @@
         }
       }
     },
+    "à jour": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "up to date"
+          }
+        }
+      }
+    },
     "à l'instant": {
       "localizations": {
         "en": {
@@ -13073,6 +14999,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "high"
+          }
+        }
+      }
+    },
+    "étape %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "step %@"
           }
         }
       }
@@ -13149,6 +15085,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "✓ Answers."
+          }
+        }
+      }
+    },
+    "✓ Toujours prêt.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "✓ Always ready."
           }
         }
       }

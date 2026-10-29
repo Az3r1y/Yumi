@@ -129,9 +129,41 @@ enum IslandActions {
     static func showModule(_ id: String) {
         leaveChatError(next: .module)
         IslandModel.shared.selectedModuleID = id
+        if id != IslandModel.tasksID, let module = state.modules.first(where: { $0.id == id }) {
+            IslandModel.shared.category = module.tab
+        }
         state.view = .module
         state.lastActivity = .now
         tap()
+    }
+
+    /// A tab of the open island: its module last shown, or its first one.
+    static func showTab(_ category: ModuleCategory) {
+        let model = IslandModel.shared
+        model.category = category
+        IslandModel.shared.pose(.pop)
+        go(.overview)
+    }
+
+    /// Opens the chat, with what was typed already in its field.
+    static func talk(seed: String? = nil) {
+        IslandModel.shared.chatSeed = seed
+        go(.prompt)
+    }
+
+    /// The colour of the island changed in the settings.
+    static func setAccent(_ accent: IslandAccent) {
+        accent.save()
+        NotificationCenter.default.post(name: .yumiLook, object: nil)
+        tap()
+    }
+
+    /// What Yumi wears changed in the settings: he bounces into it.
+    static func setCostume(_ costume: YumiCostume) {
+        costume.save()
+        NotificationCenter.default.post(name: .yumiLook, object: nil)
+        SoundEngine.shared.play("pop")
+        IslandModel.shared.pose(.boing)
     }
 
     /// A module button was pressed: the core does the work (Contracts/ModuleTypes.swift).
@@ -205,7 +237,7 @@ enum IslandActions {
     /// The key the core reads the token from (KeychainStore, never on disk).
     static let githubTokenKey = "github-token"
 
-    static var githubConnected: Bool { KeychainStore.shared.get(githubTokenKey)?.isEmpty == false }
+    static var githubConnected: Bool { GitHubAuth.currentToken != nil }
 
     /// Hands the token to the core's Keychain store, and tells the module to read it again.
     static func connectGitHub(_ token: String?) {
@@ -310,7 +342,6 @@ enum IslandActions {
     static func newConversation() {
         ClaudeService.shared.clearConversation()
         state.chatHistory = []
-        state.chatVia = nil
         state.noteMessage = nil
     }
 }

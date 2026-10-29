@@ -92,6 +92,35 @@ final class IslandModel: ObservableObject {
     // MARK: Open island
 
     @Published var selectedModuleID: String?
+    /// The tab of the open island: Travail, Journée or Détente. Kept from one opening to the next.
+    @Published var category: ModuleCategory = ModuleCategory(rawValue: UserDefaults.standard.string(forKey: IslandPrefs.categoryKey) ?? "") ?? .work {
+        didSet { UserDefaults.standard.set(category.rawValue, forKey: IslandPrefs.categoryKey) }
+    }
+    /// The Claude Code session shown in the large card; nil: the first one.
+    @Published var selectedSessionID: String?
+    /// A letter typed while the island was open: the chat opens with it in its field.
+    var chatSeed: String?
+
+    /// The pseudo module of the work tab that shows the quick task and its list.
+    static let tasksID = "tasks"
+
+    /// What the open tab offers, in the person's order: its modules, and the tasks in "Travail".
+    func entries(in category: ModuleCategory, modules: [ModuleSnapshot]) -> [String] {
+        let ids = modules.filter { $0.tab == category }.map(\.id)
+        return category == .work ? ids + [Self.tasksID] : ids
+    }
+
+    /// The module of the open tab on screen: the chosen one if it is in the tab, else the first.
+    func current(in category: ModuleCategory, modules: [ModuleSnapshot]) -> String? {
+        let ids = entries(in: category, modules: modules)
+        if let id = selectedModuleID, ids.contains(id) { return id }
+        return ids.first
+    }
+
+    /// The tabs worth showing: the ones that hold something.
+    func tabs(modules: [ModuleSnapshot]) -> [ModuleCategory] {
+        ModuleCategory.allCases.filter { !entries(in: $0, modules: modules).isEmpty }
+    }
     /// Height the open island needs for what it shows: it is as low as the content allows.
     @Published var openHeight: CGFloat = IslandConst.openHeightDefault
 
@@ -464,6 +493,13 @@ final class IslandModel: ObservableObject {
         case .whistle:    return loc("La la la")
         case .sleep:      return "Chut"
         case .matcha:     return loc("Pause matcha")
+        case .tea:        return loc("Pause thé")
+        case .water:      return loc("Je m'hydrate")
+        case .juice:      return loc("Petit jus")
+        case .book:       return loc("Un chapitre")
+        case .gamepad:    return loc("Encore une partie")
+        case .knitting:   return loc("Maille à l'endroit")
+        case .focus:      return loc("Concentré")
         }
     }
 }
@@ -471,9 +507,11 @@ final class IslandModel: ObservableObject {
 // MARK: - Preferences of the island
 
 enum IslandPrefs {
-    /// Cigarette, coffee or matcha while an agent works (YumiWorkHabit). "La cigarette doit
-    /// pouvoir être désactivée" (YUMI.md): it is one of the three choices.
+    /// What he holds while an agent works (YumiWorkHabit). "La cigarette doit pouvoir être
+    /// désactivée" (docs/journal.md): it is one choice among others.
     static let workHabitKey = YumiWorkHabit.defaultsKey
     /// When Yumi last asked the first name.
     static let nameAskedKey = "firstNameAskedAt"
+    /// The tab of the open island last shown.
+    static let categoryKey = "islandCategory"
 }

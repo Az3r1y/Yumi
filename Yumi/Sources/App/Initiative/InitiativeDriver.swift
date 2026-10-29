@@ -139,6 +139,14 @@ final class InitiativeDriver {
         if saved.watch.agentWaiting != wasWaiting { clock() }
     }
 
+    /// The person is back after a real break without leaving the session (screen time saw it):
+    /// the two hours of work count again from now.
+    func rested() {
+        wakeUps += 1
+        saved.watch.rested(now: Date())
+        clock()
+    }
+
     /// Something a module thinks is worth a word. The engine decides, with all its rules.
     func notice(_ occasion: Occasion) {
         offer(occasion)

@@ -148,7 +148,7 @@ final class RuntimeAgent {
         }
         let proposal = try await planner.propose(for: request, tools: availableTools)
         if Task.isCancelled { throw .cancelled }
-        return try PlanValidator.validate(proposal, registry: tools, policy: policy, plannedBy: planner.name)
+        return try PlanValidator.validate(proposal, registry: tools, policy: policy, plannedBy: proposal.engine ?? planner.name)
     }
 
     /// Publishes the terminal event and keeps the run in the history.

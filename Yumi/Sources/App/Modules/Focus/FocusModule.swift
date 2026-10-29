@@ -12,14 +12,31 @@ final class FocusModule: YumiModule {
 
     var snapshot: ModuleSnapshot { timer.snapshot(now: Date()) }
 
+    private var lengthObserver: NSObjectProtocol?
+
     func start(onChange: @escaping @MainActor () -> Void) {
         self.onChange = onChange
+        // A length chosen by hand in the island: that session starts now, whatever ran before
+        lengthObserver = NotificationCenter.default.addObserver(forName: .focusStartMinutes, object: nil, queue: .main) { [weak self] note in
+            guard let minutes = note.userInfo?["minutes"] as? Int else { return }
+            MainActor.assumeIsolated { self?.startChosen(minutes: minutes) }
+        }
         syncTicking()
+    }
+
+    /// Starts a session of the length the person chose, replacing the one under way.
+    func startChosen(minutes: Int) {
+        timer.stop()
+        timer.start(now: Date(), minutes: min(max(minutes, 1), 240))
+        syncTicking()
+        onChange?()
     }
 
     /// Deselecting the module also ends the session in progress.
     func stop() {
         onChange = nil
+        if let lengthObserver { NotificationCenter.default.removeObserver(lengthObserver) }
+        lengthObserver = nil
         timer.stop()
         syncTicking()
     }
@@ -93,4 +110,9 @@ final class FocusModule: YumiModule {
             }
         }
     }
+}
+
+extension Notification.Name {
+    /// The island asks for a focus session of a chosen length. userInfo: ["minutes": Int]
+    static let focusStartMinutes = AppIdentity.notification("focusStartMinutes")
 }

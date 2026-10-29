@@ -52,7 +52,15 @@ enum ClaudeHookTranslator {
             specific.append(.taskCompleted(id))
 
         case "StopFailure":
-            specific = [.sessionErrored(id, YumiError(message: payload["message"] as? String ?? ""))]
+            // Out of usage is not a bug of the session: it waits for its limit to come back
+            let message = payload["message"] as? String ?? ""
+            let kind = "\(payload["error"] ?? "") \(payload["error_type"] ?? "") \(message)".lowercased()
+            if kind.contains("rate_limit") || kind.contains("rate limit") || kind.contains("usage limit")
+                || kind.contains("limit reached") || kind.contains("limite d") {
+                specific = [.rateLimited(id)]
+            } else {
+                specific = [.sessionErrored(id, YumiError(message: message))]
+            }
 
         case "SubagentStart":
             specific = [.activityNoted(id, loc("Un sous-agent démarre"))]
@@ -69,7 +77,9 @@ enum ClaudeHookTranslator {
         let cwd = payload["cwd"] as? String ?? ""
         let origin = SessionOrigin(workingDirectory: cwd,
                                    hostBundleID: payload["bundle_id"] as? String ?? "",
-                                   hostName: payload["term_program"] as? String ?? "")
+                                   hostName: payload["term_program"] as? String ?? "",
+                                   tty: payload["tty"] as? String ?? "",
+                                   terminalSessionID: itermSession(payload["iterm_session_id"] as? String ?? ""))
         return [.sessionStarted(id, agent, title: projectName(forDirectory: cwd)),
                 .sessionLocated(id, origin)] + specific
     }
@@ -78,6 +88,11 @@ enum ClaudeHookTranslator {
     /// do not send it and do not expect an acknowledgement.
     static func protocolVersion(of payload: [String: Any]) -> Int {
         payload["hook_protocol"] as? Int ?? 1
+    }
+
+    /// iTerm2 names a pane `w0t1p0:UUID`; its AppleScript knows it by the UUID alone.
+    static func itermSession(_ value: String) -> String {
+        String(value.split(separator: ":", maxSplits: 1).last ?? "")
     }
 
     static func projectName(forDirectory directory: String) -> String {

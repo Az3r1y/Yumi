@@ -38,7 +38,7 @@ private let repos = """
  {"full_name":"estebanbaigts/audioscope","fork":false,"stargazers_count":4,"forks_count":0,"html_url":"https://github.com/estebanbaigts/audioscope"}]
 """
 private let openPulls = #"{"total_count":3,"incomplete_results":false,"items":[{"title":"x","html_url":"https://github.com/estebanbaigts/Yumi/pull/14","repository_url":"https://api.github.com/repos/estebanbaigts/Yumi"}]}"#
-private let reviewRequested = #"{"total_count":1,"items":[{"title":"Fix du repli","html_url":"https://github.com/louis/coucou/pull/9","repository_url":"https://api.github.com/repos/louis/coucou"}]}"#
+private let reviewRequested = #"{"total_count":1,"items":[{"title":"Fix du repli","html_url":"https://github.com/octo/demo/pull/9","repository_url":"https://api.github.com/repos/octo/demo"}]}"#
 private let noReview = #"{"total_count":0,"items":[]}"#
 
 @Suite struct GitHubFeedTests {
@@ -67,8 +67,8 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         #expect(GitHubFeed.mostActiveRepo(from: Data(repos.utf8)) == GitHubRepo(fullName: "estebanbaigts/Yumi", stars: 128, forks: 12,
                                                                                url: URL(string: "https://github.com/estebanbaigts/Yumi")))
         #expect(GitHubFeed.search(from: Data(openPulls.utf8)).count == 3)
-        #expect(GitHubFeed.search(from: Data(reviewRequested.utf8)).first == GitHubReview(title: "Fix du repli", repo: "louis/coucou",
-                                                                                         url: URL(string: "https://github.com/louis/coucou/pull/9")))
+        #expect(GitHubFeed.search(from: Data(reviewRequested.utf8)).first == GitHubReview(title: "Fix du repli", repo: "octo/demo",
+                                                                                         url: URL(string: "https://github.com/octo/demo/pull/9")))
         #expect(GitHubFeed.search(from: Data(noReview.utf8)).first == nil)
         #expect(GitHubFeed.events(from: Data("{\"message\":\"Bad credentials\"}".utf8), login: "x", received: false).isEmpty)
     }
@@ -133,8 +133,8 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         let pairs: [(GitHubEvent.Kind, YumiScene)] = [(.star, .star), (.fork, .fork), (.pullRequest, .pullRequest), (.merge, .merge),
                                                       (.push, .push), (.issue, .issue), (.release, .release), (.follower, .follower)]
         for (kind, scene) in pairs { #expect(kind.scene == scene) }
-        #expect(Set([GitHubEvent.Kind.star, .fork, .merge, .release].map(\.isWorthAWord)) == [true])
-        #expect(Set([GitHubEvent.Kind.push, .issue, .pullRequest, .follower].map(\.isWorthAWord)) == [false])
+        #expect(Set([GitHubEvent.Kind.star, .fork, .merge, .release, .push].map(\.isWorthAWord)) == [true])
+        #expect(Set([GitHubEvent.Kind.issue, .pullRequest, .follower].map(\.isWorthAWord)) == [false])
     }
 
     @Test func aCommitIsRecognisedInACommand() {
@@ -174,7 +174,7 @@ private let noReview = #"{"total_count":0,"items":[]}"#
     }
 
     @Test func aPullRequestWaitingForReviewComesFirst() {
-        let review = GitHubReview(title: "Fix du repli", repo: "louis/coucou", url: nil)
+        let review = GitHubReview(title: "Fix du repli", repo: "octo/demo", url: nil)
         let snapshot = GitHubSummary.snapshot(connection: .connected, repo: repo, openPulls: 3, last: (star, 1), review: review)
         #expect(snapshot.title == "Une pull request t'attend : Fix du repli")
         #expect(snapshot.primaryAction == "Relire")
@@ -260,7 +260,7 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         var observer: NSObjectProtocol?
     }
 
-    private func make(token: String? = "ghp_test") -> (GitHubModule, FakeGitHub, Seen) {
+    private func make(token: String? = "ghp_test", viaApp: Bool = false, prepared: (@MainActor () -> Void)? = nil) -> (GitHubModule, FakeGitHub, Seen) {
         let name = "yumi.tests.github.\(UUID().uuidString)"
         let defaults = UserDefaults(suiteName: name)!
         defaults.removePersistentDomain(forName: name)
@@ -272,10 +272,27 @@ private let noReview = #"{"total_count":0,"items":[]}"#
         github.set("is%3Aopen", openPulls)
         github.set("=api.github.com/user", user)
         let seen = Seen()
-        let module = GitHubModule(token: { token }, defaults: defaults, fetch: github.fetch,
+        let module = GitHubModule(token: { token }, prepare: { prepared?() }, viaApp: { viaApp },
+                                  defaults: defaults, fetch: github.fetch,
                                   onConnect: { seen.connects += 1 }, onNews: { seen.news.append(($0, $1)) },
                                   play: { seen.scenes.append(($0, $1 > 1 ? $1 : nil)) })
         return (module, github, seen)
+    }
+
+    @Test func theGitHubAppFollowsTheRepositoriesOfEveryInstallation() async {
+        let seen = Seen()
+        let (module, github, _) = make(token: "ghu_app", viaApp: true, prepared: { seen.connects += 1 })
+        github.set("/user/installations?", #"{"total_count":2,"installations":[{"id":1,"account":{"login":"estebanbaigts"}},{"id":2,"account":{"login":"acme"}}]}"#)
+        github.set("/user/installations/1/repositories", #"{"total_count":1,"repositories":[{"full_name":"estebanbaigts/Yumi","fork":false,"stargazers_count":128,"forks_count":12,"pushed_at":"2026-10-01T10:00:00Z","html_url":"https://github.com/estebanbaigts/Yumi"}]}"#)
+        github.set("/user/installations/2/repositories", #"{"total_count":1,"repositories":[{"full_name":"acme/api","fork":false,"stargazers_count":7,"forks_count":1,"pushed_at":"2026-10-02T10:00:00Z","html_url":"https://github.com/acme/api"}]}"#)
+        await module.look()
+        // The token was renewed if needed before the look.
+        #expect(seen.connects == 1)
+        #expect(github.asked("/user/repos").isEmpty)
+        #expect(github.asked("/user/installations/2/repositories").count == 1)
+        // The repository of the organisation, pushed last, comes first.
+        #expect(module.snapshot.subtitle == "acme/api")
+        #expect(github.asked("api.github.com/user").first?.value(forHTTPHeaderField: "Authorization") == "Bearer ghu_app")
     }
 
     @Test func withoutATokenNothingIsAsked() async {
@@ -381,15 +398,15 @@ private let noReview = #"{"total_count":0,"items":[]}"#
 }
 
 @Suite struct GitHubInitiativeTests {
-    @Test func aStarIsSaidWithTheSameGuardsAsEverythingElse() {
+    @Test func aStarIsSaidAtOnceButFocusAndSilenceStillHoldIt() {
         let star = GitHubEvent(id: 1, kind: .star, repo: "estebanbaigts/Yumi", actor: "louis")
         var engine = InitiativeEngine()
         let now = Date(timeIntervalSince1970: 1_800_000_000)
         var around = Surroundings(now: now, talk: .discreet)
         let said = engine.consider(.repository(star, count: 1), in: around)
         #expect(said?.text == "Une étoile de plus sur Yumi, de la part de louis.")
-        // Twenty minutes, focus, silence: the same rules.
-        #expect(engine.refusal(of: .repository(star, count: 1), in: around) == .tooSoon)
+        // News come as they happen: no twenty minutes. Focus and silence still hold them.
+        #expect(engine.refusal(of: .repository(star, count: 1), in: around) == nil)
         around.now = now.addingTimeInterval(3600)
         around.focusRunning = true
         #expect(engine.refusal(of: .repository(star, count: 1), in: around) == .focus)

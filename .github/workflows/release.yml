@@ -122,5 +122,11 @@ jobs:
           SHA-256: \`$sum\`
 
           Check: \`gh attestation verify ${{ steps.zip.outputs.zip }} --repo ${GITHUB_REPOSITORY}\`"
-          gh release create "$GITHUB_REF_NAME" "${{ steps.zip.outputs.zip }}" SHA256SUMS.txt \
-            --draft --prerelease --title "Yumi $version" --notes "$notes"
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            # A draft already exists for this tag (the tag was moved): replace its files and notes
+            gh release upload "$GITHUB_REF_NAME" "${{ steps.zip.outputs.zip }}" SHA256SUMS.txt --clobber
+            gh release edit "$GITHUB_REF_NAME" --draft --prerelease --title "Yumi $version" --notes "$notes"
+          else
+            gh release create "$GITHUB_REF_NAME" "${{ steps.zip.outputs.zip }}" SHA256SUMS.txt \
+              --draft --prerelease --title "Yumi $version" --notes "$notes"
+          fi

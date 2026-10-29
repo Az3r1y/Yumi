@@ -50,8 +50,8 @@ struct AntigravityLLMProvider: LLMProvider {
         guard let binary = binary() else { throw LLMProviderError.unavailable }
         if let problem = Self.isolationProblem(in: configFolder, isOwnHooks: isOwnHooks) { throw LLMProviderError.failed(problem) }
         // No flag for the rules: they open the prompt
-        let prompt = request.system + "\n\n" + AppleLLMProvider.prompt(request.messages, budget: 60_000)
-        let schema = request.expectsJSON ? request.tools.flatMap(Self.planSchema) : nil
+        let prompt = request.system + "\n\n" + AppleLLMProvider.prompt(for: request.messages, keepingLast: 30)
+        let schema = request.expectsJSON && !request.tools.isEmpty ? Self.planSchema(request.tools) : nil
         let arguments = Self.arguments(prompt: prompt, model: model ?? Self.defaultModel, schema: schema)
         let result: (output: Data, errors: Data)
         do {

@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The launch of the mock-up (`launch()` in design/yumi/maquette/reference.html), with the
+/// The launch of the mock-up (`launch()` in design/maquette/reference.html), with the
 /// same chronology and nothing but him, no text: a drop swells under the notch, two sleeping
 /// eyes open in the dark and look around, the island opens, the light comes on and the rim
 /// draws itself, he waves, a wink, and everything folds back. And the goodbye (`quit()`).

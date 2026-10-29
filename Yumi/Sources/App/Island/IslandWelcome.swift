@@ -1,8 +1,8 @@
 import SwiftUI
 
 // The first launch: Yumi asks the person's first name, in his voice, with a single field
-// (design/yumi/voix.md), and what he should have in hand while an agent works: coffee,
-// cigarette or matcha. The name goes to the core through `memorySetName`; it can be passed
+// (design/voix.md), and what he should have in hand while an agent works (coffee,
+// tea, a book, nothing...). The name goes to the core through `memorySetName`; it can be passed
 // over, he asks again later, without insisting. The choice is made before the name is sent.
 
 struct WelcomeActivity: View {
@@ -10,6 +10,8 @@ struct WelcomeActivity: View {
     /// Empty until the person picks one.
     @State private var held = YumiWorkHabit.isChosen() ? YumiWorkHabit.current().rawValue : ""
     @FocusState private var focused: Bool
+    /// Where Yumi stands without any setup: Apple's model, or the simple mode. Never a question.
+    @State private var engine: EngineWelcome?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -33,15 +35,27 @@ struct WelcomeActivity: View {
             .riseIn(2)
             HStack(spacing: 8) {
                 ActSub(text: loc("Quand un agent bosse, je prends"))
-                HStack(spacing: 0) {
-                    ForEach(YumiWorkHabit.firstChoices, id: \.self) { choice in
-                        SegmentButton(label: choice.label, on: held == choice.rawValue) { choose(choice) }
-                    }
+                WorkHabitChips(choices: YumiWorkHabit.firstChoices, selected: held) { choose($0) }
+                if let choice = YumiWorkHabit(rawValue: held) {
+                    WorkHabitPreview(choice: choice, size: 18)
+                        .frame(width: 30, height: 22)
                 }
-                .padding(2)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.1)))
             }
             .riseIn(3)
+            if let engine {
+                VStack(alignment: .leading, spacing: 0) {
+                    // Up to three lines: this sentence is the whole answer to "does it work here?"
+                    Text(engine.text)
+                        .font(IslandTheme.text(12.5, .regular))
+                        .foregroundStyle(IslandTheme.muted)
+                        .lineLimit(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                    if engine.opensAppleSettings {
+                        TextButton(label: loc("Ouvrir les Réglages Système")) { NSWorkspace.shared.open(AppleModelAvailability.settingsURL) }
+                    }
+                }
+                .riseIn(4)
+            }
             TextButton(label: loc("Plus tard")) { IslandActions.skipName() }
                 .riseIn(4)
             // The menu bar item can hide behind the notch: the other ways in, said once
@@ -49,7 +63,10 @@ struct WelcomeActivity: View {
                 .riseIn(5)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .onAppear { focused = true }
+        .onAppear {
+            focused = true
+            engine = EngineWelcome.message(active: EngineFactory.activeEngine, apple: .current)
+        }
     }
 
     private func choose(_ choice: YumiWorkHabit) {

@@ -3,8 +3,8 @@ import Foundation
 // MARK: - Character contract
 // The island tells the character what to do through these notifications; the character
 // renderer listens to them. Both sides rely on this file, so neither edits it during
-// the parallel work (see YUMI.md). The reference for what each value looks like is
-// design/yumi/maquette/reference.html.
+// the parallel work (see docs/journal.md). The reference for what each value looks like is
+// design/maquette/reference.html.
 
 /// One-shot body movements. They play once and the character returns to rest.
 enum YumiPose: String, CaseIterable, Sendable {
@@ -18,6 +18,8 @@ enum YumiPose: String, CaseIterable, Sendable {
 /// Lasting human habits, each with its prop and routine. Only one at a time.
 enum YumiHabit: String, CaseIterable, Sendable {
     case smoke, exhausted, coffee, headphones, sunglasses, cloud, whistle, sleep, matcha
+    // What he may have in hand while an agent works, besides coffee, cigarette and matcha
+    case tea, water, juice, book, gamepad, knitting, focus
 }
 
 /// Face expressions.
@@ -43,4 +45,6 @@ extension Notification.Name {
     static let yumiLit   = AppIdentity.notification("yumiLit")
     /// object: `CGPoint` in -1...1 on both axes, or nil to follow the pointer again
     static let yumiGaze  = AppIdentity.notification("yumiGaze")
+    /// No object: the island's colour or Yumi's costume changed (IslandAccent, YumiCostume)
+    static let yumiLook  = AppIdentity.notification("yumiLook")
 }

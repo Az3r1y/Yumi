@@ -1,0 +1,144 @@
+import Testing
+import Foundation
+
+@Suite struct BrowserMediaTitlesTests {
+    @Test func readsAYouTubeVideoInAnyBrowser() {
+        let chrome = MusicTitles.parse("Halo Nord - Lueur (clip officiel) - YouTube - Google Chrome")
+        #expect(chrome?.player == .youtube && chrome?.title == "Halo Nord - Lueur (clip officiel)" && chrome?.artist == "")
+        // Arc puts no browser name in its window titles, and YouTube counts the notifications in front
+        let arc = MusicTitles.parse("(3) Halo Nord - Lueur - YouTube")
+        #expect(arc?.player == .youtube && arc?.title == "Halo Nord - Lueur")
+        let firefox = MusicTitles.parse("(12+) Lueur - YouTube — Mozilla Firefox")
+        #expect(firefox?.title == "Lueur")
+    }
+
+    @Test func youTubeMusicIsNotYouTube() {
+        let music = MusicTitles.parse("Lueur • Halo Nord - YouTube Music")
+        #expect(music?.player == .youtubeMusic && music?.artist == "Halo Nord")
+    }
+
+    @Test func readsSoundCloudTwitchAndVimeo() {
+        let soundcloud = MusicTitles.parse("Stream Lueur by Halo Nord | Listen online for free on SoundCloud - Safari")
+        #expect(soundcloud?.player == .soundcloud && soundcloud?.title == "Lueur" && soundcloud?.artist == "Halo Nord")
+        let twitch = MusicTitles.parse("halonord - Twitch")
+        #expect(twitch?.player == .twitch && twitch?.title == "halonord")
+        let vimeo = MusicTitles.parse("Premières heures on Vimeo - Brave")
+        #expect(vimeo?.player == .vimeo && vimeo?.title == "Premières heures")
+    }
+
+    @Test func ignoresTheSitesThemselves() {
+        #expect(MusicTitles.parse("YouTube - Google Chrome") == nil)
+        #expect(MusicTitles.parse("(2) YouTube") == nil)
+        #expect(MusicTitles.parse("Abonnements - YouTube") == nil)
+        #expect(MusicTitles.parse("Twitch") == nil)
+        #expect(MusicTitles.parse("Lueur - Google Docs - Google Chrome") == nil)
+        #expect(!MusicPlayer.youtube.isScriptable && MusicPlayer.youtube.notificationName == nil)
+        #expect(MusicPlayer.youtube.webURL != nil)
+    }
+}
+
+@Suite struct TitlePlaybackTests {
+    @Test func findsTheSoundOfABrowserInItsHelpers() {
+        let audible: Set<String> = ["company.thebrowser.browser.helper", "com.apple.music"]
+        #expect(TitlePlayback.isAudible("company.thebrowser.Browser", among: audible))
+        #expect(TitlePlayback.isAudible("com.apple.Music", among: audible))
+        #expect(!TitlePlayback.isAudible("com.google.Chrome", among: audible))
+        #expect(TitlePlayback.isAudible("com.google.Chrome.app.cinhimbnkkaeohfgghhklpknlkffjgod", among: ["com.google.chrome.helper"]))
+        #expect(TitlePlayback.isAudible("com.apple.Safari", among: ["com.apple.webkit.gpu"]))
+        #expect(TitlePlayback.isAudible("org.mozilla.firefox", among: ["org.mozilla.plugincontainer"]))
+        // A prefix that is not a helper does not count
+        #expect(!TitlePlayback.isAudible("com.brave.Browser", among: ["com.brave.browserextra"]))
+        #expect(!TitlePlayback.isAudible("com.google.Chrome", among: []))
+    }
+
+    @Test func aPageNeverHeardIsNotATrack() {
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: nil, audible: false) == nil)
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: nil, audible: true) == true)
+    }
+
+    @Test func aTrackHeardThenSilentIsPaused() {
+        let lueur = NowPlaying(player: .youtube, title: "Lueur", artist: "", album: "", isPlaying: true)
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: lueur, audible: false) == false)
+        // Another video, silent: not shown
+        #expect(TitlePlayback.isPlaying(title: "Autre", previous: lueur, audible: false) == nil)
+    }
+
+    @Test func aButtonPressIsTrustedForAMoment() {
+        var paused = NowPlaying(player: .youtube, title: "Lueur", artist: "", album: "", isPlaying: false)
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: paused, audible: true, pressedRecently: true) == false)
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: paused, audible: true) == true)
+        paused.isPlaying = true
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: paused, audible: false, pressedRecently: true) == true)
+    }
+
+    @Test func withoutTheSoundTheLastButtonDecides() {
+        let paused = NowPlaying(player: .deezer, title: "Lueur", artist: "", album: "", isPlaying: false)
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: paused, audible: nil) == false)
+        #expect(TitlePlayback.isPlaying(title: "Lueur", previous: nil, audible: nil) == true)
+        #expect(TitlePlayback.isPlaying(title: "Autre", previous: paused, audible: nil) == true)
+    }
+}
+
+@Suite struct BrowserFallbackTests {
+    private let radio = "NRJ: Hit Music Only. Ecouter la radio en ligne, clips, actus, webradios..."
+
+    @Test func aWebRadioIsNotAKnownSite() {
+        // What Arc showed while the NRJ radio played: only the fallback can show it
+        #expect(MusicTitles.parse(radio) == nil)
+        #expect(BrowserFallback.title(among: [radio, "Dynasty Nova - Jeu de stratégie 4X spatial"], previous: nil) == radio)
+    }
+
+    @Test func theTitleLosesItsBrowserAndMarks() {
+        #expect(BrowserFallback.title(among: ["🔊 (2) Radio Lueur - Google Chrome"], previous: nil) == "Radio Lueur")
+        #expect(MusicTitles.clean("Radio Lueur — Mozilla Firefox") == "Radio Lueur")
+    }
+
+    @Test func emptyTitlesAreSkipped() {
+        #expect(BrowserFallback.title(among: ["", "  ", "Radio Lueur - Arc"], previous: nil) == "Radio Lueur")
+        #expect(BrowserFallback.title(among: ["", " - Google Chrome"], previous: nil) == nil)
+    }
+
+    @Test func thePageShownStaysWhenAnotherWindowComesInFront() {
+        #expect(BrowserFallback.title(among: ["Dynasty Nova", radio], previous: radio) == radio)
+        // Closed: the window in front takes over
+        #expect(BrowserFallback.title(among: ["Dynasty Nova"], previous: radio) == "Dynasty Nova")
+    }
+
+    @Test func aPageShowsOnlyWhenHeardTwiceInARow() {
+        // A single sound (a notification) is not music
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: true, heardBefore: false) == nil)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: true, heardBefore: true) == true)
+        // Never without the sound, nor when the system cannot say
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: false, heardBefore: true) == nil)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: nil, audible: nil, heardBefore: true) == nil)
+    }
+
+    @Test func aPageHeardThenSilentIsPausedThenLeavesSooner() {
+        let shown = NowPlaying(player: .web, title: radio, artist: "Arc", album: "", isPlaying: true)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: shown, audible: true, heardBefore: false) == true)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: shown, audible: false, heardBefore: true) == false)
+        #expect(BrowserFallback.isPlaying(title: "Autre", previous: shown, audible: false, heardBefore: true) == nil)
+        #expect(BrowserFallback.isPlaying(title: radio, previous: shown, audible: nil, heardBefore: true) == nil)
+        // A pause pressed in the island is trusted over the sound that lingers
+        var paused = shown
+        paused.isPlaying = false
+        #expect(BrowserFallback.isPlaying(title: radio, previous: paused, audible: true, heardBefore: true, pressedRecently: true) == false)
+        // Paused, a page leaves the island after a minute; a known player after five
+        #expect(MusicSummary.live(paused, canControl: true, pausedFor: 30) != nil)
+        #expect(MusicSummary.live(paused, canControl: true, pausedFor: 90) == nil)
+        let video = NowPlaying(player: .youtube, title: "Lueur", artist: "", album: "", isPlaying: false)
+        #expect(MusicSummary.live(video, canControl: true, pausedFor: 90) != nil)
+    }
+
+    @Test func safariSoundCannotBeToldApart() {
+        #expect(!BrowserFallback.canTellItsSound("com.apple.Safari"))
+        #expect(BrowserFallback.canTellItsSound("company.thebrowser.Browser"))
+    }
+
+    @Test func theIslandShowsThePageAndItsBrowser() {
+        let shown = NowPlaying(player: .web, title: radio, artist: "Arc", album: "", isPlaying: true)
+        let snapshot = MusicSummary.snapshot(shown, canControl: true)
+        #expect(snapshot.title == radio && snapshot.subtitle == "Arc")
+        #expect(snapshot.live != nil && !MusicPlayer.web.isScriptable && MusicPlayer.web.webURL == nil)
+    }
+}

@@ -18,7 +18,14 @@ struct GetCurrentTimeTool: Tool {
         let formatter = ISO8601DateFormatter()
         formatter.timeZone = timeZone
         let iso = formatter.string(from: context.now)
+        let spoken = DateFormatter()
+        spoken.locale = Locale(identifier: AppLanguage.isEnglish ? "en_US" : "fr_FR")
+        spoken.timeZone = timeZone
+        spoken.dateStyle = .none
+        spoken.timeStyle = .short
+        let time = spoken.string(from: context.now)
         return ToolOutput(summary: "It is \(iso).",
-                          values: ["iso8601": .string(iso), "timeZone": .string(timeZone.identifier)])
+                          values: ["iso8601": .string(iso), "timeZone": .string(timeZone.identifier),
+                                   "reply": .string(loc("Il est \(time)."))])
     }
 }

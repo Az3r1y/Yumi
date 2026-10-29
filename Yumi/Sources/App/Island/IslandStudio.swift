@@ -2,7 +2,7 @@ import AppKit
 import Combine
 import SwiftUI
 
-/// The filming mode (design/yumi/video.md): launched with `YUMI_STUDIO=1`, the island plays
+/// The filming mode (design/video.md): launched with `YUMI_STUDIO=1`, the island plays
 /// each shot of the video on a key, with careful example data and nothing personal, as many
 /// times as needed. No sound, no automatic folding, and the pointer is ignored, so that
 /// nothing moves but what the shot asks for. `YUMI_STUDIO_SCALE=1.5` or `2` enlarges the
@@ -228,6 +228,41 @@ enum IslandStudio {
         return all
     }
 
+    /// Example mails for the Gmail shot, in the language of the app: two important, one from a
+    /// friend, one newsletter. Nobody real.
+    static func gmailMails(now: Date = .now) -> [GmailMail] {
+        let fr = Bundle.main.preferredLocalizations.first?.hasPrefix("fr") ?? true
+        func mail(_ uid: Int, _ from: String, _ subject: (String, String), _ minutes: Double, unread: Bool,
+                  important: Bool = false, bulk: Bool = false) -> GmailMail {
+            var mail = GmailMail(uid: uid, from: from, subject: fr ? subject.0 : subject.1,
+                                 date: now.addingTimeInterval(-minutes * 60), unread: unread, thread: nil)
+            mail.important = important
+            mail.bulk = bulk
+            mail.replyAddress = bulk ? "" : "\(from.lowercased().replacingOccurrences(of: " ", with: "."))@example.com"
+            return mail
+        }
+        return [
+            mail(104, "Camille Martin", ("Devis pour le site, une question", "Quote for the site, one question"), 12, unread: true, important: true),
+            mail(103, "Studio Lumen", ("Réunion de lancement jeudi ?", "Kick-off meeting on Thursday?"), 48, unread: true, important: true),
+            mail(102, "Paul", ("Photos du week-end", "Weekend photos"), 95, unread: true),
+            mail(101, "Atelier Hebdo", ("Les nouveautés de la semaine", "This week's news"), 180, unread: false, bulk: true),
+        ]
+    }
+
+    /// The answer Yumi suggests to the first mail. Like the real prompt, it invents nothing:
+    /// what it does not know is left to complete.
+    static func gmailDraft() -> String {
+        let fr = Bundle.main.preferredLocalizations.first?.hasPrefix("fr") ?? true
+        return fr
+            ? "Bonjour Camille, merci pour ton message. Oui, le devis comprend la version mobile. Je t'envoie le détail des délais [à compléter]. Alex"
+            : "Hi Camille, thanks for your message. Yes, the quote includes the mobile version. I'll send you the timeline details [to complete]. Alex"
+    }
+
+    /// The example modules with Gmail as GmailSummary makes it from those mails.
+    static func gmail(_ mails: [GmailMail]) -> [ModuleSnapshot] {
+        modules(musicPlaying: false) + [GmailSummary.snapshot(mails: mails, connection: .connected, now: .now)]
+    }
+
     /// Notion as NotionModule.snapshot words it, from example tasks: two today, one late.
     static func notionTasks() -> [ModuleSnapshot] {
         let now = Date.now
@@ -276,13 +311,14 @@ enum IslandStudio {
         }) { monitors.append(monitor) }
 
         if let folder = ProcessInfo.processInfo.environment["YUMI_STUDIO_SHOTS"] { rehearse(into: folder) }
+        if let folder = ProcessInfo.processInfo.environment["YUMI_ISLAND_V2_SHOTS"] { shootIsland(into: folder) }
     }
 
     /// `YUMI_STUDIO_SHOTS=<folder>` plays every shot in turn and saves a picture of the island
     /// twice a second, to check the mode without filming.
     /// `YUMI_STUDIO_ONLY=10,11,12` plays only these shots, in this order.
     private static func rehearse(into folder: String) {
-        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15, 13: 11, 14: 11, 15: 10]
+        let lengths: [Int: Double] = [1: 6, 2: 9, 3: 5, 4: 9, 5: 8, 6: 9, 7: 4, 8: 12, 9: 6, 10: 8, 11: 12, 12: 15, 13: 11, 14: 11, 15: 10, 16: 14]
         let only = (ProcessInfo.processInfo.environment["YUMI_STUDIO_ONLY"] ?? "")
             .split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         let shots = only.isEmpty ? Array(1...9) : only
@@ -359,7 +395,7 @@ enum IslandStudio {
         controller?.studioRest()
     }
 
-    // MARK: - The shots of design/yumi/video.md
+    // MARK: - The shots of design/video.md
 
     static func play(_ shot: Int) {
         guard let controller else { return }
@@ -593,8 +629,159 @@ enum IslandStudio {
             }
             after(6.5) { model.setMood(.happy, force: true); model.pose(.celebrate) }
 
+        case 16:
+            // Gmail: the important mails apart, one opened, and the answer Yumi suggests.
+            // Nothing is sent: the shot ends on the Envoyer button, never pressed
+            let mails = gmailMails()
+            after(0.4) {
+                GmailInbox.shared.show(mails)
+                show(gmail(mails))
+                IslandActions.showTab(.day)
+                controller.expand(to: .overview)
+            }
+            after(2.8) {
+                model.selectedModuleID = "gmail"
+                controller.expand(to: .module)
+            }
+            after(5.6) { NotificationCenter.default.post(name: .yumiStudioGmail, object: StudioGmail.choose(mails[0].uid)) }
+            after(6.8) {
+                NotificationCenter.default.post(name: .yumiStudioGmail, object: StudioGmail.think)
+                model.setMood(.thinking)
+            }
+            var typed = ""
+            var at = 8.4
+            for word in gmailDraft().split(separator: " ", omittingEmptySubsequences: false) {
+                at += 0.07
+                let part = String(word)
+                after(at) {
+                    typed += (typed.isEmpty ? "" : " ") + part
+                    NotificationCenter.default.post(name: .yumiStudioGmail, object: StudioGmail.draft(typed))
+                }
+            }
+            after(at + 0.2) { model.setMood(nil); model.pose(.pop) }
+
         default:
             break
         }
     }
+}
+
+// MARK: - Pictures of the island in cards
+
+extension IslandStudio {
+    /// `YUMI_ISLAND_V2_SHOTS=<folder>`: one picture of each view of the island in cards (folded,
+    /// the three tabs, a Claude approval, the chat, the settings, three costumes), then quits.
+    /// The colour, the costume and the tab of the person are put back before quitting.
+    private static func shootIsland(into folder: String) {
+        let defaults = UserDefaults.standard
+        let kept = [IslandAccent.defaultsKey, YumiCostume.defaultsKey, IslandPrefs.categoryKey]
+            .map { ($0, defaults.object(forKey: $0)) }
+        let state = AppState.shared
+        let model = IslandModel.shared
+
+        func wear(_ costume: YumiCostume, _ accent: IslandAccent) {
+            costume.save()
+            accent.save()
+            NotificationCenter.default.post(name: .yumiLook, object: nil)
+        }
+        func save(_ name: String) {
+            guard let view = controller?.window?.contentView,
+                  let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+            view.cacheDisplay(in: view.bounds, to: rep)
+            try? rep.representation(using: .png, properties: [:])?
+                .write(to: URL(fileURLWithPath: folder).appendingPathComponent(name + ".png"))
+        }
+        func sessions() -> [ModuleSnapshot] {
+            var all = IslandStudio.sessions(.waiting)
+            if let i = all.firstIndex(where: { $0.id == "claude-code" }) {
+                all[i].rows[1].progress = "3/7"
+                all[i].rows[1].detail = loc("Modifie Accueil.swift")
+                all[i].rows[1].details = [loc("Lire l'écran d'accueil"), loc("Lancer les tests")]
+                all[i].rows.swapAt(0, 1)
+            }
+            return all
+        }
+        let shots: [(String, @MainActor () -> Void)] = [
+            ("01-repliee", { show(sessions()); controller?.collapse() }),
+            ("02-travail", { show(sessions()); model.selectedSessionID = nil; IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("02b-fiche-claude", {
+                let journals = ClaudeSessionJournals.shared
+                let notes: [SessionNote.Kind] = [
+                    .prompt(loc("Refais l'écran d'accueil, plus calme")),
+                    .todos([SessionTodo(text: loc("Lire l'écran d'accueil"), state: .completed),
+                            SessionTodo(text: loc("Simplifier la mise en page"), state: .completed),
+                            SessionTodo(text: loc("Modifie Accueil.swift"), state: .inProgress),
+                            SessionTodo(text: loc("Lancer les tests"), state: .pending)]),
+                    .toolFinished(ToolStep(tool: "Read", input: ["file_path": "/atelier/AccueilView.swift"]), failed: false),
+                    .toolFinished(ToolStep(tool: "Grep", input: ["pattern": "Theme.spacing"]), failed: false),
+                    .toolFinished(ToolStep(tool: "Edit", input: ["file_path": "/atelier/Theme.swift"]), failed: false),
+                    .toolFinished(ToolStep(tool: "Bash", input: ["command": "swift build"]), failed: false),
+                    .toolStarted(ToolStep(tool: "Edit", input: ["file_path": "/atelier/AccueilView.swift"])),
+                ]
+                for kind in notes { journals.apply(SessionNote(session: "s2", kind: kind), now: Date.now.addingTimeInterval(-540)) }
+                show(sessions()); model.selectedSessionID = nil; IslandActions.showModule("claude-code"); controller?.expand(to: .module)
+            }),
+            ("03-journee", { show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("04-detente", { show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("04b-fiche-musique", { show(modules(musicPlaying: true)); IslandActions.showModule("music"); controller?.expand(to: .module) }),
+            ("05-accord", {
+                show(sessions())
+                state.stateOverride = .approval
+                state.pendingApproval = ApprovalInfo(sessionId: "studio", tool: "Bash", command: "npm test -- --watch=false")
+                controller?.expand(to: .approval)
+            }),
+            ("06-chat", {
+                state.chatHistory = [ChatMessage(role: .user, content: loc("Rappelle-moi d'appeler Paul demain à 15 h")),
+                                     ChatMessage(role: .assistant, content: loc("C'est noté, je te le rappelle demain à 15 h."))]
+                controller?.expand(to: .prompt)
+            }),
+            ("07-reglages", { controller?.expand(to: .settings) }),
+            ("08-skin-couronne", { wear(.crown, .yumi); show(sessions()); IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("09-skin-chat", { wear(.cat, .pink); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("10-skin-sorciere", { wear(.witch, .green); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("12-skin-licorne", { wear(.unicorn, .sky); show(sessions()); IslandActions.showTab(.work); controller?.expand(to: .overview) }),
+            ("13-skin-antennes", { wear(.antennae, .orange); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("14-skin-pirate", { wear(.pirate, .yumi); show(modules(musicPlaying: false)); IslandActions.showTab(.day); controller?.expand(to: .overview) }),
+            ("15-skin-fete", { wear(.party, .pink); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("16-skin-noeud", { wear(.bow, .yumi); show(modules(musicPlaying: true)); IslandActions.showTab(.relax); controller?.expand(to: .overview) }),
+            ("98-stress-onglets", {
+                // Views switched faster than their animations: Yumi must end in the last one's place
+                show(sessions()); controller?.expand(to: .overview)
+                let steps: [@MainActor () -> Void] = [
+                    { IslandActions.showTab(.day) }, { IslandActions.showModule("claude-code") }, { IslandActions.go(.settings) },
+                    { IslandActions.showTab(.relax) }, { IslandActions.showModule("music") }, { IslandActions.go(.prompt) },
+                    { IslandActions.showTab(.work) }, { IslandActions.showModule("agenda") }, { IslandActions.showTab(.day) },
+                ]
+                for (i, step) in steps.enumerated() {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.25 + Double(i) * 0.12) { MainActor.assumeIsolated { step() } }
+                }
+            }),
+            ("11-skin-repliee", { wear(.witch, .green); show(modules(musicPlaying: true)); controller?.collapse() }),
+        ]
+        Task { @MainActor in
+            wear(.none, .yumi)
+            try? await Task.sleep(for: .seconds(7))
+            for (name, setUp) in shots {
+                rest()
+                try? await Task.sleep(for: .seconds(1.2))
+                setUp()
+                try? await Task.sleep(for: .seconds(2.6))
+                save(name)
+            }
+            for (key, value) in kept { defaults.set(value, forKey: key) }
+            NSApp.terminate(nil)
+        }
+    }
+}
+
+/// What the Gmail shot asks of the Gmail sheet, which keeps its steps to itself.
+enum StudioGmail {
+    case choose(Int)
+    case think
+    case draft(String)
+}
+
+extension Notification.Name {
+    /// Filming mode only: a step of the Gmail shot.
+    static let yumiStudioGmail = AppIdentity.notification("studioGmail")
 }

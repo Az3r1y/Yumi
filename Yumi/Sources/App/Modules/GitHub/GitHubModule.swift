@@ -25,6 +25,10 @@ final class GitHubModule: YumiModule {
     private static let trackerKey = "githubTracker"
 
     private let token: @MainActor () -> String?
+    /// Renews a token about to expire (the GitHub App's) before each look.
+    private let prepare: @MainActor () async -> Void
+    /// True when signed in with the GitHub App: the repositories come from its installations.
+    private let viaApp: @MainActor () -> Bool
     private let fetch: Fetch
     private let defaults: UserDefaults
     private let onConnect: @MainActor () -> Void
@@ -36,7 +40,13 @@ final class GitHubModule: YumiModule {
     private var onChange: (@MainActor () -> Void)?
     private var polling: Task<Void, Never>?
     private var tracker: GitHubTracker
+    /// Stars, forks and latest commits of the followed repositories, every look.
+    private var quick = GitHubQuickWatch()
+    /// Repositories watched closely each look; the others wait for the event feeds.
+    static let quickRepos = 8
     private var etags: [String: String] = [:]
+    /// The last answer of the installations' lists, for "not modified".
+    private var pageCache: [String: Data] = [:]
     private var login: String?
     private var connection = GitHubSummary.Connection.noToken
     private var repo: GitHubRepo?
@@ -72,6 +82,8 @@ final class GitHubModule: YumiModule {
     static let pushesKept = 60
 
     init(token: @escaping @MainActor () -> String?,
+         prepare: @escaping @MainActor () async -> Void = {},
+         viaApp: @escaping @MainActor () -> Bool = { false },
          defaults: UserDefaults = .standard,
          fetch: @escaping Fetch = GitHubModule.network,
          onConnect: @escaping @MainActor () -> Void = {},
@@ -81,6 +93,8 @@ final class GitHubModule: YumiModule {
          }) {
         self.play = play
         self.token = token
+        self.prepare = prepare
+        self.viaApp = viaApp
         self.defaults = defaults
         self.fetch = fetch
         self.onConnect = onConnect
@@ -171,8 +185,12 @@ final class GitHubModule: YumiModule {
         case .secondary:
             // The settings just saved a token: read it again without waiting.
             etags = [:]
+            pageCache = [:]
             login = nil
+            repos = []
             restart()
+        case .previous:
+            break
         }
     }
 
@@ -199,6 +217,7 @@ final class GitHubModule: YumiModule {
 
     /// One look at GitHub. Internal so tests can drive it without waiting.
     func look() async {
+        await prepare()
         guard let token = token() else {
             set(.noToken)
             return
@@ -232,7 +251,7 @@ final class GitHubModule: YumiModule {
 
         if slow || repos.isEmpty {
             // Every repository the token can see: owned, shared, of the person's organisations.
-            if case .fresh(let data) = await get("/user/repos?per_page=100&affiliation=owner,collaborator,organization_member&sort=pushed", token: token) {
+            if let data = await repoList(token: token) {
                 repo = GitHubFeed.mostActiveRepo(from: data)
                 let hidden = GitHubRepos.hidden(in: defaults)
                 followed = GitHubFeed.followedRepos(from: data).filter { !hidden.contains($0) }
@@ -242,13 +261,14 @@ final class GitHubModule: YumiModule {
                 defaults.set(login, forKey: GitHubRepos.loginKey)
             }
         }
+        await quickLook(token: token)
         for (feed, received) in [("events", false), ("received_events", true)] {
             if case .fresh(let data) = await get("/users/\(login)/\(feed)?per_page=50", token: token, paced: true) {
                 let events = GitHubFeed.events(from: data, login: login, received: received, repos: repos)
                 remember(events)
                 await readCommits(of: events.filter { $0.kind == .push }, token: token)
                 let hidden = GitHubRepos.hidden(in: defaults)
-                announce(tracker.fresh(events, feed: feed).filter { !hidden.contains($0.repo) })
+                announce(quick.swallow(tracker.fresh(events, feed: feed).filter { !hidden.contains($0.repo) }))
             }
         }
         if slow {
@@ -262,6 +282,64 @@ final class GitHubModule: YumiModule {
         }
         if let data = try? JSONEncoder().encode(tracker) { defaults.set(data, forKey: Self.trackerKey) }
         onChange?()
+    }
+
+    /// Every repository to follow, shaped like `/user/repos?sort=pushed`. nil when unchanged or unreachable.
+    private func repoList(token: String) async -> Data? {
+        guard viaApp() else {
+            // Every repository the token can see: owned, shared, of the person's organisations.
+            guard case .fresh(let data) = await get("/user/repos?per_page=100&affiliation=owner,collaborator,organization_member&sort=pushed", token: token) else { return nil }
+            return data
+        }
+        // The GitHub App: the repositories of each account where it is installed.
+        guard let list = await kept("/user/installations?per_page=100", token: token) else { return nil }
+        var pages: [Data] = []
+        let installations = GitHubApp.installations(from: list)
+        GitHubApp.saveAccounts(installations, in: defaults)
+        for installation in installations.prefix(Self.installationsRead) {
+            for page in 1...Self.pagesPerInstallation {
+                guard let data = await kept("/user/installations/\(installation.id)/repositories?per_page=100&page=\(page)", token: token) else { break }
+                pages.append(data)
+                let count = ((try? JSONSerialization.jsonObject(with: data) as? [String: Any])?["repositories"] as? [Any])?.count ?? 0
+                if count < 100 { break }
+            }
+        }
+        return GitHubApp.mergedRepos(pages)
+    }
+
+    /// Accounts read per look, and pages of a hundred repositories read per account.
+    static let installationsRead = 20
+    static let pagesPerInstallation = 3
+
+    /// A conditional request whose last answer is kept: "not modified" gives it back.
+    private func kept(_ path: String, token: String) async -> Data? {
+        switch await get(path, token: token) {
+        case .fresh(let data):
+            pageCache[path] = data
+            return data
+        case .unchanged:
+            return pageCache[path]
+        case .refused, .failed:
+            return nil
+        }
+    }
+
+    /// Stars, forks and the latest commit of the followed repositories: asked with their tag,
+    /// they cost nothing while nothing changes, and they do not wait for the event feeds.
+    private func quickLook(token: String) async {
+        var found: [GitHubEvent] = []
+        for name in followed.prefix(Self.quickRepos) {
+            if case .fresh(let data) = await get("/repos/\(name)", token: token),
+               let counts = GitHubQuickWatch.counts(from: data) {
+                found += quick.counts(of: name, stars: counts.stars, forks: counts.forks)
+            }
+            if case .fresh(let data) = await get("/repos/\(name)/commits?per_page=1", token: token),
+               let head = GitHubQuickWatch.head(from: data),
+               let push = quick.head(of: name, sha: head.sha, message: head.message, author: head.author) {
+                found.append(push)
+            }
+        }
+        if !found.isEmpty { announce(found) }
     }
 
     /// The exact commits of the pushes not read yet, through compare: each push once, a few per look.
@@ -336,7 +414,11 @@ final class GitHubModule: YumiModule {
         }
         last = (latest, events.filter { $0.kind == latest.kind }.count)
         // One word at most for a batch: about the latest event that counts.
-        if let worth = events.last(where: { $0.kind.isWorthAWord }) {
+        if var worth = events.last(where: { $0.kind.isWorthAWord }) {
+            // A push read from the feed: its newest commit, when its commits were read
+            if worth.kind == .push, worth.headline.isEmpty, let push = pushes.first(where: { $0.eventID == worth.id }) {
+                worth.headline = push.commits.first?.message ?? ""
+            }
             onNews(worth, events.filter { $0.kind == worth.kind }.count)
         }
         onChange?()

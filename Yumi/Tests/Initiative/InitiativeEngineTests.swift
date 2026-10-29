@@ -91,7 +91,7 @@ private func around(_ now: Date, talk: YumiTalk = .chatty, name: String? = "Este
         [.firstWake(events: 2, firstAt: at(10)), .firstWake(events: 0, firstAt: nil), .firstWake(events: nil, firstAt: nil),
          .back(agentFinished: true, agentWaiting: false), .back(agentFinished: false, agentWaiting: true), .back(agentFinished: false, agentWaiting: false), .longStretch(hours: 3),
          .agentDone(project: "yumi", minutes: 42), .meetingWhileAgentWaits(title: "Point produit", minutes: 5), .late,
-         .lowBattery(percent: 9), .weekEnd]
+         .lowBattery(percent: 9), .weekEnd, .screenTime(minutes: 480, threshold: 480), .screenTime(minutes: 605, threshold: 480)]
     }
 
     @Test func everySentenceIsInHisVoice() {
@@ -269,5 +269,46 @@ private func around(_ now: Date, talk: YumiTalk = .chatty, name: String? = "Este
         let restored = try JSONDecoder().decode(InitiativeEngine.self, from: JSONEncoder().encode(engine))
         #expect(restored == engine)
         #expect(restored.refusal(of: .lowBattery(percent: 9), in: around(at(23, 50))) == .tooSoon)
+    }
+}
+
+/// GitHub news come as they happen: the spacing between remarks and the daily count do not hold them back.
+@Suite struct InitiativeGitHubNewsTests {
+    private func push(_ headline: String = "Fix the folded island") -> Occasion {
+        var event = GitHubEvent(id: 0, kind: .push, repo: "estebanbaigts/Yumi", actor: "esteban")
+        event.headline = headline
+        return .repository(event, count: 1)
+    }
+
+    @Test func aPushIsSaidWithItsCommit() {
+        var engine = InitiativeEngine()
+        let remark = engine.consider(push(), in: around(at(10)))
+        #expect(remark?.text.contains("Fix the folded island") == true)
+        #expect(remark?.text.contains("Yumi") == true)
+    }
+
+    @Test func newsFollowEachOtherWithoutWaiting() {
+        var engine = InitiativeEngine()
+        #expect(engine.consider(push("one"), in: around(at(10), talk: .discreet)) != nil)
+        let star = Occasion.repository(GitHubEvent(id: 0, kind: .star, repo: "estebanbaigts/Yumi", actor: ""), count: 1)
+        #expect(engine.consider(star, in: around(at(10, 1), talk: .discreet)) != nil)
+        let fork = Occasion.repository(GitHubEvent(id: 0, kind: .fork, repo: "estebanbaigts/Yumi", actor: ""), count: 1)
+        #expect(engine.consider(fork, in: around(at(10, 2), talk: .discreet)) != nil)
+        // ...and they do not keep the other remarks waiting
+        #expect(engine.refusal(of: .lowBattery(percent: 10), in: around(at(10, 3), talk: .discreet)) == nil)
+    }
+
+    @Test func silenceStillWins() {
+        var engine = InitiativeEngine()
+        #expect(engine.consider(push(), in: around(at(10), talk: .silent)) == nil)
+    }
+}
+
+@Suite struct InitiativeMailTests {
+    @Test func anImportantMailIsSaidWithItsSender() {
+        var engine = InitiativeEngine()
+        let remark = engine.consider(.mail(from: "Léa", subject: "Contrat signé", count: 1), in: around(at(10), talk: .discreet))
+        #expect(remark?.text.contains("Léa") == true && remark?.text.contains("Contrat signé") == true)
+        #expect(engine.consider(.mail(from: "Paul", subject: "", count: 3), in: around(at(10, 1), talk: .discreet))?.text.contains("3") == true)
     }
 }

@@ -9,6 +9,8 @@ import Foundation
 enum ModuleAction: String, Sendable {
     case primary
     case secondary
+    /// Back one step: the previous track. Modules without one treat it as nothing.
+    case previous
 }
 
 @MainActor
@@ -32,8 +34,13 @@ protocol YumiModule: AnyObject {
 
     /// A session event went through the engine. `sessions` is the state after the event.
     func receive(_ event: YumiEvent, sessions: [SessionID: Session])
+
+    /// The tab of the open island it goes in: Travail, Journée or Détente.
+    var category: ModuleCategory { get }
 }
 
 extension YumiModule {
+    var category: ModuleCategory { ModuleCategory.of(moduleID: id) }
+
     func receive(_ event: YumiEvent, sessions: [SessionID: Session]) {}
 }

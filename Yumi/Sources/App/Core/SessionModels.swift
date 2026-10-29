@@ -82,11 +82,18 @@ struct SessionOrigin: Equatable, Codable, Sendable {
     var hostBundleID: String
     /// Name the host gives itself (`TERM_PROGRAM` for a terminal). Empty when unknown.
     var hostName: String
+    /// Terminal device of the session (`/dev/ttys004`): finds its tab in Terminal or iTerm2. Empty when unknown.
+    var tty: String
+    /// iTerm2's own identifier of the session's pane (the UUID of `ITERM_SESSION_ID`). Empty when unknown.
+    var terminalSessionID: String
 
-    init(workingDirectory: String = "", hostBundleID: String = "", hostName: String = "") {
+    init(workingDirectory: String = "", hostBundleID: String = "", hostName: String = "",
+         tty: String = "", terminalSessionID: String = "") {
         self.workingDirectory = workingDirectory
         self.hostBundleID = hostBundleID
         self.hostName = hostName
+        self.tty = tty
+        self.terminalSessionID = terminalSessionID
     }
 }
 

@@ -72,6 +72,11 @@ import Foundation
         #expect(Array(events.suffix(2)) == [.activityNoted(id, "Done."), .taskCompleted(id)])
     }
 
+    @Test func runningOutOfUsageIsALimitNotAnError() {
+        #expect(ClaudeHookTranslator.events(for: payload("StopFailure", ["error": "rate_limit", "message": "Claude usage limit reached"])).last == .rateLimited(id))
+        #expect(ClaudeHookTranslator.events(for: payload("StopFailure", ["message": "Claude usage limit reached. Your limit will reset at 5pm."])).last == .rateLimited(id))
+    }
+
     @Test func failuresAndSubagents() {
         #expect(ClaudeHookTranslator.events(for: payload("StopFailure", ["message": "boom"])).last == .sessionErrored(id, YumiError(message: "boom")))
         #expect(ClaudeHookTranslator.events(for: payload("SubagentStart")).last == .activityNoted(id, "Un sous-agent démarre"))
@@ -139,7 +144,9 @@ import Foundation
         #expect(snapshot.status == "2 sessions")
         #expect(snapshot.title == "Claude écrit Tests.swift sur yumi.")
         #expect(snapshot.subtitle == "Deux sessions ouvertes.")
-        #expect(snapshot.secondaryAction == "Ouvrir le terminal")
+        // The session runs in iTerm2: the button names it, and still draws a terminal
+        #expect(snapshot.secondaryAction == "Ouvrir iTerm2")
+        #expect(snapshot.secondarySymbol == "terminal.fill")
         #expect(!snapshot.needsAttention)
     }
 

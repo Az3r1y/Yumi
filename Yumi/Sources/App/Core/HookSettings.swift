@@ -35,7 +35,7 @@ enum HookSettings {
         return settings
     }
 
-    /// The settings with Yumi's hooks, once per event, and without Coucou's or NotchBuddy's.
+    /// The settings with Yumi's hooks, once per event, and without the legacy ones of an earlier notch app.
     /// Everything else is kept as it was.
     static func merge(_ data: Data?, command: String, events: [(String, Int)],
                       isOwn: (String) -> Bool, isLegacy: (String) -> Bool) throws(Problem) -> (data: Data, legacyRemoved: Int) {

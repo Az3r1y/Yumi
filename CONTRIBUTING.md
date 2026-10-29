@@ -1,13 +1,13 @@
 # Contributing to Yumi
 
-Thanks for your interest. Yumi is a small project and still in the middle of a migration, so please open an issue before starting anything large.
+Thanks for your interest. Yumi is a small project and moving fast, so please open an issue before starting anything large.
 
 ## Before you start
 
 Read these two files first:
 
-- [YUMI.md](YUMI.md): the decisions already taken (names, identifiers, character design). It wins over any other document.
-- [ARCHITECTURE.md](ARCHITECTURE.md): how the code works, system by system, with the risks of each one. It describes the original Coucou code: paths written `NotchBuddy/...` are `Yumi/...` here.
+- [docs/journal.md](docs/journal.md): the decisions already taken (names, identifiers, character design). It wins over any other document.
+- [docs/architecture.md](docs/architecture.md): the map of the code, folder by folder, and how a request travels through the app.
 
 ## Setup
 
@@ -57,14 +57,14 @@ Timers: set a delay to a few hundredths of a second when the transition must hap
 
 - Swift 6 with strict concurrency. SwiftUI and AppKit.
 - No third-party dependency unless there is truly no other way.
-- The character is drawn in code. It is drawn by three separate renderers (`BotEngine`, `GreetingCanvasView`, `UploadCanvasView`): a change of appearance must be made in all three.
-- Never copy an icon, a sound, an image or the Mochi character design from Coucou. This repository is public and those are not under the MIT license.
+- The character is drawn in code, by `Character/YumiRenderer.swift`, checked against `design/maquette/reference.html`.
+- Never copy an icon, a sound, an image or a character design from another project. This repository is public.
 - Secrets go in the Keychain. Never write a key to disk, to a log or to git.
 - No telemetry. Network calls only to services the user configured.
 - Never block Claude Code: if the app does not answer, the hook must exit at once.
 - Never overwrite `~/.claude/settings.json`: dated backup, merge, preview, and write only after the user confirms.
 - Never send an email or approve a Claude Code permission without an explicit click.
-- Do not fix an odd behaviour in passing. `ARCHITECTURE.md` lists several gaps between what the settings promise and what the code does. Each one deserves its own change, with its own description.
+- Do not fix an odd behaviour in passing. Each one deserves its own change, with its own description.
 
 ## Teaching Yumi a new trick
 
@@ -76,7 +76,7 @@ Each action Yumi can take is one tool in `Yumi/Sources/App/AgentRuntime/Tools/`,
 4. **`execute`**: does the thing.
 5. **`verify`**: looks again and returns a message if the result is not really there.
 
-Register it in `AppDelegate.swift`, next to the other tools, and add tests in `Yumi/Tests/AgentRuntime/` (see `AgentToolsTests.swift` and `WriteToolsRefusalTests.swift`). A tool never asks the person itself and never bypasses the permission manager.
+Register it in `App/AppDelegate.swift`, next to the other tools, and add tests in `Yumi/Tests/AgentRuntime/` (see `AgentToolsTests.swift` and `WriteToolsRefusalTests.swift`). A tool never asks the person itself and never bypasses the permission manager.
 
 Ideas waiting for someone are labelled `new trick` in the issues.
 
@@ -85,7 +85,7 @@ Ideas waiting for someone are labelled `new trick` in the issues.
 1. Create a branch from `main`. Nobody pushes to `main` directly.
 2. Keep the change focused: one subject per pull request.
 3. Build and run the tests.
-4. If the change is visible, try it by hand. The checklist in step 0 of the migration plan in `ARCHITECTURE.md` lists what to go through: greeting, hover, click, hooks, approvals, file drop, chat, sounds, shortcut.
+4. If the change is visible, try it by hand: launch and greeting, hover, click, the three tabs, Claude Code hooks and approvals, file drop, chat, sounds, shortcut.
 5. Open a pull request that says what changes for the user and how you checked it.
 
 ## Reporting a bug

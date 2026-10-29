@@ -1,14 +1,14 @@
 # Yumi: guide for AI coding agents
 
-Yumi is a native macOS app: a small animated character living in the MacBook notch that shows Claude Code sessions and a few integrations, and lets the user approve, answer, chat and drop files from the notch. It is built on the MIT source code of Coucou (see `ATTRIBUTION.md`).
+Yumi is a native macOS app: a small animated character living in the MacBook notch that shows Claude Code sessions and a few integrations, and lets the user approve, answer, chat and drop files from the notch.
 
 ## Read first
-- `YUMI.md`: decisions, identity values, character design brief, file ownership per work session. It wins over any other document.
-- `ARCHITECTURE.md`: analysis of the 18 systems of the original code, with refactor risks. Paths written `NotchBuddy/...` are `Yumi/...` here.
+- `docs/journal.md`: decisions, identity values, character design brief, file ownership per work session. It wins over any other document.
+- `docs/architecture.md`: the map of the code, folder by folder, and what each part may depend on.
 
 ## Where things are
-- `Yumi/Sources/App/`: all Swift code. `Yumi/Resources/sounds/`: the WAV sounds. `Yumi/project.yml`: XcodeGen project.
-- `design/yumi/`: character concept sheet (concept 4, left half).
+- `Yumi/Sources/App/`: all Swift code, one folder per part (see `docs/architecture.md`). `Yumi/Resources/sounds/`: the WAV sounds. `Yumi/project.yml`: XcodeGen project.
+- `design/`: the character reference (`maquette/reference.html`), voice, video plan.
 - `Yumi/Sources/App/AgentRuntime/`: the agent runtime (request, plan, tools, permissions, execution). It never acts without going through `PermissionManager`, and captures no context by itself.
 - `Yumi/Sources/App/Core/`: typed event engine and session store. `Yumi/Sources/App/Modules/`: one folder per module, each producing a `ModuleSnapshot`. Neither may use a view, `AppState`, the hook server or a sound.
 - `Yumi/Tests/`: unit tests (Swift Testing). The bundle is not hosted by the app: a file under test is listed in the `YumiTests` target of `project.yml` and must have no dependency on the rest of the app.
@@ -30,7 +30,7 @@ Build in Debug before every commit. The Debug build has 3 known warnings (two un
 ## Rules
 - Swift 6, SwiftUI + AppKit. No third-party dependencies unless truly unavoidable. The character is drawn in code (`Canvas` + `TimelineView`).
 - The `.xcodeproj` and the `Info.plist` files are generated: change `project.yml`, never edit them.
-- Never copy an icon, sound, image or the Mochi character design from Coucou. This repository is public.
+- Never copy an icon, sound, image or character design from another project. This repository is public.
 - Secrets live in the Keychain, never on disk or in git.
 - No telemetry. Network calls only to services the user configured.
 - Never block Claude Code: if the app doesn't answer, the hook exits immediately.
