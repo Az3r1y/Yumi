@@ -457,16 +457,23 @@ enum YumiRenderer {
         if let o = f.props[.headphones], o > 0.01 {
             var c = tops
             c.opacity = o
+            // The cups sit on his ears, at the sides of the sphere: when the head turns (yaw), the
+            // ear he turns away from goes behind it, the other comes round to the front
+            let ears = YumiHeadphones.ears(yaw: f.yaw, width: f.w)
             var band = Path()
-            band.move(to: CGPoint(x: 9, y: 47))
-            band.addCurve(to: CGPoint(x: 50, y: 1), control1: CGPoint(x: 9, y: 16), control2: CGPoint(x: 28, y: 1))
-            band.addCurve(to: CGPoint(x: 91, y: 47), control1: CGPoint(x: 72, y: 1), control2: CGPoint(x: 91, y: 16))
+            band.move(to: CGPoint(x: ears.left.x + 1.5, y: 47))
+            band.addCurve(to: CGPoint(x: 50, y: 1), control1: CGPoint(x: ears.left.x + 1.5, y: 16),
+                          control2: CGPoint(x: 50 - (48.5 - ears.left.x) * 0.53, y: 1))
+            band.addCurve(to: CGPoint(x: ears.right.x - 1.5, y: 47), control1: CGPoint(x: 50 + (ears.right.x - 51.5) * 0.53, y: 1),
+                          control2: CGPoint(x: ears.right.x - 1.5, y: 16))
             c.stroke(band, with: .color(Color(.sRGB, red: 0.169, green: 0.180, blue: 0.247)), style: round(4.2))
-            for x: CGFloat in [2, 87] {
-                let rect = CGRect(x: x, y: 38, width: 11, height: 20)
+            for ear in [ears.left, ears.right] where ear.opacity > 0.01 {
+                var cupContext = c
+                cupContext.opacity = o * ear.opacity
+                let rect = CGRect(x: ear.x - ear.width / 2, y: 38, width: ear.width, height: 20)
                 let cup = Path(roundedRect: rect, cornerRadius: 5)
-                c.fill(cup, with: .color(Color(.sRGB, red: 0.122, green: 0.133, blue: 0.192)))
-                c.stroke(cup, with: across(rect, f.rim), lineWidth: 1.4)
+                cupContext.fill(cup, with: .color(Color(.sRGB, red: 0.122, green: 0.133, blue: 0.192)))
+                cupContext.stroke(cup, with: across(rect, f.rim), lineWidth: 1.4)
             }
         }
 
@@ -774,3 +781,31 @@ enum YumiRenderer {
 extension YumiRGB {
     var color: Color { Color(.sRGB, red: Double(r), green: Double(g), blue: Double(b)) }
 }
+
+#if DEBUG
+/// `YUMI_RENDER_SHEET=/some/folder`: draws Yumi with his headphones, head turned left, ahead
+/// and right, into PNG files there, then quits. Checks a drawing without a screen capture.
+enum YumiRenderSheet {
+    @MainActor
+    static func runIfAsked() {
+        guard let folder = ProcessInfo.processInfo.environment["YUMI_RENDER_SHEET"] else { return }
+        for (name, yaw) in [("left", -0.45), ("ahead", 0.0), ("right", 0.45)] as [(String, CGFloat)] {
+            var frame = YumiFrame()
+            frame.yaw = yaw
+            frame.props[.headphones] = 1
+            let view = Canvas { context, size in
+                context.scaleBy(x: size.width / 100, y: size.width / 100)
+                YumiRenderer.draw(frame, in: context)
+            }
+            .frame(width: 400, height: 400)
+            .background(Color.black)
+            let renderer = ImageRenderer(content: view)
+            if let image = renderer.nsImage, let tiff = image.tiffRepresentation,
+               let png = NSBitmapImageRep(data: tiff)?.representation(using: .png, properties: [:]) {
+                try? png.write(to: URL(fileURLWithPath: folder).appendingPathComponent("headphones-\(name).png"))
+            }
+        }
+        exit(0)
+    }
+}
+#endif

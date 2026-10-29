@@ -29,3 +29,29 @@ enum YumiFaceTurn {
                                  ty: middle.y * (1 - ky) + sin(pitch) * reach.height)
     }
 }
+
+/// Where the cups of the headphones are drawn: on the ears, at the two sides of his head seen as
+/// a sphere turned by `yaw`.
+enum YumiHeadphones {
+    struct Ear: Equatable {
+        /// The middle of the cup, in the 100-unit box.
+        var x: CGFloat
+        var width: CGFloat
+        /// 1 in front, fading out as the ear goes behind the head.
+        var opacity: CGFloat
+    }
+
+    static func ears(yaw: CGFloat, width: CGFloat = 1) -> (left: Ear, right: Ear) {
+        func ear(_ side: CGFloat) -> Ear {
+            let angle = side * .pi / 2 + yaw
+            // > 0: the ear faces the viewer
+            let depth = cos(angle)
+            // His outline does not turn with the head: the ear going behind stays in sight,
+            // only narrower, and fades only past a large turn
+            return Ear(x: 50 + sin(angle) * 42.5 * width,
+                       width: max(6, 11 + 6 * depth),
+                       opacity: max(0, min(1, (depth + 0.9) / 0.3)))
+        }
+        return (ear(-1), ear(1))
+    }
+}

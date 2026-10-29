@@ -11,6 +11,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Ignore SIGPIPE — prevents crash when the hook script closes socket before we write response
         signal(SIGPIPE, SIG_IGN)
+        #if DEBUG
+        YumiRenderSheet.runIfAsked()
+        #endif
         // Warm up Keychain cache on main thread BEFORE any module or view touches it.
         // While filming (YUMI_STUDIO) the store stays empty and never touches the Keychain.
         _ = KeychainStore.shared

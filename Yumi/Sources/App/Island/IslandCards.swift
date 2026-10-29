@@ -149,8 +149,11 @@ struct IslandTopBar: View {
                         .padding(.vertical, 4)
                         .background(Capsule().fill(on ? accent.opacity(0.3) : .clear))
                         .contentShape(Capsule())
+                        // A tab is never cut: the status beside the buttons gives way first
+                        .fixedSize()
                 }
                 .buttonStyle(.plain)
+                .layoutPriority(1)
                 .accessibilityAddTraits(on ? .isSelected : [])
             }
             Spacer(minLength: 8)
@@ -159,6 +162,7 @@ struct IslandTopBar: View {
                     .font(IslandTheme.text(11.5, .medium))
                     .foregroundStyle(status.waiting ? IslandTheme.amber : IslandCardTheme.mute)
                     .lineLimit(1)
+                    .truncationMode(.tail)
                     .padding(.trailing, 4)
             }
             // The App Store build may not launch Antigravity nor Claude Code
